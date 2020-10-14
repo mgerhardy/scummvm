@@ -107,7 +107,7 @@ const int8 *SETUP_FILENAME = (const int8 *)"setup.lst";
 	Fill this with all needed configurations at \a lba.cfg file.
 	This engine version allows new type of configurations.
 	Check new config lines at \a lba.cfg file after the first game execution */
-static int8 CFGList[][22] = {
+static char CFGList[][22] = {
     "Language:",
     "LanguageCD:",
     "FlagDisplayText:",
@@ -150,7 +150,7 @@ static int8 CFGList[][22] = {
     "WallCollision" // 39
 };
 
-static int8 LanguageTypes[][10] = {
+static char LanguageTypes[][10] = {
     "English",
     "Français",
     "Deutsch",
@@ -185,7 +185,7 @@ int TwinEEngine::getConfigTypeIndex(int8 *lineBuffer) {
 	char buffer[256];
 	char *ptr;
 
-	strcpy(buffer, lineBuffer);
+	strcpy(buffer, (char*)lineBuffer);
 
 	ptr = strchr(buffer, ' ');
 
@@ -212,7 +212,7 @@ int TwinEEngine::getLanguageTypeIndex(int8 *language) {
 	char buffer[256];
 	char *ptr;
 
-	strcpy(buffer, language);
+	strcpy(buffer, (char*)language);
 
 	ptr = strchr(buffer, ' ');
 
@@ -242,107 +242,107 @@ void TwinEEngine::initConfigurations() {
 		printf("Error: Can't find config file %s\n", CONFIG_FILENAME);
 
 	// make sure it quit when it reaches the end of file
-	while (fgets(buffer, 256, fd) != NULL) {
-		*strchr(buffer, 0x0D0A) = 0;
+	while (fgets((char*)buffer, 256, fd) != NULL) {
+		*strchr((char*)buffer, 0x0D0A) = 0;
 		cfgtype = getConfigTypeIndex(buffer);
 		if (cfgtype != -1) {
 			switch (cfgtype) {
 			case 0:
-				sscanf(buffer, "Language: %s", cfgfile.Language);
+				sscanf((const char*)buffer, "Language: %s", cfgfile.Language);
 				cfgfile.LanguageId = getLanguageTypeIndex(cfgfile.Language);
 				break;
 			case 1:
-				sscanf(buffer, "LanguageCD: %s", cfgfile.LanguageCD);
+				sscanf((const char*)buffer, "LanguageCD: %s", cfgfile.LanguageCD);
 				cfgfile.LanguageCDId = getLanguageTypeIndex(cfgfile.Language) + 1;
 				break;
 			case 2:
-				sscanf(buffer, "FlagDisplayText: %s", cfgfile.FlagDisplayTextStr);
-				if (!strcmp(cfgfile.FlagDisplayTextStr, "ON")) {
+				sscanf((const char*)buffer, "FlagDisplayText: %s", cfgfile.FlagDisplayTextStr);
+				if (!strcmp((char*)cfgfile.FlagDisplayTextStr, "ON")) {
 					cfgfile.FlagDisplayText = 1;
 				} else {
 					cfgfile.FlagDisplayText = 0;
 				}
 				break;
 			case 3:
-				sscanf(buffer, "FlagKeepVoice: %s", cfgfile.FlagKeepVoiceStr);
+				sscanf((const char*)buffer, "FlagKeepVoice: %s", cfgfile.FlagKeepVoiceStr);
 				break;
 			case 8:
-				sscanf(buffer, "MidiType: %s", tmp);
-				if (strcmp(tmp, "auto") == 0) {
+				sscanf((const char*)buffer, "MidiType: %s", tmp);
+				if (strcmp((char*)tmp, "auto") == 0) {
 					fd_test = fcaseopen(HQR_MIDI_MI_WIN_FILE, "rb");
 					if (fd_test) {
 						fclose(fd_test);
 						cfgfile.MidiType = 1;
 					} else
 						cfgfile.MidiType = 0;
-				} else if (strcmp(tmp, "midi") == 0)
+				} else if (strcmp((char*)tmp, "midi") == 0)
 					cfgfile.MidiType = 1;
 				else
 					cfgfile.MidiType = 0;
 				break;
 			case 19:
-				sscanf(buffer, "WaveVolume: %d", &cfgfile.WaveVolume);
+				sscanf((const char*)buffer, "WaveVolume: %d", &cfgfile.WaveVolume);
 				cfgfile.VoiceVolume = cfgfile.WaveVolume;
 				break;
 			case 20:
-				sscanf(buffer, "VoiceVolume: %d", &cfgfile.VoiceVolume);
+				sscanf((const char*)buffer, "VoiceVolume: %d", &cfgfile.VoiceVolume);
 				break;
 			case 21:
-				sscanf(buffer, "MusicVolume: %d", &cfgfile.MusicVolume);
+				sscanf((const char*)buffer, "MusicVolume: %d", &cfgfile.MusicVolume);
 				break;
 			case 22:
-				sscanf(buffer, "CDVolume: %d", &cfgfile.CDVolume);
+				sscanf((const char*)buffer, "CDVolume: %d", &cfgfile.CDVolume);
 				break;
 			case 23:
-				sscanf(buffer, "LineVolume: %d", &cfgfile.LineVolume);
+				sscanf((const char*)buffer, "LineVolume: %d", &cfgfile.LineVolume);
 				break;
 			case 24:
-				sscanf(buffer, "MasterVolume: %d", &cfgfile.MasterVolume);
+				sscanf((const char*)buffer, "MasterVolume: %d", &cfgfile.MasterVolume);
 				break;
 			case 25:
-				sscanf(buffer, "Version: %d", &cfgfile.Version);
+				sscanf((const char*)buffer, "Version: %d", &cfgfile.Version);
 				break;
 			case 26:
-				sscanf(buffer, "FullScreen: %d", &cfgfile.FullScreen);
+				sscanf((const char*)buffer, "FullScreen: %d", &cfgfile.FullScreen);
 				break;
 			case 27:
-				sscanf(buffer, "UseCD: %d", &cfgfile.UseCD);
+				sscanf((const char*)buffer, "UseCD: %d", &cfgfile.UseCD);
 				break;
 			case 28:
-				sscanf(buffer, "Sound: %d", &cfgfile.Sound);
+				sscanf((const char*)buffer, "Sound: %d", &cfgfile.Sound);
 				break;
 			case 29:
-				sscanf(buffer, "Movie: %d", &cfgfile.Movie);
+				sscanf((const char*)buffer, "Movie: %d", &cfgfile.Movie);
 				break;
 			case 30:
-				sscanf(buffer, "CrossFade: %d", &cfgfile.CrossFade);
+				sscanf((const char*)buffer, "CrossFade: %d", &cfgfile.CrossFade);
 				break;
 			case 31:
-				sscanf(buffer, "Fps: %d", &cfgfile.Fps);
+				sscanf((const char*)buffer, "Fps: %d", &cfgfile.Fps);
 				break;
 			case 32:
-				sscanf(buffer, "Debug: %d", &cfgfile.Debug);
+				sscanf((const char*)buffer, "Debug: %d", &cfgfile.Debug);
 				break;
 			case 33:
-				sscanf(buffer, "UseAutoSaving: %d", &cfgfile.UseAutoSaving);
+				sscanf((const char*)buffer, "UseAutoSaving: %d", &cfgfile.UseAutoSaving);
 				break;
 			case 34:
-				sscanf(buffer, "CombatAuto: %d", &cfgfile.AutoAgressive);
+				sscanf((const char*)buffer, "CombatAuto: %d", &cfgfile.AutoAgressive);
 				break;
 			case 35:
-				sscanf(buffer, "Shadow: %d", &cfgfile.ShadowMode);
+				sscanf((const char*)buffer, "Shadow: %d", &cfgfile.ShadowMode);
 				break;
 			case 36:
-				sscanf(buffer, "SceZoom: %d", &cfgfile.SceZoom);
+				sscanf((const char*)buffer, "SceZoom: %d", &cfgfile.SceZoom);
 				break;
 			case 37:
-				sscanf(buffer, "FillDetails: %d", &cfgfile.FillDetails);
+				sscanf((const char*)buffer, "FillDetails: %d", &cfgfile.FillDetails);
 				break;
 			case 38:
-				sscanf(buffer, "InterfaceStyle: %d", &cfgfile.InterfaceStyle);
+				sscanf((const char*)buffer, "InterfaceStyle: %d", &cfgfile.InterfaceStyle);
 				break;
 			case 39:
-				sscanf(buffer, "WallCollision: %d", &cfgfile.WallCollision);
+				sscanf((const char*)buffer, "WallCollision: %d", &cfgfile.WallCollision);
 				break;
 			}
 		}
@@ -460,6 +460,8 @@ int8 *TwinEEngine::ITOA(int32 number) {
 
 TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flags)
     : Engine(system), _gameLang(language), _gameFlags(flags), _rnd("twine") {
+	_actor = new Actor(this);
+	_animations = new Animations(this);
 }
 
 TwinEEngine::~TwinEEngine() {
@@ -479,8 +481,8 @@ Common::Error TwinEEngine::run() {
 	return Common::kNoError;
 }
 
-int TwinEEngine::getRandomNumber() {
-	return _rnd.getRandomNumber(0x7FFF);
+int TwinEEngine::getRandomNumber(uint max) {
+	return _rnd.getRandomNumber(max);
 }
 
 void TwinEEngine::freezeTime() {

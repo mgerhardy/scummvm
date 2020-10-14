@@ -127,6 +127,9 @@ typedef struct ConfigFile {
 	int32 WallCollision;
 } ConfigFile;
 
+class Actor;
+class Animations;
+
 class TwinEEngine : public Engine {
 public:
 	TwinEEngine(OSystem *system, Common::Language language, uint32 flags);
@@ -134,6 +137,9 @@ public:
 
 	Common::Error run() override;
 	bool hasFeature(EngineFeature f) const override;
+
+	Actor *_actor;
+	Animations *_animations;
 
 	/** Configuration file structure
 	 * Contains all the data used in the engine to configurated the game in particulary ways. */
@@ -145,6 +151,7 @@ public:
 	int32 isTimeFreezed = 0;
 	int32 saveFreezedTime = 0;
 
+	void initEngine();
 	void initMCGA();
 	void initSVGA();
 
@@ -154,7 +161,7 @@ public:
 	int getConfigTypeIndex(int8 *lineBuffer);
 
 	void allocVideoMemory();
-	int getRandomNumber();
+	int getRandomNumber(uint max = 0x7FFF);
 	int32 quitGame;
 	volatile int32 lbaTime;
 

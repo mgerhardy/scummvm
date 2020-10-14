@@ -25,23 +25,24 @@
 #include <string.h>
 
 #include "actor.h"
-#include "scene.h"
-#include "hqrdepack.h"
-#include "resources.h"
-#include "renderer.h"
-#include "grid.h"
 #include "animations.h"
-#include "renderer.h"
-#include "movements.h"
-#include "gamestate.h"
-#include "sound.h"
 #include "extra.h"
+#include "gamestate.h"
+#include "grid.h"
+#include "hqrdepack.h"
+#include "movements.h"
+#include "renderer.h"
+#include "resources.h"
+#include "scene.h"
+#include "sound.h"
 
-/** Actors 3D body table - size of NUM_BODIES */
-uint8 *bodyTable[NUM_BODIES];
+namespace TwinE {
+
+Actor::Actor(TwinEEngine *engine) : _engine(engine) {
+}
 
 /** Restart hero variables while opening new scenes */
-void restartHeroScene() {
+void Actor::restartHeroScene() {
 	sceneHero->controlMode = 1;
 	memset(&sceneHero->dynamicFlags, 0, 2);
 	memset(&sceneHero->staticFlags, 0, 2);
@@ -66,33 +67,33 @@ void restartHeroScene() {
 }
 
 /** Load hero 3D body and animations */
-void loadHeroEntities() {
+void Actor::loadHeroEntities() {
 	hqrGetallocEntry(&heroEntityATHLETIC, HQR_FILE3D_FILE, FILE3DHQR_HEROATHLETIC);
 	sceneHero->entityDataPtr = heroEntityATHLETIC;
-	heroAnimIdxATHLETIC = getBodyAnimIndex(0, 0);
+	heroAnimIdxATHLETIC = _engine->_animations->getBodyAnimIndex(0, 0);
 
 	hqrGetallocEntry(&heroEntityAGGRESSIVE, HQR_FILE3D_FILE, FILE3DHQR_HEROAGGRESSIVE);
 	sceneHero->entityDataPtr = heroEntityAGGRESSIVE;
-	heroAnimIdxAGGRESSIVE = getBodyAnimIndex(0, 0);
+	heroAnimIdxAGGRESSIVE = _engine->_animations->getBodyAnimIndex(0, 0);
 
 	hqrGetallocEntry(&heroEntityDISCRETE, HQR_FILE3D_FILE, FILE3DHQR_HERODISCRETE);
 	sceneHero->entityDataPtr = heroEntityDISCRETE;
-	heroAnimIdxDISCRETE = getBodyAnimIndex(0, 0);
+	heroAnimIdxDISCRETE = _engine->_animations->getBodyAnimIndex(0, 0);
 
 	hqrGetallocEntry(&heroEntityPROTOPACK, HQR_FILE3D_FILE, FILE3DHQR_HEROPROTOPACK);
 	sceneHero->entityDataPtr = heroEntityPROTOPACK;
-	heroAnimIdxPROTOPACK = getBodyAnimIndex(0, 0);
+	heroAnimIdxPROTOPACK = _engine->_animations->getBodyAnimIndex(0, 0);
 
 	hqrGetallocEntry(&heroEntityNORMAL, HQR_FILE3D_FILE, FILE3DHQR_HERONORMAL);
 	sceneHero->entityDataPtr = heroEntityNORMAL;
-	heroAnimIdxNORMAL = getBodyAnimIndex(0, 0);
+	heroAnimIdxNORMAL = _engine->_animations->getBodyAnimIndex(0, 0);
 
-	sceneHero->animExtraPtr = currentActorAnimExtraPtr;
+	sceneHero->animExtraPtr = _engine->_animations->currentActorAnimExtraPtr;
 }
 
 /** Set hero behaviour
 	@param behaviour behaviour value to set */
-void setBehaviour(int32 behaviour) {
+void Actor::setBehaviour(int32 behaviour) {
 	int32 bodyIdx;
 
 	switch (behaviour) {
@@ -128,12 +129,12 @@ void setBehaviour(int32 behaviour) {
 	sceneHero->anim = -1;
 	sceneHero->animType = 0;
 
-	initAnim(kStanding, 0, 255, 0);
+	_engine->_animations->initAnim(kStanding, 0, 255, 0);
 }
 
 /** Initialize sprite actor
 	@param actorIdx sprite actor index */
-void initSpriteActor(int32 actorIdx) {
+void Actor::initSpriteActor(int32 actorIdx) {
 	ActorStruct *localActor = &sceneActors[actorIdx];
 
 	if (localActor->staticFlags.bIsSpriteActor && localActor->sprite != -1 && localActor->entity != localActor->sprite) {
@@ -152,7 +153,7 @@ void initSpriteActor(int32 actorIdx) {
 /** Initialize 3D actor body
 	@param bodyIdx 3D actor body index
 	@param actorIdx 3D actor index */
-int32 initBody(int32 bodyIdx, int32 actorIdx) {
+int32 Actor::initBody(int32 bodyIdx, int32 actorIdx) {
 	ActorStruct *localActor;
 	uint8 *bodyPtr;
 	uint8 var1;
@@ -160,7 +161,7 @@ int32 initBody(int32 bodyIdx, int32 actorIdx) {
 	uint8 *bodyPtr2;
 	uint8 *bodyPtr3;
 	uint8 *bodyPtr4;
-//	int16 *bodyPtr5;
+	//	int16 *bodyPtr5;
 	int16 flag;
 	int32 index;
 
@@ -180,7 +181,7 @@ int32 initBody(int32 bodyIdx, int32 actorIdx) {
 
 			if (var2 == bodyIdx) {
 				bodyPtr3 = bodyPtr2 + 1;
-				flag = *((uint16*)bodyPtr3);
+				flag = *((uint16 *)bodyPtr3);
 
 				if (!(flag & 0x8000)) {
 					hqrGetallocEntry(&bodyTable[currentPositionInBodyPtrTab], HQR_BODY_FILE, flag & 0xFFFF);
@@ -190,7 +191,7 @@ int32 initBody(int32 bodyIdx, int32 actorIdx) {
 						exit(1);
 					}
 					prepareIsoModel(bodyTable[currentPositionInBodyPtrTab]);
-					*((uint16*)bodyPtr3) = currentPositionInBodyPtrTab + 0x8000;
+					*((uint16 *)bodyPtr3) = currentPositionInBodyPtrTab + 0x8000;
 					index = currentPositionInBodyPtrTab;
 					currentPositionInBodyPtrTab++;
 				} else {
@@ -213,20 +214,20 @@ int32 initBody(int32 bodyIdx, int32 actorIdx) {
 				if (*bodyPtr4 != 14)
 					return (index);
 
-//				bodyPtr5 = (int16 *) bodyPtr3;
+				//				bodyPtr5 = (int16 *) bodyPtr3;
 
-				bottomLeftX = *((uint16*)bodyPtr3);
+				bottomLeftX = *((uint16 *)bodyPtr3);
 				bodyPtr3 += 2;
-				bottomLeftY = *((uint16*)bodyPtr3);
+				bottomLeftY = *((uint16 *)bodyPtr3);
 				bodyPtr3 += 2;
-				bottomLeftZ = *((uint16*)bodyPtr3);
+				bottomLeftZ = *((uint16 *)bodyPtr3);
 				bodyPtr3 += 2;
 
-				topRightX = *((uint16*)bodyPtr3);
+				topRightX = *((uint16 *)bodyPtr3);
 				bodyPtr3 += 2;
-				topRightY = *((uint16*)bodyPtr3);
+				topRightY = *((uint16 *)bodyPtr3);
 				bodyPtr3 += 2;
-				topRightZ = *((uint16*)bodyPtr3);
+				topRightZ = *((uint16 *)bodyPtr3);
 				bodyPtr3 += 2;
 
 				return (index);
@@ -240,12 +241,12 @@ int32 initBody(int32 bodyIdx, int32 actorIdx) {
 /** Initialize 3D actor
 	@param bodyIdx 3D actor body index
 	@param actorIdx 3D actor index */
-void initModelActor(int32 bodyIdx, int16 actorIdx) {
+void Actor::initModelActor(int32 bodyIdx, int16 actorIdx) {
 	ActorStruct *localActor;
-	int32  entityIdx;
-	int    currentIndex;
+	int32 entityIdx;
+	int currentIndex;
 	uint16 *ptr;
-	int16  var1, var2, var3, var4;
+	int16 var1, var2, var3, var4;
 
 	int32 result, result1, result2;
 
@@ -275,7 +276,7 @@ void initModelActor(int32 bodyIdx, int16 actorIdx) {
 		currentIndex = localActor->entity;
 
 		if (bottomLeftX == -32000) {
-			ptr = (uint16 *) bodyTable[localActor->entity];
+			ptr = (uint16 *)bodyTable[localActor->entity];
 			ptr++;
 
 			var1 = *((int16 *)ptr++);
@@ -342,7 +343,7 @@ void initModelActor(int32 bodyIdx, int16 actorIdx) {
 
 /** Initialize actors
 	@param actorIdx actor index to init */
-void initActor(int16 actorIdx) {
+void Actor::initActor(int16 actorIdx) {
 	ActorStruct *actor = &sceneActors[actorIdx];
 
 	if (actor->staticFlags.bIsSpriteActor) { // if sprite actor
@@ -371,7 +372,7 @@ void initActor(int16 actorIdx) {
 		actor->animType = 0;
 
 		if (actor->entity != -1) {
-			initAnim(actor->anim, 0, 255, actorIdx);
+			_engine->_animations->initAnim(actor->anim, 0, 255, actorIdx);
 		}
 
 		setActorAngleSafe(actor->angle, actor->angle, 0, &actor->move);
@@ -384,7 +385,7 @@ void initActor(int16 actorIdx) {
 
 /** Reset actor
 	@param actorIdx actor index to init */
-void resetActor(int16 actorIdx) {
+void Actor::resetActor(int16 actorIdx) {
 	ActorStruct *actor = &sceneActors[actorIdx];
 
 	actor->body = 0;
@@ -414,8 +415,8 @@ void resetActor(int16 actorIdx) {
 	actor->standOn = -1;
 	actor->zone = -1;
 
-	memset(&actor->staticFlags,0,2);
-	memset(&actor->dynamicFlags,0,2);
+	memset(&actor->staticFlags, 0, 2);
+	memset(&actor->dynamicFlags, 0, 2);
 
 	actor->life = 50;
 	actor->armor = 1;
@@ -440,7 +441,7 @@ void resetActor(int16 actorIdx) {
 	@param actorIdxAttacked actor attacked index
 	@param strengthOfHit actor hitting strength of hit
 	@param angle angle of actor hitting */
-void hitActor(int32 actorIdx, int32 actorIdxAttacked, int32 strengthOfHit, int32 angle) {
+void Actor::hitActor(int32 actorIdx, int32 actorIdxAttacked, int32 strengthOfHit, int32 angle) {
 	ActorStruct *actor = &sceneActors[actorIdxAttacked];
 
 	if (actor->life <= 0) {
@@ -454,7 +455,7 @@ void hitActor(int32 actorIdx, int32 actorIdxAttacked, int32 strengthOfHit, int32
 			int32 tmpAnimPos;
 			tmpAnimPos = actor->animPosition;
 			if (actor->animExtra) {
-				processAnimActions(actorIdxAttacked);
+				_engine->_animations->processAnimActions(actorIdxAttacked);
 			}
 
 			actor->animPosition = tmpAnimPos;
@@ -463,10 +464,10 @@ void hitActor(int32 actorIdx, int32 actorIdxAttacked, int32 strengthOfHit, int32
 				setActorAngleSafe(angle, angle, 0, &actor->move);
 			}
 
-			if (rand() & 1) {
-				initAnim(kHit2, 3, 255, actorIdxAttacked);
+			if (_engine->getRandomNumber() & 1) {
+				_engine->_animations->initAnim(kHit2, 3, 255, actorIdxAttacked);
 			} else {
-				initAnim(kBigHit, 3, 255, actorIdxAttacked);
+				_engine->_animations->initAnim(kBigHit, 3, 255, actorIdxAttacked);
 			}
 		}
 
@@ -482,12 +483,12 @@ void hitActor(int32 actorIdx, int32 actorIdxAttacked, int32 strengthOfHit, int32
 			actor->life = 0;
 		}
 	} else {
-		initAnim(kHit, 3, 255, actorIdxAttacked);
+		_engine->_animations->initAnim(kHit, 3, 255, actorIdxAttacked);
 	}
 }
 
 /** Process actor carrier */
-void processActorCarrier(int32 actorIdx) { // CheckCarrier
+void Actor::processActorCarrier(int32 actorIdx) { // CheckCarrier
 	int32 a;
 	ActorStruct *actor = &sceneActors[actorIdx];
 
@@ -501,7 +502,7 @@ void processActorCarrier(int32 actorIdx) { // CheckCarrier
 }
 
 /** Process actor extra bonus */
-void processActorExtraBonus(int32 actorIdx) { // GiveExtraBonus
+void Actor::processActorExtraBonus(int32 actorIdx) { // GiveExtraBonus
 	int32 a, numBonus;
 	int8 bonusTable[8], currentBonus;
 	ActorStruct *actor = &sceneActors[actorIdx];
@@ -515,7 +516,7 @@ void processActorExtraBonus(int32 actorIdx) { // GiveExtraBonus
 	}
 
 	if (numBonus) {
-		currentBonus = bonusTable[Rnd(numBonus)];
+		currentBonus = bonusTable[_engine->getRandomNumber(numBonus)];
 		// if bonus is magic an no magic level yet, then give life points
 		if (!magicLevelIdx && currentBonus == 2) {
 			currentBonus = 1;
@@ -534,3 +535,5 @@ void processActorExtraBonus(int32 actorIdx) { // GiveExtraBonus
 		}
 	}
 }
+
+} // namespace TwinE
