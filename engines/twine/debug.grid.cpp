@@ -26,7 +26,6 @@
 
 #include "debug.grid.h"
 #include "grid.h"
-#include "lbaengine.h"
 #include "scene.h"
 #include "twine.h"
 #include "redraw.h"

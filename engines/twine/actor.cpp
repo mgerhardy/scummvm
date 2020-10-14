@@ -25,7 +25,6 @@
 #include <string.h>
 
 #include "actor.h"
-#include "lbaengine.h"
 #include "scene.h"
 #include "hqrdepack.h"
 #include "resources.h"

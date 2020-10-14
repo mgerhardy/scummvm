@@ -21,7 +21,6 @@
  */
 
 #include "menuoptions.h"
-#include "lbaengine.h"
 #include "twine.h"
 #include "screens.h"
 #include "resources.h"

@@ -35,7 +35,6 @@
 #include "twine.h"
 #include "screens.h"
 #include "music.h"
-#include "lbaengine.h"
 #include "debug.h"
 #include "keyboard.h"
 #include "redraw.h"
@@ -65,18 +64,6 @@ TTF_Font *font;
 //static void atexit_callback(void) {
 //	sdlClose();
 //}
-
-void sdlClose() {
-	stopTrackMusic();
-	stopMidiMusic();
-	Mix_CloseAudio();
-#ifdef GAMEMOD
-	TTF_Quit();
-#endif
-	SDL_Quit();
-	exit(0);
-}
-
 
 /** SDL initializer
 	@return SDL init state */

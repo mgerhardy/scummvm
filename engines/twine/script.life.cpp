@@ -32,7 +32,6 @@
 #include "renderer.h"
 #include "sound.h"
 #include "redraw.h"
-#include "lbaengine.h"
 #include "gamestate.h"
 #include "grid.h"
 #include "music.h"

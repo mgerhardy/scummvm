@@ -23,7 +23,6 @@
 #include "debug.scene.h"
 #include "scene.h"
 #include "grid.h"
-#include "lbaengine.h"
 #include "redraw.h"
 #include "interface.h"
 #include "renderer.h"

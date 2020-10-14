@@ -26,6 +26,8 @@
 #include "common/random.h"
 #include "engines/engine.h"
 
+#include "actor.h"
+
 namespace TwinE {
 
 /** Definition for European version */
@@ -36,25 +38,24 @@ namespace TwinE {
 #define MODIFICATION_VERSION 2
 
 /** Original screen width */
-#define DEFAULT_SCREEN_WIDTH			640
+#define DEFAULT_SCREEN_WIDTH 640
 /** Original screen height */
-#define DEFAULT_SCREEN_HEIGHT			480
+#define DEFAULT_SCREEN_HEIGHT 480
 /** Scale screen to double size */
-#define SCALE					1
+#define SCALE 1
 /** Original screen width */
-#define SCREEN_WIDTH			DEFAULT_SCREEN_WIDTH * SCALE
+#define SCREEN_WIDTH DEFAULT_SCREEN_WIDTH *SCALE
 /** Original screen height */
-#define SCREEN_HEIGHT			DEFAULT_SCREEN_HEIGHT * SCALE
+#define SCREEN_HEIGHT DEFAULT_SCREEN_HEIGHT *SCALE
 /** Original FLA screen width */
-#define FLASCREEN_WIDTH			320
+#define FLASCREEN_WIDTH 320
 /** Original FLA screen height */
-#define FLASCREEN_HEIGHT		200
+#define FLASCREEN_HEIGHT 200
 /** Default frames per second */
-#define DEFAULT_FRAMES_PER_SECOND	19
+#define DEFAULT_FRAMES_PER_SECOND 19
 
 /** Number of colors used in the game */
-#define NUMOFCOLORS		256
-
+#define NUMOFCOLORS 256
 
 /** Configuration file structure
 
@@ -126,30 +127,68 @@ typedef struct ConfigFile {
 	int32 WallCollision;
 } ConfigFile;
 
-/** Configuration file structure
-
-	Contains all the data used in the engine to configurated the game in particulary ways.\n
-	A detailled information of all types are in \a main.h header file. */
-extern ConfigFile cfgfile;
-
-/** CD Game directory */
-int8 * cdDir;
-
-void initMCGA();
-void initSVGA();
-
-int8* ITOA(int32 number);
-
-class TwinEEngine: public Engine {
+class TwinEEngine : public Engine {
 public:
 	TwinEEngine(OSystem *system, Common::Language language, uint32 flags);
 	~TwinEEngine() override;
 
 	Common::Error run() override;
 	bool hasFeature(EngineFeature f) const override;
-protected:
 
+	/** Configuration file structure
+	 * Contains all the data used in the engine to configurated the game in particulary ways. */
+	ConfigFile cfgfile;
+
+	/** CD Game directory */
+	int8 *cdDir;
+
+	int32 isTimeFreezed = 0;
+	int32 saveFreezedTime = 0;
+
+	void initMCGA();
+	void initSVGA();
+
+	int8 *ITOA(int32 number);
+	void initConfigurations();
+	int getLanguageTypeIndex(int8 *language);
+	int getConfigTypeIndex(int8 *lineBuffer);
+
+	void allocVideoMemory();
 	int getRandomNumber();
+	int32 quitGame;
+	volatile int32 lbaTime;
+
+	int16 leftMouse;
+	int16 rightMouse;
+
+	/** Work video buffer */
+	uint8 *workVideoBuffer;
+	/** Main game video buffer */
+	uint8 *frontVideoBuffer;
+	/** Auxiliar game video buffer */
+	uint8 *frontVideoBufferbis;
+
+	/** temporary screen table */
+	int32 screenLookupTable[2000];
+
+	ActorMoveStruct loopMovePtr; // mainLoopVar1
+
+	int32 loopPressedKey;         // mainLoopVar5
+	int32 previousLoopPressedKey; // mainLoopVar6
+	int32 loopCurrentKey;         // mainLoopVar7
+	int32 loopInventoryItem;      // mainLoopVar9
+
+	int32 loopActorStep; // mainLoopVar17
+
+	/** Disable screen recenter */
+	int16 disableScreenRecenter;
+
+	int32 zoomScreen;
+
+	void freezeTime();
+	void unfreezeTime();
+
+	int32 gameEngineLoop();
 
 	Common::RandomSource _rnd;
 	Common::Language _gameLang;

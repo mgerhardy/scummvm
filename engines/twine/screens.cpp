@@ -30,7 +30,6 @@
 #include "sdlengine.h"
 #include "music.h"
 #include "hqrdepack.h"
-#include "lbaengine.h"
 
 
 /** Load and display Adeline Logo */

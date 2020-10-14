@@ -29,7 +29,6 @@
 #include "renderer.h"
 #include "sound.h"
 #include "redraw.h"
-#include "lbaengine.h"
 
 uint8 *scriptPtr;
 int32 continueMove;

@@ -18,7 +18,6 @@ MODULE_OBJS := \
 	hqrdepack.o \
 	interface.o \
 	keyboard.o \
-	lbaengine.o \
 	menu.o \
 	menuoptions.o \
 	metaengine.o \

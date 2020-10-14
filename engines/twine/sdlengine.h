@@ -31,9 +31,6 @@
 /** Main SDL screen surface buffer */
 extern SDL_Surface *screen;
 
-/** Close everything in the game */
-void sdlClose();
-
 /** SDL initializer
 	@return SDL init state */
 int sdlInitialize();

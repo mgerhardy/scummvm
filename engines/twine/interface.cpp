@@ -23,7 +23,6 @@
 #include "interface.h"
 #include "sdlengine.h"
 #include "twine.h"
-#include "lbaengine.h"
 const int32 INSIDE = 0; // 0000
 const int32 LEFT = 1;   // 0001
 const int32 RIGHT = 2;  // 0010

@@ -30,7 +30,6 @@
 #include "screens.h"
 #include "sdlengine.h"
 #include "hqrdepack.h"
-#include "lbaengine.h"
 #include "text.h"
 #include "interface.h"
 #include "redraw.h"

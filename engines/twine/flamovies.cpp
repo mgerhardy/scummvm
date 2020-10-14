@@ -31,7 +31,6 @@
 #include "sound.h"
 #include "music.h"
 #include "filereader.h"
-#include "lbaengine.h"
 #include "keyboard.h"
 
 /** Config movie types */

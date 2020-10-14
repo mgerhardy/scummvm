@@ -22,7 +22,6 @@
 
 #include "redraw.h"
 #include "sdlengine.h"
-#include "lbaengine.h"
 #include "renderer.h"
 #include "interface.h"
 #include "screens.h"

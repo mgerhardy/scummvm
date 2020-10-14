@@ -28,7 +28,6 @@
 #include "actor.h"
 #include "grid.h"
 #include "twine.h"
-#include "lbaengine.h"
 #include "text.h"
 #include "resources.h"
 #include "music.h"

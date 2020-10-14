@@ -30,7 +30,6 @@
 #include "sdlengine.h"
 #include "menu.h"
 #include "interface.h"
-#include "lbaengine.h"
 #include "keyboard.h"
 #include "screens.h"
 #include "renderer.h"

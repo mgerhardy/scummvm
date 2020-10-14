@@ -29,7 +29,6 @@
 #include "twine.h"
 #include "sdlengine.h"
 #include "shadeangletab.h"
-#include "lbaengine.h"
 #include "redraw.h"
 #include "interface.h"
 #include "menu.h"

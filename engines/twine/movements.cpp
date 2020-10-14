@@ -25,7 +25,6 @@
 
 #include "movements.h"
 #include "actor.h"
-#include "lbaengine.h"
 #include "renderer.h"
 #include "grid.h"
 #include "scene.h"

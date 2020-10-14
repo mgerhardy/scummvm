@@ -26,7 +26,6 @@
 
 #include "grid.h"
 #include "resources.h"
-#include "lbaengine.h"
 #include "scene.h"
 #include "sdlengine.h"
 #include "interface.h"

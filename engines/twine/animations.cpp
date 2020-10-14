@@ -25,7 +25,6 @@
 #include <string.h>
 
 #include "animations.h"
-#include "lbaengine.h"
 #include "resources.h"
 #include "scene.h"
 #include "actor.h"

@@ -23,7 +23,6 @@
 #include <stdio.h>
 
 #include "extra.h"
-#include "lbaengine.h"
 #include "collision.h"
 #include "resources.h"
 #include "gamestate.h"
