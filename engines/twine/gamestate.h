@@ -22,10 +22,9 @@
 
 #ifndef TWINE_GAMESTATE_H
 #define TWINE_GAMESTATE_H
-#define FORBIDDEN_SYMBOL_ALLOW_ALL
 
 #include "common/scummsys.h"
-#include "twine/actor.h"
+#include "actor.h"
 
 namespace TwinE {
 

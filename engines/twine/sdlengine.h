@@ -23,12 +23,12 @@
 #ifndef TWINE_SDLENGINE_H
 #define TWINE_SDLENGINE_H
 
-#include <SDL.h>
-
 #include "common/scummsys.h"
 #include "debug.h"
 
 namespace TwinE {
+
+struct SDL_Surface;
 
 /** Main SDL screen surface buffer */
 extern SDL_Surface *screen;

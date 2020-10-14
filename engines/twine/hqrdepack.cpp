@@ -24,19 +24,20 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "filereader.h"
+#include "common/system.h"
+#include "common/textconsole.h"
 #include "hqrdepack.h"
 
 namespace TwinE {
 
-FileReader fr;
+HQRDepack::HQRDepack(TwinEEngine *engine) : _engine(engine) {}
 
 /** Decompress entry based in Yaz0r and Zink decompression code
 	@param dst destination pointer where will be the decompressed entry
 	@param src compressed data pointer
 	@decompsize real file size after decompression
 	@mode compression mode used */
-void hqrDecompressEntry(uint8 *dst, uint8 *src, int32 decompsize, int32 mode) {
+void HQRDepack::hqrDecompressEntry(uint8 *dst, uint8 *src, int32 decompsize, int32 mode) {
 	uint8 b;
 	int32 lenght, d, i;
 	uint16 offset;
@@ -68,7 +69,7 @@ void hqrDecompressEntry(uint8 *dst, uint8 *src, int32 decompsize, int32 mode) {
 	@param src compressed data pointer
 	@decompsize real file size after decompression
 	@mode compression mode used */
-void hqrDecompressLZEntry(uint8 *dst, uint8 *src, int32 decompsize, int32 mode) {
+void HQRDepack::hqrDecompressLZEntry(uint8 *dst, uint8 *src, int32 decompsize, int32 mode) {
 	uint16 offset;
 	int32 lenght;
 	uint8 *ptr;
@@ -111,7 +112,7 @@ void hqrDecompressLZEntry(uint8 *dst, uint8 *src, int32 decompsize, int32 mode) 
 	@param filename HQR file name
 	@param index entry index to extract
 	@return entry real size*/
-int32 hqrGetEntry(uint8 *ptr, int8 *filename, int32 index) {
+int32 HQRDepack::hqrGetEntry(uint8 *ptr, int8 *filename, int32 index) {
 	uint32 headerSize;
 	uint32 offsetToData;
 	uint32 realSize;
@@ -122,12 +123,12 @@ int32 hqrGetEntry(uint8 *ptr, int8 *filename, int32 index) {
 		return 0;
 
 	if (!fropen2(&fr, (char *)filename, "rb"))
-		printf("HQR: %s can't be found !\n", filename);
+		warning("HQR: %s can't be found !", filename);
 
 	frread(&fr, &headerSize, 4);
 
 	if ((uint32)index >= headerSize / 4) {
-		printf("\nHQR WARNING: Invalid entry index!!\n");
+		warning("HQR WARNING: Invalid entry index!!");
 		frclose(&fr);
 		return 0;
 	}
@@ -144,7 +145,7 @@ int32 hqrGetEntry(uint8 *ptr, int8 *filename, int32 index) {
 		ptr = (uint8 *)malloc(realSize);
 
 	if (!ptr) {
-		printf("\nHQR WARNING: Unable to allocate memory!!\n");
+		warning("HQR WARNING: Unable to allocate memory!!");
 		frclose(&fr);
 		return 0;
 	}
@@ -171,7 +172,7 @@ int32 hqrGetEntry(uint8 *ptr, int8 *filename, int32 index) {
 	@param filename HQR file name
 	@param index entry index to extract
 	@return entry real size */
-int hqrEntrySize(int8 *filename, int32 index) {
+int HQRDepack::hqrEntrySize(int8 *filename, int32 index) {
 	uint32 headerSize;
 	uint32 offsetToData;
 	uint32 realSize;
@@ -180,14 +181,14 @@ int hqrEntrySize(int8 *filename, int32 index) {
 		return 0;
 
 	if (!fropen2(&fr, (char *)filename, "rb")) {
-		printf("HQR: %s can't be found !\n", filename);
-		exit(1);
+		error("HQR: %s can't be found !\n", filename);
+		g_system->fatalError();
 	}
 
 	frread(&fr, &headerSize, 4);
 
 	if ((uint32)index >= headerSize / 4) {
-		printf("\nHQR WARNING: Invalid entry index!!\n");
+		warning("HQR WARNING: Invalid entry index!!");
 		frclose(&fr);
 		return 0;
 	}
@@ -206,15 +207,15 @@ int hqrEntrySize(int8 *filename, int32 index) {
 /** Get a HQR total number of entries
 	@param filename HQR file name
 	@return total number of entries */
-int hqrNumEntries(int8 *filename) {
+int HQRDepack::hqrNumEntries(int8 *filename) {
 	uint32 headerSize;
 
 	if (!filename)
 		return 0;
 
 	if (!fropen2(&fr, (char *)filename, "rb")) {
-		printf("HQR: %s can't be found !\n", filename);
-		exit(1);
+		error("HQR: %s can't be found !\n", filename);
+		g_system->fatalError();
 	}
 
 	frread(&fr, &headerSize, 4);
@@ -227,13 +228,13 @@ int hqrNumEntries(int8 *filename) {
 	@param filename HQR file name
 	@param index entry index to extract
 	@return entry real size */
-int32 hqrGetallocEntry(uint8 **ptr, int8 *filename, int32 index) {
+int32 HQRDepack::hqrGetallocEntry(uint8 **ptr, int8 *filename, int32 index) {
 	int32 size;
 	size = hqrEntrySize(filename, index);
 
 	*ptr = (uint8 *)malloc(size * sizeof(uint8));
 	if (!*ptr) {
-		printf("HQR WARNING: unable to allocate entry memory!!\n");
+		warning("HQR WARNING: unable to allocate entry memory!!");
 		return 0;
 	}
 	hqrGetEntry(*ptr, filename, index);
@@ -246,7 +247,7 @@ int32 hqrGetallocEntry(uint8 **ptr, int8 *filename, int32 index) {
 	@param filename HQR file name
 	@param index entry index to extract
 	@return entry real size*/
-int32 hqrGetVoxEntry(uint8 *ptr, int8 *filename, int32 index, int32 hiddenIndex) {
+int32 HQRDepack::hqrGetVoxEntry(uint8 *ptr, int8 *filename, int32 index, int32 hiddenIndex) {
 	uint32 headerSize;
 	uint32 offsetToData;
 	uint32 realSize;
@@ -257,12 +258,12 @@ int32 hqrGetVoxEntry(uint8 *ptr, int8 *filename, int32 index, int32 hiddenIndex)
 		return 0;
 
 	if (!fropen2(&fr, (char *)filename, "rb"))
-		printf("HQR: %s can't be found !\n", filename);
+		warning("HQR: %s can't be found!", filename);
 
 	frread(&fr, &headerSize, 4);
 
 	if ((uint32)index >= headerSize / 4) {
-		printf("\nHQR WARNING: Invalid entry index!!\n");
+		warning("HQR WARNING: Invalid entry index!!");
 		frclose(&fr);
 		return 0;
 	}
@@ -292,7 +293,7 @@ int32 hqrGetVoxEntry(uint8 *ptr, int8 *filename, int32 index, int32 hiddenIndex)
 		ptr = (uint8 *)malloc(realSize);
 
 	if (!ptr) {
-		printf("\nHQR WARNING: Unable to allocate memory!!\n");
+		warning("HQR WARNING: Unable to allocate memory!!");
 		frclose(&fr);
 		return 0;
 	}
@@ -319,7 +320,7 @@ int32 hqrGetVoxEntry(uint8 *ptr, int8 *filename, int32 index, int32 hiddenIndex)
 	@param filename HQR file name
 	@param index entry index to extract
 	@return entry real size */
-int hqrVoxEntrySize(int8 *filename, int32 index, int32 hiddenIndex) {
+int HQRDepack::hqrVoxEntrySize(int8 *filename, int32 index, int32 hiddenIndex) {
 	uint32 headerSize;
 	uint32 offsetToData;
 	uint32 realSize;
@@ -329,14 +330,14 @@ int hqrVoxEntrySize(int8 *filename, int32 index, int32 hiddenIndex) {
 		return 0;
 
 	if (!fropen2(&fr, (char *)filename, "rb")) {
-		printf("HQR: %s can't be found !\n", filename);
-		exit(1);
+		warning("HQR: %s can't be found !", filename);
+		g_system->fatalError();
 	}
 
 	frread(&fr, &headerSize, 4);
 
 	if ((uint32)index >= headerSize / 4) {
-		printf("\nHQR WARNING: Invalid entry index!!\n");
+		warning("HQR WARNING: Invalid entry index!!");
 		frclose(&fr);
 		return 0;
 	}
@@ -370,13 +371,13 @@ int hqrVoxEntrySize(int8 *filename, int32 index, int32 hiddenIndex) {
 	@param filename HQR file name
 	@param index entry index to extract
 	@return entry real size */
-int32 hqrGetallocVoxEntry(uint8 **ptr, int8 *filename, int32 index, int32 hiddenIndex) {
+int32 HQRDepack::hqrGetallocVoxEntry(uint8 **ptr, int8 *filename, int32 index, int32 hiddenIndex) {
 	int32 size;
 	size = hqrVoxEntrySize(filename, index, hiddenIndex);
 
 	*ptr = (uint8 *)malloc(size * sizeof(uint8));
 	if (!*ptr) {
-		printf("HQR WARNING: unable to allocate entry memory!!\n");
+		warning("HQR WARNING: unable to allocate entry memory!!\n");
 		return 0;
 	}
 	hqrGetVoxEntry(*ptr, filename, index, hiddenIndex);

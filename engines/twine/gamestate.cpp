@@ -23,6 +23,7 @@
 #include "gamestate.h"
 #include "animations.h"
 #include "collision.h"
+#include "common/textconsole.h"
 #include "extra.h"
 #include "filereader.h"
 #include "grid.h"
@@ -175,7 +176,7 @@ void GameState::loadGame() {
 	int8 *namePtr;
 
 	if (!fropen2(&fr, SAVE_DIR "S9999.LBA", "rb")) {
-		printf("Can't load S9999.LBA saved game!\n");
+		warning("Can't load S9999.LBA saved game!\n");
 		return;
 	}
 
@@ -229,7 +230,7 @@ void GameState::saveGame() {
 	int8 data;
 
 	if (!fropen2(&fr, SAVE_DIR "S9999.LBA", "wb+")) {
-		printf("Can't save S9999.LBA saved game!\n");
+		warning("Can't save S9999.LBA saved game!\n");
 		return;
 	}
 
@@ -281,9 +282,9 @@ void GameState::processFoundItem(int32 item) {
 	uint8 *currentAnim;
 	AnimTimerDataStruct tmpAnimTimer;
 
-	newCameraX = (sceneHero->X + 0x100) >> 9;
-	newCameraY = (sceneHero->Y + 0x100) >> 8;
-	newCameraZ = (sceneHero->Z + 0x100) >> 9;
+	_engine->_grid->newCameraX = (sceneHero->X + 0x100) >> 9;
+	_engine->_grid->newCameraY = (sceneHero->Y + 0x100) >> 8;
+	_engine->_grid->newCameraZ = (sceneHero->Z + 0x100) >> 9;
 
 	// Hide hero in scene
 	sceneHero->staticFlags.bIsHidden = 1;
@@ -292,9 +293,9 @@ void GameState::processFoundItem(int32 item) {
 
 	copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
 
-	itemCameraX = newCameraX << 9;
-	itemCameraY = newCameraY << 8;
-	itemCameraZ = newCameraZ << 9;
+	itemCameraX = _engine->_grid->newCameraX << 9;
+	itemCameraY = _engine->_grid->newCameraY << 8;
+	itemCameraZ = _engine->_grid->newCameraZ << 9;
 
 	renderIsoModel(sceneHero->X - itemCameraX, sceneHero->Y - itemCameraY, sceneHero->Z - itemCameraZ, 0, 0x80, 0, _engine->_actor->bodyTable[sceneHero->entity]);
 	setClip(renderLeft, renderTop, renderRight, renderBottom);
@@ -306,7 +307,7 @@ void GameState::processFoundItem(int32 item) {
 	}
 	itemZ = (sceneHero->Z + 0x100) >> 9;
 
-	drawOverModelActor(itemX, itemY, itemZ);
+	_engine->_grid->drawOverModelActor(itemX, itemY, itemZ);
 	flip();
 
 	projectPositionOnScreen(sceneHero->X - itemCameraX, sceneHero->Y - itemCameraY, sceneHero->Z - itemCameraZ);
@@ -381,7 +382,7 @@ void GameState::processFoundItem(int32 item) {
 
 		renderIsoModel(sceneHero->X - itemCameraX, sceneHero->Y - itemCameraY, sceneHero->Z - itemCameraZ, 0, 0x80, 0, _engine->_actor->bodyTable[sceneHero->entity]);
 		setClip(renderLeft, renderTop, renderRight, renderBottom);
-		drawOverModelActor(itemX, itemY, itemZ);
+		_engine->_grid->drawOverModelActor(itemX, itemY, itemZ);
 		addRedrawArea(renderLeft, renderTop, renderRight, renderBottom);
 
 		if (textState) {

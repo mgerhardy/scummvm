@@ -24,7 +24,6 @@
 
 #include "filereader.h"
 #include "fcaseopen.h"
-#include "common/forbidden.h"
 #include <ctype.h>
 
 namespace TwinE {
@@ -32,7 +31,7 @@ namespace TwinE {
 /** Feed buffer from file
 	@param fr FileReader pointer */
 void frfeed(FileReader *fr) {
-	fread(fr->buffer, BUFFER_SIZE, 1, fr->fd);
+	fread(fr->buffer, BUFFER_SIZE, 1, (FILE*)fr->fd);
 	fr->bufferPos = 0;
 }
 
@@ -76,7 +75,7 @@ void frseek(FileReader *fr, uint32 seekPosition) {
 
 	sectorToSeek = seekPosition / 2048;
 
-	fseek(fr->fd, sectorToSeek * 2048, SEEK_SET);
+	fseek((FILE*)fr->fd, sectorToSeek * 2048, SEEK_SET);
 
 	fr->currSector = sectorToSeek;
 	frfeed(fr);
@@ -87,7 +86,7 @@ void frseek(FileReader *fr, uint32 seekPosition) {
 	@param fr FileReader pointer
 	@param filename file path
 	@return true if file open and false if error occurred */
-int32 fropen2(FileReader *fr, const char *filename, const char *mode) {
+int32 fropen2(FileReader *fr, char *filename, const char *mode) {
 	fr->fd = fcaseopen(filename, mode);
 
 	if (fr->fd) {
@@ -104,13 +103,13 @@ int32 fropen2(FileReader *fr, const char *filename, const char *mode) {
 	@param destPtr content destination pointer
 	@param size size of read characters */
 void frwrite(FileReader *fr, void *destPtr, uint32 size, uint32 count) {
-	fwrite(destPtr, size, count, fr->fd);
+	fwrite(destPtr, size, count, (FILE*)fr->fd);
 }
 
 /** Close file
 	@param fr FileReader pointer */
 void frclose(FileReader *fr) {
-	fclose(fr->fd);
+	fclose((FILE*)fr->fd);
 }
 
 } // namespace TwinE

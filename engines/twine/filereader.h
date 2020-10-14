@@ -23,12 +23,11 @@
 #ifndef TWINE_FILEREADER_H
 #define TWINE_FILEREADER_H
 
-#define FORBIDDEN_SYMBOL_ALLOW_ALL
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "common/file.h"
 #include "common/scummsys.h"
 
 namespace TwinE {
@@ -41,7 +40,7 @@ namespace TwinE {
 /** File reader structure */
 typedef struct FileReader {
 	/** File descriptor */
-	FILE *fd;
+	void *fd;
 	/** Content buffer */
 	uint8 buffer[BUFFER_SIZE];
 	/** Current position in the buffer */
