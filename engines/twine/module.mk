@@ -34,7 +34,6 @@ MODULE_OBJS := \
 	script.move.o \
 	sdlengine.o \
 	sound.o \
-	sys.o \
 	text.o \
 	xmidi.o
 
