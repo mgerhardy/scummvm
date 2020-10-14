@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef MOVEMENTS_H
-#define MOVEMENTS_H
+#ifndef TWINE_MOVEMENTS_H
+#define TWINE_MOVEMENTS_H
 
 #include "common/scummsys.h"
 #include "actor.h"

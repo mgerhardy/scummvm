@@ -20,12 +20,12 @@
  *
  */
 
-#ifndef SOUND_H
-#define SOUND_H
+#ifndef TWINE_SOUND_H
+#define TWINE_SOUND_H
 
 #include "common/scummsys.h"
 
-/** Total number of sprites allowed in the game */
+/** Total number of samples allowed in the game */
 #define NUM_SAMPLES 243
 #define NUM_CHANNELS 32
 

@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef HOLOMAP_H
-#define HOLOMAP_H
+#ifndef TWINE_HOLOMAP_H
+#define TWINE_HOLOMAP_H
 
 #include "common/scummsys.h"
 

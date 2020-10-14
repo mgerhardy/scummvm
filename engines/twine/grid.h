@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef GRID_H
-#define GRID_H
+#ifndef TWINE_GRID_H
+#define TWINE_GRID_H
 
 #include "common/scummsys.h"
 

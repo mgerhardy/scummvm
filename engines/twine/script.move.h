@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef SCRIPTMOVE_H
-#define SCRIPTMOVE_H
+#ifndef TWINE_SCRIPTMOVE_H
+#define TWINE_SCRIPTMOVE_H
 
 #include "common/scummsys.h"
 

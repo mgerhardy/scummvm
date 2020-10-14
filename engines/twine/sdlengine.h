@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef SCREEN_H
-#define SCREEN_H
+#ifndef TWINE_SDLENGINE_H
+#define TWINE_SDLENGINE_H
 
 #include <SDL.h>
 

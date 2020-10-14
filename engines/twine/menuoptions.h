@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef MENUOPTIONS_H
-#define MENUOPTIONS_H
+#ifndef TWINE_MENUOPTIONS_H
+#define TWINE_MENUOPTIONS_H
 
 #include "common/scummsys.h"
 

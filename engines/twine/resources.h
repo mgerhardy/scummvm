@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef RESOURCES_H
-#define RESOURCES_H
+#ifndef TWINE_RESOURCES_H
+#define TWINE_RESOURCES_H
 
 #include "common/scummsys.h"
 #include "hqrdepack.h"

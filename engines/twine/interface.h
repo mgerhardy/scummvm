@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef INTERFACE_H
-#define INTERFACE_H
+#ifndef TWINE_INTERFACE_H
+#define TWINE_INTERFACE_H
 
 #include "common/scummsys.h"
 #include "twine.h"

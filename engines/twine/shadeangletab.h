@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef SHADEANGLETAB_H
-#define SHADEANGLETAB_H
+#ifndef TWINE_SHADEANGLETAB_H
+#define TWINE_SHADEANGLETAB_H
 
 int16 shadeAngleTable[1024] = {
 	0,		// tab1

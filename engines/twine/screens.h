@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef SCREENS_H
-#define SCREENS_H
+#ifndef TWINE_SCREENS_H
+#define TWINE_SCREENS_H
 
 #include "common/scummsys.h"
 #include "twine.h"

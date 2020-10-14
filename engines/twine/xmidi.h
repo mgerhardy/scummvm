@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef XMIDI_H
-#define XMIDI_H
+#ifndef TWINE_XMIDI_H
+#define TWINE_XMIDI_H
 
 #include "common/scummsys.h"
 

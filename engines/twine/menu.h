@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef MENU_H
-#define MENU_H
+#ifndef TWINE_MENU_H
+#define TWINE_MENU_H
 
 #include "sdlengine.h"
 #include "actor.h"

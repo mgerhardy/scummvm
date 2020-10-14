@@ -23,8 +23,8 @@
 #include "common/scummsys.h"
 #include "actor.h"
 
-#ifndef EXTRA_H
-#define EXTRA_H
+#ifndef TWINE_EXTRA_H
+#define TWINE_EXTRA_H
 
 #define EXTRA_MAX_ENTRIES		50
 

@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef SCRIPTLIFE_H
-#define SCRIPTLIFE_H
+#ifndef TWINE_SCRIPTLIFE_H
+#define TWINE_SCRIPTLIFE_H
 
 #include "common/scummsys.h"
 

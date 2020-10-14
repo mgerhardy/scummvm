@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef DEBUG_H
-#define DEBUG_H
+#ifndef TWINE_DEBUG_H
+#define TWINE_DEBUG_H
 
 #include "common/scummsys.h"
 

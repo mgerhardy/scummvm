@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef GAMEENGINE_H
-#define GAMEENGINE_H
+#ifndef TWINE_GAMEENGINE_H
+#define TWINE_GAMEENGINE_H
 
 #include "common/scummsys.h"
 #include "actor.h"

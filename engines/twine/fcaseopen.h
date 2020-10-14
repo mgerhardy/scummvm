@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef fcaseopen_h
-#define fcaseopen_h
+#ifndef TWINE_FCASEOPEN_H
+#define TWINE_FCASEOPEN_H
 
 #include <stdio.h>
 

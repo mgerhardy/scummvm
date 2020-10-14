@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef HQRDEPACK_H
-#define HQRDEPACK_H
+#ifndef TWINE_HQRDEPACK_H
+#define TWINE_HQRDEPACK_H
 
 #include "common/scummsys.h"
 

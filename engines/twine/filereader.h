@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef FILEREADER_H
-#define FILEREADER_H
+#ifndef TWINE_FILEREADER_H
+#define TWINE_FILEREADER_H
 
 #include <stdio.h>
 #include <stdlib.h>

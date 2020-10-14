@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef SCENE_DEBUG_H
-#define SCENE_DEBUG_H
+#ifndef TWINE_DEBUG_SCENE_H
+#define TWINE_DEBUG_SCENE_H
 
 #include "common/scummsys.h"
 

@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef FLAMOVIES_H
-#define FLAMOVIES_H
+#ifndef TWINE_FLAMOVIES_H
+#define TWINE_FLAMOVIES_H
 
 #include "twine.h"
 

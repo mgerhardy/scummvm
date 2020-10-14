@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef GRIDDEBUG_H
-#define GRIDDEBUG_H
+#ifndef TWINE_GRIDDEBUG_H
+#define TWINE_GRIDDEBUG_H
 
 #include "common/scummsys.h"
 

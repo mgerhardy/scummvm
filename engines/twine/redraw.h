@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef REDRAW_H
-#define REDRAW_H
+#ifndef TWINE_REDRAW_H
+#define TWINE_REDRAW_H
 
 #include "common/scummsys.h"
 

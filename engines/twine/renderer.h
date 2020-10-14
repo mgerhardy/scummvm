@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef RENDERER_H
-#define RENDERER_H
+#ifndef TWINE_RENDERER_H
+#define TWINE_RENDERER_H
 
 #include "common/scummsys.h"
 

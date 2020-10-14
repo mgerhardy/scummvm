@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef ANIMATIONS_H
-#define ANIMATIONS_H
+#ifndef TWINE_ANIMATIONS_H
+#define TWINE_ANIMATIONS_H
 
 #include "common/scummsys.h"
 #include "actor.h"

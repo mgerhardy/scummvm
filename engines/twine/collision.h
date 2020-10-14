@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef COLLISION_H
-#define COLLISION_H
+#ifndef TWINE_COLLISION_H
+#define TWINE_COLLISION_H
 
 #include "common/scummsys.h"
 #include "extra.h"

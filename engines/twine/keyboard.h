@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef KEYBOARD_H
-#define KEYBOARD_H
+#ifndef TWINE_KEYBOARD_H
+#define TWINE_KEYBOARD_H
 
 #include "common/scummsys.h"
 

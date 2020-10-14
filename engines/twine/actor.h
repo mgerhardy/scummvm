@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef ACTOR_H
-#define ACTOR_H
+#ifndef TWINE_ACTOR_H
+#define TWINE_ACTOR_H
 
 #include "common/scummsys.h"
 

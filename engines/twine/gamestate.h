@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef GAMESTATE_H
-#define GAMESTATE_H
+#ifndef TWINE_GAMESTATE_H
+#define TWINE_GAMESTATE_H
 
 #include "common/scummsys.h"
 

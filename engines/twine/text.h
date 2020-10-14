@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef DIALOGUES_H
-#define DIALOGUES_H
+#ifndef TWINE_TEXT_H
+#define TWINE_TEXT_H
 
 #include "common/scummsys.h"
 

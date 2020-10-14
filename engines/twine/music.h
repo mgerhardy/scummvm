@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef MUSIC_H
-#define MUSIC_H
+#ifndef TWINE_MUSIC_H
+#define TWINE_MUSIC_H
 
 #include "common/scummsys.h"
 
