@@ -136,6 +136,8 @@ class Menu;
 class FlaMovies;
 class MenuOptions;
 class Music;
+class Redraw;
+class Renderer;
 
 class TwinEEngine : public Engine {
 public:
@@ -158,6 +160,8 @@ public:
 	FlaMovies *_flaMovies;
 	MenuOptions *_menuOptions;
 	Music *_music;
+	Redraw *_redraw;
+	Renderer *_renderer;
 
 	/** Configuration file structure
 	 * Contains all the data used in the engine to configurated the game in particulary ways. */

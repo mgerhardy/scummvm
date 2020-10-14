@@ -33,23 +33,23 @@ namespace TwinE {
 DebugScene::DebugScene(TwinEEngine *engine) : _engine(engine) {}
 
 void DebugScene::drawBoundingBoxProjectPoints(ScenePoint *pPoint3d, ScenePoint *pPoint3dProjected) {
-	projectPositionOnScreen(pPoint3d->X, pPoint3d->Y, pPoint3d->Z);
+	_engine->_renderer->projectPositionOnScreen(pPoint3d->X, pPoint3d->Y, pPoint3d->Z);
 
-	pPoint3dProjected->X = projPosX;
-	pPoint3dProjected->Y = projPosY;
-	pPoint3dProjected->Z = projPosZ;
+	pPoint3dProjected->X = _engine->_renderer->projPosX;
+	pPoint3dProjected->Y = _engine->_renderer->projPosY;
+	pPoint3dProjected->Z = _engine->_renderer->projPosZ;
 
-	if (renderLeft > projPosX)
-		renderLeft = projPosX;
+	if (_engine->_redraw->renderLeft > _engine->_renderer->projPosX)
+		_engine->_redraw->renderLeft = _engine->_renderer->projPosX;
 
-	if (renderRight < projPosX)
-		renderRight = projPosX;
+	if (_engine->_redraw->renderRight < _engine->_renderer->projPosX)
+		_engine->_redraw->renderRight = _engine->_renderer->projPosX;
 
-	if (renderTop > projPosY)
-		renderTop = projPosY;
+	if (_engine->_redraw->renderTop >_engine->_renderer->projPosY)
+		_engine->_redraw->renderTop = _engine->_renderer->projPosY;
 
-	if (renderBottom < projPosY)
-		renderBottom = projPosY;
+	if (_engine->_redraw->renderBottom < _engine->_renderer->projPosY)
+		_engine->_redraw->renderBottom = _engine->_renderer->projPosY;
 }
 
 int32 DebugScene::checkZoneType(int32 type) {

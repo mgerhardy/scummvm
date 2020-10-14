@@ -741,9 +741,9 @@ void Animations::processAnimActions(int32 actorIdx) {
 			if (animPos == actor->animPosition) {
 				_engine->_movements->rotateActor(distanceX, distanceZ, actor->angle);
 
-				throwX = destX + actor->X;
+				throwX = _engine->_renderer->destX + actor->X;
 				throwY = distanceY + actor->Y;
-				throwZ = destZ + actor->Z;
+				throwZ = _engine->_renderer->destZ + actor->Z;
 
 				_engine->_extra->addExtraThrow(actorIdx, throwX, throwY, throwZ, spriteIdx,
 				                               param1, param2 + actor->angle, param3, param4, strength);
@@ -774,9 +774,9 @@ void Animations::processAnimActions(int32 actorIdx) {
 
 				_engine->_movements->rotateActor(distanceX, distanceZ, actor->angle);
 
-				throwX = destX + actor->X;
+				throwX = _engine->_renderer->destX + actor->X;
 				throwY = distanceY + actor->Y;
-				throwZ = destZ + actor->Z;
+				throwZ = _engine->_renderer->destZ + actor->Z;
 
 				_engine->_extra->addExtraThrow(actorIdx, throwX, throwY, throwZ, spriteIdx,
 				                               param1 + newAngle, param2 + actor->angle, param3, param4, strength);
@@ -797,7 +797,7 @@ void Animations::processAnimActions(int32 actorIdx) {
 
 			if (animPos == actor->animPosition) {
 				_engine->_movements->rotateActor(distanceX, distanceZ, actor->angle);
-				_engine->_extra->addExtraAiming(actorIdx, actor->X + destX, actor->Y + distanceY, actor->Z + distanceZ, spriteIdx,
+				_engine->_extra->addExtraAiming(actorIdx, actor->X + _engine->_renderer->destX, actor->Y + distanceY, actor->Z + distanceZ, spriteIdx,
 				                                targetActor, param3, param4);
 			}
 		} break;
@@ -927,12 +927,12 @@ void Animations::processActorAnimations(int32 actorIdx) { // DoAnim
 
 				_engine->_movements->rotateActor(angle, 0, actor->animType);
 
-				_engine->_movements->processActorY = actor->Y - destZ;
+				_engine->_movements->processActorY = actor->Y - _engine->_renderer->destZ;
 
-				_engine->_movements->rotateActor(0, destX, actor->angle);
+				_engine->_movements->rotateActor(0, _engine->_renderer->destX, actor->angle);
 
-				_engine->_movements->processActorX = actor->X + destX;
-				_engine->_movements->processActorZ = actor->Z + destZ;
+				_engine->_movements->processActorX = actor->X + _engine->_renderer->destX;
+				_engine->_movements->processActorZ = actor->Z + _engine->_renderer->destZ;
 
 				_engine->_movements->setActorAngle(0, actor->speed, 50, &actor->move);
 
@@ -1018,8 +1018,8 @@ void Animations::processActorAnimations(int32 actorIdx) { // DoAnim
 
 			_engine->_movements->rotateActor(currentStepX, currentStepZ, actor->angle);
 
-			currentStepX = destX;
-			currentStepZ = destZ;
+			currentStepX = _engine->_renderer->destX;
+			currentStepZ = _engine->_renderer->destZ;
 
 			_engine->_movements->processActorX = actor->X + currentStepX - actor->lastX;
 			_engine->_movements->processActorY = actor->Y + currentStepY - actor->lastY;
@@ -1147,11 +1147,11 @@ void Animations::processActorAnimations(int32 actorIdx) { // DoAnim
 		if (_engine->_collision->causeActorDamage && !actor->dynamicFlags.bIsFalling && !currentlyProcessedActorIdx && _engine->_actor->heroBehaviour == kAthletic && actor->anim == kForward) {
 			_engine->_movements->rotateActor(actor->boudingBox.X.bottomLeft, actor->boudingBox.Z.bottomLeft, actor->angle + 0x580);
 
-			destX += _engine->_movements->processActorX;
-			destZ += _engine->_movements->processActorZ;
+			_engine->_renderer->destX += _engine->_movements->processActorX;
+			_engine->_renderer->destZ += _engine->_movements->processActorZ;
 
-			if (destX >= 0 && destZ >= 0 && destX <= 0x7E00 && destZ <= 0x7E00) {
-				if (_engine->_grid->getBrickShape(destX, _engine->_movements->processActorY + 0x100, destZ) && _engine->cfgfile.WallCollision == 1) { // avoid wall hit damage
+			if (_engine->_renderer->destX >= 0 && _engine->_renderer->destZ >= 0 && _engine->_renderer->destX <= 0x7E00 && _engine->_renderer->destZ <= 0x7E00) {
+				if (_engine->_grid->getBrickShape(_engine->_renderer->destX, _engine->_movements->processActorY + 0x100, _engine->_renderer->destZ) && _engine->cfgfile.WallCollision == 1) { // avoid wall hit damage
 					_engine->_extra->addExtraSpecial(actor->X, actor->Y + 1000, actor->Z, kHitStars);
 					initAnim(kBigHit, 2, 0, currentlyProcessedActorIdx);
 

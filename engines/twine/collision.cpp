@@ -363,14 +363,14 @@ int32 Collision::checkCollisionWithActors(int32 actorIdx) {
 	if (actor->dynamicFlags.bIsHitting) {
 		_engine->_movements->rotateActor(0, 200, actor->angle);
 
-		xLeft = destX + _engine->_movements->processActorX + actor->boudingBox.X.bottomLeft;
-		xRight = destX + _engine->_movements->processActorX + actor->boudingBox.X.topRight;
+		xLeft = _engine->_renderer->destX + _engine->_movements->processActorX + actor->boudingBox.X.bottomLeft;
+		xRight = _engine->_renderer->destX + _engine->_movements->processActorX + actor->boudingBox.X.topRight;
 
 		yLeft = _engine->_movements->processActorY + actor->boudingBox.Y.bottomLeft;
 		yRight = _engine->_movements->processActorY + actor->boudingBox.Y.topRight;
 
-		zLeft = destZ + _engine->_movements->processActorZ + actor->boudingBox.Z.bottomLeft;
-		zRight = destZ + _engine->_movements->processActorZ + actor->boudingBox.Z.topRight;
+		zLeft = _engine->_renderer->destZ + _engine->_movements->processActorZ + actor->boudingBox.Z.bottomLeft;
+		zRight = _engine->_renderer->destZ + _engine->_movements->processActorZ + actor->boudingBox.Z.topRight;
 
 		for (a = 0; a < sceneNumActors; a++) {
 			actorTest = &sceneActors[a];

@@ -193,7 +193,7 @@ int32 Actor::initBody(int32 bodyIdx, int32 actorIdx) {
 						// TODO: printf("HQR ERROR: Loading body entities");
 						_engine->_system->fatalError();
 					}
-					prepareIsoModel(bodyTable[currentPositionInBodyPtrTab]);
+					_engine->_renderer->prepareIsoModel(bodyTable[currentPositionInBodyPtrTab]);
 					*((uint16 *)bodyPtr3) = currentPositionInBodyPtrTab + 0x8000;
 					index = currentPositionInBodyPtrTab;
 					currentPositionInBodyPtrTab++;
@@ -328,7 +328,7 @@ void Actor::initModelActor(int32 bodyIdx, int16 actorIdx) {
 		if (localActor->previousAnimIdx == -1)
 			return;
 
-		copyActorInternAnim(bodyTable[currentIndex], bodyTable[localActor->entity]);
+		_engine->_renderer->copyActorInternAnim(bodyTable[currentIndex], bodyTable[localActor->entity]);
 
 		return;
 	}

@@ -46,9 +46,11 @@ namespace TwinE {
 #define FADE_MS 500
 
 /** SDL CD variable interface */
+#if TODO_SDL_CD
 SDL_CD *cdrom;
 /** CD drive letter */
 const int8 *cdname;
+#endif
 
 /** SDL_Mixer track variable interface */
 Mix_Music *current_track;
@@ -87,11 +89,12 @@ void Music::playTrackMusicCd(int32 track) {
 	if (!_engine->cfgfile.UseCD) {
 		return;
 	}
-
+#if TODO_SDL_CD
 	if (cdrom->numtracks == 10) {
 		if (CD_INDRIVE(SDL_CDStatus(cdrom)))
 			SDL_CDPlayTracks(cdrom, track, 0, 1, 0);
 	}
+#endif
 }
 
 /** Stop CD music */
@@ -100,9 +103,11 @@ void Music::stopTrackMusicCd() {
 		return;
 	}
 
+#if TODO_SDL_CD
 	if (cdrom != NULL) {
 		SDL_CDStop(cdrom);
 	}
+#endif
 }
 
 /** Generic play music, according with settings it plays CD or MP3 instead
@@ -169,7 +174,7 @@ void Music::playMidiMusic(int32 midiIdx, int32 loop) {
 
 	rw = SDL_RWFromMem(midiPtr, midiSize);
 
-	current_track = Mix_LoadMUS_RW(rw);
+	current_track = Mix_LoadMUS_RW(rw, 0);
 
 	musicFadeIn(1, FADE_MS);
 
@@ -195,6 +200,7 @@ void Music::stopMidiMusic() {
 
 /** Initialize CD-Rom */
 int Music::initCdrom() {
+#if TODO_SDL_CD
 	int32 numOfCDROM;
 	int32 cdNum;
 
@@ -237,7 +243,7 @@ int Music::initCdrom() {
 	cdrom = NULL;
 
 	warning("Can't find LBA CD!");
-
+#endif
 	return 0;
 }
 

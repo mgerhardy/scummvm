@@ -52,180 +52,7 @@ namespace TwinE {
 
 #define ERROR_OUT_OF_SCREEN 2
 
-// --- structures ----
-
-typedef struct renderTabEntry {
-	int16 depth;
-	int16 renderType;
-	uint8 *dataPtr;
-} renderTabEntry;
-
-typedef struct pointTab {
-	int16 X;
-	int16 Y;
-	int16 Z;
-} pointTab;
-
-typedef struct elementEntry {
-	int16 firstPoint;  // data1
-	int16 numOfPoints; // data2
-	int16 basePoint;   // data3
-	int16 baseElement; // param
-	int16 flag;
-	int16 rotateZ;
-	int16 rotateY;
-	int16 rotateX;
-	int32 numOfShades; // field_10
-	int32 field_14;
-	int32 field_18;
-	int32 Y;
-	int32 field_20;
-	int16 field_24;
-} elementEntry;
-
-typedef struct lineCoordinates {
-	int32 data;
-	int16 x1;
-	int16 y1;
-	int16 x2;
-	int16 y2;
-} lineCoordinates;
-
-typedef struct lineData {
-	int32 data;
-	int16 p1;
-	int16 p2;
-} lineData;
-
-typedef struct polyHeader {
-	uint8 renderType; //FillVertic_AType
-	uint8 numOfVertex;
-	int16 colorIndex;
-} polyHeader;
-
-typedef struct polyVertexHeader {
-	int16 shadeEntry;
-	int16 dataOffset;
-} polyVertexHeader;
-
-typedef struct computedVertex {
-	int16 shadeValue;
-	int16 x;
-	int16 y;
-} computedVertex;
-
-typedef struct bodyHeaderStruct {
-	int16 bodyFlag;
-	int16 unk0;
-	int16 unk1;
-	int16 unk2;
-	int16 unk3;
-	int16 unk4;
-	int16 unk5;
-	int16 offsetToData;
-	int8 *ptrToKeyFrame;
-	int32 keyFrameTime;
-} bodyHeaderStruct;
-
-typedef struct vertexData {
-	uint8 param;
-	int16 x;
-	int16 y;
-} vertexData;
-
-typedef union packed16 {
-	struct {
-		uint8 al;
-		uint8 ah;
-	} bit;
-	uint16 temp;
-} packed16;
-
-// ---- variables ----
-
-int32 baseMatrixRotationX;
-int32 baseMatrixRotationY;
-int32 baseMatrixRotationZ;
-
-int32 baseTransPosX; // setSomething2Var1
-int32 baseTransPosY; // setSomething2Var2
-int32 baseTransPosZ; // setSomething2Var3
-
-int32 baseRotPosX; // setSomething3Var12
-int32 baseRotPosY; // setSomething3Var14
-int32 baseRotPosZ; // setSomething3Var16
-
-int32 cameraPosX; // cameraVar1
-int32 cameraPosY; // cameraVar2
-int32 cameraPosZ; // cameraVar3
-
-// ---
-
-int32 renderAngleX; // _angleX
-int32 renderAngleY; // _angleY
-int32 renderAngleZ; // _angleZ
-
-int32 renderX; // _X
-int32 renderY; // _Y
-int32 renderZ; // _Z
-
-// ---
-
-int32 baseMatrix[3 * 3];
-
-int32 numOfPrimitives;
-
-int32 numOfPoints;
-int32 numOfElements;
-uint8 *pointsPtr;
-uint8 *elementsPtr;
-uint8 *elementsPtr2;
-
-uint8 *pri2Ptr2;
-
-int32 matricesTable[271];
-uint8 *currentMatrixTableEntry;
-
-int32 *shadePtr;
-int32 shadeMatrix[9];
-int32 lightX;
-int32 lightY;
-int32 lightZ;
-
-pointTab computedPoints[800]; // _projectedPointTable
-pointTab flattenPoints[800];  // _flattenPointTable
-int16 shadeTable[500];
-
-int16 primitiveCounter;
-renderTabEntry *renderTabEntryPtr;
-renderTabEntry *renderTabEntryPtr2;
-renderTabEntry *renderTabSortedPtr;
-
-renderTabEntry renderTab[1000];
-renderTabEntry renderTabSorted[1000];
-uint8 renderTab7[10000];
-
-uint8 *renderV19; // RECHECK THIS
-
-// render polygon vars
-int16 pRenderV3[96];
-int16 *pRenderV2;
-
-int16 vleft;
-int16 vtop;
-int16 vright;
-int16 vbottom;
-
-uint8 oldVertexParam;
-uint8 vertexParam1;
-uint8 vertexParam2;
-
-int16 polyTab[960];
-int16 polyTab2[960];
-int32 renderLoop;
-// end render polygon vars
-
-int32 projectPositionOnScreen(int32 cX, int32 cY, int32 cZ) {
+int32 Renderer::projectPositionOnScreen(int32 cX, int32 cY, int32 cZ) {
 	if (!isUsingOrhoProjection) {
 		cX -= baseRotPosX;
 		cY -= baseRotPosY;
@@ -256,7 +83,7 @@ int32 projectPositionOnScreen(int32 cX, int32 cY, int32 cZ) {
 	return 1;
 }
 
-void setCameraPosition(int32 X, int32 Y, int32 cX, int32 cY, int32 cZ) {
+void Renderer::setCameraPosition(int32 X, int32 Y, int32 cX, int32 cY, int32 cZ) {
 	orthoProjX = X;
 	orthoProjY = Y;
 
@@ -267,13 +94,13 @@ void setCameraPosition(int32 X, int32 Y, int32 cX, int32 cY, int32 cZ) {
 	isUsingOrhoProjection = 0;
 }
 
-void setBaseTranslation(int32 X, int32 Y, int32 Z) {
+void Renderer::setBaseTranslation(int32 X, int32 Y, int32 Z) {
 	baseTransPosX = X;
 	baseTransPosY = Y;
 	baseTransPosZ = Z;
 }
 
-void setOrthoProjection(int32 X, int32 Y, int32 Z) {
+void Renderer::setOrthoProjection(int32 X, int32 Y, int32 Z) {
 	orthoProjX = X;
 	orthoProjY = Y;
 	orthoProjZ = Z;
@@ -281,14 +108,14 @@ void setOrthoProjection(int32 X, int32 Y, int32 Z) {
 	isUsingOrhoProjection = 1;
 }
 
-void getBaseRotationPosition(int32 X, int32 Y, int32 Z) {
+void Renderer::getBaseRotationPosition(int32 X, int32 Y, int32 Z) {
 	destX = (baseMatrix[0] * X + baseMatrix[1] * Y + baseMatrix[2] * Z) >> 14;
 	destY = (baseMatrix[3] * X + baseMatrix[4] * Y + baseMatrix[5] * Z) >> 14;
 	destZ = (baseMatrix[6] * X + baseMatrix[7] * Y + baseMatrix[8] * Z) >> 14;
 }
 
 #define PI 3.1415
-void setBaseRotation(int32 X, int32 Y, int32 Z) {
+void Renderer::setBaseRotation(int32 X, int32 Y, int32 Z) {
 	int32 matrixElem;
 	double Xradians, Yradians, Zradians;
 
@@ -327,13 +154,13 @@ void setBaseRotation(int32 X, int32 Y, int32 Z) {
 	baseRotPosZ = destZ;
 }
 
-void getCameraAnglePositions(int32 X, int32 Y, int32 Z) {
+void Renderer::getCameraAnglePositions(int32 X, int32 Y, int32 Z) {
 	destX = (baseMatrix[0] * X + baseMatrix[3] * Y + baseMatrix[6] * Z) >> 14;
 	destY = (baseMatrix[1] * X + baseMatrix[4] * Y + baseMatrix[7] * Z) >> 14;
 	destZ = (baseMatrix[2] * X + baseMatrix[5] * Y + baseMatrix[8] * Z) >> 14;
 }
 
-void setCameraAngle(int32 transPosX, int32 transPosY, int32 transPosZ, int32 rotPosX, int32 rotPosY, int32 rotPosZ, int32 param6) {
+void Renderer::setCameraAngle(int32 transPosX, int32 transPosY, int32 transPosZ, int32 rotPosX, int32 rotPosY, int32 rotPosZ, int32 param6) {
 	baseTransPosX = transPosX;
 	baseTransPosY = transPosY;
 	baseTransPosZ = transPosZ;
@@ -351,7 +178,7 @@ void setCameraAngle(int32 transPosX, int32 transPosY, int32 transPosZ, int32 rot
 
 // ------------------------------------------------------------------------------------------------------
 
-void applyRotation(int32 *tempMatrix, int32 *currentMatrix) {
+void Renderer::applyRotation(int32 *tempMatrix, int32 *currentMatrix) {
 	int32 i;
 	int32 angle;
 	int32 angleVar1; // esi
@@ -425,7 +252,7 @@ void applyRotation(int32 *tempMatrix, int32 *currentMatrix) {
 	}
 }
 
-void applyPointsRotation(uint8 *firstPointsPtr, int32 numPoints, pointTab *destPoints, int32 *rotationMatrix) {
+void Renderer::applyPointsRotation(uint8 *firstPointsPtr, int32 numPoints, pointTab *destPoints, int32 *rotationMatrix) {
 	int16 tmpX;
 	int16 tmpY;
 	int16 tmpZ;
@@ -452,7 +279,7 @@ void applyPointsRotation(uint8 *firstPointsPtr, int32 numPoints, pointTab *destP
 	} while (--numOfPoints);
 }
 
-void processRotatedElement(int32 rotZ, int32 rotY, int32 rotX, elementEntry *elemPtr) { // unsigned char * elemPtr) // loadPart
+void Renderer::processRotatedElement(int32 rotZ, int32 rotY, int32 rotX, elementEntry *elemPtr) { // unsigned char * elemPtr) // loadPart
 	int32 *currentMatrix;
 	int16 baseElement;
 
@@ -496,7 +323,7 @@ void processRotatedElement(int32 rotZ, int32 rotY, int32 rotX, elementEntry *ele
 	applyPointsRotation(pointsPtr + firstPoint, numOfPoints, &computedPoints[firstPoint / 6], (int32 *)currentMatrixTableEntry);
 }
 
-void applyPointsTranslation(uint8 *firstPointsPtr, int32 numPoints, pointTab *destPoints, int32 *translationMatrix) {
+void Renderer::applyPointsTranslation(uint8 *firstPointsPtr, int32 numPoints, pointTab *destPoints, int32 *translationMatrix) {
 	int16 tmpX;
 	int16 tmpY;
 	int16 tmpZ;
@@ -523,7 +350,7 @@ void applyPointsTranslation(uint8 *firstPointsPtr, int32 numPoints, pointTab *de
 	} while (--numOfPoints);
 }
 
-void processTranslatedElement(int32 rotX, int32 rotY, int32 rotZ, elementEntry *elemPtr) {
+void Renderer::processTranslatedElement(int32 rotX, int32 rotY, int32 rotZ, elementEntry *elemPtr) {
 	int32 *dest;
 	int32 *source;
 
@@ -559,7 +386,7 @@ void processTranslatedElement(int32 rotX, int32 rotY, int32 rotZ, elementEntry *
 	applyPointsTranslation(pointsPtr + elemPtr->firstPoint, elemPtr->numOfPoints, &computedPoints[elemPtr->firstPoint / 6], (int *)currentMatrixTableEntry);
 }
 
-void translateGroup(int16 ax, int16 bx, int16 cx) {
+void Renderer::translateGroup(int16 ax, int16 bx, int16 cx) {
 	int32 ebp;
 	int32 ebx;
 	int32 ecx;
@@ -602,7 +429,7 @@ void translateGroup(int16 ax, int16 bx, int16 cx) {
 	destZ = eax;
 }
 
-void setLightVector(int32 angleX, int32 angleY, int32 angleZ) {
+void Renderer::setLightVector(int32 angleX, int32 angleY, int32 angleZ) {
 	// TODO: RECHECK THIS
 	/*_cameraAngleX = angleX;
 	_cameraAngleY = angleY;
@@ -626,7 +453,7 @@ FORCEINLINE int16 clamp(int16 x, int16 a, int16 b) {
 	return x < a ? a : (x > b ? b : x);
 }
 
-int computePolygons() {
+int Renderer::computePolygons() {
 	int16 vertexX, vertexY;
 	int16 *outPtr;
 	int32 i, nVertex;
@@ -728,7 +555,7 @@ int computePolygons() {
 	return (1);
 }
 
-void renderPolygons(int32 renderType, int32 color) {
+void Renderer::renderPolygons(int32 renderType, int32 color) {
 	uint8 *out, *out2;
 	int16 *ptr1;
 	int16 *ptr2;
@@ -1189,7 +1016,7 @@ void renderPolygons(int32 renderType, int32 color) {
 	};
 }
 
-void circleFill(int32 x, int32 y, int32 radius, int8 color) {
+void Renderer::circleFill(int32 x, int32 y, int32 radius, int8 color) {
 	int32 currentLine;
 
 	radius += 1;
@@ -1212,7 +1039,7 @@ void circleFill(int32 x, int32 y, int32 radius, int8 color) {
 	}
 }
 
-int32 renderModelElements(uint8 *pointer) {
+int32 Renderer::renderModelElements(uint8 *pointer) {
 	uint8 *edi;
 	int16 temp;
 	int32 eax;
@@ -1618,7 +1445,7 @@ int32 renderModelElements(uint8 *pointer) {
 	return (0);
 }
 
-int32 renderAnimatedModel(uint8 *bodyPtr) {
+int32 Renderer::renderAnimatedModel(uint8 *bodyPtr) {
 	elementEntry *elemEntryPtr;
 	pointTab *pointPtr;
 	pointTab *pointPtrDest;
@@ -1832,7 +1659,7 @@ int32 renderAnimatedModel(uint8 *bodyPtr) {
 	return renderModelElements((uint8 *)shadePtr);
 }
 
-void prepareIsoModel(uint8 *bodyPtr) { // loadGfxSub
+void Renderer::prepareIsoModel(uint8 *bodyPtr) { // loadGfxSub
 	bodyHeaderStruct *bodyHeader;
 	int16 offsetToData;
 	uint8 *bodyDataPtr;
@@ -1875,7 +1702,7 @@ void prepareIsoModel(uint8 *bodyPtr) { // loadGfxSub
 	}
 }
 
-int renderIsoModel(int32 X, int32 Y, int32 Z, int32 angleX, int32 angleY, int32 angleZ, uint8 *bodyPtr) { // AffObjetIso
+int Renderer::renderIsoModel(int32 X, int32 Y, int32 Z, int32 angleX, int32 angleY, int32 angleZ, uint8 *bodyPtr) { // AffObjetIso
 	uint8 *ptr;
 	int16 bodyHeader;
 
@@ -1916,14 +1743,13 @@ int renderIsoModel(int32 X, int32 Y, int32 Z, int32 angleX, int32 angleY, int32 
 		// the mostly used renderer code
 		return (renderAnimatedModel(ptr));
 	} else {
-		printf("Unsupported unanimated model render!\n");
-		exit(1);
+		error("Unsupported unanimated model render!\n");
 	}
 
 	return (0);
 }
 
-void copyActorInternAnim(uint8 *bodyPtrSrc, uint8 *bodyPtrDest) {
+void Renderer::copyActorInternAnim(uint8 *bodyPtrSrc, uint8 *bodyPtrDest) {
 	int16 cx;
 	int16 ax;
 	int32 i;
@@ -1965,7 +1791,7 @@ void copyActorInternAnim(uint8 *bodyPtrSrc, uint8 *bodyPtrDest) {
 	}
 }
 
-void renderBehaviourModel(int32 boxLeft, int32 boxTop, int32 boxRight, int32 boxBottom, int32 Y, int32 angle, uint8 *entityPtr) {
+void Renderer::renderBehaviourModel(int32 boxLeft, int32 boxTop, int32 boxRight, int32 boxBottom, int32 Y, int32 angle, uint8 *entityPtr) {
 	int tmpBoxRight;
 	int x;
 	int y;
@@ -1993,7 +1819,7 @@ void renderBehaviourModel(int32 boxLeft, int32 boxTop, int32 boxRight, int32 box
 	}
 }
 
-void renderInventoryItem(int32 X, int32 Y, uint8 *itemBodyPtr, int32 angle, int32 param) { // Draw3DObject
+void Renderer::renderInventoryItem(int32 X, int32 Y, uint8 *itemBodyPtr, int32 angle, int32 param) { // Draw3DObject
 	setCameraPosition(X, Y, 128, 200, 200);
 	setCameraAngle(0, 0, 0, 60, 0, 0, param);
 

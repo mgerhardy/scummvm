@@ -473,9 +473,26 @@ TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flag
 	_flaMovies = new FlaMovies(this);
 	_menuOptions = new MenuOptions(this);
 	_music = new Music(this);
+	_redraw = new Redraw(this);
+	_renderer = new Renderer(this);
 }
 
 TwinEEngine::~TwinEEngine() {
+	delete _actor;
+	delete _animations;
+	delete _collision;
+	delete _extra;
+	delete _gameState;
+	delete _grid;
+	delete _movements;
+	delete _hqrdepack;
+	delete _interface;
+	delete _menu;
+	delete _flaMovies;
+	delete _menu;
+	delete _music;
+	delete _redraw;
+	delete _renderer;
 }
 
 bool TwinEEngine::hasFeature(EngineFeature f) const {

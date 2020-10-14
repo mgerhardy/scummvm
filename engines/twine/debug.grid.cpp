@@ -41,25 +41,25 @@ void DebugGrid::changeGridCamera(int16 pKey) {
 		// Press up - more X positions
 		if (pKey == 0x2E) {
 			_engine->_grid->newCameraZ--;
-			reqBgRedraw = 1;
+			_engine->_redraw->reqBgRedraw = 1;
 		}
 
 		// Press down - less X positions
 		if (pKey == 0x2C) {
 			_engine->_grid->newCameraZ++;
-			reqBgRedraw = 1;
+			_engine->_redraw->reqBgRedraw = 1;
 		}
 
 		// Press left - less Z positions
 		if (pKey == 0x1F) {
 			_engine->_grid->newCameraX--;
-			reqBgRedraw = 1;
+			_engine->_redraw->reqBgRedraw = 1;
 		}
 
 		// Press right - more Z positions
 		if (pKey == 0x2D) {
 			_engine->_grid->newCameraX++;
-			reqBgRedraw = 1;
+			_engine->_redraw->reqBgRedraw = 1;
 		}
 	}
 }
@@ -73,7 +73,7 @@ void DebugGrid::changeGrid(int16 pKey) {
 			if (currentSceneIdx > NUM_SCENES)
 				currentSceneIdx = 0;
 			needChangeScene = currentSceneIdx;
-			reqBgRedraw = 1;
+			_engine->_redraw->reqBgRedraw = 1;
 		}
 
 		// Press down - less X positions
@@ -82,7 +82,7 @@ void DebugGrid::changeGrid(int16 pKey) {
 			if (currentSceneIdx < 0)
 				currentSceneIdx = NUM_SCENES;
 			needChangeScene = currentSceneIdx;
-			reqBgRedraw = 1;
+			_engine->_redraw->reqBgRedraw = 1;
 		}
 
 		if (_engine->cfgfile.Debug && (pKey == 'f' || pKey == 'r'))
@@ -116,7 +116,7 @@ void DebugGrid::applyCellingGrid(int16 pKey) {
 	} else if (pKey == 0x14 && _engine->_grid->useCellingGrid == 1) {
 		_engine->_grid->useCellingGrid = -1;
 		_engine->_grid->createGridMap();
-		reqBgRedraw = 1;
+		_engine->_redraw->reqBgRedraw = 1;
 		if (_engine->cfgfile.Debug && pKey == 0x14)
 			debug("\nDisable Celling Grid index: %d\n", _engine->_grid->cellingGridIdx);
 		needChangeScene = -2; // tricky to make the fade
