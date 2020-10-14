@@ -47,10 +47,6 @@ namespace TwinE {
 #define SCREEN_WIDTH DEFAULT_SCREEN_WIDTH *SCALE
 /** Original screen height */
 #define SCREEN_HEIGHT DEFAULT_SCREEN_HEIGHT *SCALE
-/** Original FLA screen width */
-#define FLASCREEN_WIDTH 320
-/** Original FLA screen height */
-#define FLASCREEN_HEIGHT 200
 /** Default frames per second */
 #define DEFAULT_FRAMES_PER_SECOND 19
 
@@ -130,6 +126,10 @@ typedef struct ConfigFile {
 class Actor;
 class Animations;
 class Collision;
+class Extra;
+class GameState;
+class Grid;
+class Movements;
 
 class TwinEEngine : public Engine {
 public:
@@ -142,6 +142,10 @@ public:
 	Actor *_actor;
 	Animations *_animations;
 	Collision *_collision;
+	Extra *_extra;
+	GameState *_gameState;
+	Grid *_grid;
+	Movements *_movements;
 
 	/** Configuration file structure
 	 * Contains all the data used in the engine to configurated the game in particulary ways. */
@@ -165,7 +169,7 @@ public:
 	void allocVideoMemory();
 	int getRandomNumber(uint max = 0x7FFF);
 	int32 quitGame;
-	volatile int32 lbaTime;
+	int32 lbaTime;
 
 	int16 leftMouse;
 	int16 rightMouse;

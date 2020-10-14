@@ -29,6 +29,7 @@
 
 #include "actor.h"
 #include "animations.h"
+#include "common/textconsole.h"
 #include "fcaseopen.h"
 #include "flamovies.h"
 #include "gamestate.h"
@@ -46,7 +47,6 @@
 #include "sdlengine.h"
 #include "sound.h"
 #include "text.h"
-#include "twine.h"
 
 #include "animations.h"
 #include "collision.h"
@@ -239,7 +239,7 @@ void TwinEEngine::initConfigurations() {
 
 	fd = fcaseopen(CONFIG_FILENAME, "rb");
 	if (!fd)
-		printf("Error: Can't find config file %s\n", CONFIG_FILENAME);
+		error("Error: Can't find config file %s\n", CONFIG_FILENAME);
 
 	// make sure it quit when it reaches the end of file
 	while (fgets((char*)buffer, 256, fd) != NULL) {
@@ -463,6 +463,10 @@ TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flag
 	_actor = new Actor(this);
 	_animations = new Animations(this);
 	_collision = new Collision(this);
+	_extra = new Extra(this);
+	_gameState = new GameState(this);
+	_grid = new Grid(this);
+	_movements = new Movements(this);
 }
 
 TwinEEngine::~TwinEEngine() {

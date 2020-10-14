@@ -27,10 +27,22 @@
 
 namespace TwinE {
 
-extern int32 showingZones;
-extern int32 typeZones;
+class TwinEEngine;
+struct ScenePoint;
 
-void displayZones(int16 pKey);
+class DebugScene {
+private:
+	TwinEEngine *_engine;
+
+	void drawBoundingBoxProjectPoints(ScenePoint *pPoint3d, ScenePoint *pPoint3dProjected);
+	int32 checkZoneType(int32 type);
+public:
+	DebugScene(TwinEEngine *engine);
+	int32 showingZones = 0;
+	int32 typeZones = 127; // all zones on as default
+
+	void displayZones(int16 pKey);
+};
 
 } // namespace TwinE
 

@@ -44,39 +44,11 @@ namespace TwinE {
 /** FLA movie extension */
 #define FLA_EXT ".fla"
 
-/** FLA Frame Opcode types */
-enum FlaFrameOpcode {
-	kLoadPalette = 0,
-	kFade = 1,
-	kPlaySample = 2,
-	kStopSample = 4,
-	kDeltaFrame = 5,
-	kKeyFrame = 7
-};
-
-/** Auxiliar FLA fade out variable */
-int32 _fadeOut;
-/** Auxiliar FLA fade out variable to count frames between the fade */
-int32 fadeOutFrames;
-
-/** FLA movie sample auxiliar table */
-int32 flaSampleTable[100];
-/** Number of samples in FLA movie */
-int32 samplesInFla;
-/** Auxiliar work video buffer */
-uint8 *workVideoBufferCopy;
-/** FLA movie header data */
-FLAHeaderStruct flaHeaderData;
-/** FLA movie header data */
-FLAFrameDataStruct frameData;
-
-FileReader frFla;
-
 /** FLA movie draw key frame
 	@param ptr FLA frame buffer pointer
 	@param width FLA movie width
 	@param height FLA movie height */
-void drawKeyFrame(uint8 *ptr, int32 width, int32 height) {
+void FlaMovies::drawKeyFrame(uint8 *ptr, int32 width, int32 height) {
 	int32 a, b;
 	uint8 *destPtr = (uint8 *)flaBuffer;
 	uint8 *startOfLine = destPtr;
@@ -112,7 +84,7 @@ void drawKeyFrame(uint8 *ptr, int32 width, int32 height) {
 /** FLA movie draw delta frame
 	@param ptr FLA frame buffer pointer
 	@param width FLA movie width */
-void drawDeltaFrame(uint8 *ptr, int32 width) {
+void FlaMovies::drawDeltaFrame(uint8 *ptr, int32 width) {
 	int32 a, b;
 	uint16 skip;
 	uint8 *destPtr;
@@ -160,12 +132,12 @@ void drawDeltaFrame(uint8 *ptr, int32 width) {
 
 	According with the settins we can put the original aspect radio stretch
 	to fullscreen or preserve it and use top and button black bars */
-void scaleFla2x() {
+void FlaMovies::scaleFla2x() {
 	int32 i, j;
 	uint8 *source = (uint8 *)flaBuffer;
-	uint8 *dest = (uint8 *)workVideoBuffer;
+	uint8 *dest = (uint8 *)_engine->workVideoBuffer;
 
-	if (cfgfile.Movie == CONF_MOVIE_FLAWIDE) {
+	if (_engine->cfgfile.Movie == CONF_MOVIE_FLAWIDE) {
 		for (i = 0; i < SCREEN_WIDTH / SCALE * 40; i++) {
 			*(dest++) = 0x00;
 		}
@@ -176,7 +148,7 @@ void scaleFla2x() {
 			*(dest++) = *(source);
 			*(dest++) = *(source++);
 		}
-		if (cfgfile.Movie == CONF_MOVIE_FLAWIDE) { // include wide bars
+		if (_engine->cfgfile.Movie == CONF_MOVIE_FLAWIDE) { // include wide bars
 			memcpy(dest, dest - SCREEN_WIDTH / SCALE, FLASCREEN_WIDTH * 2);
 			dest += FLASCREEN_WIDTH * 2;
 		} else { // stretch the movie like original game.
@@ -191,7 +163,7 @@ void scaleFla2x() {
 		}
 	}
 
-	if (cfgfile.Movie == CONF_MOVIE_FLAWIDE) {
+	if (_engine->cfgfile.Movie == CONF_MOVIE_FLAWIDE) {
 		for (i = 0; i < SCREEN_WIDTH / SCALE * 40; i++) {
 			*(dest++) = 0x00;
 		}
@@ -199,7 +171,7 @@ void scaleFla2x() {
 }
 
 /** FLA movie process frame */
-void processFrame() {
+void FlaMovies::processFrame() {
 	FLASampleStruct sample;
 	uint32 opcodeBlockSize;
 	uint8 opcode;
@@ -277,9 +249,11 @@ void fla_pcxList(int8 *flaName) {
 	// TODO if is using FLA PCX than show the images instead
 }
 
+FlaMovies::FlaMovies(TwinEEngine *engine) : _engine(engine) {}
+
 /** Play FLA movies
 	@param flaName FLA movie name */
-void playFlaMovie(int8 *flaName) {
+void FlaMovies::playFlaMovie(int8 *flaName) {
 	int32 i;
 	int32 quit = 0;
 	int32 currentFrame;
@@ -289,7 +263,7 @@ void playFlaMovie(int8 *flaName) {
 	stopSamples();
 
 	// Play FLA PCX instead of movies
-	if (cfgfile.Movie == CONF_MOVIE_FLAPCX) {
+	if (_engine->cfgfile.Movie == CONF_MOVIE_FLAPCX) {
 		fla_pcxList(flaName);
 		return;
 	}
@@ -297,23 +271,23 @@ void playFlaMovie(int8 *flaName) {
 	stopMusic();
 
 	// take extension if movie name has it
-	for (i = 0; i < (int32)strlen(flaName); i++) {
+	for (i = 0; i < (int32)strlen((const char *)flaName); i++) {
 		if (flaName[i] == '.') {
 			flaName[i] = 0;
 		}
 	}
 
-	sprintf(fileNamePath, FLA_DIR);
-	strcat(fileNamePath, flaName);
-	strcat(fileNamePath, FLA_EXT);
+	sprintf((char *)fileNamePath, FLA_DIR);
+	strcat((char *)fileNamePath, (const char*)flaName);
+	strcat((char *)fileNamePath, FLA_EXT);
 
 	_fadeOut = -1;
 	fadeOutFrames = 0;
 
-	if (!fropen2(&frFla, fileNamePath, "rb"))
+	if (!fropen2(&frFla, (char*)fileNamePath, "rb"))
 		return;
 
-	workVideoBufferCopy = workVideoBuffer;
+	workVideoBufferCopy = _engine->workVideoBuffer;
 
 	frread(&frFla, &flaHeaderData.version, 6);
 	frread(&frFla, &flaHeaderData.numOfFrames, 4);
@@ -333,7 +307,7 @@ void playFlaMovie(int8 *flaName) {
 		flaSampleTable[i] = var0;
 	}
 
-	if (!strcmp(flaHeaderData.version, "V1.3")) {
+	if (!strcmp((const char *)flaHeaderData.version, "V1.3")) {
 		currentFrame = 0;
 
 		if (!quit) {
@@ -343,7 +317,7 @@ void playFlaMovie(int8 *flaName) {
 				else {
 					processFrame();
 					scaleFla2x();
-					copyScreen(workVideoBuffer, frontVideoBuffer);
+					copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 
 					// Only blit to screen if isn't a fade
 					if (_fadeOut == -1) {
@@ -376,8 +350,8 @@ void playFlaMovie(int8 *flaName) {
 		}
 	}
 
-	if (cfgfile.CrossFade) {
-		crossFade(frontVideoBuffer, paletteRGBACustom);
+	if (_engine->cfgfile.CrossFade) {
+		crossFade(_engine->frontVideoBuffer, paletteRGBACustom);
 	} else {
 		fadeToBlack(paletteRGBACustom);
 	}

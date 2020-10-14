@@ -26,6 +26,7 @@
 
 #include "actor.h"
 #include "animations.h"
+#include "common/textconsole.h"
 #include "extra.h"
 #include "gamestate.h"
 #include "grid.h"
@@ -35,6 +36,8 @@
 #include "resources.h"
 #include "scene.h"
 #include "sound.h"
+#include "twine.h"
+#include "common/system.h"
 
 namespace TwinE {
 
@@ -60,7 +63,7 @@ void Actor::restartHeroScene() {
 	sceneHero->zone = -1;
 	sceneHero->angle = previousHeroAngle;
 
-	setActorAngleSafe(sceneHero->angle, sceneHero->angle, 0, &sceneHero->move);
+	_engine->_movements->setActorAngleSafe(sceneHero->angle, sceneHero->angle, 0, &sceneHero->move);
 	setBehaviour(previousHeroBehaviour);
 
 	cropBottomScreen = 0;
@@ -187,8 +190,8 @@ int32 Actor::initBody(int32 bodyIdx, int32 actorIdx) {
 					hqrGetallocEntry(&bodyTable[currentPositionInBodyPtrTab], HQR_BODY_FILE, flag & 0xFFFF);
 
 					if (!bodyTable[currentPositionInBodyPtrTab]) {
-						printf("HQR ERROR: Loading body entities\n");
-						exit(1);
+						// TODO: printf("HQR ERROR: Loading body entities");
+						_engine->_system->fatalError();
 					}
 					prepareIsoModel(bodyTable[currentPositionInBodyPtrTab]);
 					*((uint16 *)bodyPtr3) = currentPositionInBodyPtrTab + 0x8000;
@@ -355,7 +358,7 @@ void Actor::initActor(int16 actorIdx) {
 
 		initSpriteActor(actorIdx);
 
-		setActorAngleSafe(0, 0, 0, &actor->move);
+		_engine->_movements->setActorAngleSafe(0, 0, 0, &actor->move);
 
 		if (actor->staticFlags.bUsesClipping) {
 			actor->lastX = actor->X;
@@ -375,7 +378,7 @@ void Actor::initActor(int16 actorIdx) {
 			_engine->_animations->initAnim(actor->anim, 0, 255, actorIdx);
 		}
 
-		setActorAngleSafe(actor->angle, actor->angle, 0, &actor->move);
+		_engine->_movements->setActorAngleSafe(actor->angle, actor->angle, 0, &actor->move);
 	}
 
 	actor->positionInMoveScript = -1;
@@ -430,7 +433,7 @@ void Actor::resetActor(int16 actorIdx) {
 	actor->animType = 0;
 	actor->animPosition = 0;
 
-	setActorAngleSafe(0, 0, 0, &actor->move);
+	_engine->_movements->setActorAngleSafe(0, 0, 0, &actor->move);
 
 	actor->positionInMoveScript = -1;
 	actor->positionInLifeScript = 0;
@@ -461,7 +464,7 @@ void Actor::hitActor(int32 actorIdx, int32 actorIdxAttacked, int32 strengthOfHit
 			actor->animPosition = tmpAnimPos;
 		} else {
 			if (angle != -1) {
-				setActorAngleSafe(angle, angle, 0, &actor->move);
+				_engine->_movements->setActorAngleSafe(angle, angle, 0, &actor->move);
 			}
 
 			if (_engine->getRandomNumber() & 1) {
@@ -471,10 +474,10 @@ void Actor::hitActor(int32 actorIdx, int32 actorIdxAttacked, int32 strengthOfHit
 			}
 		}
 
-		addExtraSpecial(actor->X, actor->Y + 1000, actor->Z, kHitStars);
+		_engine->_extra->addExtraSpecial(actor->X, actor->Y + 1000, actor->Z, kHitStars);
 
 		if (!actorIdxAttacked) {
-			heroMoved = 1;
+			_engine->_movements->heroMoved = 1;
 		}
 
 		actor->life -= strengthOfHit;
@@ -518,18 +521,18 @@ void Actor::processActorExtraBonus(int32 actorIdx) { // GiveExtraBonus
 	if (numBonus) {
 		currentBonus = bonusTable[_engine->getRandomNumber(numBonus)];
 		// if bonus is magic an no magic level yet, then give life points
-		if (!magicLevelIdx && currentBonus == 2) {
+		if (!_engine->_gameState->magicLevelIdx && currentBonus == 2) {
 			currentBonus = 1;
 		}
 		currentBonus += 3;
 
 		if (actor->dynamicFlags.bIsDead) {
-			addExtraBonus(actor->X, actor->Y, actor->Z, 0x100, 0, currentBonus, actor->bonusAmount);
+			_engine->_extra->addExtraBonus(actor->X, actor->Y, actor->Z, 0x100, 0, currentBonus, actor->bonusAmount);
 			// FIXME add constant for sample index
 			playSample(11, 0x1000, 1, actor->X, actor->Y, actor->Z, actorIdx);
 		} else {
-			int32 angle = getAngleAndSetTargetActorDistance(actor->X, actor->Z, sceneHero->X, sceneHero->Z);
-			addExtraBonus(actor->X, actor->Y + actor->boudingBox.Y.topRight, actor->Z, 200, angle, currentBonus, actor->bonusAmount);
+			int32 angle = _engine->_movements->getAngleAndSetTargetActorDistance(actor->X, actor->Z, sceneHero->X, sceneHero->Z);
+			_engine->_extra->addExtraBonus(actor->X, actor->Y + actor->boudingBox.Y.topRight, actor->Z, 200, angle, currentBonus, actor->bonusAmount);
 			// FIXME add constant for sample index
 			playSample(11, 0x1000, 1, actor->X, actor->Y + actor->boudingBox.Y.topRight, actor->Z, actorIdx);
 		}

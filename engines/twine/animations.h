@@ -25,7 +25,6 @@
 
 #include "actor.h"
 #include "common/scummsys.h"
-#include "twine/twine.h"
 
 namespace TwinE {
 
@@ -58,6 +57,8 @@ enum AnimationTypes {
 	kHit2 = 22,
 	kSabreAttack = 23
 };
+
+class TwinEEngine;
 
 class Animations {
 private:

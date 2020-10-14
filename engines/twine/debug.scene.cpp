@@ -26,13 +26,13 @@
 #include "redraw.h"
 #include "renderer.h"
 #include "scene.h"
+#include "twine.h"
 
 namespace TwinE {
 
-int32 showingZones = 0;
-int32 typeZones = 127; // all zones on as default
+DebugScene::DebugScene(TwinEEngine *engine) : _engine(engine) {}
 
-void drawBoundingBoxProjectPoints(ScenePoint *pPoint3d, ScenePoint *pPoint3dProjected) {
+void DebugScene::drawBoundingBoxProjectPoints(ScenePoint *pPoint3d, ScenePoint *pPoint3dProjected) {
 	projectPositionOnScreen(pPoint3d->X, pPoint3d->Y, pPoint3d->Z);
 
 	pPoint3dProjected->X = projPosX;
@@ -52,7 +52,7 @@ void drawBoundingBoxProjectPoints(ScenePoint *pPoint3d, ScenePoint *pPoint3dProj
 		renderBottom = projPosY;
 }
 
-int32 checkZoneType(int32 type) {
+int32 DebugScene::checkZoneType(int32 type) {
 	switch (type) {
 	case 0:
 		if (typeZones & 0x01)
@@ -89,7 +89,7 @@ int32 checkZoneType(int32 type) {
 	return 0;
 }
 
-void displayZones(int16 pKey) {
+void DebugScene::displayZones(int16 pKey) {
 	if (showingZones == 1) {
 		int z;
 		ZoneStruct *zonePtr = sceneZones;
@@ -125,37 +125,37 @@ void displayZones(int16 pKey) {
 
 				// compute the points in 3D
 
-				frontBottomLeftPoint.X = zonePtr->bottomLeft.X - cameraX;
-				frontBottomLeftPoint.Y = zonePtr->bottomLeft.Y - cameraY;
-				frontBottomLeftPoint.Z = zonePtr->topRight.Z - cameraZ;
+				frontBottomLeftPoint.X = zonePtr->bottomLeft.X - _engine->_grid->cameraX;
+				frontBottomLeftPoint.Y = zonePtr->bottomLeft.Y - _engine->_grid->cameraY;
+				frontBottomLeftPoint.Z = zonePtr->topRight.Z - _engine->_grid->cameraZ;
 
-				frontBottomRightPoint.X = zonePtr->topRight.X - cameraX;
-				frontBottomRightPoint.Y = zonePtr->bottomLeft.Y - cameraY;
-				frontBottomRightPoint.Z = zonePtr->topRight.Z - cameraZ;
+				frontBottomRightPoint.X = zonePtr->topRight.X - _engine->_grid->cameraX;
+				frontBottomRightPoint.Y = zonePtr->bottomLeft.Y - _engine->_grid->cameraY;
+				frontBottomRightPoint.Z = zonePtr->topRight.Z - _engine->_grid->cameraZ;
 
-				frontTopLeftPoint.X = zonePtr->bottomLeft.X - cameraX;
-				frontTopLeftPoint.Y = zonePtr->topRight.Y - cameraY;
-				frontTopLeftPoint.Z = zonePtr->topRight.Z - cameraZ;
+				frontTopLeftPoint.X = zonePtr->bottomLeft.X - _engine->_grid->cameraX;
+				frontTopLeftPoint.Y = zonePtr->topRight.Y - _engine->_grid->cameraY;
+				frontTopLeftPoint.Z = zonePtr->topRight.Z - _engine->_grid->cameraZ;
 
-				frontTopRightPoint.X = zonePtr->topRight.X - cameraX;
-				frontTopRightPoint.Y = zonePtr->topRight.Y - cameraY;
-				frontTopRightPoint.Z = zonePtr->topRight.Z - cameraZ;
+				frontTopRightPoint.X = zonePtr->topRight.X - _engine->_grid->cameraX;
+				frontTopRightPoint.Y = zonePtr->topRight.Y - _engine->_grid->cameraY;
+				frontTopRightPoint.Z = zonePtr->topRight.Z - _engine->_grid->cameraZ;
 
-				backBottomLeftPoint.X = zonePtr->bottomLeft.X - cameraX;
-				backBottomLeftPoint.Y = zonePtr->bottomLeft.Y - cameraY;
-				backBottomLeftPoint.Z = zonePtr->bottomLeft.Z - cameraZ;
+				backBottomLeftPoint.X = zonePtr->bottomLeft.X - _engine->_grid->cameraX;
+				backBottomLeftPoint.Y = zonePtr->bottomLeft.Y - _engine->_grid->cameraY;
+				backBottomLeftPoint.Z = zonePtr->bottomLeft.Z - _engine->_grid->cameraZ;
 
-				backBottomRightPoint.X = zonePtr->topRight.X - cameraX;
-				backBottomRightPoint.Y = zonePtr->bottomLeft.Y - cameraY;
-				backBottomRightPoint.Z = zonePtr->bottomLeft.Z - cameraZ;
+				backBottomRightPoint.X = zonePtr->topRight.X - _engine->_grid->cameraX;
+				backBottomRightPoint.Y = zonePtr->bottomLeft.Y - _engine->_grid->cameraY;
+				backBottomRightPoint.Z = zonePtr->bottomLeft.Z - _engine->_grid->cameraZ;
 
-				backTopLeftPoint.X = zonePtr->bottomLeft.X - cameraX;
-				backTopLeftPoint.Y = zonePtr->topRight.Y - cameraY;
-				backTopLeftPoint.Z = zonePtr->bottomLeft.Z - cameraZ;
+				backTopLeftPoint.X = zonePtr->bottomLeft.X - _engine->_grid->cameraX;
+				backTopLeftPoint.Y = zonePtr->topRight.Y - _engine->_grid->cameraY;
+				backTopLeftPoint.Z = zonePtr->bottomLeft.Z - _engine->_grid->cameraZ;
 
-				backTopRightPoint.X = zonePtr->topRight.X - cameraX;
-				backTopRightPoint.Y = zonePtr->topRight.Y - cameraY;
-				backTopRightPoint.Z = zonePtr->bottomLeft.Z - cameraZ;
+				backTopRightPoint.X = zonePtr->topRight.X - _engine->_grid->cameraX;
+				backTopRightPoint.Y = zonePtr->topRight.Y - _engine->_grid->cameraY;
+				backTopRightPoint.Z = zonePtr->bottomLeft.Z - _engine->_grid->cameraZ;
 
 				// project all points
 

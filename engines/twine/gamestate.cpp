@@ -38,21 +38,17 @@
 #include "screens.h"
 #include "sound.h"
 #include "text.h"
+#include "actor.h"
+#include "twine.h"
 
 namespace TwinE {
 
 #define SAVE_DIR "save/"
 
-int32 magicLevelStrengthOfHit[] = {
-    kNoBallStrenght,
-    kYellowBallStrenght,
-    kGreenBallStrenght,
-    kRedBallStrenght,
-    kFireBallStrength,
-    0};
+GameState::GameState(TwinEEngine* engine) : _engine(engine) {}
 
 /** Initialize engine 3D projections */
-void initEngineProjections() { // reinitAll1
+void GameState::initEngineProjections() { // reinitAll1
 	setOrthoProjection(311, 240, 512);
 	setBaseTranslation(0, 0, 0);
 	setBaseRotation(0, 0, 0);
@@ -60,10 +56,10 @@ void initEngineProjections() { // reinitAll1
 }
 
 /** Initialize variables */
-void initSceneVars() {
+void GameState::initSceneVars() {
 	int32 i;
 
-	resetExtras();
+	_engine->_extra->resetExtras();
 
 	for (i = 0; i < OVERLAY_MAX_ENTRIES; i++) {
 		overlayList[i].info0 = -1;
@@ -104,11 +100,11 @@ void initSceneVars() {
 	sceneNumZones = 0;
 	sceneNumTracks = 0;
 
-	currentPositionInBodyPtrTab = 0;
+	_engine->_actor->currentPositionInBodyPtrTab = 0;
 }
 
-void initHeroVars() { // reinitAll3
-	resetActor(0);    // reset Hero
+void GameState::initHeroVars() { // reinitAll3
+	_engine->_actor->resetActor(0);    // reset Hero
 
 	magicBallIdx = -1;
 
@@ -126,7 +122,7 @@ void initHeroVars() { // reinitAll3
 }
 
 /** Initialize all engine variables */
-void initEngineVars(int32 save) { // reinitAll
+void GameState::initEngineVars(int32 save) { // reinitAll
 	resetClip();
 
 	alphaLight = 896;
@@ -141,7 +137,7 @@ void initEngineVars(int32 save) { // reinitAll
 
 	currentSceneIdx = -1;
 	needChangeScene = 0;
-	quitGame = -1;
+	_engine->quitGame = -1;
 	mecaPinguinIdx = -1;
 	canShowCredits = 0;
 
@@ -152,7 +148,7 @@ void initEngineVars(int32 save) { // reinitAll
 	inventoryNumKeys = 0;
 	inventoryNumGas = 0;
 
-	cropBottomScreen = 0;
+	_engine->_actor->cropBottomScreen = 0;
 
 	magicLevelIdx = 0;
 	usingSabre = 0;
@@ -161,9 +157,9 @@ void initEngineVars(int32 save) { // reinitAll
 
 	currentTextBank = 0;
 	currentlyFollowedActor = 0;
-	heroBehaviour = 0;
-	previousHeroAngle = 0;
-	previousHeroBehaviour = 0;
+	_engine->_actor->heroBehaviour = 0;
+	_engine->_actor->previousHeroAngle = 0;
+	_engine->_actor->previousHeroBehaviour = 0;
 
 	if (save == -1) {
 		loadGame();
@@ -173,7 +169,7 @@ void initEngineVars(int32 save) { // reinitAll
 	}
 }
 
-void loadGame() {
+void GameState::loadGame() {
 	FileReader fr;
 	uint8 data;
 	int8 *namePtr;
@@ -197,8 +193,8 @@ void loadGame() {
 	frread(&fr, &needChangeScene, 1); // scene index
 	frread(&fr, &gameChapter, 1);
 
-	frread(&fr, &heroBehaviour, 1);
-	previousHeroBehaviour = heroBehaviour;
+	frread(&fr, &_engine->_actor->heroBehaviour, 1);
+	_engine->_actor->previousHeroBehaviour = _engine->_actor->heroBehaviour;
 	frread(&fr, &sceneHero->life, 1);
 	frread(&fr, &inventoryNumKashes, 2);
 	frread(&fr, &magicLevelIdx, 1);
@@ -208,7 +204,7 @@ void loadGame() {
 	frread(&fr, &newHeroY, 2);
 	frread(&fr, &newHeroZ, 2);
 	frread(&fr, &sceneHero->angle, 2);
-	previousHeroAngle = sceneHero->angle;
+	_engine->_actor->previousHeroAngle = sceneHero->angle;
 	frread(&fr, &sceneHero->body, 1);
 
 	frread(&fr, &data, 1); // number of holomap locations, always 0x96
@@ -228,7 +224,7 @@ void loadGame() {
 	heroPositionType = kReborn;
 }
 
-void saveGame() {
+void GameState::saveGame() {
 	FileReader fr;
 	int8 data;
 
@@ -249,7 +245,7 @@ void saveGame() {
 
 	frwrite(&fr, &currentSceneIdx, 1, 1);
 	frwrite(&fr, &gameChapter, 1, 1);
-	frwrite(&fr, &heroBehaviour, 1, 1);
+	frwrite(&fr, &_engine->_actor->heroBehaviour, 1, 1);
 	frwrite(&fr, &sceneHero->life, 1, 1);
 	frwrite(&fr, &inventoryNumKashes, 2, 1);
 	frwrite(&fr, &magicLevelIdx, 1, 1);
@@ -277,7 +273,7 @@ void saveGame() {
 	frclose(&fr);
 }
 
-void processFoundItem(int32 item) {
+void GameState::processFoundItem(int32 item) {
 	int32 itemCameraX, itemCameraY, itemCameraZ; // objectXYZ
 	int32 itemX, itemY, itemZ;                   // object2XYZ
 	int32 boxTopLeftX, boxTopLeftY, boxBottomRightX, boxBottomRightY;
@@ -294,13 +290,13 @@ void processFoundItem(int32 item) {
 	redrawEngineActions(1);
 	sceneHero->staticFlags.bIsHidden = 0;
 
-	copyScreen(frontVideoBuffer, workVideoBuffer);
+	copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
 
 	itemCameraX = newCameraX << 9;
 	itemCameraY = newCameraY << 8;
 	itemCameraZ = newCameraZ << 9;
 
-	renderIsoModel(sceneHero->X - itemCameraX, sceneHero->Y - itemCameraY, sceneHero->Z - itemCameraZ, 0, 0x80, 0, bodyTable[sceneHero->entity]);
+	renderIsoModel(sceneHero->X - itemCameraX, sceneHero->Y - itemCameraY, sceneHero->Z - itemCameraZ, 0, 0x80, 0, _engine->_actor->bodyTable[sceneHero->entity]);
 	setClip(renderLeft, renderTop, renderRight, renderBottom);
 
 	itemX = (sceneHero->X + 0x100) >> 9;
@@ -328,10 +324,10 @@ void processFoundItem(int32 item) {
 	{
 		int32 tmpLanguageCDId;
 		stopMusic();
-		tmpLanguageCDId = cfgfile.LanguageCDId;
-		//cfgfile.LanguageCDId = 0; // comented so we can init vox bank
+		tmpLanguageCDId = _engine->cfgfile.LanguageCDId;
+		//_engine->cfgfile.LanguageCDId = 0; // comented so we can init vox bank
 		initTextBank(2);
-		cfgfile.LanguageCDId = tmpLanguageCDId;
+		_engine->cfgfile.LanguageCDId = tmpLanguageCDId;
 	}
 
 	resetClip();
@@ -341,17 +337,17 @@ void processFoundItem(int32 item) {
 	textState = 1;
 	quitItem = 0;
 
-	if (cfgfile.LanguageCDId) {
+	if (_engine->cfgfile.LanguageCDId) {
 		initVoxToPlay(item);
 	}
 
-	currentAnim = animTable[getBodyAnimIndex(kFoundItem, 0)];
+	currentAnim = _engine->_animations->animTable[_engine->_animations->getBodyAnimIndex(kFoundItem, 0)];
 
 	tmpAnimTimer = sceneHero->animTimerData;
 
-	animBuffer2 += stockAnimation(animBuffer2, bodyTable[sceneHero->entity], &sceneHero->animTimerData);
-	if (animBuffer1 + 4488 < animBuffer2) {
-		animBuffer2 = animBuffer1;
+	_engine->_animations->animBuffer2 += _engine->_animations->stockAnimation(_engine->_animations->animBuffer2, _engine->_actor->bodyTable[sceneHero->entity], &sceneHero->animTimerData);
+	if (_engine->_animations->animBuffer1 + 4488 < _engine->_animations->animBuffer2) {
+		_engine->_animations->animBuffer2 = _engine->_animations->animBuffer1;
 	}
 
 	currentAnimState = 0;
@@ -376,14 +372,14 @@ void processFoundItem(int32 item) {
 		resetClip();
 		initEngineProjections();
 
-		if (setModelAnimation(currentAnimState, currentAnim, bodyTable[sceneHero->entity], &sceneHero->animTimerData)) {
+		if (_engine->_animations->setModelAnimation(currentAnimState, currentAnim, _engine->_actor->bodyTable[sceneHero->entity], &sceneHero->animTimerData)) {
 			currentAnimState++; // keyframe
-			if (currentAnimState >= getNumKeyframes(currentAnim)) {
-				currentAnimState = getStartKeyframe(currentAnim);
+			if (currentAnimState >= _engine->_animations->getNumKeyframes(currentAnim)) {
+				currentAnimState = _engine->_animations->getStartKeyframe(currentAnim);
 			}
 		}
 
-		renderIsoModel(sceneHero->X - itemCameraX, sceneHero->Y - itemCameraY, sceneHero->Z - itemCameraZ, 0, 0x80, 0, bodyTable[sceneHero->entity]);
+		renderIsoModel(sceneHero->X - itemCameraX, sceneHero->Y - itemCameraY, sceneHero->Z - itemCameraZ, 0, 0x80, 0, _engine->_actor->bodyTable[sceneHero->entity]);
 		setClip(renderLeft, renderTop, renderRight, renderBottom);
 		drawOverModelActor(itemX, itemY, itemZ);
 		addRedrawArea(renderLeft, renderTop, renderRight, renderBottom);
@@ -410,7 +406,7 @@ void processFoundItem(int32 item) {
 			}
 		}
 
-		lbaTime++;
+		_engine->lbaTime++;
 	}
 
 	while (playVoxSimple(currDialTextEntry)) {
@@ -429,16 +425,16 @@ void processFoundItem(int32 item) {
 		delaySkip(1);
 	} while (!skipIntro);*/
 
-	if (cfgfile.LanguageCDId && isSamplePlaying(currDialTextEntry)) {
+	if (_engine->cfgfile.LanguageCDId && isSamplePlaying(currDialTextEntry)) {
 		stopVox(currDialTextEntry);
 	}
 
 	sceneHero->animTimerData = tmpAnimTimer;
 }
 
-void processGameChoices(int32 choiceIdx) {
+void GameState::processGameChoices(int32 choiceIdx) {
 	int32 i;
-	copyScreen(frontVideoBuffer, workVideoBuffer);
+	copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
 
 	gameChoicesSettings[0] = 0;          // Current loaded button (button number)
 	gameChoicesSettings[1] = numChoices; // Num of buttons
@@ -458,7 +454,7 @@ void processGameChoices(int32 choiceIdx) {
 	choiceAnswer = gameChoices[gameChoicesSettings[0]];
 
 	// get right VOX entry index
-	if (cfgfile.LanguageCDId) {
+	if (_engine->cfgfile.LanguageCDId) {
 		initVoxToPlay(choiceAnswer);
 		while (playVoxSimple(currDialTextEntry))
 			;
@@ -469,11 +465,11 @@ void processGameChoices(int32 choiceIdx) {
 	}
 }
 
-void processGameoverAnimation() { // makeGameOver
+void GameState::processGameoverAnimation() { // makeGameOver
 	int32 tmpLbaTime, startLbaTime;
 	uint8 *gameOverPtr;
 
-	tmpLbaTime = lbaTime;
+	tmpLbaTime = _engine->lbaTime;
 
 	// workaround to fix hero redraw after drowning
 	sceneHero->staticFlags.bIsHidden = 1;
@@ -482,7 +478,7 @@ void processGameoverAnimation() { // makeGameOver
 
 	// TODO: drawInGameTransBox
 	setPalette(paletteRGBA);
-	copyScreen(frontVideoBuffer, workVideoBuffer);
+	copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
 	gameOverPtr = malloc(hqrEntrySize(HQR_RESS_FILE, RESSHQR_GAMEOVERMDL));
 	hqrGetEntry(gameOverPtr, HQR_RESS_FILE, RESSHQR_GAMEOVERMDL);
 
@@ -493,25 +489,25 @@ void processGameoverAnimation() { // makeGameOver
 		stopSamples();
 		stopMidiMusic(); // stop fade music
 		setCameraPosition(320, 240, 128, 200, 200);
-		startLbaTime = lbaTime;
+		startLbaTime = _engine->lbaTime;
 		setClip(120, 120, 519, 359);
 
-		while (skipIntro != 1 && (lbaTime - startLbaTime) <= 0x1F4) {
+		while (skipIntro != 1 && (_engine->lbaTime - startLbaTime) <= 0x1F4) {
 			readKeys();
 
-			avg = getAverageValue(40000, 3200, 500, lbaTime - startLbaTime);
-			cdot = crossDot(1, 1024, 100, (lbaTime - startLbaTime) % 0x64);
-			blitBox(120, 120, 519, 359, (int8 *)workVideoBuffer, 120, 120, (int8 *)frontVideoBuffer);
+			avg = _engine->_collision->getAverageValue(40000, 3200, 500, _engine->lbaTime - startLbaTime);
+			cdot = crossDot(1, 1024, 100, (_engine->lbaTime - startLbaTime) % 0x64);
+			blitBox(120, 120, 519, 359, (int8 *)_engine->workVideoBuffer, 120, 120, (int8 *)_engine->frontVideoBuffer);
 			setCameraAngle(0, 0, 0, 0, -cdot, 0, avg);
 			renderIsoModel(0, 0, 0, 0, 0, 0, gameOverPtr);
 			copyBlockPhys(120, 120, 519, 359);
 
-			lbaTime++;
+			_engine->lbaTime++;
 			sdldelay(15);
 		}
 
-		playSample(37, Rnd(2000) + 3096, 1, 0x80, 0x80, 0x80, -1);
-		blitBox(120, 120, 519, 359, (int8 *)workVideoBuffer, 120, 120, (int8 *)frontVideoBuffer);
+		playSample(37, _engine->getRandomNumber(2000) + 3096, 1, 0x80, 0x80, 0x80, -1);
+		blitBox(120, 120, 519, 359, (int8 *)_engine->workVideoBuffer, 120, 120, (int8 *)_engine->frontVideoBuffer);
 		setCameraAngle(0, 0, 0, 0, 0, 0, 3200);
 		renderIsoModel(0, 0, 0, 0, 0, 0, gameOverPtr);
 		copyBlockPhys(120, 120, 519, 359);
@@ -520,11 +516,11 @@ void processGameoverAnimation() { // makeGameOver
 
 		resetClip();
 		free(gameOverPtr);
-		copyScreen(workVideoBuffer, frontVideoBuffer);
+		copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 		flip();
 		initEngineProjections();
 
-		lbaTime = tmpLbaTime;
+		_engine->lbaTime = tmpLbaTime;
 	}
 }
 

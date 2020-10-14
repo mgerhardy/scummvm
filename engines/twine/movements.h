@@ -40,98 +40,106 @@ enum ControlMode {
 	kRandom = 7
 };
 
-/** Hero moved */
-int16 heroMoved; // twinsenMove
-/** Hero Action */
-int16 heroAction; // action
+class TwinEEngine;
 
-/** Process actor X coordinate */
-int16 processActorX;
-/** Process actor Y coordinate */
-int16 processActorY;
-/** Process actor Z coordinate */
-int16 processActorZ;
+class Movements {
+private:
+	TwinEEngine *_engine;
+public:
+	Movements(TwinEEngine *engine);
+	/** Hero moved */
+	int16 heroMoved; // twinsenMove
+	/** Hero Action */
+	int16 heroAction; // action
 
-ActorStruct *processActorPtr; // processActorVar1
+	/** Process actor X coordinate */
+	int16 processActorX;
+	/** Process actor Y coordinate */
+	int16 processActorY;
+	/** Process actor Z coordinate */
+	int16 processActorZ;
 
-/** Previous process actor X coordinate */
-int16 previousActorX; // processActorVar2
-/** Previous process actor Y coordinate */
-int16 previousActorY; // processActorVar3
-/** Previous process actor Z coordinate */
-int16 previousActorZ; // processActorVar4
+	ActorStruct *processActorPtr; // processActorVar1
 
-int32 targetActorDistance; // DoTrackVar1
+	/** Previous process actor X coordinate */
+	int16 previousActorX; // processActorVar2
+	/** Previous process actor Y coordinate */
+	int16 previousActorY; // processActorVar3
+	/** Previous process actor Z coordinate */
+	int16 previousActorZ; // processActorVar4
 
-/** Get shadow position
+	int32 targetActorDistance; // DoTrackVar1
+
+	/** Get shadow position
 	@param X Shadow X coordinate
 	@param Y Shadow Y coordinate
 	@param Z Shadow Z coordinate */
-void getShadowPosition(int32 X, int32 Y, int32 Z);
+	void getShadowPosition(int32 X, int32 Y, int32 Z);
 
-/** Set actor safe angle
+	/** Set actor safe angle
 	@param startAngle start angle
 	@param endAngle end angle
 	@param stepAngle number of steps
 	@param movePtr time pointer to update */
-void setActorAngleSafe(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveStruct *movePtr);
+	void setActorAngleSafe(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveStruct *movePtr);
 
-/** Clear actors safe angle
+	/** Clear actors safe angle
 	@param actorPtr actor pointer */
-void clearRealAngle(ActorStruct *actorPtr);
+	void clearRealAngle(ActorStruct *actorPtr);
 
-/** Set actor safe angle
+	/** Set actor safe angle
 	@param startAngle start angle
 	@param endAngle end angle
 	@param stepAngle number of steps
 	@param movePtr time pointer to update */
-void setActorAngle(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveStruct *movePtr);
+	void setActorAngle(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveStruct *movePtr);
 
-/** Get actor angle
+	/** Get actor angle
 	@param x1 Actor 1 X
 	@param z1 Actor 1 Z
 	@param x2 Actor 2 X
 	@param z2 Actor 2 Z */
-int32 getAngleAndSetTargetActorDistance(int32 x1, int32 z1, int32 x2, int32 z2);
+	int32 getAngleAndSetTargetActorDistance(int32 x1, int32 z1, int32 x2, int32 z2);
 
-/** Get actor real angle
+	/** Get actor real angle
 	@param movePtr time pointer to process */
-int32 getRealAngle(ActorMoveStruct *movePtr);
+	int32 getRealAngle(ActorMoveStruct *movePtr);
 
-/** Get actor step
+	/** Get actor step
 	@param movePtr time pointer to process */
-int32 getRealValue(ActorMoveStruct *movePtr);
+	int32 getRealValue(ActorMoveStruct *movePtr);
 
-/** Rotate actor with a given angle
+	/** Rotate actor with a given angle
 	@param X Actor current X coordinate
 	@param Z Actor current Z coordinate
 	@param angle Actor angle to rotate */
-void rotateActor(int32 X, int32 Z, int32 angle);
+	void rotateActor(int32 X, int32 Z, int32 angle);
 
-/** Get distance value in 2D
+	/** Get distance value in 2D
 	@param x1 Actor 1 X coordinate
 	@param z1 Actor 1 Z coordinate
 	@param x2 Actor 2 X coordinate
 	@param z2 Actor 2 Z coordinate */
-int32 getDistance2D(int32 x1, int32 z1, int32 x2, int32 z2);
+	int32 getDistance2D(int32 x1, int32 z1, int32 x2, int32 z2);
 
-/** Get distance value in 3D
+	/** Get distance value in 3D
 	@param x1 Actor 1 X coordinate
 	@param y1 Actor 1 Y coordinate
 	@param z1 Actor 1 Z coordinate
 	@param x2 Actor 2 X coordinate
 	@param y2 Actor 2 Y coordinate
 	@param z2 Actor 2 Z coordinate */
-int32 getDistance3D(int32 x1, int32 y1, int32 z1, int32 x2, int32 y2, int32 z2);
+	int32 getDistance3D(int32 x1, int32 y1, int32 z1, int32 x2, int32 y2, int32 z2);
 
-/** Move actor around the scene
+	/** Move actor around the scene
 	@param angleFrom Current actor angle
 	@param angleTo Angle to rotate
 	@param speed Rotate speed
 	@param movePtr Pointer to process movements */
-void moveActor(int32 angleFrom, int32 angleTo, int32 speed, ActorMoveStruct *movePtr);
+	void moveActor(int32 angleFrom, int32 angleTo, int32 speed, ActorMoveStruct *movePtr);
 
-void processActorMovements(int32 actorIdx);
+	void processActorMovements(int32 actorIdx);
+};
 
 } // namespace TwinE
 

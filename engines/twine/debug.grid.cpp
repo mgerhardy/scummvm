@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "common/debug.h"
 #include "debug.grid.h"
 #include "grid.h"
 #include "redraw.h"
@@ -32,44 +33,39 @@
 
 namespace TwinE {
 
-int32 useFreeCamera = 0;
-#ifdef _DEBUG
-int32 canChangeScenes = 1;
-#else
-int32 canChangeScenes = 0;
-#endif
+DebugGrid::DebugGrid(TwinEEngine *engine) : _engine(engine) {}
 
 /** Change scenario camera positions */
-void changeGridCamera(int16 pKey) {
+void DebugGrid::changeGridCamera(int16 pKey) {
 	if (useFreeCamera) {
 		// Press up - more X positions
 		if (pKey == 0x2E) {
-			newCameraZ--;
+			_engine->_grid->newCameraZ--;
 			reqBgRedraw = 1;
 		}
 
 		// Press down - less X positions
 		if (pKey == 0x2C) {
-			newCameraZ++;
+			_engine->_grid->newCameraZ++;
 			reqBgRedraw = 1;
 		}
 
 		// Press left - less Z positions
 		if (pKey == 0x1F) {
-			newCameraX--;
+			_engine->_grid->newCameraX--;
 			reqBgRedraw = 1;
 		}
 
 		// Press right - more Z positions
 		if (pKey == 0x2D) {
-			newCameraX++;
+			_engine->_grid->newCameraX++;
 			reqBgRedraw = 1;
 		}
 	}
 }
 
 /** Change grid index */
-void changeGrid(int16 pKey) {
+void DebugGrid::changeGrid(int16 pKey) {
 	if (canChangeScenes) {
 		// Press up - more X positions
 		if (pKey == 0x13) {
@@ -89,40 +85,40 @@ void changeGrid(int16 pKey) {
 			reqBgRedraw = 1;
 		}
 
-		if (cfgfile.Debug && (pKey == 'f' || pKey == 'r'))
-			printf("\nGrid index changed: %d\n", needChangeScene);
+		if (_engine->cfgfile.Debug && (pKey == 'f' || pKey == 'r'))
+			debug("\nGrid index changed: %d\n", needChangeScene);
 	}
 }
 
 /** Apply and change disappear celling grid */
-void applyCellingGrid(int16 pKey) {
+void DebugGrid::applyCellingGrid(int16 pKey) {
 	// Increase celling grid index
 	if (pKey == 0x22) {
-		cellingGridIdx++;
-		if (cellingGridIdx > 133)
-			cellingGridIdx = 133;
+		_engine->_grid->cellingGridIdx++;
+		if (_engine->_grid->cellingGridIdx > 133)
+			_engine->_grid->cellingGridIdx = 133;
 	}
 	// Decrease celling grid index
 	if (pKey == 0x30) {
-		cellingGridIdx--;
-		if (cellingGridIdx < 0)
-			cellingGridIdx = 0;
+		_engine->_grid->cellingGridIdx--;
+		if (_engine->_grid->cellingGridIdx < 0)
+			_engine->_grid->cellingGridIdx = 0;
 	}
 
 	// Enable/disable celling grid
-	if (pKey == 0x14 && useCellingGrid == -1) {
-		useCellingGrid = 1;
+	if (pKey == 0x14 && _engine->_grid->useCellingGrid == -1) {
+		_engine->_grid->useCellingGrid = 1;
 		//createGridMap();
-		initCellingGrid(cellingGridIdx);
-		if (cfgfile.Debug && pKey == 0x14)
-			printf("\nEnable Celling Grid index: %d\n", cellingGridIdx);
+		_engine->_grid->initCellingGrid(_engine->_grid->cellingGridIdx);
+		if (_engine->cfgfile.Debug && pKey == 0x14)
+			debug("\nEnable Celling Grid index: %d\n", _engine->_grid->cellingGridIdx);
 		needChangeScene = -2; // tricky to make the fade
-	} else if (pKey == 0x14 && useCellingGrid == 1) {
-		useCellingGrid = -1;
-		createGridMap();
+	} else if (pKey == 0x14 && _engine->_grid->useCellingGrid == 1) {
+		_engine->_grid->useCellingGrid = -1;
+		_engine->_grid->createGridMap();
 		reqBgRedraw = 1;
-		if (cfgfile.Debug && pKey == 0x14)
-			printf("\nDisable Celling Grid index: %d\n", cellingGridIdx);
+		if (_engine->cfgfile.Debug && pKey == 0x14)
+			debug("\nDisable Celling Grid index: %d\n", _engine->_grid->cellingGridIdx);
 		needChangeScene = -2; // tricky to make the fade
 	}
 }

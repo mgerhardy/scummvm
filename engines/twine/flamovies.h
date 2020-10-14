@@ -23,12 +23,17 @@
 #ifndef TWINE_FLAMOVIES_H
 #define TWINE_FLAMOVIES_H
 
-#include "twine.h"
+#include "common/scummsys.h"
+#include "filereader.h"
 
 namespace TwinE {
 
 /** FLA movie directory */
 #define FLA_DIR "fla/"
+/** Original FLA screen width */
+#define FLASCREEN_WIDTH 320
+/** Original FLA screen height */
+#define FLASCREEN_HEIGHT 200
 
 /** FLA movie header structure */
 typedef struct FLAHeaderStruct {
@@ -72,12 +77,55 @@ typedef struct FLASampleStruct {
 	uint8 y;
 } FLASampleStruct;
 
-/** FLA movie file buffer */
-unsigned char flaBuffer[FLASCREEN_WIDTH * FLASCREEN_HEIGHT];
+/** FLA Frame Opcode types */
+enum FlaFrameOpcode {
+	kLoadPalette = 0,
+	kFade = 1,
+	kPlaySample = 2,
+	kStopSample = 4,
+	kDeltaFrame = 5,
+	kKeyFrame = 7
+};
 
-/** Play FLA movies
+class TwinEEngine;
+
+class FlaMovies {
+private:
+	TwinEEngine *_engine;
+
+	/** Auxiliar FLA fade out variable */
+	int32 _fadeOut;
+	/** Auxiliar FLA fade out variable to count frames between the fade */
+	int32 fadeOutFrames;
+
+	/** FLA movie sample auxiliar table */
+	int32 flaSampleTable[100];
+	/** Number of samples in FLA movie */
+	int32 samplesInFla;
+	/** Auxiliar work video buffer */
+	uint8 *workVideoBufferCopy;
+	/** FLA movie header data */
+	FLAHeaderStruct flaHeaderData;
+	/** FLA movie header data */
+	FLAFrameDataStruct frameData;
+
+	FileReader frFla;
+
+	void drawKeyFrame(uint8 *ptr, int32 width, int32 height);
+	void drawDeltaFrame(uint8 *ptr, int32 width);
+	void scaleFla2x();
+	void processFrame();
+
+public:
+	FlaMovies(TwinEEngine *engine);
+
+	/** FLA movie file buffer */
+	unsigned char flaBuffer[FLASCREEN_WIDTH * FLASCREEN_HEIGHT];
+
+	/** Play FLA movies
 	@param flaName FLA movie name */
-void playFlaMovie(int8 *flaName);
+	void playFlaMovie(int8 *flaName);
+};
 
 } // namespace TwinE
 

@@ -24,7 +24,6 @@
 #define TWINE_ACTOR_H
 
 #include "common/scummsys.h"
-#include "twine/twine.h"
 
 namespace TwinE {
 
@@ -176,6 +175,8 @@ typedef struct ActorStruct {
 	ActorMoveStruct move;
 	AnimTimerDataStruct animTimerData;
 } ActorStruct;
+
+class TwinEEngine;
 
 class Actor {
 private:

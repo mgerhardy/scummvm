@@ -26,6 +26,7 @@
 
 #include "actor.h"
 #include "collision.h"
+#include "common/textconsole.h"
 #include "grid.h"
 #include "interface.h"
 #include "redraw.h"
@@ -34,6 +35,7 @@
 #include "scene.h"
 #include "screens.h"
 #include "sdlengine.h"
+#include "twine.h"
 
 namespace TwinE {
 
@@ -44,74 +46,14 @@ namespace TwinE {
 /** Grip Z size */
 #define GRID_SIZE_Z GRID_SIZE_X
 
-/** Total number of bricks allowed in the game */
-#define NUM_BRICKS 9000
-
-/** Total number of bricks allowed in the game */
-#define CELLING_GRIDS_START_INDEX 120
-
-/** Table with all loaded bricks */
-uint8 *brickTable[NUM_BRICKS];
-/** Table with all loaded bricks masks */
-uint8 *brickMaskTable[NUM_BRICKS];
-/** Table with all loaded bricks sizes */
-uint32 brickSizeTable[NUM_BRICKS];
-/** Table with all loaded bricks usage */
-uint8 brickUsageTable[NUM_BRICKS];
-
-/** Current grid pointer */
-uint8 *currentGrid;
-/** Current block library pointer */
-uint8 *currentBll;
-/** Number of block libraries */
-int32 numberOfBll;
-
-/** Block fragment entry */
-struct BlockEntry {
-	/** Block library index */
-	uint8 blockIdx;
-	/** Brick index inside the block library */
-	uint8 brickBlockIdx;
-};
-/** Grid block entry types */
-typedef struct BlockEntry blockMap[64][64][25];
-
-/** Brick entry data */
-typedef struct BrickEntry {
-	/** Brick X position in screen */
-	int16 x; //z
-	/** Brick Y position in screen */
-	int16 y;
-	/** Brick Z position in screen */
-	int16 z; // x
-	/** Brick pixel X position */
-	int16 posX;
-	/** Brick pixel Y position */
-	int16 posY;
-	/** Brick index */
-	int16 index;
-	/** Brick shape type */
-	uint8 shape;
-	/** Brick sound type */
-	uint8 sound;
-} BrickEntry;
-
-/** Brick data buffer */
-BrickEntry bricksDataBuffer[28][150];
-/** Brick info buffer */
-int16 brickInfoBuffer[28];
-
-/** Current brick pixel X position */
-int32 brickPixelPosX;
-/** Current brick pixel Y position */
-int32 brickPixelPosY;
+Grid::Grid(TwinEEngine *engine) : _engine(engine) {}
 
 /** Copy grid mask to allow actors to display over the bricks
 	@param index current brick index
 	@param x grid X coordinate
 	@param y grid Y coordinate
 	@param buffer work video buffer */
-void copyGridMask(int32 index, int32 x, int32 y, uint8 *buffer) {
+void Grid::copyGridMask(int32 index, int32 x, int32 y, uint8 *buffer) {
 	uint8 *ptr;
 	int32 top;
 	int32 bottom;
@@ -182,8 +124,8 @@ void copyGridMask(int32 index, int32 x, int32 y, uint8 *buffer) {
 			return;
 	}
 
-	outPtr = frontVideoBuffer + screenLookupTable[absY] + left;
-	inPtr = buffer + screenLookupTable[absY] + left;
+	outPtr = _engine->frontVideoBuffer + _engine->screenLookupTable[absY] + left;
+	inPtr = buffer + _engine->screenLookupTable[absY] + left;
 
 	do {
 		vc3 = *(ptr++);
@@ -222,7 +164,7 @@ void copyGridMask(int32 index, int32 x, int32 y, uint8 *buffer) {
 	@param X actor X coordinate
 	@param Y actor Y coordinate
 	@param Z actor Z coordinate */
-void drawOverModelActor(int32 X, int32 Y, int32 Z) {
+void Grid::drawOverModelActor(int32 X, int32 Y, int32 Z) {
 	int32 CopyBlockPhysLeft;
 	int32 CopyBlockPhysRight;
 	int32 i;
@@ -238,7 +180,7 @@ void drawOverModelActor(int32 X, int32 Y, int32 Z) {
 
 			if (currBrickEntry->posY + 38 > textWindowTop && currBrickEntry->posY <= textWindowBottom && currBrickEntry->y >= Y) {
 				if (currBrickEntry->x + currBrickEntry->z > Z + X) {
-					copyGridMask(currBrickEntry->index, (j * 24) - 24, currBrickEntry->posY, workVideoBuffer);
+					copyGridMask(currBrickEntry->index, (j * 24) - 24, currBrickEntry->posY, _engine->workVideoBuffer);
 				}
 			}
 		}
@@ -249,7 +191,7 @@ void drawOverModelActor(int32 X, int32 Y, int32 Z) {
 	@param X actor X coordinate
 	@param Y actor Y coordinate
 	@param Z actor Z coordinate */
-void drawOverSpriteActor(int32 X, int32 Y, int32 Z) {
+void Grid::drawOverSpriteActor(int32 X, int32 Y, int32 Z) {
 	int32 CopyBlockPhysLeft;
 	int32 CopyBlockPhysRight;
 	int32 i;
@@ -265,11 +207,11 @@ void drawOverSpriteActor(int32 X, int32 Y, int32 Z) {
 
 			if (currBrickEntry->posY + 38 > textWindowTop && currBrickEntry->posY <= textWindowBottom && currBrickEntry->y >= Y) {
 				if ((currBrickEntry->x == X) && (currBrickEntry->z == Z)) {
-					copyGridMask(currBrickEntry->index, (j * 24) - 24, currBrickEntry->posY, workVideoBuffer);
+					copyGridMask(currBrickEntry->index, (j * 24) - 24, currBrickEntry->posY, _engine->workVideoBuffer);
 				}
 
 				if ((currBrickEntry->x > X) || (currBrickEntry->z > Z)) {
-					copyGridMask(currBrickEntry->index, (j * 24) - 24, currBrickEntry->posY, workVideoBuffer);
+					copyGridMask(currBrickEntry->index, (j * 24) - 24, currBrickEntry->posY, _engine->workVideoBuffer);
 				}
 			}
 		}
@@ -279,7 +221,7 @@ void drawOverSpriteActor(int32 X, int32 Y, int32 Z) {
 /** Process brick masks to allow actors to display over the bricks
 	@param buffer brick pointer buffer
 	@param ptr brick mask pointer buffer */
-int processGridMask(uint8 *buffer, uint8 *ptr) {
+int Grid::processGridMask(uint8 *buffer, uint8 *ptr) {
 	uint32 *ptrSave = (uint32 *)ptr;
 	uint8 *ptr2;
 	uint8 *esi;
@@ -350,7 +292,7 @@ int processGridMask(uint8 *buffer, uint8 *ptr) {
 }
 
 /** Create grid masks to allow display actors over the bricks */
-void createGridMask() {
+void Grid::createGridMask() {
 	int32 b;
 
 	for (b = 0; b < NUM_BRICKS; b++) {
@@ -368,7 +310,7 @@ void createGridMask() {
 	@param width sprite width size
 	@param height sprite height size
 	@param spritePtr sprite buffer pointer */
-void getSpriteSize(int32 offset, int32 *width, int32 *height, uint8 *spritePtr) {
+void Grid::getSpriteSize(int32 offset, int32 *width, int32 *height, uint8 *spritePtr) {
 	spritePtr += *((int32 *)(spritePtr + offset * 4));
 
 	*width = *spritePtr;
@@ -378,7 +320,7 @@ void getSpriteSize(int32 offset, int32 *width, int32 *height, uint8 *spritePtr) 
 /** Load grid bricks according with block librarie usage
 	@param gridSize size of the current grid
 	@return true if everything went ok*/
-int32 loadGridBricks(int32 gridSize) {
+int32 Grid::loadGridBricks(int32 gridSize) {
 	uint32 firstBrick = 60000;
 	uint32 lastBrick = 0;
 	uint8 *ptrToBllBits;
@@ -442,7 +384,7 @@ int32 loadGridBricks(int32 gridSize) {
 /** Create grid Y column in block buffer
 	@param gridEntry current grid index
 	@param dest destination block buffer */
-void createGridColumn(uint8 *gridEntry, uint8 *dest) {
+void Grid::createGridColumn(uint8 *gridEntry, uint8 *dest) {
 	int32 blockCount;
 	int32 brickCount;
 	int32 flag;
@@ -482,7 +424,7 @@ void createGridColumn(uint8 *gridEntry, uint8 *dest) {
 /** Create grid Y column in block buffer
 	@param gridEntry current grid index
 	@param dest destination block buffer */
-void createCellingGridColumn(uint8 *gridEntry, uint8 *dest) {
+void Grid::createCellingGridColumn(uint8 *gridEntry, uint8 *dest) {
 	int32 blockCount;
 	int32 brickCount;
 	int32 flag;
@@ -520,7 +462,7 @@ void createCellingGridColumn(uint8 *gridEntry, uint8 *dest) {
 }
 
 /** Create grid map from current grid to block library buffer */
-void createGridMap() {
+void Grid::createGridMap() {
 	int32 currOffset = 0;
 	int32 blockOffset;
 	int32 gridIdx;
@@ -541,7 +483,7 @@ void createGridMap() {
 
 /** Create celling grid map from celling grid to block library buffer
 	@param gridPtr celling grid buffer pointer */
-void createCellingGridMap(uint8 *gridPtr) {
+void Grid::createCellingGridMap(uint8 *gridPtr) {
 	int32 currGridOffset = 0;
 	int32 currOffset = 0;
 	int32 blockOffset;
@@ -565,7 +507,7 @@ void createCellingGridMap(uint8 *gridPtr) {
 
 /** Initialize grid (background scenearios)
 	@param index grid index number */
-int32 initGrid(int32 index) {
+int32 Grid::initGrid(int32 index) {
 
 	// load grids from file
 	int32 gridSize = hqrGetallocEntry(&currentGrid, HQR_LBA_GRI_FILE, index);
@@ -586,7 +528,7 @@ int32 initGrid(int32 index) {
 
 /** Initialize celling grid (background scenearios)
 	@param index grid index number */
-int32 initCellingGrid(int32 index) {
+int32 Grid::initCellingGrid(int32 index) {
 	uint8 *gridPtr;
 
 	// load grids from file
@@ -606,7 +548,7 @@ int32 initCellingGrid(int32 index) {
 	@param index brick index to draw
 	@param posX brick X position to draw
 	@param posY brick Y position to draw */
-void drawBrick(int32 index, int32 posX, int32 posY) {
+void Grid::drawBrick(int32 index, int32 posX, int32 posY) {
 	drawBrickSprite(index, posX, posY, brickTable[index], 0);
 }
 
@@ -615,7 +557,7 @@ void drawBrick(int32 index, int32 posX, int32 posY) {
 	@param posX sprite X position to draw
 	@param posY sprite Y position to draw
 	@param ptr sprite buffer pointer to draw */
-void drawSprite(int32 index, int32 posX, int32 posY, uint8 *ptr) {
+void Grid::drawSprite(int32 index, int32 posX, int32 posY, uint8 *ptr) {
 	drawBrickSprite(index, posX, posY, ptr, 1);
 }
 
@@ -626,7 +568,7 @@ void drawSprite(int32 index, int32 posX, int32 posY, uint8 *ptr) {
 	@param posY sprite Y position to draw
 	@param ptr sprite buffer pointer to draw
 	@param isSprite allows to identify if the sprite to display is brick or a single sprite */
-void drawBrickSprite(int32 index, int32 posX, int32 posY, uint8 *ptr, int32 isSprite) {
+void Grid::drawBrickSprite(int32 index, int32 posX, int32 posY, uint8 *ptr, int32 isSprite) {
 	//unsigned char *ptr;
 	int32 top;
 	int32 bottom;
@@ -663,7 +605,7 @@ void drawBrickSprite(int32 index, int32 posX, int32 posY, uint8 *ptr, int32 isSp
 		right++;
 		bottom++;
 
-		outPtr = frontVideoBuffer + screenLookupTable[top] + left;
+		outPtr = _engine->frontVideoBuffer + _engine->screenLookupTable[top] + left;
 
 		offset = -((right - left) - SCREEN_WIDTH);
 
@@ -678,7 +620,7 @@ void drawBrickSprite(int32 index, int32 posX, int32 posY, uint8 *ptr, int32 isSp
 						temp = *(ptr++);
 						for (i = 0; i < iteration; i++) {
 							if (x >= textWindowLeft && x < textWindowRight && y >= textWindowTop && y < textWindowBottom)
-								frontVideoBuffer[y * SCREEN_WIDTH + x] = temp;
+								_engine->frontVideoBuffer[y * SCREEN_WIDTH + x] = temp;
 
 							x++;
 							outPtr++;
@@ -686,7 +628,7 @@ void drawBrickSprite(int32 index, int32 posX, int32 posY, uint8 *ptr, int32 isSp
 					} else {
 						for (i = 0; i < iteration; i++) {
 							if (x >= textWindowLeft && x < textWindowRight && y >= textWindowTop && y < textWindowBottom)
-								frontVideoBuffer[y * SCREEN_WIDTH + x] = *ptr;
+								_engine->frontVideoBuffer[y * SCREEN_WIDTH + x] = *ptr;
 
 							x++;
 							ptr++;
@@ -708,7 +650,7 @@ void drawBrickSprite(int32 index, int32 posX, int32 posY, uint8 *ptr, int32 isSp
 /** Get block library
 	@param index block library index
 	@return pointer to the current block index */
-uint8 *getBlockLibrary(int32 index) {
+uint8 *Grid::getBlockLibrary(int32 index) {
 	int32 offset = *((uint32 *)(currentBll + 4 * index));
 	return (uint8 *)(currentBll + offset);
 }
@@ -717,7 +659,7 @@ uint8 *getBlockLibrary(int32 index) {
 	@param x column x position in the current camera
 	@param y column y position in the current camera
 	@param z column z position in the current camera */
-void getBrickPos(int32 x, int32 y, int32 z) {
+void Grid::getBrickPos(int32 x, int32 y, int32 z) {
 	brickPixelPosX = (x - z) * 24 + 288;              // x pos
 	brickPixelPosY = ((x + z) * 12) - (y * 15) + 215; // y pos
 }
@@ -728,7 +670,7 @@ void getBrickPos(int32 x, int32 y, int32 z) {
 	@param x column x position
 	@param y column y position
 	@param z column z position */
-void drawColumnGrid(int32 blockIdx, int32 brickBlockIdx, int32 x, int32 y, int32 z) {
+void Grid::drawColumnGrid(int32 blockIdx, int32 brickBlockIdx, int32 x, int32 y, int32 z) {
 	uint8 *blockPtr;
 	uint16 brickIdx;
 	uint8 brickShape;
@@ -762,7 +704,7 @@ void drawColumnGrid(int32 blockIdx, int32 brickBlockIdx, int32 x, int32 y, int32
 	brickBuffIdx = (brickPixelPosX + 24) / 24;
 
 	if (brickInfoBuffer[brickBuffIdx] >= 150) {
-		printf("\nGRID WARNING: brick buffer exceeded! \n");
+		warning("\nGRID WARNING: brick buffer exceeded! \n");
 		return;
 	}
 
@@ -781,7 +723,7 @@ void drawColumnGrid(int32 blockIdx, int32 brickBlockIdx, int32 x, int32 y, int32
 }
 
 /** Redraw grid background */
-void redrawGrid() {
+void Grid::redrawGrid() {
 	int32 i, x, y, z;
 	uint8 blockIdx;
 	blockMap *map = (blockMap *)blockBuffer;
@@ -814,28 +756,28 @@ void redrawGrid() {
 	}
 }
 
-int32 getBrickShape(int32 x, int32 y, int32 z) { // WorldColBrick
+int32 Grid::getBrickShape(int32 x, int32 y, int32 z) { // WorldColBrick
 	uint8 blockIdx;
 	uint8 *blockBufferPtr;
 
 	blockBufferPtr = blockBuffer;
 
-	collisionX = (x + 0x100) >> 9;
-	collisionY = y >> 8;
-	collisionZ = (z + 0x100) >> 9;
+	_engine->_collision->collisionX = (x + 0x100) >> 9;
+	_engine->_collision->collisionY = y >> 8;
+	_engine->_collision->collisionZ = (z + 0x100) >> 9;
 
-	if (collisionX < 0 || collisionX >= 64)
+	if (_engine->_collision->collisionX < 0 || _engine->_collision->collisionX >= 64)
 		return 0;
 
-	if (collisionY <= -1)
+	if (_engine->_collision->collisionY <= -1)
 		return 1;
 
-	if (collisionY < 0 || collisionY > 24 || collisionZ < 0 || collisionZ >= 64)
+	if (_engine->_collision->collisionY < 0 || _engine->_collision->collisionY > 24 || _engine->_collision->collisionZ < 0 || _engine->_collision->collisionZ >= 64)
 		return 0;
 
-	blockBufferPtr += collisionX * 50;
-	blockBufferPtr += collisionY * 2;
-	blockBufferPtr += (collisionZ << 7) * 25;
+	blockBufferPtr += _engine->_collision->collisionX * 50;
+	blockBufferPtr += _engine->_collision->collisionY * 2;
+	blockBufferPtr += (_engine->_collision->collisionZ << 7) * 25;
 
 	blockIdx = *blockBufferPtr;
 
@@ -857,29 +799,29 @@ int32 getBrickShape(int32 x, int32 y, int32 z) { // WorldColBrick
 	}
 }
 
-int32 getBrickShapeFull(int32 x, int32 y, int32 z, int32 y2) {
+int32 Grid::getBrickShapeFull(int32 x, int32 y, int32 z, int32 y2) {
 	int32 newY, currY, i;
 	uint8 blockIdx, brickShape;
 	uint8 *blockBufferPtr;
 
 	blockBufferPtr = blockBuffer;
 
-	collisionX = (x + 0x100) >> 9;
-	collisionY = y >> 8;
-	collisionZ = (z + 0x100) >> 9;
+	_engine->_collision->collisionX = (x + 0x100) >> 9;
+	_engine->_collision->collisionY = y >> 8;
+	_engine->_collision->collisionZ = (z + 0x100) >> 9;
 
-	if (collisionX < 0 || collisionX >= 64)
+	if (_engine->_collision->collisionX < 0 || _engine->_collision->collisionX >= 64)
 		return 0;
 
-	if (collisionY <= -1)
+	if (_engine->_collision->collisionY <= -1)
 		return 1;
 
-	if (collisionY < 0 || collisionY > 24 || collisionZ < 0 || collisionZ >= 64)
+	if (_engine->_collision->collisionY < 0 || _engine->_collision->collisionY > 24 || _engine->_collision->collisionZ < 0 || _engine->_collision->collisionZ >= 64)
 		return 0;
 
-	blockBufferPtr += collisionX * 50;
-	blockBufferPtr += collisionY * 2;
-	blockBufferPtr += (collisionZ << 7) * 25;
+	blockBufferPtr += _engine->_collision->collisionX * 50;
+	blockBufferPtr += _engine->_collision->collisionY * 2;
+	blockBufferPtr += (_engine->_collision->collisionZ << 7) * 25;
 
 	blockIdx = *blockBufferPtr;
 
@@ -898,7 +840,7 @@ int32 getBrickShapeFull(int32 x, int32 y, int32 z, int32 y2) {
 		brickShape = *blockPtr;
 
 		newY = (y2 + 255) >> 8;
-		currY = collisionY;
+		currY = _engine->_collision->collisionY;
 
 		for (i = 0; i < newY; i++) {
 			if (currY > 24) {
@@ -918,7 +860,7 @@ int32 getBrickShapeFull(int32 x, int32 y, int32 z, int32 y2) {
 		brickShape = *(blockBufferPtr + 1);
 
 		newY = (y2 + 255) >> 8;
-		currY = collisionY;
+		currY = _engine->_collision->collisionY;
 
 		for (i = 0; i < newY; i++) {
 			if (currY > 24) {
@@ -937,28 +879,28 @@ int32 getBrickShapeFull(int32 x, int32 y, int32 z, int32 y2) {
 	return 0;
 }
 
-int32 getBrickSoundType(int32 x, int32 y, int32 z) { // getPos2
+int32 Grid::getBrickSoundType(int32 x, int32 y, int32 z) { // getPos2
 	uint8 blockIdx;
 	uint8 *blockBufferPtr;
 
 	blockBufferPtr = blockBuffer;
 
-	collisionX = (x + 0x100) >> 9;
-	collisionY = y >> 8;
-	collisionZ = (z + 0x100) >> 9;
+	_engine->_collision->collisionX = (x + 0x100) >> 9;
+	_engine->_collision->collisionY = y >> 8;
+	_engine->_collision->collisionZ = (z + 0x100) >> 9;
 
-	if (collisionX < 0 || collisionX >= 64)
+	if (_engine->_collision->collisionX < 0 || _engine->_collision->collisionX >= 64)
 		return 0;
 
-	if (collisionY <= -1)
+	if (_engine->_collision->collisionY <= -1)
 		return 1;
 
-	if (collisionY < 0 || collisionY > 24 || collisionZ < 0 || collisionZ >= 64)
+	if (_engine->_collision->collisionY < 0 || _engine->_collision->collisionY > 24 || _engine->_collision->collisionZ < 0 || _engine->_collision->collisionZ >= 64)
 		return 0;
 
-	blockBufferPtr += collisionX * 50;
-	blockBufferPtr += collisionY * 2;
-	blockBufferPtr += (collisionZ << 7) * 25;
+	blockBufferPtr += _engine->_collision->collisionX * 50;
+	blockBufferPtr += _engine->_collision->collisionY * 2;
+	blockBufferPtr += (_engine->_collision->collisionZ << 7) * 25;
 
 	blockIdx = *blockBufferPtr;
 

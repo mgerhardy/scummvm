@@ -25,9 +25,10 @@
 
 #include "common/scummsys.h"
 #include "extra.h"
-#include "twine.h"
 
 namespace TwinE {
+
+class TwinEEngine;
 
 class Collision {
 private:

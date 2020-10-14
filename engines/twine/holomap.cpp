@@ -22,20 +22,23 @@
 
 #include "holomap.h"
 #include "gamestate.h"
+#include "twine.h"
 
 namespace TwinE {
 
+Holomap::Holomap(TwinEEngine *engine) : _engine(engine) {}
+
 /** Set Holomap location position
 	@location Scene where position must be set */
-void setHolomapPosition(int32 location) {
-	holomapFlags[location] = 0x81;
+void Holomap::setHolomapPosition(int32 location) {
+	_engine->_gameState->holomapFlags[location] = 0x81;
 }
 
 /** Clear Holomap location position
 	@location Scene where position must be cleared */
-void clearHolomapPosition(int32 location) {
-	holomapFlags[location] &= 0x7E;
-	holomapFlags[location] |= 0x40;
+void Holomap::clearHolomapPosition(int32 location) {
+	_engine->_gameState->holomapFlags[location] &= 0x7E;
+	_engine->_gameState->holomapFlags[location] |= 0x40;
 }
 
 } // namespace TwinE

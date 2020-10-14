@@ -27,15 +27,29 @@
 
 namespace TwinE {
 
-extern int32 useFreeCamera;
-extern int32 canChangeScenes;
+class TwinEEngine;
 
-/** Change scenario camera positions */
-void changeGridCamera(int16 pKey);
-/** Change grid index */
-void changeGrid(int16 pKey);
-/** Apply and change disappear celling grid */
-void applyCellingGrid(int16 pKey);
+class DebugGrid {
+private:
+	TwinEEngine *_engine;
+
+public:
+	DebugGrid(TwinEEngine *engine);
+
+	int32 useFreeCamera = 0;
+#ifdef _DEBUG
+	int32 canChangeScenes = 1;
+#else
+	int32 canChangeScenes = 0;
+#endif
+
+	/** Change scenario camera positions */
+	void changeGridCamera(int16 pKey);
+	/** Change grid index */
+	void changeGrid(int16 pKey);
+	/** Apply and change disappear celling grid */
+	void applyCellingGrid(int16 pKey);
+};
 
 } // namespace TwinE
 

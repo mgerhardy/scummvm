@@ -24,6 +24,7 @@
 #define TWINE_GRID_H
 
 #include "common/scummsys.h"
+#include "actor.h"
 
 namespace TwinE {
 
@@ -46,92 +47,173 @@ enum ShapeType {
 	kFlatBottom2 = 15
 };
 
-/** New grid camera X coordinates */
-int32 newCameraX;
-/** New grid camera Y coordinates */
-int32 newCameraY;
-/** New grid camera Z coordinates */
-int32 newCameraZ;
+/** Block fragment entry */
+struct BlockEntry {
+	/** Block library index */
+	uint8 blockIdx;
+	/** Brick index inside the block library */
+	uint8 brickBlockIdx;
+};
+/** Brick entry data */
+typedef struct BrickEntry {
+	/** Brick X position in screen */
+	int16 x; //z
+	/** Brick Y position in screen */
+	int16 y;
+	/** Brick Z position in screen */
+	int16 z; // x
+	/** Brick pixel X position */
+	int16 posX;
+	/** Brick pixel Y position */
+	int16 posY;
+	/** Brick index */
+	int16 index;
+	/** Brick shape type */
+	uint8 shape;
+	/** Brick sound type */
+	uint8 sound;
+} BrickEntry;
 
-/** Current grid camera X coordinates */
-int32 cameraX;
-/** Current grid camera Y coordinates */
-int32 cameraY;
-/** Current grid camera Z coordinates */
-int32 cameraZ;
+/** Total number of bricks allowed in the game */
+#define NUM_BRICKS 9000
 
-/** Celling grid brick block buffer */
-uint8 *blockBuffer;
+/** Total number of bricks allowed in the game */
+#define CELLING_GRIDS_START_INDEX 120
 
-/** Flag to know if the engine is using celling grids */
-int16 useCellingGrid; // useAnotherGrm
-/** Current celling grid index */
-int16 cellingGridIdx; // currentGrid2
+class TwinEEngine;
 
-/** Draw 3D actor over bricks
+class Grid {
+private:
+	TwinEEngine *_engine;
+
+	void drawColumnGrid(int32 blockIdx, int32 brickBlockIdx, int32 x, int32 y, int32 z);
+	void getBrickPos(int32 x, int32 y, int32 z);
+	void createCellingGridMap(uint8 *gridPtr);
+	void createCellingGridColumn(uint8 *gridEntry, uint8 *dest);
+	void createGridColumn(uint8 *gridEntry, uint8 *dest);
+	int32 loadGridBricks(int32 gridSize);
+	void createGridMask();
+	int processGridMask(uint8 *buffer, uint8 *ptr);
+	void copyGridMask(int32 index, int32 x, int32 y, uint8 *buffer);
+public:
+	Grid(TwinEEngine *engine);
+
+	/** Table with all loaded bricks */
+	uint8 *brickTable[NUM_BRICKS];
+	/** Table with all loaded bricks masks */
+	uint8 *brickMaskTable[NUM_BRICKS];
+	/** Table with all loaded bricks sizes */
+	uint32 brickSizeTable[NUM_BRICKS];
+	/** Table with all loaded bricks usage */
+	uint8 brickUsageTable[NUM_BRICKS];
+
+	/** Current grid pointer */
+	uint8 *currentGrid;
+	/** Current block library pointer */
+	uint8 *currentBll;
+	/** Number of block libraries */
+	int32 numberOfBll;
+
+	/** Grid block entry types */
+	typedef struct BlockEntry blockMap[64][64][25];
+
+	/** Brick data buffer */
+	BrickEntry bricksDataBuffer[28][150];
+	/** Brick info buffer */
+	int16 brickInfoBuffer[28];
+
+	/** Current brick pixel X position */
+	int32 brickPixelPosX;
+	/** Current brick pixel Y position */
+	int32 brickPixelPosY;
+
+	/** New grid camera X coordinates */
+	int32 newCameraX;
+	/** New grid camera Y coordinates */
+	int32 newCameraY;
+	/** New grid camera Z coordinates */
+	int32 newCameraZ;
+
+	/** Current grid camera X coordinates */
+	int32 cameraX;
+	/** Current grid camera Y coordinates */
+	int32 cameraY;
+	/** Current grid camera Z coordinates */
+	int32 cameraZ;
+
+	/** Celling grid brick block buffer */
+	uint8 *blockBuffer;
+
+	/** Flag to know if the engine is using celling grids */
+	int16 useCellingGrid; // useAnotherGrm
+	/** Current celling grid index */
+	int16 cellingGridIdx; // currentGrid2
+
+	/** Draw 3D actor over bricks
 	@param X actor X coordinate
 	@param Y actor Y coordinate
 	@param Z actor Z coordinate */
-void drawOverModelActor(int32 X, int32 Y, int32 Z);
+	void drawOverModelActor(int32 X, int32 Y, int32 Z);
 
-/** Draw sprite actor over bricks
+	/** Draw sprite actor over bricks
 	@param X actor X coordinate
 	@param Y actor Y coordinate
 	@param Z actor Z coordinate */
-void drawOverSpriteActor(int32 X, int32 Y, int32 Z);
+	void drawOverSpriteActor(int32 X, int32 Y, int32 Z);
 
-/** Get sprite width and height sizes
+	/** Get sprite width and height sizes
 	@param offset sprite pointer offset
 	@param width sprite width size
 	@param height sprite height size
 	@param spritePtr sprite buffer pointer */
-void getSpriteSize(int32 offset, int32 *width, int32 *height, uint8 *spritePtr);
+	void getSpriteSize(int32 offset, int32 *width, int32 *height, uint8 *spritePtr);
 
-/** Draw brick sprite in the screen
+	/** Draw brick sprite in the screen
 	@param index brick index to draw
 	@param posX brick X position to draw
 	@param posY brick Y position to draw */
-void drawBrick(int32 index, int32 posX, int32 posY);
+	void drawBrick(int32 index, int32 posX, int32 posY);
 
-/** Draw sprite in the screen
+	/** Draw sprite in the screen
 	@param index sprite index to draw
 	@param posX sprite X position to draw
 	@param posY sprite Y position to draw
 	@param ptr sprite buffer pointer to draw */
-void drawSprite(int32 index, int32 posX, int32 posY, uint8 *spritePtr);
+	void drawSprite(int32 index, int32 posX, int32 posY, uint8 *spritePtr);
 
-/** Draw sprite or bricks in the screen according with the type
+	/** Draw sprite or bricks in the screen according with the type
 	@param index sprite index to draw
 	@param posX sprite X position to draw
 	@param posY sprite Y position to draw
 	@param ptr sprite buffer pointer to draw
 	@param isSprite allows to identify if the sprite to display is brick or a single sprite */
-void drawBrickSprite(int32 index, int32 posX, int32 posY, uint8 *spritePtr, int32 isSprite);
+	void drawBrickSprite(int32 index, int32 posX, int32 posY, uint8 *spritePtr, int32 isSprite);
 
-/** Get block library
+	/** Get block library
 	@param index block library index
 	@return pointer to the current block index */
-uint8 *getBlockLibrary(int32 index);
+	uint8 *getBlockLibrary(int32 index);
 
-/** Create grid map from current grid to block library buffer */
-void createGridMap();
+	/** Create grid map from current grid to block library buffer */
+	void createGridMap();
 
-/** Initialize grid (background scenearios)
+	/** Initialize grid (background scenearios)
 	@param index grid index number */
-int32 initGrid(int32 index);
+	int32 initGrid(int32 index);
 
-/** Initialize celling grid (background scenearios)
+	/** Initialize celling grid (background scenearios)
 	@param index grid index number */
-int32 initCellingGrid(int32 index);
+	int32 initCellingGrid(int32 index);
 
-/** Redraw grid background */
-void redrawGrid();
+	/** Redraw grid background */
+	void redrawGrid();
 
-int32 getBrickShape(int32 x, int32 y, int32 z);
+	int32 getBrickShape(int32 x, int32 y, int32 z);
 
-int32 getBrickShapeFull(int32 x, int32 y, int32 z, int32 y2);
+	int32 getBrickShapeFull(int32 x, int32 y, int32 z, int32 y2);
 
-int32 getBrickSoundType(int32 x, int32 y, int32 z);
+	int32 getBrickSoundType(int32 x, int32 y, int32 z);
+};
 
 } // namespace TwinE
 

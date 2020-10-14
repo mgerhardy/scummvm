@@ -26,20 +26,24 @@
 #include "actor.h"
 #include "animations.h"
 #include "collision.h"
+#include "common/textconsole.h"
 #include "gamestate.h"
 #include "grid.h"
 #include "keyboard.h"
 #include "movements.h"
 #include "renderer.h"
 #include "scene.h"
+#include "twine.h"
 
 namespace TwinE {
+
+Movements::Movements(TwinEEngine *engine) : _engine(engine) {}
 
 /** Get shadow position
 	@param X Shadow X coordinate
 	@param Y Shadow Y coordinate
 	@param Z Shadow Z coordinate */
-void getShadowPosition(int32 X, int32 Y, int32 Z) {
+void Movements::getShadowPosition(int32 X, int32 Y, int32 Z) {
 	int32 tempX;
 	int32 tempY;
 	int32 tempZ;
@@ -49,7 +53,7 @@ void getShadowPosition(int32 X, int32 Y, int32 Z) {
 	tempY = Y >> 8;
 	tempZ = (Z + 0x100) >> 9;
 
-	ptr = blockBuffer + tempY * 2 + tempX * 25 * 2 + (tempZ << 6) * 25 * 2;
+	ptr = _engine->_grid->blockBuffer + tempY * 2 + tempX * 25 * 2 + (tempZ << 6) * 25 * 2;
 
 	while (tempY) {        // search down until either ground is found or lower border of the cube is reached
 		if (*(int16 *)ptr) // found the ground
@@ -59,11 +63,11 @@ void getShadowPosition(int32 X, int32 Y, int32 Z) {
 		ptr -= 2;
 	}
 
-	shadowCollisionType = 0;
+	_engine->_actor->shadowCollisionType = 0;
 
-	collisionX = tempX;
-	collisionY = tempY;
-	collisionZ = tempZ;
+	_engine->_collision->collisionX = tempX;
+	_engine->_collision->collisionY = tempY;
+	_engine->_collision->collisionZ = tempZ;
 
 	processActorX = X;
 	processActorY = (tempY + 1) << 8;
@@ -73,16 +77,16 @@ void getShadowPosition(int32 X, int32 Y, int32 Z) {
 		uint8 *blockPtr;
 		uint8 brickShape;
 
-		blockPtr = getBlockLibrary(*(ptr)-1) + 3 + *(ptr + 1) * 4;
+		blockPtr = _engine->_grid->getBlockLibrary(*(ptr)-1) + 3 + *(ptr + 1) * 4;
 		brickShape = *((uint8 *)(blockPtr));
 
-		shadowCollisionType = brickShape;
-		reajustActorPosition(shadowCollisionType);
+		_engine->_actor->shadowCollisionType = brickShape;
+		_engine->_collision->reajustActorPosition(_engine->_actor->shadowCollisionType);
 	}
 
-	shadowX = processActorX;
-	shadowY = processActorY;
-	shadowZ = processActorZ;
+	_engine->_actor->shadowX = processActorX;
+	_engine->_actor->shadowY = processActorY;
+	_engine->_actor->shadowZ = processActorZ;
 }
 
 /** Set actor safe angle
@@ -90,16 +94,16 @@ void getShadowPosition(int32 X, int32 Y, int32 Z) {
 	@param endAngle end angle
 	@param stepAngle number of steps
 	@param movePtr Pointer to process movements */
-void setActorAngleSafe(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveStruct *movePtr) {
+void Movements::setActorAngleSafe(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveStruct *movePtr) {
 	movePtr->from = startAngle & 0x3FF;
 	movePtr->to = endAngle & 0x3FF;
 	movePtr->numOfStep = stepAngle & 0x3FF;
-	movePtr->timeOfChange = lbaTime;
+	movePtr->timeOfChange =  _engine->lbatime;
 }
 
 /** Clear actors safe angle
 	@param actorPtr actor pointer */
-void clearRealAngle(ActorStruct *actorPtr) {
+void Movements::clearRealAngle(ActorStruct *actorPtr) {
 	setActorAngleSafe(actorPtr->angle, actorPtr->angle, 0, &actorPtr->move);
 }
 
@@ -108,11 +112,11 @@ void clearRealAngle(ActorStruct *actorPtr) {
 	@param endAngle end angle
 	@param stepAngle number of steps
 	@param movePtr Pointer to process movements */
-void setActorAngle(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveStruct *movePtr) {
+void Movements::setActorAngle(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveStruct *movePtr) {
 	movePtr->from = startAngle;
 	movePtr->to = endAngle;
 	movePtr->numOfStep = stepAngle;
-	movePtr->timeOfChange = lbaTime;
+	movePtr->timeOfChange =  _engine->lbatime;
 }
 
 /** Get actor angle
@@ -121,7 +125,7 @@ void setActorAngle(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveS
 	@param x2 Actor 2 X
 	@param z2 Actor 2 Z */
 #define PI 3.14159265
-int32 getAngleAndSetTargetActorDistance(int32 x1, int32 z1, int32 x2, int32 z2) {
+int32 Movements::getAngleAndSetTargetActorDistance(int32 x1, int32 z1, int32 x2, int32 z2) {
 	/*
 	//Pythagoras
     targetActorDistance = (int32)sqrt((int64)(((z2 - z1)*(z2 - z1) + (x2 - x1)*(x2 - x1))));
@@ -190,12 +194,12 @@ int32 getAngleAndSetTargetActorDistance(int32 x1, int32 z1, int32 x2, int32 z2) 
 
 /** Get actor real angle
 	@param movePtr Pointer to process movements */
-int32 getRealAngle(ActorMoveStruct *movePtr) {
+int32 Movements::getRealAngle(ActorMoveStruct *movePtr) {
 	int32 timePassed;
 	int32 remainingAngle;
 
 	if (movePtr->numOfStep) {
-		timePassed = lbaTime - movePtr->timeOfChange;
+		timePassed =  _engine->lbatime - movePtr->timeOfChange;
 
 		if (timePassed >= movePtr->numOfStep) { // rotation is finished
 			movePtr->numOfStep = 0;
@@ -222,19 +226,19 @@ int32 getRealAngle(ActorMoveStruct *movePtr) {
 
 /** Get actor step
 	@param movePtr Pointer to process movements */
-int32 getRealValue(ActorMoveStruct *movePtr) {
+int32 Movements::getRealValue(ActorMoveStruct *movePtr) {
 	int32 tempStep;
 
 	if (!movePtr->numOfStep)
 		return movePtr->to;
 
-	if (!(lbaTime - movePtr->timeOfChange < movePtr->numOfStep)) {
+	if (!( _engine->lbatime - movePtr->timeOfChange < movePtr->numOfStep)) {
 		movePtr->numOfStep = 0;
 		return movePtr->to;
 	}
 
 	tempStep = movePtr->to - movePtr->from;
-	tempStep *= lbaTime - movePtr->timeOfChange;
+	tempStep *=  _engine->lbatime - movePtr->timeOfChange;
 	tempStep /= movePtr->numOfStep;
 
 	return tempStep + movePtr->from;
@@ -244,7 +248,7 @@ int32 getRealValue(ActorMoveStruct *movePtr) {
 	@param X Actor current X coordinate
 	@param Z Actor current Z coordinate
 	@param angle Actor angle to rotate */
-void rotateActor(int32 X, int32 Z, int32 angle) {
+void Movements::rotateActor(int32 X, int32 Z, int32 angle) {
 	double radians = 2 * PI * angle / 0x400;
 	destX = (int32)(X * cos(radians) + Z * sin(radians));
 	destZ = (int32)(-X * sin(radians) + Z * cos(radians));
@@ -255,7 +259,7 @@ void rotateActor(int32 X, int32 Z, int32 angle) {
 	@param z1 Actor 1 Z coordinate
 	@param x2 Actor 2 X coordinate
 	@param z2 Actor 2 Z coordinate */
-int32 getDistance2D(int32 x1, int32 z1, int32 x2, int32 z2) {
+int32 Movements::getDistance2D(int32 x1, int32 z1, int32 x2, int32 z2) {
 	return (int32)sqrt((int64)((x2 - x1) * (x2 - x1) + (z2 - z1) * (z2 - z1)));
 }
 
@@ -266,7 +270,7 @@ int32 getDistance2D(int32 x1, int32 z1, int32 x2, int32 z2) {
 	@param x2 Actor 2 X coordinate
 	@param y2 Actor 2 Y coordinate
 	@param z2 Actor 2 Z coordinate */
-int32 getDistance3D(int32 x1, int32 y1, int32 z1, int32 x2, int32 y2, int32 z2) {
+int32 Movements::getDistance3D(int32 x1, int32 y1, int32 z1, int32 x2, int32 y2, int32 z2) {
 	return (int32)sqrt((int64)((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1)));
 }
 
@@ -275,7 +279,7 @@ int32 getDistance3D(int32 x1, int32 y1, int32 z1, int32 x2, int32 y2, int32 z2) 
 	@param angleTo Angle to rotate
 	@param speed Rotate speed
 	@param movePtr Pointer to process movements */
-void moveActor(int32 angleFrom, int32 angleTo, int32 speed, ActorMoveStruct *movePtr) { // ManualRealAngle
+void Movements::moveActor(int32 angleFrom, int32 angleTo, int32 speed, ActorMoveStruct *movePtr) { // ManualRealAngle
 	int32 numOfStepInt;
 	int16 numOfStep;
 	int16 from;
@@ -301,10 +305,10 @@ void moveActor(int32 angleFrom, int32 angleTo, int32 speed, ActorMoveStruct *mov
 	numOfStepInt >>= 8;
 
 	movePtr->numOfStep = (int16)numOfStepInt;
-	movePtr->timeOfChange = lbaTime;
+	movePtr->timeOfChange =  _engine->lbatime;
 }
 
-void processActorMovements(int32 actorIdx) {
+void Movements::processActorMovements(int32 actorIdx) {
 	ActorStruct *actor = &sceneActors[actorIdx];
 
 	if (actor->entity == -1)
@@ -364,7 +368,7 @@ void processActorMovements(int32 actorIdx) {
 							heroMoved = 1;
 							actor->angle = getRealAngle(&actor->move);
 							if (!(previousLoopPressedKey & 1) || !actor->anim) {
-								int32 aggresiveMode = Rnd(3);
+								int32 aggresiveMode = _engine->getRandomNumber(3);
 
 								switch (aggresiveMode) {
 								case 0:
@@ -514,21 +518,21 @@ void processActorMovements(int32 actorIdx) {
 			if (!actor->dynamicFlags.bIsRotationByAnim) {
 				if (actor->brickShape & 0x80) {
 					moveActor(actor->angle, (((rand() & 0x100) + (actor->angle - 0x100)) & 0x3FF), actor->speed, &actor->move);
-					actor->info0 = Rnd(300) + lbaTime + 300;
+					actor->info0 = _engine->getRandomNumber(300) +  _engine->lbatime + 300;
 					initAnim(0, 0, 255, actorIdx);
 				}
 
 				if (!actor->move.numOfStep) {
 					initAnim(1, 0, 255, actorIdx);
-					if (lbaTime > actor->info0) {
-						moveActor(actor->angle, (((rand() & 0x100) + (actor->angle - 0x100)) & 0x3FF), actor->speed, &actor->move);
-						actor->info0 = Rnd(300) + lbaTime + 300;
+					if ( _engine->lbatime > actor->info0) {
+						moveActor(actor->angle, (((_engine->getRandomNumber() & 0x100) + (actor->angle - 0x100)) & 0x3FF), actor->speed, &actor->move);
+						actor->info0 = _engine->getRandomNumber(300) +  _engine->lbatime + 300;
 					}
 				}
 			}
 		} break;
 		default:
-			printf("Unknown Control mode %d\n", actor->controlMode);
+			warning("Unknown Control mode %d\n", actor->controlMode);
 			break;
 		}
 	}

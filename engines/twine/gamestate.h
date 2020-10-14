@@ -24,6 +24,7 @@
 #define TWINE_GAMESTATE_H
 
 #include "common/scummsys.h"
+#include "twine/actor.h"
 
 namespace TwinE {
 
@@ -49,66 +50,77 @@ enum MagicballStrengthType {
 	kFireBallStrength = 8
 };
 
-/** LBA engine game flags to save quest states */
-uint8 gameFlags[256];
+class TwinEEngine;
 
-/** LBA engine chapter */
-int16 gameChapter;
+class GameState {
+private:
+	TwinEEngine *_engine;
 
-/** Magic ball type index */
-int16 magicBallIdx;
-/** Magic ball num bounce */
-int16 magicBallNumBounce;
-/** Magic ball auxiliar bounce number */
-int16 magicBallAuxBounce; // magicBallParam
-/** Magic level index */
-int16 magicLevelIdx;
+	void initSceneVars();
+	void initHeroVars();
 
-/** Store the number of inventory keys */
-int16 inventoryNumKeys;
-/** Store the number of inventory kashes */
-int16 inventoryNumKashes;
-/** Store the number of inventory clover leafs boxes */
-int16 inventoryNumLeafsBox;
-/** Store the number of inventory clover leafs */
-int16 inventoryNumLeafs;
-/** Store the number of inventory magic points */
-int16 inventoryMagicPoints;
-/** Store the number of gas */
-int16 inventoryNumGas;
+public:
+	GameState(TwinEEngine *engine);
 
-/** Its using FunFrock Sabre */
-int16 usingSabre;
+	/** LBA engine game flags to save quest states */
+	uint8 gameFlags[256];
 
-/** Inventory used flags */
-uint8 inventoryFlags[NUM_INVENTORY_ITEMS];
+	/** LBA engine chapter */
+	int16 gameChapter;
 
-/** Inventory used flags */
-uint8 holomapFlags[150]; // GV14
+	/** Magic ball type index */
+	int16 magicBallIdx;
+	/** Magic ball num bounce */
+	int16 magicBallNumBounce;
+	/** Magic ball auxiliar bounce number */
+	int16 magicBallAuxBounce; // magicBallParam
+	/** Magic level index */
+	int16 magicLevelIdx;
 
-int8 savePlayerName[30]; // playerName
+	/** Store the number of inventory keys */
+	int16 inventoryNumKeys;
+	/** Store the number of inventory kashes */
+	int16 inventoryNumKashes;
+	/** Store the number of inventory clover leafs boxes */
+	int16 inventoryNumLeafsBox;
+	/** Store the number of inventory clover leafs */
+	int16 inventoryNumLeafs;
+	/** Store the number of inventory magic points */
+	int16 inventoryMagicPoints;
+	/** Store the number of gas */
+	int16 inventoryNumGas;
 
-int32 gameChoices[10];         // inGameMenuData
-int32 numChoices;              // numOfOptionsInChoice
-int16 gameChoicesSettings[18]; // choiceTab -  same structure as menu settings
-int32 choiceAnswer;            // inGameMenuAnswer
+	/** Its using FunFrock Sabre */
+	int16 usingSabre;
 
-extern int32 magicLevelStrengthOfHit[];
+	/** Inventory used flags */
+	uint8 inventoryFlags[NUM_INVENTORY_ITEMS];
 
-/** Initialize all engine variables */
-void initEngineVars(int32 save);
+	/** Inventory used flags */
+	uint8 holomapFlags[150]; // GV14
 
-/** Initialize engine 3D projections */
-void initEngineProjections();
+	int8 savePlayerName[30]; // playerName
 
-void processFoundItem(int32 item);
+	int32 gameChoices[10];         // inGameMenuData
+	int32 numChoices;              // numOfOptionsInChoice
+	int16 gameChoicesSettings[18]; // choiceTab -  same structure as menu settings
+	int32 choiceAnswer;            // inGameMenuAnswer
 
-void loadGame();
-void saveGame();
+	/** Initialize all engine variables */
+	void initEngineVars(int32 save);
 
-void processGameChoices(int32 choiceIdx);
+	/** Initialize engine 3D projections */
+	void initEngineProjections();
 
-void processGameoverAnimation();
+	void processFoundItem(int32 item);
+
+	void loadGame();
+	void saveGame();
+
+	void processGameChoices(int32 choiceIdx);
+
+	void processGameoverAnimation();
+};
 
 } // namespace TwinE
 
