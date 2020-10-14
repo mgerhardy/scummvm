@@ -26,7 +26,7 @@
 #ifndef ACTOR_H
 #define ACTOR_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 
 /** Total number of sprites allowed in the game */
 #define NUM_SPRITES 200

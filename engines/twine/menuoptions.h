@@ -26,7 +26,7 @@
 #ifndef MENUOPTIONS_H
 #define MENUOPTIONS_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 
 int32 canShowCredits;
 

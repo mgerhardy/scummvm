@@ -27,7 +27,7 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 
 /** Definition for European version */
 #define EUROPE_VERSION 0

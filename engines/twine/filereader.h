@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sys.h"
+#include "common/scummsys.h"
 
 /** Number of sector in the buffer */
 #define SECTORS_IN_BUFFER (3)

@@ -26,7 +26,7 @@
 #ifndef INTERFACE_H
 #define INTERFACE_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 #include "main.h"
 
 /** Screen top limit to display the texts */

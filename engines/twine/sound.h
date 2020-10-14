@@ -26,8 +26,7 @@
 #ifndef SOUND_H
 #define SOUND_H
 
-#include "sys.h"
-#include "sys.h"
+#include "common/scummsys.h"
 
 /** Total number of sprites allowed in the game */
 #define NUM_SAMPLES 243

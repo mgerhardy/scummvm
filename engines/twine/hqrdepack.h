@@ -26,7 +26,7 @@
 #ifndef HQRDEPACK_H
 #define HQRDEPACK_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 
 /** Get a HQR entry pointer
 	@param ptr pointer to save the entry

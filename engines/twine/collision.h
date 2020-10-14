@@ -26,7 +26,7 @@
 #ifndef COLLISION_H
 #define COLLISION_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 #include "extra.h"
 
 /** Actor collition X coordinate */

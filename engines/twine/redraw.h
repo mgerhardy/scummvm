@@ -26,7 +26,7 @@
 #ifndef REDRAW_H
 #define REDRAW_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 
 #define OVERLAY_MAX_ENTRIES		10
 

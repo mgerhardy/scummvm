@@ -26,7 +26,7 @@
 #ifndef DIALOGUES_H
 #define DIALOGUES_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 
 //TODO: add all 14 colors here for future use
 /** White color value */

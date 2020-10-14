@@ -26,7 +26,7 @@
 #ifndef SCREENS_H
 #define SCREENS_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 #include "main.h"
 
 /** In-game palette (should not be used, except in special case. otherwise use other images functions instead) */

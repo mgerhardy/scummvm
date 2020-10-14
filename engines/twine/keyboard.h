@@ -26,7 +26,7 @@
 #ifndef KEYBOARD_H
 #define KEYBOARD_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 
 /** Pressed key map - scanCodeTab1 */
 extern uint8 pressedKeyMap[29];

@@ -26,7 +26,7 @@
 #ifndef MOVEMENTS_H
 #define MOVEMENTS_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 #include "actor.h"
 
 /** Control mode types */

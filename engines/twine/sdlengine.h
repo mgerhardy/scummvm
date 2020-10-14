@@ -26,9 +26,9 @@
 #ifndef SCREEN_H
 #define SCREEN_H
 
-#include <SDL/SDL.h>
+#include <SDL.h>
 
-#include "sys.h"
+#include "common/scummsys.h"
 #include "debug.h"
 
 /** Main SDL screen surface buffer */

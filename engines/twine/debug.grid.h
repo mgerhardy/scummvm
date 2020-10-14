@@ -26,7 +26,7 @@
 #ifndef GRIDDEBUG_H
 #define GRIDDEBUG_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 
 extern int32 useFreeCamera;
 extern int32 canChangeScenes;

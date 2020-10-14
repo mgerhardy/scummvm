@@ -26,7 +26,7 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 
 typedef struct MouseStatusStruct {
 	int32 left;

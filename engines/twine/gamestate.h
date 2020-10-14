@@ -26,7 +26,7 @@
 #ifndef GAMESTATE_H
 #define GAMESTATE_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 
 #define NUM_GAME_FLAGS			255
 #define NUM_INVENTORY_ITEMS		28

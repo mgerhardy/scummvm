@@ -26,7 +26,7 @@
 #ifndef ANIMATIONS_H
 #define ANIMATIONS_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 #include "actor.h"
 
 /** Total number of animations allowed in the game */

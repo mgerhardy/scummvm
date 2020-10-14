@@ -26,7 +26,7 @@
 #ifndef GAMEENGINE_H
 #define GAMEENGINE_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 #include "actor.h"
 
 int32 quitGame;

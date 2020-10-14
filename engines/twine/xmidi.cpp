@@ -1,12 +1,12 @@
 /** @file xmidi.cpp
 	@brief
 	This file contains MIDI-related routines.
-	These routines were adapted from ScrummVM/Exult engine source code.
+	These routines were adapted from ScummVM/Exult engine source code.
 
 	TwinEngine: a Little Big Adventure engine
 
 	Copyright (C) 2013 The TwinEngine team
-	Copyright (C) 2013 The ScrummVM/ExultEngine team
+	Copyright (C) 2013 The ScummVM/ExultEngine team
 
 	This program is free software; you can redistribute it and/or
 	modify it under the terms of the GNU General Public License

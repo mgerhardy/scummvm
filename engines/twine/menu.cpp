@@ -23,7 +23,7 @@
 	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "sys.h"
+#include "common/scummsys.h"
 #include "main.h"
 #include "menu.h"
 #include "menuoptions.h"

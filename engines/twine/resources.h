@@ -26,7 +26,7 @@
 #ifndef RESOURCES_H
 #define RESOURCES_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 #include "hqrdepack.h"
 #include "gamestate.h"
 

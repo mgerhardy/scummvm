@@ -26,7 +26,7 @@
 #ifndef SCENE_DEBUG_H
 #define SCENE_DEBUG_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 
 extern int32 showingZones;
 extern int32 typeZones;

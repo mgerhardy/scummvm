@@ -26,7 +26,7 @@
 #ifndef MUSIC_H
 #define MUSIC_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 
 /** Track number of the current playing music */
 int32 currentMusic;

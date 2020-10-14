@@ -648,11 +648,9 @@ void processExtras() {
 					extra->info0 = -1;
 					continue;
 				} else {
-					int32 angle, pos;
+					const int32 angle = getAngleAndSetTargetActorDistance(extra->Y, 0, currentExtraY, targetActorDistance);
 
-					angle = getAngleAndSetTargetActorDistance(extra->Y, 0, currentExtraY, targetActorDistance);
-
-					pos = getRealAngle(&extra->trackActorMove);
+					int32 pos = getRealAngle(&extra->trackActorMove);
 
 					if (!pos) {
 						pos = 1;

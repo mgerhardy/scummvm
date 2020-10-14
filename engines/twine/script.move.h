@@ -26,7 +26,7 @@
 #ifndef SCRIPTMOVE_H
 #define SCRIPTMOVE_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 
 /** Process actor move script
 	@param actorIdx Current processed actor index */

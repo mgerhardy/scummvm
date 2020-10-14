@@ -26,7 +26,7 @@
 #ifndef HOLOMAP_H
 #define HOLOMAP_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 
 /** Set Holomap location position
 	@location Scene where position must be set */

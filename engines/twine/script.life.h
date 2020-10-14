@@ -26,7 +26,7 @@
 #ifndef SCRIPTLIFE_H
 #define SCRIPTLIFE_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 
 #define MAX_TARGET_ACTOR_DISTANCE 0x7D00
 

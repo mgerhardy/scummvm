@@ -26,7 +26,7 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 
 int32 isUsingOrhoProjection;
 

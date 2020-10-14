@@ -26,7 +26,7 @@
 #ifndef GRID_H
 #define GRID_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 
 enum ShapeType {
 	kNone = 0,

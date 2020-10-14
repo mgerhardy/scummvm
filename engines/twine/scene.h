@@ -26,7 +26,7 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-#include "sys.h"
+#include "common/scummsys.h"
 #include "actor.h"
 
 #define NUM_SCENES_FLAGS	80
