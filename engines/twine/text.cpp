@@ -24,7 +24,7 @@
 #include <math.h>
 
 #include "text.h"
-#include "main.h"
+#include "twine.h"
 #include "hqrdepack.h"
 #include "resources.h"
 #include "sdlengine.h"

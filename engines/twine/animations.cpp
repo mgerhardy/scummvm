@@ -35,7 +35,7 @@
 #include "gamestate.h"
 #include "collision.h"
 #include "grid.h"
-#include "main.h"
+#include "twine.h"
 
 enum ActionType {
 	ACTION_HITTING           = 0,

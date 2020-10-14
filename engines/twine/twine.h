@@ -20,11 +20,13 @@
  *
  */
 
+#ifndef TWINE_TWINE_H
+#define TWINE_TWINE_H
 
-#ifndef MAIN_H
-#define MAIN_H
+#include "common/random.h"
+#include "engines/engine.h"
 
-#include "common/scummsys.h"
+namespace TwinE {
 
 /** Definition for European version */
 #define EUROPE_VERSION 0
@@ -137,5 +139,24 @@ void initMCGA();
 void initSVGA();
 
 int8* ITOA(int32 number);
+
+class TwinEEngine: public Engine {
+public:
+	TwinEEngine(OSystem *system, Common::Language language, uint32 flags);
+	~TwinEEngine() override;
+
+	Common::Error run() override;
+	bool hasFeature(EngineFeature f) const override;
+protected:
+
+	int getRandomNumber();
+
+	Common::RandomSource _rnd;
+	Common::Language _gameLang;
+	uint32 _gameFlags;
+	int _startSlot;
+};
+
+} // namespace TwinE
 
 #endif

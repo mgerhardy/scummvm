@@ -27,7 +27,7 @@
 #include "flamovies.h"
 #include "screens.h"
 #include "sdlengine.h"
-#include "main.h"
+#include "twine.h"
 #include "sound.h"
 #include "music.h"
 #include "filereader.h"

@@ -23,7 +23,7 @@
 #ifndef FLAMOVIES_H
 #define FLAMOVIES_H
 
-#include "main.h"
+#include "twine.h"
 
 /** FLA movie directory */
 #define FLA_DIR "fla/"

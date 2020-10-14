@@ -24,25 +24,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <SDL/SDL.h>
-#include <SDL/SDL_thread.h>
-#ifndef MACOSX
-#include <SDL/SDL_mixer.h>
-#else
-#include <SDL_mixer/SDL_mixer.h>
-#endif
-
+#include <SDL.h>
+#include <SDL_thread.h>
+#include <SDL_mixer.h>
 #ifdef GAMEMOD
-#ifndef MACOSX
-#include <SDL/SDL_ttf.h>
-#else
-#include <SDL_ttf/SDL_ttf.h>
-#endif
-
+#include <SDL_ttf.h>
 #endif
 
 #include "sdlengine.h"
-#include "main.h"
+#include "twine.h"
 #include "screens.h"
 #include "music.h"
 #include "lbaengine.h"

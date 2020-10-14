@@ -22,7 +22,7 @@
 
 #include "menuoptions.h"
 #include "lbaengine.h"
-#include "main.h"
+#include "twine.h"
 #include "screens.h"
 #include "resources.h"
 #include "sdlengine.h"

@@ -21,7 +21,7 @@
  */
 
 #include "lbaengine.h"
-#include "main.h"
+#include "twine.h"
 #include "sdlengine.h"
 #include "screens.h"
 #include "grid.h"

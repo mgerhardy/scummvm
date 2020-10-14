@@ -27,7 +27,7 @@
 #include "scene.h"
 #include "actor.h"
 #include "grid.h"
-#include "main.h"
+#include "twine.h"
 #include "lbaengine.h"
 #include "text.h"
 #include "resources.h"

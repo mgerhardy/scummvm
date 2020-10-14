@@ -26,7 +26,7 @@
 #include <assert.h>
 
 #include "renderer.h"
-#include "main.h"
+#include "twine.h"
 #include "sdlengine.h"
 #include "shadeangletab.h"
 #include "lbaengine.h"

@@ -24,7 +24,7 @@
 #define INTERFACE_H
 
 #include "common/scummsys.h"
-#include "main.h"
+#include "twine.h"
 
 /** Screen top limit to display the texts */
 #define SCREEN_TEXTLIMIT_TOP	0

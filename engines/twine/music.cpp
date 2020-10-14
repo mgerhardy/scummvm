@@ -24,15 +24,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <SDL/SDL.h>
-#ifndef MACOSX
-#include <SDL/SDL_mixer.h>
-#else
-#include <SDL_mixer/SDL_mixer.h>
-#endif
+#include <SDL.h>
+#include <SDL_mixer.h>
 
 #include "music.h"
-#include "main.h"
+#include "twine.h"
 #include "sdlengine.h"
 #include "hqrdepack.h"
 #include "resources.h"

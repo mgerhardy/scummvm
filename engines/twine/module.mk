@@ -19,7 +19,6 @@ MODULE_OBJS := \
 	interface.o \
 	keyboard.o \
 	lbaengine.o \
-	main.o \
 	menu.o \
 	menuoptions.o \
 	metaengine.o \
@@ -35,6 +34,7 @@ MODULE_OBJS := \
 	sdlengine.o \
 	sound.o \
 	text.o \
+	twine.o \
 	xmidi.o
 
 # This module can be built as a plugin

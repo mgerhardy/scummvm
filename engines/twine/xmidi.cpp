@@ -21,7 +21,7 @@
  */
 
 #include "xmidi.h"
-#include "main.h"
+#include "twine.h"
 
 #include <stdio.h>
 #include <stdlib.h>

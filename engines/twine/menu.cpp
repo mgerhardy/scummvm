@@ -21,7 +21,7 @@
  */
 
 #include "common/scummsys.h"
-#include "main.h"
+#include "twine.h"
 #include "menu.h"
 #include "menuoptions.h"
 #include "resources.h"

@@ -20,13 +20,15 @@
  *
  */
 
+#include "twine.h"
+
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
-#include "main.h"
+#include "twine.h"
 #include "resources.h"
 #include "sdlengine.h"
 #include "screens.h"
@@ -416,22 +418,6 @@ void initAll() {
     initSVGA();
 }
 
-/** Main engine function
-	@param argc numner of arguments
-	@param argv array with all arguments strings */
-int main(int argc, char *argv[]) {
-	initAll();
-	initEngine();
-	sdlClose();
-	printf("\n\nLBA/Relentless < %s / %s >\n\nOK.\n\n", __DATE__, __TIME__);
-	printf("TwinEngine v%s closed\n", ENGINE_VERSION);
-	if (cfgfile.Debug) {
-		printf("\nPress <ENTER> to quit debug mode\n");
-		getchar();
-	}
-	return 0;
-}
-
 // AUX FUNC
 
 int8* ITOA(int32 number) {
@@ -449,47 +435,29 @@ int8* ITOA(int32 number) {
 	return text;
 }
 
+namespace TwinE {
 
-/** \mainpage Twinsen's Engine Doxxy Documentation
+TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flags)
+    : Engine(system), _gameLang(language), _gameFlags(flags), _rnd("twine") {
+}
 
-	\section intro_sec Introduction
+TwinEEngine::~TwinEEngine() {
+}
 
-	TwinEngine is a reimplementation project upon the popular
-	Little Big Adventure games released respectively in
-	1994 (Relentless in North America) and 	1997 (Twinsen's Odyssey).
+bool TwinEEngine::hasFeature(EngineFeature f) const {
+	return false;
+}
 
-	\section doc_sec Documentation
+Common::Error TwinEEngine::run() {
+	initGraphics(kScreenWidth, kScreenHeight);
+	syncSoundSettings();
+	initAll();
+	initEngine();
+	return Common::kNoError;
+}
 
-	This document, allows you to easily search for particulary things among
-	the code. We plan to comment as best as we can and with the most necessary
-	informations. The source code is also shared in this document and you can
-	use it in the terms of the license.
+int TwinEEngine::getRandomNumber() {
+	return _rnd.getRandomNumber(0x7FFF);
+}
 
-	Feel free to contact us if you wanna help improving this documentation and
-	the engine itself.
-
-	\section copy_sec Copyright
-
-	Copyright (c) Adeline Software International 1994, All Rights Reserved.\n
-	Copyright (c) 2002-2007 The TwinEngine team.\n
-	Copyright (c) 2008-2013 Prequengine team \n
-	Copyright (c) 2013 The TwinEngine team
-
-	\section licenc_sec License
-
-	This program is free software; you can redistribute it and/or
-	modify it under the terms of the GNU General Public License
-	as published by the Free Software Foundation; either version 2
-	of the License, or (at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program; if not, write to the Free Software
-	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-	For a full license, check the license file in source code.
-*/
+} // namespace TwinE

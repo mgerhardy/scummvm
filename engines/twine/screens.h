@@ -24,7 +24,7 @@
 #define SCREENS_H
 
 #include "common/scummsys.h"
-#include "main.h"
+#include "twine.h"
 
 /** In-game palette (should not be used, except in special case. otherwise use other images functions instead) */
 uint8 palette[NUMOFCOLORS * 3];

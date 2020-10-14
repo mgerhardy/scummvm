@@ -26,7 +26,7 @@
 
 #include "screens.h"
 #include "resources.h"
-#include "main.h"
+#include "twine.h"
 #include "sdlengine.h"
 #include "music.h"
 #include "hqrdepack.h"

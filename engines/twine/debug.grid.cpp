@@ -28,7 +28,7 @@
 #include "grid.h"
 #include "lbaengine.h"
 #include "scene.h"
-#include "main.h"
+#include "twine.h"
 #include "redraw.h"
 
 int32 useFreeCamera = 0;

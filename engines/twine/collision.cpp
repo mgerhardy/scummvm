@@ -27,7 +27,7 @@
 #include "actor.h"
 #include "movements.h"
 #include "grid.h"
-#include "main.h"
+#include "twine.h"
 #include "animations.h"
 #include "renderer.h"
 #include "extra.h"

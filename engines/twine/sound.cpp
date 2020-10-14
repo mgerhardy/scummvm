@@ -29,7 +29,7 @@
 
 #include "sound.h"
 #include "flamovies.h"
-#include "main.h"
+#include "twine.h"
 #include "resources.h"
 #include "hqrdepack.h"
 #include "movements.h"
