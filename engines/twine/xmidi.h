@@ -32,6 +32,8 @@
  * //risca
  */
 
+// TODO: use MidiParser_XMIDI
+
 /*
  * Takes a pointer to XMIDI data of size 'size' and converts it to MIDI. The
  * result is allocated dynamically and saved to the 'dest' pointer. Returns
