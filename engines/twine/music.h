@@ -25,6 +25,8 @@
 
 #include "common/scummsys.h"
 
+namespace TwinE {
+
 /** Track number of the current playing music */
 int32 currentMusic;
 
@@ -57,5 +59,7 @@ int32 initCdrom();
 
 /** Stop MIDI and Track music */
 void stopMusic();
+
+} // namespace TwinE
 
 #endif

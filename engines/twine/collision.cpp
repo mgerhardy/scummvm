@@ -22,20 +22,27 @@
 
 #include <stdio.h>
 
-#include "collision.h"
-#include "scene.h"
 #include "actor.h"
-#include "movements.h"
-#include "grid.h"
-#include "twine.h"
 #include "animations.h"
-#include "renderer.h"
+#include "collision.h"
+#include "common/debug.h"
+#include "common/util.h"
 #include "extra.h"
+#include "grid.h"
+#include "movements.h"
+#include "renderer.h"
+#include "scene.h"
+#include "twine.h"
+
+namespace TwinE {
+
+Collision::Collision(TwinEEngine *engine) : _engine(engine) {
+}
 
 /** Check if actor 1 is standing in actor2
 	@param actorIdx1 Actor 1 index
 	@param actorIdx2 Actor 2 index */
-int32 standingOnActor(int32 actorIdx1, int32 actorIdx2) { // CheckZvOnZv
+int32 Collision::standingOnActor(int32 actorIdx1, int32 actorIdx2) { // CheckZvOnZv
 	int32 x1Left, y1Left, z1Left, x1Right, y1Right, z1Right;
 	int32 x2Left, y2Left, z2Left, x2Right, y2Right, z2Right;
 	ActorStruct *actor1;
@@ -88,7 +95,7 @@ int32 standingOnActor(int32 actorIdx1, int32 actorIdx2) { // CheckZvOnZv
 	return 1; // standing
 }
 
-int32 getAverageValue(int32 var0, int32 var1, int32 var2, int32 var3) {
+int32 Collision::getAverageValue(int32 var0, int32 var1, int32 var2, int32 var3) {
 	if (var3 <= 0) {
 		return var0;
 	}
@@ -97,12 +104,12 @@ int32 getAverageValue(int32 var0, int32 var1, int32 var2, int32 var3) {
 		return var1;
 	}
 
-    return ((((var1 - var0) * var3) / var2) + var0);
+	return ((((var1 - var0) * var3) / var2) + var0);
 }
 
 /** Reajust actor position in scene according with brick shape bellow actor
 	@param brickShape Shape of brick bellow the actor */
-void reajustActorPosition(int32 brickShape) {
+void Collision::reajustActorPosition(int32 brickShape) {
 	int32 brkX, brkY, brkZ;
 
 	if (!brickShape) {
@@ -173,8 +180,8 @@ void reajustActorPosition(int32 brickShape) {
 			}
 			break;
 		default:
-			if (cfgfile.Debug == 1) {
-				printf("Brick Shape %d unsupported\n", brickShape);
+			if (_engine->cfgfile.Debug == 1) {
+				debug("Brick Shape %d unsupported\n", brickShape);
 			}
 			break;
 		}
@@ -202,19 +209,19 @@ void reajustActorPosition(int32 brickShape) {
 
 /** Check collision with actors
 	@param actorIx Current process actor index */
-int32 checkCollisionWithActors(int32 actorIdx) {
+int32 Collision::checkCollisionWithActors(int32 actorIdx) {
 	int32 a, xLeft, xRight, yLeft, yRight, zLeft, zRight;
 	ActorStruct *actor, *actorTest;
 
 	actor = &sceneActors[actorIdx];
 
-	xLeft  = processActorX + actor->boudingBox.X.bottomLeft;
+	xLeft = processActorX + actor->boudingBox.X.bottomLeft;
 	xRight = processActorX + actor->boudingBox.X.topRight;
 
-	yLeft  = processActorY + actor->boudingBox.Y.bottomLeft;
+	yLeft = processActorY + actor->boudingBox.Y.bottomLeft;
 	yRight = processActorY + actor->boudingBox.Y.topRight;
 
-	zLeft  = processActorZ + actor->boudingBox.Z.bottomLeft;
+	zLeft = processActorZ + actor->boudingBox.Z.bottomLeft;
 	zRight = processActorZ + actor->boudingBox.Z.topRight;
 
 	actor->collision = -1;
@@ -226,13 +233,13 @@ int32 checkCollisionWithActors(int32 actorIdx) {
 		if (a != actorIdx && actorTest->entity != -1 && !actor->staticFlags.bComputeLowCollision && actorTest->standOn != actorIdx) {
 			int32 xLeftTest, xRightTest, yLeftTest, yRightTest, zLeftTest, zRightTest;
 
-			xLeftTest  = actorTest->X + actorTest->boudingBox.X.bottomLeft;
+			xLeftTest = actorTest->X + actorTest->boudingBox.X.bottomLeft;
 			xRightTest = actorTest->X + actorTest->boudingBox.X.topRight;
 
-			yLeftTest  = actorTest->Y + actorTest->boudingBox.Y.bottomLeft;
+			yLeftTest = actorTest->Y + actorTest->boudingBox.Y.bottomLeft;
 			yRightTest = actorTest->Y + actorTest->boudingBox.Y.topRight;
 
-			zLeftTest  = actorTest->Z + actorTest->boudingBox.Z.bottomLeft;
+			zLeftTest = actorTest->Z + actorTest->boudingBox.Z.bottomLeft;
 			zRightTest = actorTest->Z + actorTest->boudingBox.Z.topRight;
 
 			if (xLeft < xRightTest && xRight > xLeftTest && yLeft < yRightTest && yRight > yLeftTest && zLeft < zRightTest && zRight > zLeftTest) {
@@ -274,7 +281,7 @@ int32 checkCollisionWithActors(int32 actorIdx) {
 							}
 
 							if ((actorTest->boudingBox.X.topRight - actorTest->boudingBox.X.bottomLeft == actorTest->boudingBox.Z.topRight - actorTest->boudingBox.Z.bottomLeft) &&
-								(actor->boudingBox.X.topRight - actor->boudingBox.X.bottomLeft == actor->boudingBox.Z.topRight - actor->boudingBox.Z.bottomLeft)) {
+							    (actor->boudingBox.X.topRight - actor->boudingBox.X.bottomLeft == actor->boudingBox.Z.topRight - actor->boudingBox.Z.bottomLeft)) {
 								if (newAngle < 0x180) {
 									processActorX = xLeftTest - actor->boudingBox.X.topRight;
 								}
@@ -300,7 +307,7 @@ int32 checkCollisionWithActors(int32 actorIdx) {
 					int32 newAngle;
 
 					if (standingOnActor(actorIdx, a)) {
-						hitActor(actorIdx, a, 1, -1);
+						_engine->_actor->hitActor(actorIdx, a, 1, -1);
 					}
 
 					newAngle = getAngleAndSetTargetActorDistance(processActorX, processActorZ, actorTest->X, actorTest->Z);
@@ -328,7 +335,7 @@ int32 checkCollisionWithActors(int32 actorIdx) {
 					}
 
 					if ((actorTest->boudingBox.X.topRight - actorTest->boudingBox.X.bottomLeft == actorTest->boudingBox.Z.topRight - actorTest->boudingBox.Z.bottomLeft) &&
-						(actor->boudingBox.X.topRight - actor->boudingBox.X.bottomLeft == actor->boudingBox.Z.topRight - actor->boudingBox.Z.bottomLeft)) {
+					    (actor->boudingBox.X.topRight - actor->boudingBox.X.bottomLeft == actor->boudingBox.Z.topRight - actor->boudingBox.Z.bottomLeft)) {
 						if (newAngle < 0x180) {
 							processActorX = xLeftTest - actor->boudingBox.X.topRight;
 						}
@@ -354,15 +361,15 @@ int32 checkCollisionWithActors(int32 actorIdx) {
 	}
 
 	if (actor->dynamicFlags.bIsHitting) {
-   		rotateActor(0, 200, actor->angle);
+		rotateActor(0, 200, actor->angle);
 
-		xLeft  = destX + processActorX + actor->boudingBox.X.bottomLeft;
+		xLeft = destX + processActorX + actor->boudingBox.X.bottomLeft;
 		xRight = destX + processActorX + actor->boudingBox.X.topRight;
 
-		yLeft  = processActorY + actor->boudingBox.Y.bottomLeft;
+		yLeft = processActorY + actor->boudingBox.Y.bottomLeft;
 		yRight = processActorY + actor->boudingBox.Y.topRight;
 
-		zLeft  = destZ + processActorZ + actor->boudingBox.Z.bottomLeft;
+		zLeft = destZ + processActorZ + actor->boudingBox.Z.bottomLeft;
 		zRight = destZ + processActorZ + actor->boudingBox.Z.topRight;
 
 		for (a = 0; a < sceneNumActors; a++) {
@@ -372,17 +379,17 @@ int32 checkCollisionWithActors(int32 actorIdx) {
 			if (a != actorIdx && actorTest->entity != -1 && !actorTest->staticFlags.bIsHidden && actorTest->standOn != actorIdx) {
 				int32 xLeftTest, xRightTest, yLeftTest, yRightTest, zLeftTest, zRightTest;
 
-				xLeftTest  = actorTest->X + actorTest->boudingBox.X.bottomLeft;
+				xLeftTest = actorTest->X + actorTest->boudingBox.X.bottomLeft;
 				xRightTest = actorTest->X + actorTest->boudingBox.X.topRight;
 
-				yLeftTest  = actorTest->Y + actorTest->boudingBox.Y.bottomLeft;
+				yLeftTest = actorTest->Y + actorTest->boudingBox.Y.bottomLeft;
 				yRightTest = actorTest->Y + actorTest->boudingBox.Y.topRight;
 
-				zLeftTest  = actorTest->Z + actorTest->boudingBox.Z.bottomLeft;
+				zLeftTest = actorTest->Z + actorTest->boudingBox.Z.bottomLeft;
 				zRightTest = actorTest->Z + actorTest->boudingBox.Z.topRight;
 
 				if (xLeft < xRightTest && xRight > xLeftTest && yLeft < yRightTest && yRight > yLeftTest && zLeft < zRightTest && zRight > zLeftTest) {
-					hitActor(actorIdx, a, actor->strengthOfHit, actor->angle + 0x200);
+					_engine->_actor->hitActor(actorIdx, a, actor->strengthOfHit, actor->angle + 0x200);
 					actor->dynamicFlags.bIsHitting = 0;
 				}
 			}
@@ -397,7 +404,7 @@ int32 checkCollisionWithActors(int32 actorIdx) {
 	@param Y Hero Y coordinate
 	@param Z Hero Z coordinate
 	@param damageMask Cause damage mask */
-void checkHeroCollisionWithBricks(int32 X, int32 Y, int32 Z, int32 damageMask) {
+void Collision::checkHeroCollisionWithBricks(int32 X, int32 Y, int32 Z, int32 damageMask) {
 	int32 brickShape;
 
 	brickShape = getBrickShape(processActorX, processActorY, processActorZ);
@@ -436,7 +443,7 @@ void checkHeroCollisionWithBricks(int32 X, int32 Y, int32 Z, int32 damageMask) {
 	@param Y Actor Y coordinate
 	@param Z Actor Z coordinate
 	@param damageMask Cause damage mask */
-void checkActorCollisionWithBricks(int32 X, int32 Y, int32 Z, int32 damageMask) {
+void Collision::checkActorCollisionWithBricks(int32 X, int32 Y, int32 Z, int32 damageMask) {
 	int32 brickShape;
 
 	brickShape = getBrickShape(processActorX, processActorY, processActorZ);
@@ -471,29 +478,29 @@ void checkActorCollisionWithBricks(int32 X, int32 Y, int32 Z, int32 damageMask) 
 }
 
 /** Make actor to stop falling */
-void stopFalling() { // ReceptionObj()
+void Collision::stopFalling() { // ReceptionObj()
 	int32 fall;
 
-	if (currentlyProcessedActorIdx == 0) {
+	if (_engine->_animations->currentlyProcessedActorIdx == 0) {
 		fall = heroYBeforeFall - processActorY;
 
 		if (fall >= 0x1000) {
 			addExtraSpecial(processActorPtr->X, processActorPtr->Y + 1000, processActorPtr->Z, kHitStars);
 			processActorPtr->life--;
-			initAnim(kLandingHit, 2, 0, currentlyProcessedActorIdx);
+			_engine->_animations->initAnim(kLandingHit, 2, 0, _engine->_animations->currentlyProcessedActorIdx);
 		} else if (fall >= 0x800) {
 			addExtraSpecial(processActorPtr->X, processActorPtr->Y + 1000, processActorPtr->Z, kHitStars);
 			processActorPtr->life--;
-			initAnim(kLandingHit, 2, 0, currentlyProcessedActorIdx);
+			_engine->_animations->initAnim(kLandingHit, 2, 0, _engine->_animations->currentlyProcessedActorIdx);
 		} else if (fall > 10) {
-			initAnim(kLanding, 2, 0, currentlyProcessedActorIdx);
+			_engine->_animations->initAnim(kLanding, 2, 0, _engine->_animations->currentlyProcessedActorIdx);
 		} else {
-			initAnim(kStanding, 0, 0, currentlyProcessedActorIdx);
+			_engine->_animations->initAnim(kStanding, 0, 0, _engine->_animations->currentlyProcessedActorIdx);
 		}
 
 		heroYBeforeFall = 0;
 	} else {
-		initAnim(kLanding, 2, processActorPtr->animExtra, currentlyProcessedActorIdx);
+		_engine->_animations->initAnim(kLanding, 2, processActorPtr->animExtra, _engine->_animations->currentlyProcessedActorIdx);
 	}
 
 	processActorPtr->dynamicFlags.bIsFalling = 0;
@@ -502,21 +509,21 @@ void stopFalling() { // ReceptionObj()
 /** Check extra collision with actors
 	@param extra to process
 	@param actorIdx actor to check collision */
-int32 checkExtraCollisionWithActors(ExtraListStruct* extra, int32 actorIdx) {
+int32 Collision::checkExtraCollisionWithActors(ExtraListStruct *extra, int32 actorIdx) {
 	int32 a;
 	int32 xLeft, xRight, yLeft, yRight, zLeft, zRight;
-	int16 * spriteBounding;
+	int16 *spriteBounding;
 	ActorStruct *actorTest;
 
-	spriteBounding = (int16*)(spriteBoundingBoxPtr + extra->info0 * 16 + 4);
+	spriteBounding = (int16 *)(spriteBoundingBoxPtr + extra->info0 * 16 + 4);
 
-	xLeft  = *(spriteBounding++) + extra->X;
+	xLeft = *(spriteBounding++) + extra->X;
 	xRight = *(spriteBounding++) + extra->X;
 
-	yLeft  = *(spriteBounding++) + extra->Y;
+	yLeft = *(spriteBounding++) + extra->Y;
 	yRight = *(spriteBounding++) + extra->Y;
 
-	zLeft  = *(spriteBounding++) + extra->Z;
+	zLeft = *(spriteBounding++) + extra->Z;
 	zRight = *(spriteBounding++) + extra->Z;
 
 	for (a = 0; a < sceneNumActors; a++) {
@@ -525,18 +532,18 @@ int32 checkExtraCollisionWithActors(ExtraListStruct* extra, int32 actorIdx) {
 		if (a != actorIdx && actorTest->entity != -1) {
 			int32 xLeftTest, xRightTest, yLeftTest, yRightTest, zLeftTest, zRightTest;
 
-			xLeftTest  = actorTest->X + actorTest->boudingBox.X.bottomLeft;
+			xLeftTest = actorTest->X + actorTest->boudingBox.X.bottomLeft;
 			xRightTest = actorTest->X + actorTest->boudingBox.X.topRight;
 
-			yLeftTest  = actorTest->Y + actorTest->boudingBox.Y.bottomLeft;
+			yLeftTest = actorTest->Y + actorTest->boudingBox.Y.bottomLeft;
 			yRightTest = actorTest->Y + actorTest->boudingBox.Y.topRight;
 
-			zLeftTest  = actorTest->Z + actorTest->boudingBox.Z.bottomLeft;
+			zLeftTest = actorTest->Z + actorTest->boudingBox.Z.bottomLeft;
 			zRightTest = actorTest->Z + actorTest->boudingBox.Z.topRight;
 
 			if (xLeft < xRightTest && xRight > xLeftTest && yLeft < yRightTest && yRight > yLeftTest && zLeft < zRightTest && zRight > zLeftTest) {
 				if (extra->strengthOfHit != 0) {
-					hitActor(actorIdx, a, extra->strengthOfHit, -1);
+					_engine->_actor->hitActor(actorIdx, a, extra->strengthOfHit, -1);
 				}
 
 				return a;
@@ -548,26 +555,26 @@ int32 checkExtraCollisionWithActors(ExtraListStruct* extra, int32 actorIdx) {
 }
 
 /** Check extra collision with bricks */
-int32 checkExtraCollisionWithBricks(int32 X, int32 Y, int32 Z, int32 oldX, int32 oldY, int32 oldZ) {
+int32 Collision::checkExtraCollisionWithBricks(int32 X, int32 Y, int32 Z, int32 oldX, int32 oldY, int32 oldZ) {
 	int32 averageX, averageY, averageZ;
 
 	if (getBrickShape(oldX, oldY, oldZ)) {
 		return 1;
 	}
 
-	averageX = Abs(X + oldX)/2;
-	averageY = Abs(Y + oldY)/2;
-	averageZ = Abs(Z + oldZ)/2;
+	averageX = ABS(X + oldX) / 2;
+	averageY = ABS(Y + oldY) / 2;
+	averageZ = ABS(Z + oldZ) / 2;
 
 	if (getBrickShape(averageX, averageY, averageZ)) {
 		return 1;
 	}
 
-	if (getBrickShape(Abs(oldX + averageX)/2, Abs(oldY + averageY)/2, Abs(oldZ + averageZ)/2)) {
+	if (getBrickShape(ABS(oldX + averageX) / 2, ABS(oldY + averageY) / 2, ABS(oldZ + averageZ) / 2)) {
 		return 1;
 	}
 
-	if (getBrickShape(Abs(X + averageX)/2, Abs(Y + averageY)/2, Abs(Z + averageZ)/2)) {
+	if (getBrickShape(ABS(X + averageX) / 2, ABS(Y + averageY) / 2, ABS(Z + averageZ) / 2)) {
 		return 1;
 	}
 
@@ -577,45 +584,47 @@ int32 checkExtraCollisionWithBricks(int32 X, int32 Y, int32 Z, int32 oldX, int32
 /** Check extra collision with another extra
 	@param extra to process
 	@param extraIdx extra index to check collision */
-int32 checkExtraCollisionWithExtra(ExtraListStruct* extra, int32 extraIdx) {
+int32 Collision::checkExtraCollisionWithExtra(ExtraListStruct *extra, int32 extraIdx) {
 	int32 i;
 	int32 xLeft, xRight, yLeft, yRight, zLeft, zRight;
-	int16 * spriteBounding;
+	int16 *spriteBounding;
 
-	spriteBounding = (int16*)(spriteBoundingBoxPtr + extra->info0 * 16 + 4);
+	spriteBounding = (int16 *)(spriteBoundingBoxPtr + extra->info0 * 16 + 4);
 
-	xLeft  = *(spriteBounding++) + extra->X;
+	xLeft = *(spriteBounding++) + extra->X;
 	xRight = *(spriteBounding++) + extra->X;
 
-	yLeft  = *(spriteBounding++) + extra->Y;
+	yLeft = *(spriteBounding++) + extra->Y;
 	yRight = *(spriteBounding++) + extra->Y;
 
-	zLeft  = *(spriteBounding++) + extra->Z;
+	zLeft = *(spriteBounding++) + extra->Z;
 	zRight = *(spriteBounding++) + extra->Z;
 
-    for (i = 0; i < EXTRA_MAX_ENTRIES; i++) {
+	for (i = 0; i < EXTRA_MAX_ENTRIES; i++) {
 		ExtraListStruct *extraTest = &extraList[i];
-		if ( i != extraIdx && extraTest->info0 != -1) {
+		if (i != extraIdx && extraTest->info0 != -1) {
 			int32 xLeftTest, xRightTest, yLeftTest, yRightTest, zLeftTest, zRightTest;
-//            int16 * spriteBoundingTest;
-//	        spriteBoundingTest = (int16*)(spriteBoundingBoxPtr + extraTest->info0 * 16 + 4);
+			//            int16 * spriteBoundingTest;
+			//	        spriteBoundingTest = (int16*)(spriteBoundingBoxPtr + extraTest->info0 * 16 + 4);
 
-			xLeftTest  = *(spriteBounding++) + extraTest->X;
-	        xRightTest = *(spriteBounding++) + extraTest->X;
+			xLeftTest = *(spriteBounding++) + extraTest->X;
+			xRightTest = *(spriteBounding++) + extraTest->X;
 
-	        yLeftTest  = *(spriteBounding++) + extraTest->Y;
-	        yRightTest = *(spriteBounding++) + extraTest->Y;
+			yLeftTest = *(spriteBounding++) + extraTest->Y;
+			yRightTest = *(spriteBounding++) + extraTest->Y;
 
-	        zLeftTest  = *(spriteBounding++) + extraTest->Z;
-	        zRightTest = *(spriteBounding++) + extraTest->Z;
+			zLeftTest = *(spriteBounding++) + extraTest->Z;
+			zRightTest = *(spriteBounding++) + extraTest->Z;
 
-            if (xLeft < xLeftTest) {
-			    if (xLeft < xRightTest && xRight > xLeftTest && yLeft < yRightTest && yRight > yLeftTest && zLeft < zRightTest && zRight > zLeftTest) {
-				    return i;
-			    }
-            }
+			if (xLeft < xLeftTest) {
+				if (xLeft < xRightTest && xRight > xLeftTest && yLeft < yRightTest && yRight > yLeftTest && zLeft < zRightTest && zRight > zLeftTest) {
+					return i;
+				}
+			}
 		}
 	}
 
 	return -1;
 }
+
+} // namespace TwinE

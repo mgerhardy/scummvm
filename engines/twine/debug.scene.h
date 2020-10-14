@@ -25,9 +25,13 @@
 
 #include "common/scummsys.h"
 
+namespace TwinE {
+
 extern int32 showingZones;
 extern int32 typeZones;
 
 void displayZones(int16 pKey);
+
+} // namespace TwinE
 
 #endif

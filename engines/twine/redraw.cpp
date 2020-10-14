@@ -21,26 +21,28 @@
  */
 
 #include "redraw.h"
-#include "sdlengine.h"
-#include "renderer.h"
-#include "interface.h"
-#include "screens.h"
-#include "grid.h"
-#include "scene.h"
 #include "actor.h"
-#include "hqrdepack.h"
-#include "resources.h"
-#include "menu.h"
 #include "animations.h"
-#include "keyboard.h"
-#include "movements.h"
-#include "text.h"
 #include "collision.h"
+#include "grid.h"
+#include "hqrdepack.h"
+#include "interface.h"
+#include "keyboard.h"
+#include "menu.h"
+#include "movements.h"
+#include "renderer.h"
+#include "resources.h"
+#include "scene.h"
+#include "screens.h"
+#include "sdlengine.h"
 #include "sound.h"
+#include "text.h"
 
 #ifdef GAMEMOD
 #include "debug.scene.h"
 #endif
+
+namespace TwinE {
 
 typedef struct RedrawStruct {
 	uint16 left;
@@ -53,7 +55,7 @@ RedrawStruct currentRedrawList[300];
 RedrawStruct nextRedrawList[300];
 
 typedef struct DrawListStruct {
-	int16  posValue;
+	int16 posValue;
 	uint16 index; // field_2
 	uint16 X;
 	uint16 Y;
@@ -105,7 +107,7 @@ void addRedrawCurrentArea(int32 left, int32 top, int32 right, int32 bottom) {
 		else
 			bottomValue = currentRedrawList[i].bottom;
 
-		if ((rightValue - leftValue) *(bottomValue - topValue) < ((currentRedrawList[i].bottom - currentRedrawList[i].top) *(currentRedrawList[i].right - currentRedrawList[i].left) + area)) {
+		if ((rightValue - leftValue) * (bottomValue - topValue) < ((currentRedrawList[i].bottom - currentRedrawList[i].top) * (currentRedrawList[i].right - currentRedrawList[i].left) + area)) {
 			currentRedrawList[i].left = leftValue;
 			currentRedrawList[i].top = topValue;
 			currentRedrawList[i].right = rightValue;
@@ -189,11 +191,11 @@ void flipRedrawAreas() {
 /** Blit/Update all screen regions in the currentRedrawList */
 void blitBackgroundAreas() {
 	int32 i;
-	RedrawStruct* currentArea;
+	RedrawStruct *currentArea;
 	currentArea = currentRedrawList;
 
 	for (i = 0; i < numOfRedrawBox; i++) {
-		blitBox(currentArea->left, currentArea->top, currentArea->right, currentArea->bottom, (int8 *) workVideoBuffer, currentArea->left, currentArea->top, (int8 *) frontVideoBuffer);
+		blitBox(currentArea->left, currentArea->top, currentArea->right, currentArea->bottom, (int8 *)workVideoBuffer, currentArea->left, currentArea->top, (int8 *)frontVideoBuffer);
 		currentArea++;
 	}
 }
@@ -209,9 +211,9 @@ void sortDrawingList(DrawListStruct *list, int32 listSize) {
 
 	for (i = 0; i < listSize - 1; i++) {
 		for (j = 0; j < listSize - 1 - i; j++) {
-			if (list[j+1].posValue < list[j].posValue) {
-				memcpy(&tempStruct, &list[j+1], sizeof(DrawListStruct));
-				memcpy(&list[j+1], &list[j], sizeof(DrawListStruct));
+			if (list[j + 1].posValue < list[j].posValue) {
+				memcpy(&tempStruct, &list[j + 1], sizeof(DrawListStruct));
+				memcpy(&list[j + 1], &list[j], sizeof(DrawListStruct));
 				memcpy(&list[j], &tempStruct, sizeof(DrawListStruct));
 			}
 		}
@@ -300,7 +302,7 @@ void redrawEngineActions(int32 bgRedraw) { // fullRedraw
 		actor = &sceneActors[modelActorPos];
 		actor->dynamicFlags.bIsVisible = 0; // reset visible state
 
-		if ((useCellingGrid == -1) || actor->Y <= (*(int16 *)(cellingGridIdx*24 + (int8 *)sceneZones + 8))) {
+		if ((useCellingGrid == -1) || actor->Y <= (*(int16 *)(cellingGridIdx * 24 + (int8 *)sceneZones + 8))) {
 			// no redraw required
 			if (actor->staticFlags.bIsBackgrounded && bgRedraw == 0) {
 				// get actor position on screen
@@ -317,7 +319,7 @@ void redrawEngineActions(int32 bgRedraw) { // fullRedraw
 					projectPositionOnScreen(actor->X - cameraX, actor->Y - cameraY, actor->Z - cameraZ);
 
 					if ((actor->staticFlags.bUsesClipping && projPosX > -112 && projPosX < 752 && projPosY > -50 && projPosY < 651) ||
-					   ((!actor->staticFlags.bUsesClipping) && projPosX > -50 && projPosX < 680 && projPosY > -30 && projPosY < 580)) {
+					    ((!actor->staticFlags.bUsesClipping) && projPosX > -50 && projPosX < 680 && projPosY > -30 && projPosY < 580)) {
 
 						tmpVal = actor->Z + actor->X - cameraX - cameraZ;
 
@@ -414,7 +416,7 @@ void redrawEngineActions(int32 bgRedraw) { // fullRedraw
 		do {
 			actorIdx = drawList[pos].index & 0x3FF;
 			actor = &sceneActors[actorIdx];
-			flags = ((uint32) drawList[pos].index) & 0xFC00;
+			flags = ((uint32)drawList[pos].index) & 0xFC00;
 
 			// Drawing actors
 			if (flags < 0xC00) {
@@ -453,14 +455,14 @@ void redrawEngineActions(int32 bgRedraw) { // fullRedraw
 
 							drawOverModelActor(tempX, tempY, tempZ);
 
-							if(cropBottomScreen) {
+							if (cropBottomScreen) {
 								renderBottom = textWindowBottom = cropBottomScreen + 10;
 							}
 
 							addRedrawArea(textWindowLeft, textWindowTop, renderRight, renderBottom);
 
 							if (actor->staticFlags.bIsBackgrounded && bgRedraw == 1) {
-								blitBox(textWindowLeft, textWindowTop, renderRight, renderBottom, (int8 *) frontVideoBuffer, textWindowLeft, textWindowTop, (int8 *) workVideoBuffer);
+								blitBox(textWindowLeft, textWindowTop, renderRight, renderBottom, (int8 *)frontVideoBuffer, textWindowLeft, textWindowTop, (int8 *)workVideoBuffer);
 							}
 						}
 					}
@@ -469,7 +471,7 @@ void redrawEngineActions(int32 bgRedraw) { // fullRedraw
 			// Drawing shadows
 			else if (flags == 0xC00 && !cropBottomScreen) {
 				int32 spriteWidth, spriteHeight, tmpX, tmpY, tmpZ;
-				DrawListStruct shadow =	drawList[pos];
+				DrawListStruct shadow = drawList[pos];
 
 				// get actor position on screen
 				projectPositionOnScreen(shadow.X - cameraX, shadow.Y - cameraY, shadow.Z - cameraZ);
@@ -477,9 +479,9 @@ void redrawEngineActions(int32 bgRedraw) { // fullRedraw
 				getSpriteSize(shadow.field_A, &spriteWidth, &spriteHeight, spriteShadowPtr);
 
 				// calculate sprite size and position on screen
-				renderLeft   = projPosX - (spriteWidth / 2);
-				renderTop    = projPosY - (spriteHeight / 2);
-				renderRight  = projPosX + (spriteWidth / 2);
+				renderLeft = projPosX - (spriteWidth / 2);
+				renderTop = projPosY - (spriteHeight / 2);
+				renderRight = projPosX + (spriteWidth / 2);
 				renderBottom = projPosY + (spriteHeight / 2);
 
 				setClip(renderLeft, renderTop, renderRight, renderBottom);
@@ -514,7 +516,7 @@ void redrawEngineActions(int32 bgRedraw) { // fullRedraw
 				getSpriteSize(0, &spriteWidth, &spriteHeight, spritePtr);
 
 				// calculate sprite position on screen
-				renderLeft = projPosX +  *((int16 *)(spriteBoundingBoxPtr + (actor->entity * 16)));
+				renderLeft = projPosX + *((int16 *)(spriteBoundingBoxPtr + (actor->entity * 16)));
 				renderTop = projPosY + *((int16 *)(spriteBoundingBoxPtr + (actor->entity * 16) + 2));
 				renderRight = renderLeft + spriteWidth;
 				renderBottom = renderTop + spriteHeight;
@@ -548,7 +550,7 @@ void redrawEngineActions(int32 bgRedraw) { // fullRedraw
 					addRedrawArea(textWindowLeft, textWindowTop, textWindowRight, textWindowBottom);
 
 					if (actor->staticFlags.bIsBackgrounded && bgRedraw == 1) {
-						blitBox(textWindowLeft, textWindowTop, textWindowRight, textWindowBottom, (int8 *) frontVideoBuffer, textWindowLeft, textWindowTop, (int8 *) workVideoBuffer);
+						blitBox(textWindowLeft, textWindowTop, textWindowRight, textWindowBottom, (int8 *)frontVideoBuffer, textWindowLeft, textWindowTop, (int8 *)workVideoBuffer);
 					}
 
 					// show clipping area
@@ -607,7 +609,7 @@ void redrawEngineActions(int32 bgRedraw) { // fullRedraw
 		OverlayListStruct *overlay = &overlayList[i];
 		if (overlay->info0 != -1) {
 			// process position overlay
-			switch(overlay->posType) {
+			switch (overlay->posType) {
 			case koNormal:
 				if (lbaTime >= overlay->lifeTime) {
 					overlay->info0 = -1;
@@ -626,12 +628,11 @@ void redrawEngineActions(int32 bgRedraw) { // fullRedraw
 					overlay->info0 = -1;
 					continue;
 				}
-			}
-				break;
+			} break;
 			}
 
 			// process overlay type
-			switch(overlay->type) {
+			switch (overlay->type) {
 			case koSprite: {
 				int16 offsetX, offsetY;
 				int32 spriteWidth, spriteHeight;
@@ -642,9 +643,9 @@ void redrawEngineActions(int32 bgRedraw) { // fullRedraw
 				offsetX = *((int16 *)(spriteBoundingBoxPtr + (overlay->info0 * 16)));
 				offsetY = *((int16 *)(spriteBoundingBoxPtr + (overlay->info0 * 16) + 2));
 
-				renderLeft   = offsetX + overlay->X;
-				renderTop    = offsetY + overlay->Y;
-				renderRight  = renderLeft + spriteWidth;
+				renderLeft = offsetX + overlay->X;
+				renderTop = offsetY + overlay->Y;
+				renderRight = renderLeft + spriteWidth;
 				renderBottom = renderTop + spriteHeight;
 
 				drawSprite(0, renderLeft, renderTop, spritePtr);
@@ -653,8 +654,7 @@ void redrawEngineActions(int32 bgRedraw) { // fullRedraw
 					addRedrawArea(textWindowLeft, textWindowTop, renderRight, renderBottom);
 				}
 
-			}
-				break;
+			} break;
 			case koNumber: {
 				int32 textLength, textHeight;
 				int8 text[10];
@@ -663,9 +663,9 @@ void redrawEngineActions(int32 bgRedraw) { // fullRedraw
 				textLength = getTextSize(text);
 				textHeight = 48;
 
-				renderLeft   = overlay->X - (textLength/2);
-				renderTop    = overlay->Y - 24;
-				renderRight  = overlay->X + (textLength/2);
+				renderLeft = overlay->X - (textLength / 2);
+				renderTop = overlay->Y - 24;
+				renderRight = overlay->X + (textLength / 2);
 				renderBottom = overlay->Y + textHeight;
 
 				setClip(renderLeft, renderTop, renderRight, renderBottom);
@@ -677,8 +677,7 @@ void redrawEngineActions(int32 bgRedraw) { // fullRedraw
 				if (textWindowLeft <= textWindowRight && textWindowTop <= textWindowBottom) {
 					addRedrawArea(textWindowLeft, textWindowTop, renderRight, renderBottom);
 				}
-			}
-				break;
+			} break;
 			case koNumberRange: {
 				int32 textLength, textHeight, range;
 				int8 text[10];
@@ -690,9 +689,9 @@ void redrawEngineActions(int32 bgRedraw) { // fullRedraw
 				textLength = getTextSize(text);
 				textHeight = 48;
 
-				renderLeft   = overlay->X - (textLength/2);
-				renderTop    = overlay->Y - 24;
-				renderRight  = overlay->X + (textLength/2);
+				renderLeft = overlay->X - (textLength / 2);
+				renderTop = overlay->Y - 24;
+				renderRight = overlay->X + (textLength / 2);
 				renderBottom = overlay->Y + textHeight;
 
 				setClip(renderLeft, renderTop, renderRight, renderBottom);
@@ -704,8 +703,7 @@ void redrawEngineActions(int32 bgRedraw) { // fullRedraw
 				if (textWindowLeft <= textWindowRight && textWindowTop <= textWindowBottom) {
 					addRedrawArea(textWindowLeft, textWindowTop, renderRight, renderBottom);
 				}
-			}
-				break;
+			} break;
 			case koInventoryItem: {
 				int32 item = overlay->info0;
 
@@ -722,8 +720,7 @@ void redrawEngineActions(int32 bgRedraw) { // fullRedraw
 				drawBox(10, 10, 69, 69);
 				addRedrawArea(10, 10, 69, 69);
 				initEngineProjections();
-			}
-				break;
+			} break;
 			case koText: {
 				int32 textLength, textHeight;
 				int8 text[256];
@@ -733,24 +730,24 @@ void redrawEngineActions(int32 bgRedraw) { // fullRedraw
 				textLength = getTextSize(text);
 				textHeight = 48;
 
-				renderLeft   = overlay->X - (textLength/2);
-				renderTop    = overlay->Y - 24;
-				renderRight  = overlay->X + (textLength/2);
+				renderLeft = overlay->X - (textLength / 2);
+				renderTop = overlay->Y - 24;
+				renderRight = overlay->X + (textLength / 2);
 				renderBottom = overlay->Y + textHeight;
 
-				if(renderLeft < 0) {
+				if (renderLeft < 0) {
 					renderLeft = 0;
 				}
 
-				if(renderTop < 0) {
+				if (renderTop < 0) {
 					renderTop = 0;
 				}
 
-				if(renderRight > SCREEN_TEXTLIMIT_RIGHT) {
+				if (renderRight > SCREEN_TEXTLIMIT_RIGHT) {
 					renderRight = SCREEN_TEXTLIMIT_RIGHT;
 				}
 
-				if(renderBottom > SCREEN_TEXTLIMIT_BOTTOM) {
+				if (renderBottom > SCREEN_TEXTLIMIT_BOTTOM) {
 					renderBottom = SCREEN_TEXTLIMIT_BOTTOM;
 				}
 
@@ -763,8 +760,7 @@ void redrawEngineActions(int32 bgRedraw) { // fullRedraw
 				if (textWindowLeft <= textWindowRight && textWindowTop <= textWindowBottom) {
 					addRedrawArea(textWindowLeft, textWindowTop, renderRight, renderBottom);
 				}
-			}
-				break;
+			} break;
 			}
 		}
 	}
@@ -796,55 +792,55 @@ void redrawEngineActions(int32 bgRedraw) { // fullRedraw
 	}
 
 	if (zoomScreen) {
-        //zoomScreenScale();
-    }
+		//zoomScreenScale();
+	}
 }
 
 void drawBubble(int32 actorIdx) {
-    int32 spriteWidth, spriteHeight;
-    uint8 *spritePtr;
-    ActorStruct *actor = &sceneActors[actorIdx];
+	int32 spriteWidth, spriteHeight;
+	uint8 *spritePtr;
+	ActorStruct *actor = &sceneActors[actorIdx];
 
-    // get actor position on screen
-    projectPositionOnScreen(actor->X - cameraX, actor->Y + actor->boudingBox.Y.topRight - cameraY, actor->Z - cameraZ);
+	// get actor position on screen
+	projectPositionOnScreen(actor->X - cameraX, actor->Y + actor->boudingBox.Y.topRight - cameraY, actor->Z - cameraZ);
 
-    if (actorIdx != bubbleActor) {
-        bubbleSpriteIndex = bubbleSpriteIndex ^ 1;
-        bubbleActor = actorIdx;
-    }
+	if (actorIdx != bubbleActor) {
+		bubbleSpriteIndex = bubbleSpriteIndex ^ 1;
+		bubbleActor = actorIdx;
+	}
 
-    spritePtr = spriteTable[bubbleSpriteIndex];
-    getSpriteSize(0, &spriteWidth, &spriteHeight, spritePtr);
+	spritePtr = spriteTable[bubbleSpriteIndex];
+	getSpriteSize(0, &spriteWidth, &spriteHeight, spritePtr);
 
-    // calculate sprite position on screen
-    if (bubbleSpriteIndex == SPRITEHQR_DIAG_BUBBLE_RIGHT) {
-        renderLeft = projPosX + 10;
-    } else {
-        renderLeft = projPosX - 10 - spriteWidth;
-    }
-    renderTop = projPosY - 20;
-    renderRight = spriteWidth + renderLeft - 1;
-    renderBottom = spriteHeight + renderTop - 1;
+	// calculate sprite position on screen
+	if (bubbleSpriteIndex == SPRITEHQR_DIAG_BUBBLE_RIGHT) {
+		renderLeft = projPosX + 10;
+	} else {
+		renderLeft = projPosX - 10 - spriteWidth;
+	}
+	renderTop = projPosY - 20;
+	renderRight = spriteWidth + renderLeft - 1;
+	renderBottom = spriteHeight + renderTop - 1;
 
-    setClip(renderLeft, renderTop, renderRight, renderBottom);
+	setClip(renderLeft, renderTop, renderRight, renderBottom);
 
-    drawSprite(0, renderLeft, renderTop, spritePtr);
-    if (textWindowLeft <= textWindowRight && textWindowTop <= textWindowBottom) {
-        copyBlockPhys(renderLeft, renderTop, renderRight, renderBottom);
-    }
+	drawSprite(0, renderLeft, renderTop, spritePtr);
+	if (textWindowLeft <= textWindowRight && textWindowTop <= textWindowBottom) {
+		copyBlockPhys(renderLeft, renderTop, renderRight, renderBottom);
+	}
 
-    resetClip();
+	resetClip();
 }
 
 void zoomScreenScale() {
-    int h, w;
-	uint8 * dest;
-    uint8 * zoomWorkVideoBuffer = (uint8 *) malloc((SCREEN_WIDTH * SCREEN_HEIGHT) * sizeof(uint8));
-    memcpy(zoomWorkVideoBuffer, workVideoBuffer, SCREEN_WIDTH*SCREEN_HEIGHT);
+	int h, w;
+	uint8 *dest;
+	uint8 *zoomWorkVideoBuffer = (uint8 *)malloc((SCREEN_WIDTH * SCREEN_HEIGHT) * sizeof(uint8));
+	memcpy(zoomWorkVideoBuffer, workVideoBuffer, SCREEN_WIDTH * SCREEN_HEIGHT);
 
 	dest = workVideoBuffer;
 
-    for (h = 0; h < SCREEN_HEIGHT; h++) {
+	for (h = 0; h < SCREEN_HEIGHT; h++) {
 		for (w = 0; w < SCREEN_WIDTH; w++) {
 			*dest++ = *zoomWorkVideoBuffer;
 			*dest++ = *zoomWorkVideoBuffer++;
@@ -853,5 +849,7 @@ void zoomScreenScale() {
 		//dest += SCREEN_WIDTH;
 	}
 	copyScreen(workVideoBuffer, frontVideoBuffer);
-    //free(zoomWorkVideoBuffer);
+	//free(zoomWorkVideoBuffer);
 }
+
+} // namespace TwinE

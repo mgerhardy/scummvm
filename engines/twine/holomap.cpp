@@ -23,6 +23,8 @@
 #include "holomap.h"
 #include "gamestate.h"
 
+namespace TwinE {
+
 /** Set Holomap location position
 	@location Scene where position must be set */
 void setHolomapPosition(int32 location) {
@@ -35,3 +37,5 @@ void clearHolomapPosition(int32 location) {
 	holomapFlags[location] &= 0x7E;
 	holomapFlags[location] |= 0x40;
 }
+
+} // namespace TwinE

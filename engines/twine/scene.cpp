@@ -24,24 +24,25 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "scene.h"
 #include "actor.h"
-#include "grid.h"
-#include "twine.h"
-#include "text.h"
-#include "resources.h"
-#include "music.h"
-#include "renderer.h"
-#include "gamestate.h"
-#include "redraw.h"
-#include "movements.h"
-#include "sound.h"
 #include "animations.h"
 #include "extra.h"
+#include "gamestate.h"
+#include "grid.h"
+#include "movements.h"
+#include "music.h"
+#include "redraw.h"
+#include "renderer.h"
+#include "resources.h"
+#include "scene.h"
 #include "screens.h"
+#include "sound.h"
+#include "text.h"
+#include "twine.h"
 
-uint8* currentScene;
+namespace TwinE {
 
+uint8 *currentScene;
 
 void setActorStaticFlags(int32 actorIdx, uint16 staticFlags) {
 	if (staticFlags & 0x1) {
@@ -98,76 +99,76 @@ void setActorStaticFlags(int32 actorIdx, uint16 staticFlags) {
 void loadScene() {
 	int32 i;
 	int32 scriptSize = 0;
-	uint8* localScene = currentScene;
+	uint8 *localScene = currentScene;
 
 	// load scene ambience properties
 	currentTextBank = *(localScene++);
 	currentGameOverScene = *(localScene++);
 	localScene += 4;
 
-	alphaLight = *((uint16*)localScene);
+	alphaLight = *((uint16 *)localScene);
 	localScene += 2;
-	betaLight = *((uint16*)localScene);
+	betaLight = *((uint16 *)localScene);
 	localScene += 2;
 
 	// FIXME: Workaround to fix lighting issue - not using proper dark light
 	alphaLight = 896;
 	betaLight = 950;
 
-	sampleAmbiance[0] = *((uint16*)localScene);
+	sampleAmbiance[0] = *((uint16 *)localScene);
 	localScene += 2;
-	sampleRepeat[0] = *((uint16*)localScene);
+	sampleRepeat[0] = *((uint16 *)localScene);
 	localScene += 2;
-	sampleRound[0] = *((uint16*)localScene);
-	localScene += 2;
-
-	sampleAmbiance[1] = *((uint16*)localScene);
-	localScene += 2;
-	sampleRepeat[1] = *((uint16*)localScene);
-	localScene += 2;
-	sampleRound[1] = *((uint16*)localScene);
+	sampleRound[0] = *((uint16 *)localScene);
 	localScene += 2;
 
-	sampleAmbiance[2] = *((uint16*)localScene);
+	sampleAmbiance[1] = *((uint16 *)localScene);
 	localScene += 2;
-	sampleRepeat[2] = *((uint16*)localScene);
+	sampleRepeat[1] = *((uint16 *)localScene);
 	localScene += 2;
-	sampleRound[2] = *((uint16*)localScene);
-	localScene += 2;
-
-	sampleAmbiance[3] = *((uint16*)localScene);
-	localScene += 2;
-	sampleRepeat[3] = *((uint16*)localScene);
-	localScene += 2;
-	sampleRound[3] = *((uint16*)localScene);
+	sampleRound[1] = *((uint16 *)localScene);
 	localScene += 2;
 
-	sampleMinDelay = *((uint16*)localScene);
+	sampleAmbiance[2] = *((uint16 *)localScene);
 	localScene += 2;
-	sampleMinDelayRnd = *((uint16*)localScene);
+	sampleRepeat[2] = *((uint16 *)localScene);
+	localScene += 2;
+	sampleRound[2] = *((uint16 *)localScene);
+	localScene += 2;
+
+	sampleAmbiance[3] = *((uint16 *)localScene);
+	localScene += 2;
+	sampleRepeat[3] = *((uint16 *)localScene);
+	localScene += 2;
+	sampleRound[3] = *((uint16 *)localScene);
+	localScene += 2;
+
+	sampleMinDelay = *((uint16 *)localScene);
+	localScene += 2;
+	sampleMinDelayRnd = *((uint16 *)localScene);
 	localScene += 2;
 
 	sceneMusic = *(localScene++);
 
 	// load hero properties
-	sceneHeroX = *((uint16*)localScene);
+	sceneHeroX = *((uint16 *)localScene);
 	localScene += 2;
-	sceneHeroY = *((uint16*)localScene);
+	sceneHeroY = *((uint16 *)localScene);
 	localScene += 2;
-	sceneHeroZ = *((uint16*)localScene);
+	sceneHeroZ = *((uint16 *)localScene);
 	localScene += 2;
 
-	scriptSize = *((uint16*)localScene);
+	scriptSize = *((uint16 *)localScene);
 	localScene += 2;
 	sceneHero->moveScript = localScene;
 	localScene += scriptSize;
 
-	scriptSize = *((uint16*)localScene);
+	scriptSize = *((uint16 *)localScene);
 	localScene += 2;
 	sceneHero->lifeScript = localScene;
 	localScene += scriptSize;
 
-	sceneNumActors = *((uint16*)localScene);
+	sceneNumActors = *((uint16 *)localScene);
 	localScene += 2;
 
 	for (i = 1; i < sceneNumActors; i++) {
@@ -175,11 +176,11 @@ void loadScene() {
 
 		resetActor(i);
 
-		staticFlags = *((uint16*)localScene);
+		staticFlags = *((uint16 *)localScene);
 		localScene += 2;
 		setActorStaticFlags(i, staticFlags);
 
-		sceneActors[i].entity = *((uint16*)localScene);
+		sceneActors[i].entity = *((uint16 *)localScene);
 		localScene += 2;
 
 		if (!sceneActors[i].staticFlags.bIsSpriteActor) {
@@ -188,34 +189,34 @@ void loadScene() {
 
 		sceneActors[i].body = *(localScene++);
 		sceneActors[i].anim = *(localScene++);
-		sceneActors[i].sprite = *((uint16*)localScene);
+		sceneActors[i].sprite = *((uint16 *)localScene);
 		localScene += 2;
-		sceneActors[i].X = *((uint16*)localScene);
+		sceneActors[i].X = *((uint16 *)localScene);
 		sceneActors[i].collisionX = sceneActors[i].X;
 		localScene += 2;
-		sceneActors[i].Y = *((uint16*)localScene);
+		sceneActors[i].Y = *((uint16 *)localScene);
 		sceneActors[i].collisionY = sceneActors[i].Y;
 		localScene += 2;
-		sceneActors[i].Z = *((uint16*)localScene);
+		sceneActors[i].Z = *((uint16 *)localScene);
 		sceneActors[i].collisionZ = sceneActors[i].Z;
 		localScene += 2;
 		sceneActors[i].strengthOfHit = *(localScene++);
-		sceneActors[i].bonusParameter = *((uint16*)localScene);
+		sceneActors[i].bonusParameter = *((uint16 *)localScene);
 		localScene += 2;
 		sceneActors[i].bonusParameter &= 0xFE;
-		sceneActors[i].angle = *((uint16*)localScene);
+		sceneActors[i].angle = *((uint16 *)localScene);
 		localScene += 2;
-		sceneActors[i].speed = *((uint16*)localScene);
+		sceneActors[i].speed = *((uint16 *)localScene);
 		localScene += 2;
-		sceneActors[i].controlMode = *((uint16*)localScene);
+		sceneActors[i].controlMode = *((uint16 *)localScene);
 		localScene += 2;
-		sceneActors[i].info0 = *((int16*)localScene);
+		sceneActors[i].info0 = *((int16 *)localScene);
 		localScene += 2;
-		sceneActors[i].info1 = *((int16*)localScene);
+		sceneActors[i].info1 = *((int16 *)localScene);
 		localScene += 2;
-		sceneActors[i].info2 = *((int16*)localScene);
+		sceneActors[i].info2 = *((int16 *)localScene);
 		localScene += 2;
-		sceneActors[i].info3 = *((int16*)localScene);
+		sceneActors[i].info3 = *((int16 *)localScene);
 		localScene += 2;
 		sceneActors[i].followedActor = sceneActors[i].info3;
 		sceneActors[i].bonusAmount = *(localScene++);
@@ -223,60 +224,60 @@ void loadScene() {
 		sceneActors[i].armor = *(localScene++);
 		sceneActors[i].life = *(localScene++);
 
-		scriptSize = *((uint16*)localScene);
+		scriptSize = *((uint16 *)localScene);
 		localScene += 2;
 		sceneActors[i].moveScript = localScene;
 		localScene += scriptSize;
 
-		scriptSize = *((uint16*)localScene);
+		scriptSize = *((uint16 *)localScene);
 		localScene += 2;
 		sceneActors[i].lifeScript = localScene;
 		localScene += scriptSize;
 	}
 
-	sceneNumZones = *((uint16*)localScene);
+	sceneNumZones = *((uint16 *)localScene);
 	localScene += 2;
 
 	for (i = 0; i < sceneNumZones; i++) {
-		sceneZones[i].bottomLeft.X = *((uint16*)localScene);
+		sceneZones[i].bottomLeft.X = *((uint16 *)localScene);
 		localScene += 2;
-		sceneZones[i].bottomLeft.Y = *((uint16*)localScene);
+		sceneZones[i].bottomLeft.Y = *((uint16 *)localScene);
 		localScene += 2;
-		sceneZones[i].bottomLeft.Z = *((uint16*)localScene);
-		localScene += 2;
-
-		sceneZones[i].topRight.X = *((uint16*)localScene);
-		localScene += 2;
-		sceneZones[i].topRight.Y = *((uint16*)localScene);
-		localScene += 2;
-		sceneZones[i].topRight.Z = *((uint16*)localScene);
+		sceneZones[i].bottomLeft.Z = *((uint16 *)localScene);
 		localScene += 2;
 
-		sceneZones[i].type = *((uint16*)localScene);
+		sceneZones[i].topRight.X = *((uint16 *)localScene);
+		localScene += 2;
+		sceneZones[i].topRight.Y = *((uint16 *)localScene);
+		localScene += 2;
+		sceneZones[i].topRight.Z = *((uint16 *)localScene);
 		localScene += 2;
 
-		sceneZones[i].infoData.generic.info0 = *((uint16*)localScene);
-		localScene += 2;
-		sceneZones[i].infoData.generic.info1 = *((uint16*)localScene);
-		localScene += 2;
-		sceneZones[i].infoData.generic.info2 = *((uint16*)localScene);
-		localScene += 2;
-		sceneZones[i].infoData.generic.info3 = *((uint16*)localScene);
+		sceneZones[i].type = *((uint16 *)localScene);
 		localScene += 2;
 
-		sceneZones[i].snap = *((uint16*)localScene);
+		sceneZones[i].infoData.generic.info0 = *((uint16 *)localScene);
+		localScene += 2;
+		sceneZones[i].infoData.generic.info1 = *((uint16 *)localScene);
+		localScene += 2;
+		sceneZones[i].infoData.generic.info2 = *((uint16 *)localScene);
+		localScene += 2;
+		sceneZones[i].infoData.generic.info3 = *((uint16 *)localScene);
+		localScene += 2;
+
+		sceneZones[i].snap = *((uint16 *)localScene);
 		localScene += 2;
 	}
 
-	sceneNumTracks = *((uint16*)localScene);
+	sceneNumTracks = *((uint16 *)localScene);
 	localScene += 2;
 
 	for (i = 0; i < sceneNumTracks; i++) {
-		sceneTracks[i].X = *((uint16*)localScene);
+		sceneTracks[i].X = *((uint16 *)localScene);
 		localScene += 2;
-		sceneTracks[i].Y = *((uint16*)localScene);
+		sceneTracks[i].Y = *((uint16 *)localScene);
 		localScene += 2;
-		sceneTracks[i].Z = *((uint16*)localScene);
+		sceneTracks[i].Z = *((uint16 *)localScene);
 		localScene += 2;
 	}
 }
@@ -290,7 +291,6 @@ int32 initScene(int32 index) {
 
 	return 1;
 }
-
 
 /** Reset scene */
 void resetScene() {
@@ -408,21 +408,21 @@ void processEnvironmentSound() {
 	if (lbaTime >= sampleAmbienceTime) {
 		currentAmb = Rnd(4); // random ambiance
 
-		for(s = 0; s < 4; s++) {
-			if(!(samplePlayed & (1 << currentAmb))) { // if not already played
-				samplePlayed |= (1 << currentAmb); // make sample played
+		for (s = 0; s < 4; s++) {
+			if (!(samplePlayed & (1 << currentAmb))) { // if not already played
+				samplePlayed |= (1 << currentAmb);     // make sample played
 
-				if(samplePlayed == 15) { // reset if all samples played
+				if (samplePlayed == 15) { // reset if all samples played
 					samplePlayed = 0;
 				}
 
 				sampleIdx = sampleAmbiance[currentAmb];
-				if(sampleIdx != -1) {
+				if (sampleIdx != -1) {
 					decal = sampleRound[currentAmb];
 					repeat = sampleRepeat[currentAmb];
 
-					playSample(sampleIdx, (0x1000+Rnd(decal)-(decal/2)), repeat, 110, -1, 110, -1);
-					break ;
+					playSample(sampleIdx, (0x1000 + Rnd(decal) - (decal / 2)), repeat, 110, -1, 110, -1);
+					break;
 				}
 			}
 
@@ -459,8 +459,8 @@ void processZoneExtraBonus(ZoneStruct *zone) {
 				currentBonus = 1;
 			}
 
-			angle = getAngleAndSetTargetActorDistance(Abs(zone->topRight.X + zone->bottomLeft.X)/2, Abs(zone->topRight.Z + zone->bottomLeft.Z)/2, sceneHero->X, sceneHero->Z);
-			index = addExtraBonus(Abs(zone->topRight.X + zone->bottomLeft.X)/2, zone->topRight.Y, Abs(zone->topRight.Z + zone->bottomLeft.Z)/2, 180, angle, currentBonus + 3, zone->infoData.generic.info2);
+			angle = getAngleAndSetTargetActorDistance(Abs(zone->topRight.X + zone->bottomLeft.X) / 2, Abs(zone->topRight.Z + zone->bottomLeft.Z) / 2, sceneHero->X, sceneHero->Z);
+			index = addExtraBonus(Abs(zone->topRight.X + zone->bottomLeft.X) / 2, zone->topRight.Y, Abs(zone->topRight.Z + zone->bottomLeft.Z) / 2, 180, angle, currentBonus + 3, zone->infoData.generic.info2);
 
 			if (index != -1) {
 				extraList[index].type |= 0x400;
@@ -469,7 +469,6 @@ void processZoneExtraBonus(ZoneStruct *zone) {
 		}
 	}
 }
-
 
 /** Process actor zones
 	@param actorIdx Process actor index */
@@ -495,8 +494,8 @@ void processActorZones(int32 actorIdx) {
 
 		// check if actor is in zone
 		if ((currentX >= zone->bottomLeft.X && currentX <= zone->topRight.X) &&
-			(currentY >= zone->bottomLeft.Y && currentY <= zone->topRight.Y) &&
-			(currentZ >= zone->bottomLeft.Z && currentZ <= zone->topRight.Z)) {
+		    (currentY >= zone->bottomLeft.Y && currentY <= zone->topRight.Y) &&
+		    (currentZ >= zone->bottomLeft.Z && currentZ <= zone->topRight.Z)) {
 			switch (zone->type) {
 			case kCube:
 				if (!actorIdx && actor->life > 0) {
@@ -582,3 +581,5 @@ void processActorZones(int32 actorIdx) {
 		reqBgRedraw = 1;
 	}
 }
+
+} // namespace TwinE

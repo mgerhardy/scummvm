@@ -28,6 +28,8 @@
 #include "common/scummsys.h"
 #include "debug.h"
 
+namespace TwinE {
+
 /** Main SDL screen surface buffer */
 extern SDL_Surface *screen;
 
@@ -48,7 +50,7 @@ void delaySkip(uint32 time);
 
 /** Set a new palette in the SDL screen buffer
 	@param palette palette to set */
-void setPalette(uint8 * palette);
+void setPalette(uint8 *palette);
 
 /** Fade screen from black to white */
 void fadeBlackToWhite();
@@ -90,5 +92,7 @@ void ttfDrawText(int32 X, int32 Y, int8 *string, int32 center);
 /** Gets SDL mouse positions
 	@param mouseData structure that contains mouse position info */
 void getMousePositions(MouseStatusStruct *mouseData);
+
+} // namespace TwinE
 
 #endif

@@ -25,6 +25,8 @@
 
 #include "common/scummsys.h"
 
+namespace TwinE {
+
 /** Set Holomap location position
 	@location Scene where position must be set */
 void setHolomapPosition(int32 location);
@@ -33,5 +35,6 @@ void setHolomapPosition(int32 location);
 	@location Scene where position must be cleared */
 void clearHolomapPosition(int32 location);
 
+} // namespace TwinE
 
 #endif

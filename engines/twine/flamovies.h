@@ -25,6 +25,8 @@
 
 #include "twine.h"
 
+namespace TwinE {
+
 /** FLA movie directory */
 #define FLA_DIR "fla/"
 
@@ -71,10 +73,12 @@ typedef struct FLASampleStruct {
 } FLASampleStruct;
 
 /** FLA movie file buffer */
-unsigned char flaBuffer[FLASCREEN_WIDTH*FLASCREEN_HEIGHT];
+unsigned char flaBuffer[FLASCREEN_WIDTH * FLASCREEN_HEIGHT];
 
 /** Play FLA movies
 	@param flaName FLA movie name */
 void playFlaMovie(int8 *flaName);
+
+} // namespace TwinE
 
 #endif

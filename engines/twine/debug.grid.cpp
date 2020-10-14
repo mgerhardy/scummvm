@@ -26,9 +26,11 @@
 
 #include "debug.grid.h"
 #include "grid.h"
+#include "redraw.h"
 #include "scene.h"
 #include "twine.h"
-#include "redraw.h"
+
+namespace TwinE {
 
 int32 useFreeCamera = 0;
 #ifdef _DEBUG
@@ -125,3 +127,4 @@ void applyCellingGrid(int16 pKey) {
 	}
 }
 
+} // namespace TwinE

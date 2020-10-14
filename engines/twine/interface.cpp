@@ -23,19 +23,25 @@
 #include "interface.h"
 #include "sdlengine.h"
 #include "twine.h"
+
+namespace TwinE {
+
 const int32 INSIDE = 0; // 0000
 const int32 LEFT = 1;   // 0001
 const int32 RIGHT = 2;  // 0010
-const int32 TOP = 4; // 0100
-const int32 BOTTOM = 8;    // 1000
+const int32 TOP = 4;    // 0100
+const int32 BOTTOM = 8; // 1000
 
-int32 checkClipping(int32 x, int32 y)
-{
+int32 checkClipping(int32 x, int32 y) {
 	int32 code = INSIDE;
-	if (x < textWindowLeft) code |= LEFT;
-	else if (x > textWindowRight) code |= RIGHT;
-	if (y < textWindowTop) code |= TOP;
-	else if (y > textWindowBottom) code |= BOTTOM;
+	if (x < textWindowLeft)
+		code |= LEFT;
+	else if (x > textWindowRight)
+		code |= RIGHT;
+	if (y < textWindowTop)
+		code |= TOP;
+	else if (y > textWindowBottom)
+		code |= BOTTOM;
 	return code;
 }
 
@@ -72,21 +78,22 @@ void drawLine(int32 startWidth, int32 startHeight, int32 endWidth, int32 endHeig
 	outcode1 = checkClipping(endWidth, endHeight);
 
 	while ((outcode0 | outcode1) != 0) {
-		if (((outcode0 & outcode1) != 0) && (outcode0 != INSIDE)) return; // Reject lines which are behind one clipping plane
+		if (((outcode0 & outcode1) != 0) && (outcode0 != INSIDE))
+			return; // Reject lines which are behind one clipping plane
 
 		// At least one endpoint is outside the clip rectangle; pick it.
 		outcodeOut = outcode0 ? outcode0 : outcode1;
 
-		if (outcodeOut & TOP) {           // point is above the clip rectangle
+		if (outcodeOut & TOP) { // point is above the clip rectangle
 			x = startWidth + (int)((endWidth - startWidth) * (float)(textWindowTop - startHeight) / (float)(endHeight - startHeight));
 			y = textWindowTop;
 		} else if (outcodeOut & BOTTOM) { // point is below the clip rectangle
 			x = startWidth + (int)((endWidth - startWidth) * (float)(textWindowBottom - startHeight) / (float)(endHeight - startHeight));
 			y = textWindowBottom;
-		} else if (outcodeOut & RIGHT) {  // point is to the right of clip rectangle
+		} else if (outcodeOut & RIGHT) { // point is to the right of clip rectangle
 			y = startHeight + (int)((endHeight - startHeight) * (float)(textWindowRight - startWidth) / (float)(endWidth - startWidth));
 			x = textWindowRight;
-		} else if (outcodeOut & LEFT) {   // point is to the left of clip rectangle
+		} else if (outcodeOut & LEFT) { // point is to the left of clip rectangle
 			y = startHeight + (int)((endHeight - startHeight) * (float)(textWindowLeft - startWidth) / (float)(endWidth - startWidth));
 			x = textWindowLeft;
 		}
@@ -103,7 +110,7 @@ void drawLine(int32 startWidth, int32 startHeight, int32 endWidth, int32 endHeig
 		}
 	}
 
-	flag2 = 640;//SCREEN_WIDTH;
+	flag2 = 640; //SCREEN_WIDTH;
 	endWidth -= startWidth;
 	endHeight -= startHeight;
 	if (endHeight < 0) {
@@ -114,7 +121,7 @@ void drawLine(int32 startWidth, int32 startHeight, int32 endWidth, int32 endHeig
 	out = frontVideoBuffer + screenLookupTable[startHeight] + startWidth;
 
 	color = currentLineColor;
-	if (endWidth < endHeight) {    // significant slope
+	if (endWidth < endHeight) { // significant slope
 		xchg = endWidth;
 		endWidth = endHeight;
 		endHeight = xchg;
@@ -124,7 +131,7 @@ void drawLine(int32 startWidth, int32 startHeight, int32 endWidth, int32 endHeig
 		endHeight <<= 1;
 		endWidth++;
 		do {
-			*out = (uint8) color;
+			*out = (uint8)color;
 			startHeight -= endHeight;
 			if (startHeight > 0) {
 				out += flag2;
@@ -133,14 +140,14 @@ void drawLine(int32 startWidth, int32 startHeight, int32 endWidth, int32 endHeig
 				out += flag2 + 1;
 			}
 		} while (--endWidth);
-	} else {   // reduced slope
+	} else { // reduced slope
 		var2 = endWidth;
 		var2 <<= 1;
 		startHeight = endWidth;
 		endHeight <<= 1;
 		endWidth++;
 		do {
-			*out = (uint8) color;
+			*out = (uint8)color;
 			out++;
 			startHeight -= endHeight;
 			if (startHeight < 0) {
@@ -322,3 +329,5 @@ void resetClip() {
 	textWindowRight = SCREEN_TEXTLIMIT_RIGHT;
 	textWindowBottom = SCREEN_TEXTLIMIT_BOTTOM;
 }
+
+} // namespace TwinE

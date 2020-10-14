@@ -462,6 +462,7 @@ TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flag
     : Engine(system), _gameLang(language), _gameFlags(flags), _rnd("twine") {
 	_actor = new Actor(this);
 	_animations = new Animations(this);
+	_collision = new Collision(this);
 }
 
 TwinEEngine::~TwinEEngine() {

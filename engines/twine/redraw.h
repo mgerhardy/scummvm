@@ -25,7 +25,9 @@
 
 #include "common/scummsys.h"
 
-#define OVERLAY_MAX_ENTRIES		10
+namespace TwinE {
+
+#define OVERLAY_MAX_ENTRIES 10
 
 /** Auxiliar object render left position on screen */
 int32 renderLeft;
@@ -101,5 +103,7 @@ void redrawEngineActions(int32 bgRedraw);
 void drawBubble(int32 actorIdx);
 
 void zoomScreenScale();
+
+} // namespace TwinE
 
 #endif

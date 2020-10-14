@@ -22,83 +22,83 @@
 
 #include <stdio.h>
 
-#include "extra.h"
 #include "collision.h"
-#include "resources.h"
+#include "extra.h"
 #include "gamestate.h"
-#include "scene.h"
-#include "movements.h"
-#include "renderer.h"
 #include "grid.h"
-#include "sound.h"
-#include "redraw.h"
 #include "interface.h"
+#include "movements.h"
+#include "redraw.h"
+#include "renderer.h"
+#include "resources.h"
+#include "scene.h"
+#include "sound.h"
+
+namespace TwinE {
 
 /** Hit Stars shape info */
 int16 hitStarsShapeTable[] = {
-	10,
-	0,
-	-20,
-	4,
-	-6,
-	19,
-	-6,
-	7,
-	2,
-	12,
-	16,
-	0,
-	7,
-	-12,
-	16,
-	-7,
-	2,
-	-19,
-	-6,
-	-4,
-	-6
-};
+    10,
+    0,
+    -20,
+    4,
+    -6,
+    19,
+    -6,
+    7,
+    2,
+    12,
+    16,
+    0,
+    7,
+    -12,
+    16,
+    -7,
+    2,
+    -19,
+    -6,
+    -4,
+    -6};
 
 /** Explode Cloud shape info */
-int16 explodeCloudShapeTable [] = {
-	18,
-	0,
-	-20,
-	6,
-	-16,
-	8,
-	-10,
-	14,
-	-12,
-	20,
-	-4,
-	18,
-	4,
-	12,
-	4,
-	16,
-	8,
-	8,
-	16,
-	2,
-	12,
-	-4,
-	18,
-	-10,
-	16,
-	-12,
-	8,
-	-16,
-	10,
-	-20,
-	4,
-	-12,
-	-8,
-	-6,
-	-6,
-	-10,
-	-12
-};
+int16 explodeCloudShapeTable[] = {
+    18,
+    0,
+    -20,
+    6,
+    -16,
+    8,
+    -10,
+    14,
+    -12,
+    20,
+    -4,
+    18,
+    4,
+    12,
+    4,
+    16,
+    8,
+    8,
+    16,
+    2,
+    12,
+    -4,
+    18,
+    -10,
+    16,
+    -12,
+    8,
+    -16,
+    10,
+    -20,
+    4,
+    -12,
+    -8,
+    -6,
+    -6,
+    -10,
+    -12};
 
 int32 addExtra(int32 actorIdx, int32 X, int32 Y, int32 Z, int32 info0, int32 targetActor, int32 maxSpeed, int32 strengthOfHit) {
 	int32 i;
@@ -400,7 +400,7 @@ void addExtraThrowMagicball(int32 X, int32 Y, int32 Z, int32 param1, int32 angle
 		break;
 	case 5:
 		magicBallIdx = addExtraAimingAtKey(0, X, Y, Z, ballSprite, extraIdx);
-      break;
+		break;
 	}
 
 	if (inventoryMagicPoints > 0) {
@@ -425,9 +425,9 @@ void drawSpecialShape(int16 *shapeTable, int32 X, int32 Y, int32 color, int32 an
 	var_8 = ((*(shapeTable++)) * size) >> 4;
 	temp1 = ((*(shapeTable++)) * size) >> 4;
 
-	renderLeft   = 0x7D00;
-	renderRight  = -0x7D00;
-	renderTop    = 0x7D00;
+	renderLeft = 0x7D00;
+	renderRight = -0x7D00;
+	renderTop = 0x7D00;
 	renderBottom = -0x7D00;
 
 	rotateActor(var_8, temp1, angle);
@@ -468,16 +468,16 @@ void drawSpecialShape(int16 *shapeTable, int32 X, int32 Y, int32 color, int32 an
 		currentY = destZ + Y;
 
 		if (currentX < renderLeft)
-		  renderLeft = currentX;
+			renderLeft = currentX;
 
 		if (currentX > renderRight)
-		  renderRight = currentX;
+			renderRight = currentX;
 
 		if (currentY < renderTop)
-		  renderTop = currentY;
+			renderTop = currentY;
 
 		if (currentY > renderBottom)
-		  renderBottom = currentY;
+			renderBottom = currentY;
 
 		projPosX = currentX;
 		projPosY = currentY;
@@ -488,7 +488,6 @@ void drawSpecialShape(int16 *shapeTable, int32 X, int32 Y, int32 color, int32 an
 
 		currentX = projPosX;
 		currentY = projPosY;
-
 	}
 
 	projPosX = currentX;
@@ -502,7 +501,7 @@ void drawExtraSpecial(int32 extraIdx, int32 X, int32 Y) {
 
 	specialType = extra->info0 & 0x7FFF;
 
-	switch(specialType) {
+	switch (specialType) {
 	case kHitStars:
 		drawSpecialShape(hitStarsShapeTable, X, Y, 15, (lbaTime << 5) & 0x300, 4);
 		break;
@@ -514,8 +513,7 @@ void drawExtraSpecial(int32 extraIdx, int32 X, int32 Y) {
 		}
 
 		drawSpecialShape(explodeCloudShapeTable, X, Y, 15, 0, cloudTime);
-	}
-		break;
+	} break;
 	}
 }
 
@@ -581,7 +579,7 @@ void processExtras() {
 
 				currentExtraSpeedY = extra->destY * (lbaTime - extra->lifeTime);
 				currentExtraSpeedY += extra->lastY;
-				extra->Y = currentExtraSpeedY - Abs(((extra->angle * (lbaTime - extra->lifeTime))* (lbaTime - extra->lifeTime)) >> 4);
+				extra->Y = currentExtraSpeedY - Abs(((extra->angle * (lbaTime - extra->lifeTime)) * (lbaTime - extra->lifeTime)) >> 4);
 
 				extra->Z = extra->destZ * (lbaTime - extra->lifeTime) + extra->lastZ;
 
@@ -674,28 +672,28 @@ void processExtras() {
 			// process magic ball extra aiming for key
 			if (extra->type & 0x200) {
 				int32 actorIdx, tmpAngle, angle;
-//				int32 actorIdxAttacked = extra->lifeTime;
-                ExtraListStruct *extraKey = &extraList[extra->actorIdx];
+				//				int32 actorIdxAttacked = extra->lifeTime;
+				ExtraListStruct *extraKey = &extraList[extra->actorIdx];
 				actorIdx = extra->actorIdx;
 
-                tmpAngle = getAngleAndSetTargetActorDistance(extra->X, extra->Z, extraKey->X, extraKey->Z);
+				tmpAngle = getAngleAndSetTargetActorDistance(extra->X, extra->Z, extraKey->X, extraKey->Z);
 				angle = (tmpAngle - extra->angle) & 0x3FF;
 
 				if (angle > 400 && angle < 600) {
-                    playSample(97, 0x1000, 1, sceneHero->X, sceneHero->Y, sceneHero->Z, 0);
+					playSample(97, 0x1000, 1, sceneHero->X, sceneHero->Y, sceneHero->Z, 0);
 
-                    if (extraKey->info1 > 1) {
-                        projectPositionOnScreen(extraKey->X - cameraX, extraKey->Y - cameraY, extraKey->Z - cameraZ);
-                        addOverlay(koNumber, extraKey->info1, projPosX, projPosY, koNormal, 0, 2);
-                    }
+					if (extraKey->info1 > 1) {
+						projectPositionOnScreen(extraKey->X - cameraX, extraKey->Y - cameraY, extraKey->Z - cameraZ);
+						addOverlay(koNumber, extraKey->info1, projPosX, projPosY, koNormal, 0, 2);
+					}
 
-                    addOverlay(koSprite, SPRITEHQR_KEY, 10, 30, koNormal, 0, 2);
+					addOverlay(koSprite, SPRITEHQR_KEY, 10, 30, koNormal, 0, 2);
 
-                    inventoryNumKeys += extraKey->info1;
-                    extraKey->info0 = -1;
+					inventoryNumKeys += extraKey->info1;
+					extraKey->info0 = -1;
 
 					extra->info0 = -1;
-                    magicBallIdx = addExtra(-1, extra->X, extra->Y, extra->Z, SPRITEHQR_KEY, 0, 8000, 0);
+					magicBallIdx = addExtra(-1, extra->X, extra->Y, extra->Z, SPRITEHQR_KEY, 0, 8000, 0);
 					continue;
 				} else {
 					int32 angle, pos;
@@ -917,3 +915,4 @@ void processExtras() {
 	}
 }
 
+} // namespace TwinE

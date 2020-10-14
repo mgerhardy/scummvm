@@ -26,14 +26,16 @@
 #include "common/scummsys.h"
 #include "twine.h"
 
+namespace TwinE {
+
 /** Screen top limit to display the texts */
-#define SCREEN_TEXTLIMIT_TOP	0
+#define SCREEN_TEXTLIMIT_TOP 0
 /** Screen left limit to display the texts */
-#define SCREEN_TEXTLIMIT_LEFT	0
+#define SCREEN_TEXTLIMIT_LEFT 0
 /** Screen right limit to display the texts */
-#define SCREEN_TEXTLIMIT_RIGHT	SCREEN_WIDTH-1
+#define SCREEN_TEXTLIMIT_RIGHT SCREEN_WIDTH - 1
 /** Screen bottom limit to display the texts */
-#define SCREEN_TEXTLIMIT_BOTTOM	SCREEN_HEIGHT-1
+#define SCREEN_TEXTLIMIT_BOTTOM SCREEN_HEIGHT - 1
 
 int32 textWindowTop;
 int32 textWindowTopSave;
@@ -77,5 +79,7 @@ void setClip(int32 left, int32 top, int32 right, int32 bottom);
 void saveClip(); // saveTextWindow
 void loadClip(); // loadSavedTextWindow
 void resetClip();
+
+} // namespace TwinE
 
 #endif

@@ -25,6 +25,8 @@
 
 #include "common/scummsys.h"
 
+namespace TwinE {
+
 enum ShapeType {
 	kNone = 0,
 	kSolid = 1,
@@ -61,12 +63,10 @@ int32 cameraZ;
 /** Celling grid brick block buffer */
 uint8 *blockBuffer;
 
-
 /** Flag to know if the engine is using celling grids */
 int16 useCellingGrid; // useAnotherGrm
 /** Current celling grid index */
 int16 cellingGridIdx; // currentGrid2
-
 
 /** Draw 3D actor over bricks
 	@param X actor X coordinate
@@ -111,7 +111,7 @@ void drawBrickSprite(int32 index, int32 posX, int32 posY, uint8 *spritePtr, int3
 /** Get block library
 	@param index block library index
 	@return pointer to the current block index */
-uint8* getBlockLibrary(int32 index);
+uint8 *getBlockLibrary(int32 index);
 
 /** Create grid map from current grid to block library buffer */
 void createGridMap();
@@ -132,5 +132,7 @@ int32 getBrickShape(int32 x, int32 y, int32 z);
 int32 getBrickShapeFull(int32 x, int32 y, int32 z, int32 y2);
 
 int32 getBrickSoundType(int32 x, int32 y, int32 z);
+
+} // namespace TwinE
 
 #endif

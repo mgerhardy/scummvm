@@ -25,8 +25,12 @@
 
 #include "common/scummsys.h"
 
+namespace TwinE {
+
 /** Process actor move script
 	@param actorIdx Current processed actor index */
 void processMoveScript(int32 actorIdx);
+
+} // namespace TwinE
 
 #endif

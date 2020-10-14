@@ -25,26 +25,28 @@
 
 #include "common/scummsys.h"
 
-#define NUM_GAME_FLAGS			255
-#define NUM_INVENTORY_ITEMS		28
+namespace TwinE {
 
-#define GAMEFLAG_HAS_HOLOMAP			0
-#define GAMEFLAG_HAS_MAGICBALL			1
-#define GAMEFLAG_HAS_SABRE				2
-#define GAMEFLAG_TUNIC					4
-#define GAMEFLAG_BOOKOFBU				6
-#define GAMEFLAG_PROTOPACK				12
-#define GAMEFLAG_MECA_PINGUIN			14
-#define GAMEFLAG_HAS_CLOVER_LEAF		27
-#define GAMEFLAG_INVENTORY_DISABLED		70
+#define NUM_GAME_FLAGS 255
+#define NUM_INVENTORY_ITEMS 28
+
+#define GAMEFLAG_HAS_HOLOMAP 0
+#define GAMEFLAG_HAS_MAGICBALL 1
+#define GAMEFLAG_HAS_SABRE 2
+#define GAMEFLAG_TUNIC 4
+#define GAMEFLAG_BOOKOFBU 6
+#define GAMEFLAG_PROTOPACK 12
+#define GAMEFLAG_MECA_PINGUIN 14
+#define GAMEFLAG_HAS_CLOVER_LEAF 27
+#define GAMEFLAG_INVENTORY_DISABLED 70
 
 /** Magicball strength*/
 enum MagicballStrengthType {
-	kNoBallStrenght			= 2,
-	kYellowBallStrenght		= 3,
-	kGreenBallStrenght		= 4,
-	kRedBallStrenght		= 6,
-	kFireBallStrength		= 8
+	kNoBallStrenght = 2,
+	kYellowBallStrenght = 3,
+	kGreenBallStrenght = 4,
+	kRedBallStrenght = 6,
+	kFireBallStrength = 8
 };
 
 /** LBA engine game flags to save quest states */
@@ -86,10 +88,10 @@ uint8 holomapFlags[150]; // GV14
 
 int8 savePlayerName[30]; // playerName
 
-int32 gameChoices[10]; // inGameMenuData
-int32 numChoices;      // numOfOptionsInChoice
+int32 gameChoices[10];         // inGameMenuData
+int32 numChoices;              // numOfOptionsInChoice
 int16 gameChoicesSettings[18]; // choiceTab -  same structure as menu settings
-int32 choiceAnswer; // inGameMenuAnswer
+int32 choiceAnswer;            // inGameMenuAnswer
 
 extern int32 magicLevelStrengthOfHit[];
 
@@ -107,5 +109,7 @@ void saveGame();
 void processGameChoices(int32 choiceIdx);
 
 void processGameoverAnimation();
+
+} // namespace TwinE
 
 #endif

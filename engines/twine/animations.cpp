@@ -848,9 +848,9 @@ int32 Animations::initAnim(int32 newAnim, int16 animType, uint8 animExtra, int32
 		animType = 2;
 
 	if (actor->previousAnimIdx == -1) { // if no previous animation
-		setAnimAtKeyframe(0, animTable[animIndex], bodyTable[actor->entity], &actor->animTimerData);
+		setAnimAtKeyframe(0, animTable[animIndex], _engine->_actor->bodyTable[actor->entity], &actor->animTimerData);
 	} else { // interpolation between animations
-		animBuffer2 += stockAnimation(animBuffer2, bodyTable[actor->entity], &actor->animTimerData);
+		animBuffer2 += stockAnimation(animBuffer2, _engine->_actor->bodyTable[actor->entity], &actor->animTimerData);
 		if (animBuffer1 + 4488 < animBuffer2)
 			animBuffer2 = animBuffer1;
 	}
@@ -996,7 +996,7 @@ void Animations::processActorAnimations(int32 actorIdx) { // DoAnim
 			int32 keyFramePassed;
 			animPtr = animTable[actor->previousAnimIdx];
 
-			keyFramePassed = verifyAnimAtKeyframe(actor->animPosition, animPtr, bodyTable[actor->entity], &actor->animTimerData);
+			keyFramePassed = verifyAnimAtKeyframe(actor->animPosition, animPtr, _engine->_actor->bodyTable[actor->entity], &actor->animTimerData);
 
 			if (processRotationByAnim) {
 				actor->dynamicFlags.bIsRotationByAnim = 1;
@@ -1087,7 +1087,7 @@ void Animations::processActorAnimations(int32 actorIdx) { // DoAnim
 	// actor falling Y speed
 	if (actor->dynamicFlags.bIsFalling) {
 		processActorX = previousActorX;
-		processActorY = previousActorY + loopActorStep; // add step to fall
+		processActorY = previousActorY + _engine->loopActorStep; // add step to fall
 		processActorZ = previousActorZ;
 	}
 

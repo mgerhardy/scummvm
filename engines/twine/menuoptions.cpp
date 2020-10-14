@@ -21,27 +21,27 @@
  */
 
 #include "menuoptions.h"
-#include "twine.h"
-#include "screens.h"
+#include "flamovies.h"
+#include "gamestate.h"
+#include "interface.h"
+#include "keyboard.h"
+#include "menu.h"
+#include "music.h"
 #include "resources.h"
+#include "scene.h"
+#include "screens.h"
 #include "sdlengine.h"
 #include "text.h"
-#include "gamestate.h"
-#include "music.h"
-#include "keyboard.h"
-#include "flamovies.h"
-#include "scene.h"
-#include "interface.h"
-#include "menu.h"
-#include "text.h"
+#include "twine.h"
+
+namespace TwinE {
 
 /** Main menu continue game option key */
-#define MAINMENU_CONTINUEGAME		21
+#define MAINMENU_CONTINUEGAME 21
 /** Main menu enter players name */
-#define MAINMENU_ENTERPLAYERNAME	42
+#define MAINMENU_ENTERPLAYERNAME 42
 
 int8 allowedCharIndex[] = " ABCDEFGHIJKLM.NOPQRSTUVWXYZ-abcdefghijklm?nopqrstuvwxyz!0123456789\040\b\r\0";
-
 
 void newGame() {
 	int32 tmpFlagDisplayText;
@@ -141,7 +141,7 @@ void drawSelectableCharacter(int32 x, int32 y, int32 arg) {
 	if (arg != 0) {
 		drawSplittedBox(left, top, right, bottom, 91);
 	} else {
-		blitBox(left, top, right, bottom, (int8 *) workVideoBuffer, left, top, (int8 *)frontVideoBuffer);
+		blitBox(left, top, right, bottom, (int8 *)workVideoBuffer, left, top, (int8 *)frontVideoBuffer);
 		right2 = right;
 		drawTransparentBox(left, top, right2, bottom, 4);
 	}
@@ -166,8 +166,8 @@ void drawSelectableCharacters(void) {
 }
 
 // 0001F18C
-void drawPlayerName(int32 centerx, int32 top, int8* playerName, int32 type) {
-/*
+void drawPlayerName(int32 centerx, int32 top, int8 *playerName, int32 type) {
+	/*
 	int v4; // ebp@0
   int v6; // [sp+0h] [bp-14h]@0
   int v7; // [sp+0h] [bp-14h]@4
@@ -213,7 +213,7 @@ void drawPlayerName(int32 centerx, int32 top, int8* playerName, int32 type) {
 int32 enterPlayerName(int32 textIdx) {
 	int8 buffer[256];
 
-	while(1) {
+	while (1) {
 		copyScreen(workVideoBuffer, frontVideoBuffer);
 		flip(); //frontVideoBuffer
 		initTextBank(0);
@@ -229,14 +229,14 @@ int32 enterPlayerName(int32 textIdx) {
 			readKeys();
 			do {
 				readKeys();
-			} while(skipIntro);
-		} while(skippedKey);
+			} while (skipIntro);
+		} while (skippedKey);
 
 		enterPlayerNameVar2 = 1;
 
 		do {
 			readKeys();
-		} while(pressedKey);
+		} while (pressedKey);
 
 		while (!skipIntro) {
 			readKeys();
@@ -259,8 +259,7 @@ int32 enterPlayerName(int32 textIdx) {
 /** Main menu new game options */
 void newGameMenu() {
 	//TODO: process players name
-	if(enterPlayerName(MAINMENU_ENTERPLAYERNAME))
-	{
+	if (enterPlayerName(MAINMENU_ENTERPLAYERNAME)) {
 		initEngineVars(1);
 		newGame();
 
@@ -274,8 +273,8 @@ void newGameMenu() {
 			readKeys();
 			do {
 				readKeys();
-			} while(skippedKey != 0);
-		} while(skipIntro != 0);
+			} while (skippedKey != 0);
+		} while (skipIntro != 0);
 	}
 }
 
@@ -303,7 +302,9 @@ void continueGameMenu() {
 			readKeys();
 			do {
 				readKeys();
-			} while(skippedKey != 0);
-		} while(skipIntro != 0);
+			} while (skippedKey != 0);
+		} while (skipIntro != 0);
 	}
 }
+
+} // namespace TwinE

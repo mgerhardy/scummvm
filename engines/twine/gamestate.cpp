@@ -21,34 +21,35 @@
  */
 
 #include "gamestate.h"
-#include "scene.h"
-#include "redraw.h"
-#include "text.h"
-#include "menu.h"
-#include "renderer.h"
+#include "animations.h"
+#include "collision.h"
+#include "extra.h"
+#include "filereader.h"
 #include "grid.h"
 #include "interface.h"
-#include "animations.h"
 #include "keyboard.h"
-#include "resources.h"
-#include "extra.h"
-#include "sound.h"
-#include "screens.h"
-#include "music.h"
-#include "filereader.h"
+#include "menu.h"
 #include "menuoptions.h"
-#include "collision.h"
+#include "music.h"
+#include "redraw.h"
+#include "renderer.h"
+#include "resources.h"
+#include "scene.h"
+#include "screens.h"
+#include "sound.h"
+#include "text.h"
+
+namespace TwinE {
 
 #define SAVE_DIR "save/"
 
 int32 magicLevelStrengthOfHit[] = {
-	kNoBallStrenght,
-	kYellowBallStrenght,
-	kGreenBallStrenght,
-	kRedBallStrenght,
-	kFireBallStrength,
-	0
-};
+    kNoBallStrenght,
+    kYellowBallStrenght,
+    kGreenBallStrenght,
+    kRedBallStrenght,
+    kFireBallStrength,
+    0};
 
 /** Initialize engine 3D projections */
 void initEngineProjections() { // reinitAll1
@@ -100,21 +101,21 @@ void initSceneVars() {
 	}
 
 	sceneNumActors = 0;
-	sceneNumZones  = 0;
+	sceneNumZones = 0;
 	sceneNumTracks = 0;
 
 	currentPositionInBodyPtrTab = 0;
 }
 
 void initHeroVars() { // reinitAll3
-	resetActor(0); // reset Hero
+	resetActor(0);    // reset Hero
 
 	magicBallIdx = -1;
 
 	inventoryNumLeafsBox = 2;
-	inventoryNumLeafs    = 2;
-	inventoryNumKashes   = 0;
-	inventoryNumKeys     = 0;
+	inventoryNumLeafs = 2;
+	inventoryNumKashes = 0;
+	inventoryNumKeys = 0;
 	inventoryMagicPoints = 0;
 
 	usingSabre = 0;
@@ -175,7 +176,7 @@ void initEngineVars(int32 save) { // reinitAll
 void loadGame() {
 	FileReader fr;
 	uint8 data;
-	int8* namePtr;
+	int8 *namePtr;
 
 	if (!fropen2(&fr, SAVE_DIR "S9999.LBA", "rb")) {
 		printf("Can't load S9999.LBA saved game!\n");
@@ -278,7 +279,7 @@ void saveGame() {
 
 void processFoundItem(int32 item) {
 	int32 itemCameraX, itemCameraY, itemCameraZ; // objectXYZ
-	int32 itemX, itemY, itemZ; // object2XYZ
+	int32 itemX, itemY, itemZ;                   // object2XYZ
 	int32 boxTopLeftX, boxTopLeftY, boxBottomRightX, boxBottomRightY;
 	int32 textState, quitItem, currentAnimState;
 	uint8 *currentAnim;
@@ -439,13 +440,13 @@ void processGameChoices(int32 choiceIdx) {
 	int32 i;
 	copyScreen(frontVideoBuffer, workVideoBuffer);
 
-	gameChoicesSettings[0] = 0;	// Current loaded button (button number)
+	gameChoicesSettings[0] = 0;          // Current loaded button (button number)
 	gameChoicesSettings[1] = numChoices; // Num of buttons
-	gameChoicesSettings[2] = 0; // Buttons box height
+	gameChoicesSettings[2] = 0;          // Buttons box height
 	gameChoicesSettings[3] = currentTextBank + 3;
 
 	if (numChoices > 0) {
-		for(i = 0; i < numChoices; i++) {
+		for (i = 0; i < numChoices; i++) {
 			gameChoicesSettings[i * 2 + 4] = 0;
 			gameChoicesSettings[i * 2 + 5] = gameChoices[i];
 		}
@@ -459,7 +460,8 @@ void processGameChoices(int32 choiceIdx) {
 	// get right VOX entry index
 	if (cfgfile.LanguageCDId) {
 		initVoxToPlay(choiceAnswer);
-		while(playVoxSimple(currDialTextEntry));
+		while (playVoxSimple(currDialTextEntry))
+			;
 		stopVox(currDialTextEntry);
 
 		hasHiddenVox = 0;
@@ -494,12 +496,12 @@ void processGameoverAnimation() { // makeGameOver
 		startLbaTime = lbaTime;
 		setClip(120, 120, 519, 359);
 
-		while(skipIntro != 1 && (lbaTime - startLbaTime) <= 0x1F4) {
+		while (skipIntro != 1 && (lbaTime - startLbaTime) <= 0x1F4) {
 			readKeys();
 
 			avg = getAverageValue(40000, 3200, 500, lbaTime - startLbaTime);
 			cdot = crossDot(1, 1024, 100, (lbaTime - startLbaTime) % 0x64);
-			blitBox(120, 120, 519, 359, (int8*) workVideoBuffer, 120, 120, (int8*) frontVideoBuffer);
+			blitBox(120, 120, 519, 359, (int8 *)workVideoBuffer, 120, 120, (int8 *)frontVideoBuffer);
 			setCameraAngle(0, 0, 0, 0, -cdot, 0, avg);
 			renderIsoModel(0, 0, 0, 0, 0, 0, gameOverPtr);
 			copyBlockPhys(120, 120, 519, 359);
@@ -509,7 +511,7 @@ void processGameoverAnimation() { // makeGameOver
 		}
 
 		playSample(37, Rnd(2000) + 3096, 1, 0x80, 0x80, 0x80, -1);
-		blitBox(120, 120, 519, 359, (int8*) workVideoBuffer, 120, 120, (int8*) frontVideoBuffer);
+		blitBox(120, 120, 519, 359, (int8 *)workVideoBuffer, 120, 120, (int8 *)frontVideoBuffer);
 		setCameraAngle(0, 0, 0, 0, 0, 0, 3200);
 		renderIsoModel(0, 0, 0, 0, 0, 0, gameOverPtr);
 		copyBlockPhys(120, 120, 519, 359);
@@ -525,3 +527,5 @@ void processGameoverAnimation() { // makeGameOver
 		lbaTime = tmpLbaTime;
 	}
 }
+
+} // namespace TwinE

@@ -24,8 +24,10 @@
 #define TWINE_RESOURCES_H
 
 #include "common/scummsys.h"
-#include "hqrdepack.h"
 #include "gamestate.h"
+#include "hqrdepack.h"
+
+namespace TwinE {
 
 /** RESS.HQR FILE */
 #define RESSHQR_MAINPAL 0
@@ -52,7 +54,7 @@
 #define RESSHQR_GAMEOVERMDL 21
 
 #define RESSHQR_ALARMREDPAL 22
-#define RESSHQR_DARKPAL		24
+#define RESSHQR_DARKPAL 24
 
 #define RESSHQR_ADELINEIMG 27
 #define RESSHQR_ADELINEPAL 28
@@ -64,8 +66,8 @@
 #define RESSHQR_EAPAL 53
 
 #define FLA_DRAGON3 "dragon3"
-#define FLA_INTROD  "introd"
-#define FLA_THEEND  "the_end"
+#define FLA_INTROD "introd"
+#define FLA_THEEND "the_end"
 
 #define FILE3DHQR_HERONORMAL 0
 #define FILE3DHQR_HEROATHLETIC 1
@@ -74,46 +76,48 @@
 #define FILE3DHQR_HEROPROTOPACK 4
 
 /** Behaviour menu sprite values */
-#define SPRITEHQR_KASHES			3
-#define SPRITEHQR_LIFEPOINTS		4
-#define SPRITEHQR_MAGICPOINTS		5
-#define SPRITEHQR_KEY				6
-#define SPRITEHQR_CLOVERLEAF		7
-#define SPRITEHQR_CLOVERLEAFBOX		41
+#define SPRITEHQR_KASHES 3
+#define SPRITEHQR_LIFEPOINTS 4
+#define SPRITEHQR_MAGICPOINTS 5
+#define SPRITEHQR_KEY 6
+#define SPRITEHQR_CLOVERLEAF 7
+#define SPRITEHQR_CLOVERLEAFBOX 41
 
-#define SPRITEHQR_MAGICBALL_GREEN			42
-#define SPRITEHQR_MAGICBALL_RED				43
-#define SPRITEHQR_MAGICBALL_YELLOW_TRANS	44
-#define SPRITEHQR_MAGICBALL_GREEN_TRANS		109
-#define SPRITEHQR_MAGICBALL_RED_TRANS		110
+#define SPRITEHQR_MAGICBALL_GREEN 42
+#define SPRITEHQR_MAGICBALL_RED 43
+#define SPRITEHQR_MAGICBALL_YELLOW_TRANS 44
+#define SPRITEHQR_MAGICBALL_GREEN_TRANS 109
+#define SPRITEHQR_MAGICBALL_RED_TRANS 110
 
-#define SPRITEHQR_DIAG_BUBBLE_RIGHT		90
-#define SPRITEHQR_DIAG_BUBBLE_LEFT		91
+#define SPRITEHQR_DIAG_BUBBLE_RIGHT 90
+#define SPRITEHQR_DIAG_BUBBLE_LEFT 91
 
-extern int8 * HQR_RESS_FILE;
-extern int8 * HQR_TEXT_FILE;
-extern int8 * HQR_FLASAMP_FILE;
-extern int8 * HQR_MIDI_MI_DOS_FILE;
-extern int8 * HQR_MIDI_MI_WIN_FILE;
-extern int8 * HQR_MIDI_MI_WIN_MP3_FILE;
-extern int8 * HQR_MIDI_MI_WIN_OGG_FILE;
-extern int8 * HQR_SAMPLES_FILE;
-extern int8 * HQR_LBA_GRI_FILE;
-extern int8 * HQR_LBA_BLL_FILE;
-extern int8 * HQR_LBA_BRK_FILE;
-extern int8 * HQR_SCENE_FILE;
-extern int8 * HQR_SPRITES_FILE;
-extern int8 * HQR_FILE3D_FILE;
-extern int8 * HQR_BODY_FILE;
-extern int8 * HQR_ANIM_FILE;
-extern int8 * HQR_INVOBJ_FILE;
+extern int8 *HQR_RESS_FILE;
+extern int8 *HQR_TEXT_FILE;
+extern int8 *HQR_FLASAMP_FILE;
+extern int8 *HQR_MIDI_MI_DOS_FILE;
+extern int8 *HQR_MIDI_MI_WIN_FILE;
+extern int8 *HQR_MIDI_MI_WIN_MP3_FILE;
+extern int8 *HQR_MIDI_MI_WIN_OGG_FILE;
+extern int8 *HQR_SAMPLES_FILE;
+extern int8 *HQR_LBA_GRI_FILE;
+extern int8 *HQR_LBA_BLL_FILE;
+extern int8 *HQR_LBA_BRK_FILE;
+extern int8 *HQR_SCENE_FILE;
+extern int8 *HQR_SPRITES_FILE;
+extern int8 *HQR_FILE3D_FILE;
+extern int8 *HQR_BODY_FILE;
+extern int8 *HQR_ANIM_FILE;
+extern int8 *HQR_INVOBJ_FILE;
 
 /** Table with all loaded samples */
-uint8* inventoryTable[NUM_INVENTORY_ITEMS];
+uint8 *inventoryTable[NUM_INVENTORY_ITEMS];
 /** Table with all loaded samples sizes */
 uint32 inventorySizeTable[NUM_INVENTORY_ITEMS];
 
 /** Initialize resource pointers */
 void initResources();
+
+} // namespace TwinE
 
 #endif

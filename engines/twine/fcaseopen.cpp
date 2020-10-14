@@ -22,121 +22,105 @@
 
 #include "fcaseopen.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 
 #ifdef WIN32
 #include <direct.h>
 #else
-#include <unistd.h>
 #include <dirent.h>
+#include <unistd.h>
 #endif
 
 #ifndef WIN32
 
 // r must have strlen(path) + 2 bytes
-static int casepath(char const *path, char *r)
-{
-    size_t l = strlen(path);
-    char *p = alloca(l + 1);
-    strcpy(p, path);
-    size_t rl = 0;
+static int casepath(char const *path, char *r) {
+	size_t l = strlen(path);
+	char *p = alloca(l + 1);
+	strcpy(p, path);
+	size_t rl = 0;
 
-    DIR *d;
-    if (p[0] == '/')
-    {
-        d = opendir("/");
-        p = p + 1;
-    }
-    else
-    {
-        d = opendir(".");
-        r[0] = '.';
-        r[1] = 0;
-        rl = 1;
-    }
+	DIR *d;
+	if (p[0] == '/') {
+		d = opendir("/");
+		p = p + 1;
+	} else {
+		d = opendir(".");
+		r[0] = '.';
+		r[1] = 0;
+		rl = 1;
+	}
 
-    int last = 0;
-    char *c = strsep(&p, "/");
-    while (c)
-    {
-        if (!d)
-        {
-            return 0;
-        }
+	int last = 0;
+	char *c = strsep(&p, "/");
+	while (c) {
+		if (!d) {
+			return 0;
+		}
 
-        if (last)
-        {
-            closedir(d);
-            return 0;
-        }
+		if (last) {
+			closedir(d);
+			return 0;
+		}
 
-        r[rl] = '/';
-        rl += 1;
-        r[rl] = 0;
+		r[rl] = '/';
+		rl += 1;
+		r[rl] = 0;
 
-        struct dirent *e = readdir(d);
-        while (e)
-        {
-            if (strcasecmp(c, e->d_name) == 0)
-            {
-                strcpy(r + rl, e->d_name);
-                rl += strlen(e->d_name);
+		struct dirent *e = readdir(d);
+		while (e) {
+			if (strcasecmp(c, e->d_name) == 0) {
+				strcpy(r + rl, e->d_name);
+				rl += strlen(e->d_name);
 
-                closedir(d);
-                d = opendir(r);
+				closedir(d);
+				d = opendir(r);
 
-                break;
-            }
+				break;
+			}
 
-            e = readdir(d);
-        }
+			e = readdir(d);
+		}
 
-        if (!e)
-        {
-            strcpy(r + rl, c);
-            rl += strlen(c);
-            last = 1;
-        }
+		if (!e) {
+			strcpy(r + rl, c);
+			rl += strlen(c);
+			last = 1;
+		}
 
-        c = strsep(&p, "/");
-    }
+		c = strsep(&p, "/");
+	}
 
-    if (d) closedir(d);
-    return 1;
+	if (d)
+		closedir(d);
+	return 1;
 }
 #endif
 
-FILE *fcaseopen(char const *path, char const *mode)
-{
-    FILE *f = fopen(path, mode);
+FILE *fcaseopen(char const *path, char const *mode) {
+	FILE *f = fopen(path, mode);
 #ifndef WIN32
-    if (!f)
-    {
-        char *r = alloca(strlen(path) + 2);
-        if (casepath(path, r))
-        {
-            f = fopen(r, mode);
-        }
-    }
+	if (!f) {
+		char *r = alloca(strlen(path) + 2);
+		if (casepath(path, r)) {
+			f = fopen(r, mode);
+		}
+	}
 #endif
-    return f;
+	return f;
 }
 
-void casechdir(char const *path)
-{
+void casechdir(char const *path) {
 #ifndef WIN32
-    char *r = alloca(strlen(path) + 2);
-    if (casepath(path, r))
-    {
-        chdir(r);
-    }
-    else
-    {
-        errno = ENOENT;
-    }
+	char *r = alloca(strlen(path) + 2);
+	if (casepath(path, r)) {
+		chdir(r);
+	} else {
+		errno = ENOENT;
+	}
 #else
-    _chdir(path);
+	_chdir(path);
 #endif
 }

@@ -23,19 +23,21 @@
 #ifndef TWINE_MOVEMENTS_H
 #define TWINE_MOVEMENTS_H
 
-#include "common/scummsys.h"
 #include "actor.h"
+#include "common/scummsys.h"
+
+namespace TwinE {
 
 /** Control mode types */
 enum ControlMode {
-	kNoMove			= 0,
-	kManual			= 1,
-	kFollow			= 2,
-	kTrack			= 3,
-	kFollow2		= 4,
-	kTrackAttack	= 5,
-	kSameXZ			= 6,
-	kRandom			= 7
+	kNoMove = 0,
+	kManual = 1,
+	kFollow = 2,
+	kTrack = 3,
+	kFollow2 = 4,
+	kTrackAttack = 5,
+	kSameXZ = 6,
+	kRandom = 7
 };
 
 /** Hero moved */
@@ -61,7 +63,6 @@ int16 previousActorZ; // processActorVar4
 
 int32 targetActorDistance; // DoTrackVar1
 
-
 /** Get shadow position
 	@param X Shadow X coordinate
 	@param Y Shadow Y coordinate
@@ -73,18 +74,18 @@ void getShadowPosition(int32 X, int32 Y, int32 Z);
 	@param endAngle end angle
 	@param stepAngle number of steps
 	@param movePtr time pointer to update */
-void setActorAngleSafe(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveStruct * movePtr);
+void setActorAngleSafe(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveStruct *movePtr);
 
 /** Clear actors safe angle
 	@param actorPtr actor pointer */
-void clearRealAngle(ActorStruct * actorPtr);
+void clearRealAngle(ActorStruct *actorPtr);
 
 /** Set actor safe angle
 	@param startAngle start angle
 	@param endAngle end angle
 	@param stepAngle number of steps
 	@param movePtr time pointer to update */
-void setActorAngle(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveStruct * movePtr);
+void setActorAngle(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveStruct *movePtr);
 
 /** Get actor angle
 	@param x1 Actor 1 X
@@ -95,11 +96,11 @@ int32 getAngleAndSetTargetActorDistance(int32 x1, int32 z1, int32 x2, int32 z2);
 
 /** Get actor real angle
 	@param movePtr time pointer to process */
-int32 getRealAngle(ActorMoveStruct * movePtr);
+int32 getRealAngle(ActorMoveStruct *movePtr);
 
 /** Get actor step
 	@param movePtr time pointer to process */
-int32 getRealValue(ActorMoveStruct * movePtr);
+int32 getRealValue(ActorMoveStruct *movePtr);
 
 /** Rotate actor with a given angle
 	@param X Actor current X coordinate
@@ -131,5 +132,7 @@ int32 getDistance3D(int32 x1, int32 y1, int32 z1, int32 x2, int32 y2, int32 z2);
 void moveActor(int32 angleFrom, int32 angleTo, int32 speed, ActorMoveStruct *movePtr);
 
 void processActorMovements(int32 actorIdx);
+
+} // namespace TwinE
 
 #endif

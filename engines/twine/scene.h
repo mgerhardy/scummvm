@@ -23,25 +23,26 @@
 #ifndef TWINE_SCENE_H
 #define TWINE_SCENE_H
 
-#include "common/scummsys.h"
 #include "actor.h"
+#include "common/scummsys.h"
 
-#define NUM_SCENES_FLAGS	80
+namespace TwinE {
 
-#define NUM_SCENES_ENTRIES	120
-#define NUM_SCENES	NUM_SCENES_ENTRIES-1
+#define NUM_SCENES_FLAGS 80
 
-#define NUM_MAX_ACTORS		100
-#define NUM_MAX_ZONES		100
-#define NUM_MAX_TRACKS		200
+#define NUM_SCENES_ENTRIES 120
+#define NUM_SCENES NUM_SCENES_ENTRIES - 1
+
+#define NUM_MAX_ACTORS 100
+#define NUM_MAX_ZONES 100
+#define NUM_MAX_TRACKS 200
 
 enum ScenePositionType {
-	kNoPosition	= 0,
-	kZone		= 1,
-	kScene		= 2,
-	kReborn		= 3
+	kNoPosition = 0,
+	kZone = 1,
+	kScene = 2,
+	kReborn = 3
 };
-
 
 int32 needChangeScene;
 int32 currentSceneIdx;
@@ -151,15 +152,14 @@ int32 sceneNumZones;
 ZoneStruct sceneZones[NUM_MAX_ZONES];
 
 enum ZoneType {
-	kCube		= 0, // Change to another scene
-	kCamera		= 1, // Binds camera view
-	kSceneric	= 2, // For use in Life Script
-	kGrid		= 3, // Set disappearing Grid fragment
-	kObject		= 4, // Give bonus
-	kText		= 5, // Displays text message
-	kLadder		= 6  // Hero can climb on it
+	kCube = 0,     // Change to another scene
+	kCamera = 1,   // Binds camera view
+	kSceneric = 2, // For use in Life Script
+	kGrid = 3,     // Set disappearing Grid fragment
+	kObject = 4,   // Give bonus
+	kText = 5,     // Displays text message
+	kLadder = 6    // Hero can climb on it
 };
-
 
 // TRACKS
 
@@ -181,5 +181,7 @@ void processEnvironmentSound();
 /** Process actor zones
 	@param actorIdx Process actor index */
 void processActorZones(int32 actorIdx);
+
+} // namespace TwinE
 
 #endif

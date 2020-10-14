@@ -23,12 +23,14 @@
 #ifndef TWINE_MENU_H
 #define TWINE_MENU_H
 
-#include "sdlengine.h"
 #include "actor.h"
+#include "sdlengine.h"
+
+namespace TwinE {
 
 int32 currMenuTextIndex;
 int32 currMenuTextBank;
-int8  currMenuTextBuffer[256];
+int8 currMenuTextBuffer[256];
 
 int16 itemAngle[255]; // objectRotation
 
@@ -63,7 +65,7 @@ void drawTransparentBox(int32 left, int32 top, int32 right, int32 bottom, int32 
 /** Where the main menu options are processed
 	@param menuSettings menu settings array with the information to build the menu options
 	@return pressed menu button identification */
-int32 processMenu(int16 * menuSettings);
+int32 processMenu(int16 *menuSettings);
 
 /** Used to run the main menu */
 void mainMenu();
@@ -79,5 +81,7 @@ void processBehaviourMenu();
 
 /** Process in-game inventory menu */
 void processInventoryMenu();
+
+} // namespace TwinE
 
 #endif

@@ -24,8 +24,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "hqrdepack.h"
 #include "filereader.h"
+#include "hqrdepack.h"
+
+namespace TwinE {
 
 FileReader fr;
 
@@ -34,7 +36,7 @@ FileReader fr;
 	@param src compressed data pointer
 	@decompsize real file size after decompression
 	@mode compression mode used */
-void hqrDecompressEntry(uint8 * dst, uint8 * src, int32 decompsize, int32 mode) {
+void hqrDecompressEntry(uint8 *dst, uint8 *src, int32 decompsize, int32 mode) {
 	uint8 b;
 	int32 lenght, d, i;
 	uint16 offset;
@@ -44,7 +46,7 @@ void hqrDecompressEntry(uint8 * dst, uint8 * src, int32 decompsize, int32 mode) 
 		b = *(src++);
 		for (d = 0; d < 8; d++) {
 			if (!(b & (1 << d))) {
-				offset = *(uint16*)(src);
+				offset = *(uint16 *)(src);
 				src += 2;
 				lenght = (offset & 0x0F) + (mode + 1);
 				ptr = dst - (offset >> 4) - 1;
@@ -66,7 +68,7 @@ void hqrDecompressEntry(uint8 * dst, uint8 * src, int32 decompsize, int32 mode) 
 	@param src compressed data pointer
 	@decompsize real file size after decompression
 	@mode compression mode used */
-void hqrDecompressLZEntry(uint8 * dst, uint8 * src, int32 decompsize, int32 mode) {
+void hqrDecompressLZEntry(uint8 *dst, uint8 *src, int32 decompsize, int32 mode) {
 	uint16 offset;
 	int32 lenght;
 	uint8 *ptr;
@@ -75,8 +77,8 @@ void hqrDecompressLZEntry(uint8 * dst, uint8 * src, int32 decompsize, int32 mode
 		uint8 bits;
 		uint8 type = *(src++);
 		for (bits = 1; bits != 0; bits <<= 1) {
-			if (!(type&bits)) {
-				offset = *(uint16*)(src);
+			if (!(type & bits)) {
+				offset = *(uint16 *)(src);
 				src += 2;
 				lenght = (offset & 0x0F) + (mode + 1);
 				ptr = dst - (offset >> 4) - 1;
@@ -109,7 +111,7 @@ void hqrDecompressLZEntry(uint8 * dst, uint8 * src, int32 decompsize, int32 mode
 	@param filename HQR file name
 	@param index entry index to extract
 	@return entry real size*/
-int32 hqrGetEntry(uint8 * ptr, int8 *filename, int32 index) {
+int32 hqrGetEntry(uint8 *ptr, int8 *filename, int32 index) {
 	uint32 headerSize;
 	uint32 offsetToData;
 	uint32 realSize;
@@ -119,7 +121,7 @@ int32 hqrGetEntry(uint8 * ptr, int8 *filename, int32 index) {
 	if (!filename)
 		return 0;
 
-	if (!fropen2(&fr, (char*)filename, "rb"))
+	if (!fropen2(&fr, (char *)filename, "rb"))
 		printf("HQR: %s can't be found !\n", filename);
 
 	frread(&fr, &headerSize, 4);
@@ -130,7 +132,7 @@ int32 hqrGetEntry(uint8 * ptr, int8 *filename, int32 index) {
 		return 0;
 	}
 
-	frseek(&fr, index*4);
+	frseek(&fr, index * 4);
 	frread(&fr, &offsetToData, 4);
 
 	frseek(&fr, offsetToData);
@@ -139,7 +141,7 @@ int32 hqrGetEntry(uint8 * ptr, int8 *filename, int32 index) {
 	frread(&fr, &mode, 2);
 
 	if (!ptr)
-		ptr = (uint8*)malloc(realSize);
+		ptr = (uint8 *)malloc(realSize);
 
 	if (!ptr) {
 		printf("\nHQR WARNING: Unable to allocate memory!!\n");
@@ -153,8 +155,8 @@ int32 hqrGetEntry(uint8 * ptr, int8 *filename, int32 index) {
 	}
 	// compressed: modes (1 & 2)
 	else if (mode == 1 || mode == 2) {
-		uint8* compDataPtr = 0;
-		compDataPtr = (uint8*)malloc(compSize);
+		uint8 *compDataPtr = 0;
+		compDataPtr = (uint8 *)malloc(compSize);
 		frread(&fr, compDataPtr, compSize);
 		hqrDecompressEntry(ptr, compDataPtr, realSize, mode);
 		free(compDataPtr);
@@ -177,7 +179,7 @@ int hqrEntrySize(int8 *filename, int32 index) {
 	if (!filename)
 		return 0;
 
-	if (!fropen2(&fr, (char*)filename, "rb")) {
+	if (!fropen2(&fr, (char *)filename, "rb")) {
 		printf("HQR: %s can't be found !\n", filename);
 		exit(1);
 	}
@@ -190,7 +192,7 @@ int hqrEntrySize(int8 *filename, int32 index) {
 		return 0;
 	}
 
-	frseek(&fr, index*4);
+	frseek(&fr, index * 4);
 	frread(&fr, &offsetToData, 4);
 
 	frseek(&fr, offsetToData);
@@ -210,7 +212,7 @@ int hqrNumEntries(int8 *filename) {
 	if (!filename)
 		return 0;
 
-	if (!fropen2(&fr, (char*)filename, "rb")) {
+	if (!fropen2(&fr, (char *)filename, "rb")) {
 		printf("HQR: %s can't be found !\n", filename);
 		exit(1);
 	}
@@ -225,11 +227,11 @@ int hqrNumEntries(int8 *filename) {
 	@param filename HQR file name
 	@param index entry index to extract
 	@return entry real size */
-int32 hqrGetallocEntry(uint8 ** ptr, int8 *filename, int32 index) {
+int32 hqrGetallocEntry(uint8 **ptr, int8 *filename, int32 index) {
 	int32 size;
 	size = hqrEntrySize(filename, index);
 
-	*ptr = (uint8*)malloc(size * sizeof(uint8));
+	*ptr = (uint8 *)malloc(size * sizeof(uint8));
 	if (!*ptr) {
 		printf("HQR WARNING: unable to allocate entry memory!!\n");
 		return 0;
@@ -244,7 +246,7 @@ int32 hqrGetallocEntry(uint8 ** ptr, int8 *filename, int32 index) {
 	@param filename HQR file name
 	@param index entry index to extract
 	@return entry real size*/
-int32 hqrGetVoxEntry(uint8 * ptr, int8 *filename, int32 index, int32 hiddenIndex) {
+int32 hqrGetVoxEntry(uint8 *ptr, int8 *filename, int32 index, int32 hiddenIndex) {
 	uint32 headerSize;
 	uint32 offsetToData;
 	uint32 realSize;
@@ -254,7 +256,7 @@ int32 hqrGetVoxEntry(uint8 * ptr, int8 *filename, int32 index, int32 hiddenIndex
 	if (!filename)
 		return 0;
 
-	if (!fropen2(&fr, (char*)filename, "rb"))
+	if (!fropen2(&fr, (char *)filename, "rb"))
 		printf("HQR: %s can't be found !\n", filename);
 
 	frread(&fr, &headerSize, 4);
@@ -265,7 +267,7 @@ int32 hqrGetVoxEntry(uint8 * ptr, int8 *filename, int32 index, int32 hiddenIndex
 		return 0;
 	}
 
-	frseek(&fr, index*4);
+	frseek(&fr, index * 4);
 	frread(&fr, &offsetToData, 4);
 
 	frseek(&fr, offsetToData);
@@ -277,7 +279,7 @@ int32 hqrGetVoxEntry(uint8 * ptr, int8 *filename, int32 index, int32 hiddenIndex
 	if (hiddenIndex > 0) {
 		int32 i = 0;
 		for (i = 0; i < hiddenIndex; i++) {
-			frseek(&fr, offsetToData + compSize + 10); // hidden entry
+			frseek(&fr, offsetToData + compSize + 10);   // hidden entry
 			offsetToData = offsetToData + compSize + 10; // current hidden offset
 
 			frread(&fr, &realSize, 4);
@@ -287,7 +289,7 @@ int32 hqrGetVoxEntry(uint8 * ptr, int8 *filename, int32 index, int32 hiddenIndex
 	}
 
 	if (!ptr)
-		ptr = (uint8*)malloc(realSize);
+		ptr = (uint8 *)malloc(realSize);
 
 	if (!ptr) {
 		printf("\nHQR WARNING: Unable to allocate memory!!\n");
@@ -301,8 +303,8 @@ int32 hqrGetVoxEntry(uint8 * ptr, int8 *filename, int32 index, int32 hiddenIndex
 	}
 	// compressed: modes (1 & 2)
 	else if (mode == 1 || mode == 2) {
-		uint8* compDataPtr = 0;
-		compDataPtr = (uint8*)malloc(compSize);
+		uint8 *compDataPtr = 0;
+		compDataPtr = (uint8 *)malloc(compSize);
 		frread(&fr, compDataPtr, compSize);
 		hqrDecompressEntry(ptr, compDataPtr, realSize, mode);
 		free(compDataPtr);
@@ -326,7 +328,7 @@ int hqrVoxEntrySize(int8 *filename, int32 index, int32 hiddenIndex) {
 	if (!filename)
 		return 0;
 
-	if (!fropen2(&fr, (char*)filename, "rb")) {
+	if (!fropen2(&fr, (char *)filename, "rb")) {
 		printf("HQR: %s can't be found !\n", filename);
 		exit(1);
 	}
@@ -339,7 +341,7 @@ int hqrVoxEntrySize(int8 *filename, int32 index, int32 hiddenIndex) {
 		return 0;
 	}
 
-	frseek(&fr, index*4);
+	frseek(&fr, index * 4);
 	frread(&fr, &offsetToData, 4);
 
 	frseek(&fr, offsetToData);
@@ -350,7 +352,7 @@ int hqrVoxEntrySize(int8 *filename, int32 index, int32 hiddenIndex) {
 	if (hiddenIndex > 0) {
 		int32 i = 0;
 		for (i = 0; i < hiddenIndex; i++) {
-			frseek(&fr, offsetToData + compSize + 10); // hidden entry
+			frseek(&fr, offsetToData + compSize + 10);   // hidden entry
 			offsetToData = offsetToData + compSize + 10; // current hidden offset
 
 			frread(&fr, &realSize, 4);
@@ -368,11 +370,11 @@ int hqrVoxEntrySize(int8 *filename, int32 index, int32 hiddenIndex) {
 	@param filename HQR file name
 	@param index entry index to extract
 	@return entry real size */
-int32 hqrGetallocVoxEntry(uint8 ** ptr, int8 *filename, int32 index, int32 hiddenIndex) {
+int32 hqrGetallocVoxEntry(uint8 **ptr, int8 *filename, int32 index, int32 hiddenIndex) {
 	int32 size;
 	size = hqrVoxEntrySize(filename, index, hiddenIndex);
 
-	*ptr = (uint8*)malloc(size * sizeof(uint8));
+	*ptr = (uint8 *)malloc(size * sizeof(uint8));
 	if (!*ptr) {
 		printf("HQR WARNING: unable to allocate entry memory!!\n");
 		return 0;
@@ -381,3 +383,5 @@ int32 hqrGetallocVoxEntry(uint8 ** ptr, int8 *filename, int32 index, int32 hidde
 
 	return size;
 }
+
+} // namespace TwinE

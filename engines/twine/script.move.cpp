@@ -21,14 +21,15 @@
  */
 
 #include "script.move.h"
-#include "scene.h"
 #include "actor.h"
-#include "movements.h"
 #include "animations.h"
-#include "scene.h"
-#include "renderer.h"
-#include "sound.h"
+#include "movements.h"
 #include "redraw.h"
+#include "renderer.h"
+#include "scene.h"
+#include "sound.h"
+
+namespace TwinE {
 
 uint8 *scriptPtr;
 int32 continueMove;
@@ -43,8 +44,8 @@ typedef struct ScriptMoveFunction {
 	ScriptMoveFunc *function;
 } ScriptMoveFunction;
 
-#define MAPFUNC(name, func) {(uint8*)name, func}
-
+#define MAPFUNC(name, func) \
+	{ (uint8 *)name, func }
 
 /*0x00*/
 int32 mEND(int32 actorIdx, ActorStruct *actor) {
@@ -314,7 +315,7 @@ int32 mWAIT_NUM_SECOND(int32 actorIdx, ActorStruct *actor) {
 	int32 numSeconds, currentTime;
 	actor->positionInMoveScript += 5;
 
-	numSeconds  = *(scriptPtr++);
+	numSeconds = *(scriptPtr++);
 	currentTime = *((int32 *)scriptPtr);
 
 	if (currentTime == 0) {
@@ -533,44 +534,42 @@ int32 mANGLE_RND(int32 actorIdx, ActorStruct *actor) {
 	return 0;
 }
 
-
 static const ScriptMoveFunction function_map[] = {
-	/*0x00*/ MAPFUNC("END", mEND),
-	/*0x01*/ MAPFUNC("NOP", mNOP),
-	/*0x02*/ MAPFUNC("BODY", mBODY),
-	/*0x03*/ MAPFUNC("ANIM", mANIM),
-	/*0x04*/ MAPFUNC("GOTO_POINT", mGOTO_POINT),
-	/*0x05*/ MAPFUNC("WAIT_ANIM", mWAIT_ANIM),
-	/*0x06*/ MAPFUNC("LOOP", mLOOP),
-	/*0x07*/ MAPFUNC("ANGLE", mANGLE),
-	/*0x08*/ MAPFUNC("POS_POINT", mPOS_POINT),
-	/*0x09*/ MAPFUNC("LABEL", mLABEL),
-	/*0x0A*/ MAPFUNC("GOTO", mGOTO),
-	/*0x0B*/ MAPFUNC("STOP", mSTOP),
-	/*0x0C*/ MAPFUNC("GOTO_SYM_POINT", mGOTO_SYM_POINT),
-	/*0x0D*/ MAPFUNC("WAIT_NUM_ANIM", mWAIT_NUM_ANIM),
-	/*0x0E*/ MAPFUNC("SAMPLE", mSAMPLE),
-	/*0x0F*/ MAPFUNC("GOTO_POINT_3D", mGOTO_POINT_3D),
-	/*0x10*/ MAPFUNC("SPEED", mSPEED),
-	/*0x11*/ MAPFUNC("BACKGROUND", mBACKGROUND),
-	/*0x12*/ MAPFUNC("WAIT_NUM_SECOND", mWAIT_NUM_SECOND),
-	/*0x13*/ MAPFUNC("NO_BODY", mNO_BODY),
-	/*0x14*/ MAPFUNC("BETA", mBETA),
-	/*0x15*/ MAPFUNC("OPEN_LEFT", mOPEN_LEFT),
-	/*0x16*/ MAPFUNC("OPEN_RIGHT", mOPEN_RIGHT),
-	/*0x17*/ MAPFUNC("OPEN_UP", mOPEN_UP),
-	/*0x18*/ MAPFUNC("OPEN_DOWN", mOPEN_DOWN),
-	/*0x19*/ MAPFUNC("CLOSE", mCLOSE),
-	/*0x1A*/ MAPFUNC("WAIT_DOOR", mWAIT_DOOR),
-	/*0x1B*/ MAPFUNC("SAMPLE_RND", mSAMPLE_RND),
-	/*0x1C*/ MAPFUNC("SAMPLE_ALWAYS", mSAMPLE_ALWAYS),
-	/*0x1D*/ MAPFUNC("SAMPLE_STOP", mSAMPLE_STOP),
-	/*0x1E*/ MAPFUNC("PLAY_FLA", mPLAY_FLA),
-	/*0x1F*/ MAPFUNC("REPEAT_SAMPLE", mREPEAT_SAMPLE),
-	/*0x20*/ MAPFUNC("SIMPLE_SAMPLE", mSIMPLE_SAMPLE),
-	/*0x21*/ MAPFUNC("FACE_HERO", mFACE_HERO),
-	/*0x22*/ MAPFUNC("ANGLE_RND", mANGLE_RND)
-};
+    /*0x00*/ MAPFUNC("END", mEND),
+    /*0x01*/ MAPFUNC("NOP", mNOP),
+    /*0x02*/ MAPFUNC("BODY", mBODY),
+    /*0x03*/ MAPFUNC("ANIM", mANIM),
+    /*0x04*/ MAPFUNC("GOTO_POINT", mGOTO_POINT),
+    /*0x05*/ MAPFUNC("WAIT_ANIM", mWAIT_ANIM),
+    /*0x06*/ MAPFUNC("LOOP", mLOOP),
+    /*0x07*/ MAPFUNC("ANGLE", mANGLE),
+    /*0x08*/ MAPFUNC("POS_POINT", mPOS_POINT),
+    /*0x09*/ MAPFUNC("LABEL", mLABEL),
+    /*0x0A*/ MAPFUNC("GOTO", mGOTO),
+    /*0x0B*/ MAPFUNC("STOP", mSTOP),
+    /*0x0C*/ MAPFUNC("GOTO_SYM_POINT", mGOTO_SYM_POINT),
+    /*0x0D*/ MAPFUNC("WAIT_NUM_ANIM", mWAIT_NUM_ANIM),
+    /*0x0E*/ MAPFUNC("SAMPLE", mSAMPLE),
+    /*0x0F*/ MAPFUNC("GOTO_POINT_3D", mGOTO_POINT_3D),
+    /*0x10*/ MAPFUNC("SPEED", mSPEED),
+    /*0x11*/ MAPFUNC("BACKGROUND", mBACKGROUND),
+    /*0x12*/ MAPFUNC("WAIT_NUM_SECOND", mWAIT_NUM_SECOND),
+    /*0x13*/ MAPFUNC("NO_BODY", mNO_BODY),
+    /*0x14*/ MAPFUNC("BETA", mBETA),
+    /*0x15*/ MAPFUNC("OPEN_LEFT", mOPEN_LEFT),
+    /*0x16*/ MAPFUNC("OPEN_RIGHT", mOPEN_RIGHT),
+    /*0x17*/ MAPFUNC("OPEN_UP", mOPEN_UP),
+    /*0x18*/ MAPFUNC("OPEN_DOWN", mOPEN_DOWN),
+    /*0x19*/ MAPFUNC("CLOSE", mCLOSE),
+    /*0x1A*/ MAPFUNC("WAIT_DOOR", mWAIT_DOOR),
+    /*0x1B*/ MAPFUNC("SAMPLE_RND", mSAMPLE_RND),
+    /*0x1C*/ MAPFUNC("SAMPLE_ALWAYS", mSAMPLE_ALWAYS),
+    /*0x1D*/ MAPFUNC("SAMPLE_STOP", mSAMPLE_STOP),
+    /*0x1E*/ MAPFUNC("PLAY_FLA", mPLAY_FLA),
+    /*0x1F*/ MAPFUNC("REPEAT_SAMPLE", mREPEAT_SAMPLE),
+    /*0x20*/ MAPFUNC("SIMPLE_SAMPLE", mSIMPLE_SAMPLE),
+    /*0x21*/ MAPFUNC("FACE_HERO", mFACE_HERO),
+    /*0x22*/ MAPFUNC("ANGLE_RND", mANGLE_RND)};
 
 /** Process actor move script
 	@param actorIdx Current processed actor index */
@@ -580,15 +579,17 @@ void processMoveScript(int32 actorIdx) {
 
 	continueMove = 1;
 	actor = &sceneActors[actorIdx];
-	move  = &actor->move;
+	move = &actor->move;
 
 	do {
 		scriptPosition = actor->positionInMoveScript;
-		scriptPtr      = actor->moveScript + scriptPosition;
-		scriptOpcode   = *(scriptPtr++);
+		scriptPtr = actor->moveScript + scriptPosition;
+		scriptOpcode = *(scriptPtr++);
 
 		actor->positionInMoveScript++;
 
 		function_map[scriptOpcode].function(actorIdx, actor);
-	} while(continueMove);
+	} while (continueMove);
 }
+
+} // namespace TwinE

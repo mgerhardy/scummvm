@@ -24,9 +24,11 @@
 #include "fcaseopen.h"
 #include <ctype.h>
 
+namespace TwinE {
+
 /** Feed buffer from file
 	@param fr FileReader pointer */
-void frfeed(FileReader* fr) {
+void frfeed(FileReader *fr) {
 	fread(fr->buffer, BUFFER_SIZE, 1, fr->fd);
 	fr->bufferPos = 0;
 }
@@ -35,13 +37,13 @@ void frfeed(FileReader* fr) {
 	@param fr FileReader pointer
 	@param destPtr content destination pointer
 	@param size size of read characters */
-void frread(FileReader* fr, void* destPtr, uint32 size) {
+void frread(FileReader *fr, void *destPtr, uint32 size) {
 	if (BUFFER_SIZE - fr->bufferPos >= size) {
 		memcpy(destPtr, &fr->buffer[fr->bufferPos], size);
 		fr->bufferPos += size;
 	} else {
 		// feed what we can
-		int8* tempPtr = (int8*)destPtr;
+		int8 *tempPtr = (int8 *)destPtr;
 		memcpy(tempPtr, &fr->buffer[fr->bufferPos], BUFFER_SIZE - fr->bufferPos);
 		tempPtr += BUFFER_SIZE - fr->bufferPos;
 		size -= BUFFER_SIZE - fr->bufferPos;
@@ -66,7 +68,7 @@ void frread(FileReader* fr, void* destPtr, uint32 size) {
 /** Seek file
 	@param fr FileReader pointer
 	@param seekPosition position to seek */
-void frseek(FileReader* fr, uint32 seekPosition) {
+void frseek(FileReader *fr, uint32 seekPosition) {
 	uint32 sectorToSeek;
 
 	sectorToSeek = seekPosition / 2048;
@@ -82,7 +84,7 @@ void frseek(FileReader* fr, uint32 seekPosition) {
 	@param fr FileReader pointer
 	@param filename file path
 	@return true if file open and false if error occurred */
-int32 fropen2(FileReader* fr, char* filename, const char* mode) {
+int32 fropen2(FileReader *fr, char *filename, const char *mode) {
 	fr->fd = fcaseopen(filename, mode);
 
 	if (fr->fd) {
@@ -98,12 +100,14 @@ int32 fropen2(FileReader* fr, char* filename, const char* mode) {
 	@param fr FileReader pointer
 	@param destPtr content destination pointer
 	@param size size of read characters */
-void frwrite(FileReader* fr, void* destPtr, uint32 size, uint32 count) {
+void frwrite(FileReader *fr, void *destPtr, uint32 size, uint32 count) {
 	fwrite(destPtr, size, count, fr->fd);
 }
 
 /** Close file
 	@param fr FileReader pointer */
-void frclose(FileReader* fr) {
+void frclose(FileReader *fr) {
 	fclose(fr->fd);
 }
+
+} // namespace TwinE

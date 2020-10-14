@@ -25,6 +25,8 @@
 
 #include "common/scummsys.h"
 
+namespace TwinE {
+
 extern int32 useFreeCamera;
 extern int32 canChangeScenes;
 
@@ -34,5 +36,7 @@ void changeGridCamera(int16 pKey);
 void changeGrid(int16 pKey);
 /** Apply and change disappear celling grid */
 void applyCellingGrid(int16 pKey);
+
+} // namespace TwinE
 
 #endif

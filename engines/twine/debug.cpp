@@ -23,15 +23,17 @@
 #include "debug.h"
 
 #ifdef GAMEMOD
-#include "debug.scene.h"
 #include "debug.grid.h"
-#include "scene.h"
-#include "sdlengine.h"
-#include "menu.h"
+#include "debug.scene.h"
 #include "interface.h"
-#include "text.h"
-#include "screens.h"
+#include "menu.h"
 #include "redraw.h"
+#include "scene.h"
+#include "screens.h"
+#include "sdlengine.h"
+#include "text.h"
+
+namespace TwinE {
 
 enum ButtonType {
 	NO_ACTION,
@@ -60,7 +62,7 @@ typedef struct DebugButtonStruct {
 	int32 top;
 	int32 right;
 	int32 bottom;
-	int8  *text;
+	int8 *text;
 	int32 textLeft;
 	int32 textTop;
 	int32 isActive;
@@ -78,14 +80,13 @@ typedef struct DebugWindowStruct {
 	int32 alpha;
 	int32 isActive;
 	int32 numLines;
-	int8  *text[20];
+	int8 *text[20];
 	int32 numButtons;
 	DebugButtonStruct debugButtons[50];
 } DebugWindowStruct;
 
 DebugWindowStruct debugWindows[10];
 int32 numDebugWindows = 0;
-
 
 void debugFillButton(int32 X, int32 Y, int32 width, int32 height, int8 color) {
 	int32 i, j;
@@ -124,11 +125,11 @@ void debugDrawWindowButtons(int32 w) {
 		int32 top = debugWindows[w].debugButtons[b].top;
 		int32 right = debugWindows[w].debugButtons[b].right;
 		int32 bottom = debugWindows[w].debugButtons[b].bottom;
-		int8  *text = debugWindows[w].debugButtons[b].text;
+		int8 *text = debugWindows[w].debugButtons[b].text;
 		int32 textLeft = debugWindows[w].debugButtons[b].textLeft;
 		int32 textTop = debugWindows[w].debugButtons[b].textTop;
 		int32 isActive = debugWindows[w].debugButtons[b].isActive;
-		int8  color = debugWindows[w].debugButtons[b].color;
+		int8 color = debugWindows[w].debugButtons[b].color;
 		if (isActive > 0)
 			color = debugWindows[w].debugButtons[b].activeColor;
 
@@ -149,7 +150,7 @@ void debugDrawWindow(int32 w) {
 		int32 l;
 
 		for (l = 0; l < debugWindows[w].numLines; l++) {
-			ttfDrawText(left + 10, top + l*20 + 5, debugWindows[w].text[l], 0);
+			ttfDrawText(left + 10, top + l * 20 + 5, debugWindows[w].text[l], 0);
 		}
 	}
 
@@ -199,10 +200,10 @@ void debugRefreshButtons(int32 type) {
 					int32 top = debugWindows[w].debugButtons[b].top;
 					int32 right = debugWindows[w].debugButtons[b].right;
 					int32 bottom = debugWindows[w].debugButtons[b].bottom;
-					int8  *text = debugWindows[w].debugButtons[b].text;
+					int8 *text = debugWindows[w].debugButtons[b].text;
 					int32 textLeft = debugWindows[w].debugButtons[b].textLeft;
 					int32 textTop = debugWindows[w].debugButtons[b].textTop;
-					int8  color = debugWindows[w].debugButtons[b].color;
+					int8 color = debugWindows[w].debugButtons[b].color;
 					int32 isActive = debugWindows[w].debugButtons[b].isActive = !debugWindows[w].debugButtons[b].isActive;
 
 					if (isActive > 0)
@@ -364,7 +365,6 @@ void debugSetActions(int32 type) {
 		}
 		break;
 
-
 	case -1:
 		debugResetButton(-2);
 		debugRedrawScreen();
@@ -415,38 +415,38 @@ void debugAddWindow(int32 left, int32 top, int32 right, int32 bottom, int32 alph
 void debugLeftMenu() {
 	// left menu window
 	debugAddWindow(5, 60, 200, 474, 4, 1);
-	debugAddButton(0, 5, 55, 160, 75, (int8*) "Use free camera", 30, 60, 0, 87, 119, NO_MENU, FREE_CAMERA);
-	debugAddButton(0, 161, 55, 200, 75, (int8*) "info", 171, 60, 0, 87, 119, FREE_CAMERA_INFO_MENU, -1);
-	debugAddButton(0, 5, 76, 160, 96, (int8*) "Change scenes", 30, 81, 0, 87, 119, NO_MENU, CHANGE_SCENE);
-	debugAddButton(0, 161, 76, 200, 96, (int8*) "info", 171, 81, 0, 87, 119, CHANGE_SCENE_INFO_MENU, -2);
-	debugAddButton(0, 5, 97, 200, 117, (int8*) "Show celling grids", 30, 102, 0, 87, 119, NO_MENU, 3);
-	debugAddButton(0, 5, 118, 200, 138, (int8*) "Show zones", 30, 123, 0, 87, 119, ZONES_MENU, SHOW_ZONES);
+	debugAddButton(0, 5, 55, 160, 75, (int8 *)"Use free camera", 30, 60, 0, 87, 119, NO_MENU, FREE_CAMERA);
+	debugAddButton(0, 161, 55, 200, 75, (int8 *)"info", 171, 60, 0, 87, 119, FREE_CAMERA_INFO_MENU, -1);
+	debugAddButton(0, 5, 76, 160, 96, (int8 *)"Change scenes", 30, 81, 0, 87, 119, NO_MENU, CHANGE_SCENE);
+	debugAddButton(0, 161, 76, 200, 96, (int8 *)"info", 171, 81, 0, 87, 119, CHANGE_SCENE_INFO_MENU, -2);
+	debugAddButton(0, 5, 97, 200, 117, (int8 *)"Show celling grids", 30, 102, 0, 87, 119, NO_MENU, 3);
+	debugAddButton(0, 5, 118, 200, 138, (int8 *)"Show zones", 30, 123, 0, 87, 119, ZONES_MENU, SHOW_ZONES);
 
 	// add submenu windows
 	//   - free camera window
 	debugAddWindow(205, 55, 634, 160, 4, 0);
-	debugAddWindowText(FREE_CAMERA_INFO_MENU, (int8*) "When enable, use the following keys to browse through the scenes:");
-	debugAddWindowText(FREE_CAMERA_INFO_MENU, (int8*) "           - S to go North");
-	debugAddWindowText(FREE_CAMERA_INFO_MENU, (int8*) "           - X to go South");
-	debugAddWindowText(FREE_CAMERA_INFO_MENU, (int8*) "           - Z to go West");
-	debugAddWindowText(FREE_CAMERA_INFO_MENU, (int8*) "           - C to go East");
+	debugAddWindowText(FREE_CAMERA_INFO_MENU, (int8 *)"When enable, use the following keys to browse through the scenes:");
+	debugAddWindowText(FREE_CAMERA_INFO_MENU, (int8 *)"           - S to go North");
+	debugAddWindowText(FREE_CAMERA_INFO_MENU, (int8 *)"           - X to go South");
+	debugAddWindowText(FREE_CAMERA_INFO_MENU, (int8 *)"           - Z to go West");
+	debugAddWindowText(FREE_CAMERA_INFO_MENU, (int8 *)"           - C to go East");
 
 	//   - change scene window
 	debugAddWindow(205, 55, 634, 137, 4, 0);
-	debugAddWindowText(CHANGE_SCENE_INFO_MENU, (int8*) "When enable, use the following keys to change to another scene:");
-	debugAddWindowText(CHANGE_SCENE_INFO_MENU, (int8*) "           - R to go Next Scene");
-	debugAddWindowText(CHANGE_SCENE_INFO_MENU, (int8*) "           - F to go Previous Scene");
+	debugAddWindowText(CHANGE_SCENE_INFO_MENU, (int8 *)"When enable, use the following keys to change to another scene:");
+	debugAddWindowText(CHANGE_SCENE_INFO_MENU, (int8 *)"           - R to go Next Scene");
+	debugAddWindowText(CHANGE_SCENE_INFO_MENU, (int8 *)"           - F to go Previous Scene");
 
 	//   - zones window
 	debugAddWindow(205, 55, 634, 97, 4, 0);
-	debugAddWindowText(ZONES_MENU, (int8*) "You can enable or disable each zone type:");
-	debugAddButton(ZONES_MENU, 205, 118, 350, 138, (int8*) "Cube Zones", 215, 123, 1, 87, 119, 0, SHOW_ZONE_CUBE);
-	debugAddButton(ZONES_MENU, 205, 139, 350, 159, (int8*) "Camera Zones", 215, 144, 2, 87, 119, 0, SHOW_ZONE_CAMERA);
-	debugAddButton(ZONES_MENU, 205, 160, 350, 180, (int8*) "Scenaric Zones", 215, 165, 3, 87, 119, 0, SHOW_ZONE_SCENARIC);
-	debugAddButton(ZONES_MENU, 205, 181, 350, 201, (int8*) "Celling Grid Zones", 215, 186, 4, 87, 119, 0, SHOW_ZONE_CELLINGGRID);
-	debugAddButton(ZONES_MENU, 205, 202, 350, 222, (int8*) "Object Zones", 215, 207, 5, 87, 119, 0, SHOW_ZONE_OBJECT);
-	debugAddButton(ZONES_MENU, 205, 223, 350, 243, (int8*) "Text Zones", 215, 228, 6, 87, 119, 0, SHOW_ZONE_TEXT);
-	debugAddButton(ZONES_MENU, 205, 244, 350, 264, (int8*) "Ladder Zones", 215, 249, 7, 87, 119, 0, SHOW_ZONE_LADDER);
+	debugAddWindowText(ZONES_MENU, (int8 *)"You can enable or disable each zone type:");
+	debugAddButton(ZONES_MENU, 205, 118, 350, 138, (int8 *)"Cube Zones", 215, 123, 1, 87, 119, 0, SHOW_ZONE_CUBE);
+	debugAddButton(ZONES_MENU, 205, 139, 350, 159, (int8 *)"Camera Zones", 215, 144, 2, 87, 119, 0, SHOW_ZONE_CAMERA);
+	debugAddButton(ZONES_MENU, 205, 160, 350, 180, (int8 *)"Scenaric Zones", 215, 165, 3, 87, 119, 0, SHOW_ZONE_SCENARIC);
+	debugAddButton(ZONES_MENU, 205, 181, 350, 201, (int8 *)"Celling Grid Zones", 215, 186, 4, 87, 119, 0, SHOW_ZONE_CELLINGGRID);
+	debugAddButton(ZONES_MENU, 205, 202, 350, 222, (int8 *)"Object Zones", 215, 207, 5, 87, 119, 0, SHOW_ZONE_OBJECT);
+	debugAddButton(ZONES_MENU, 205, 223, 350, 243, (int8 *)"Text Zones", 215, 228, 6, 87, 119, 0, SHOW_ZONE_TEXT);
+	debugAddButton(ZONES_MENU, 205, 244, 350, 264, (int8 *)"Ladder Zones", 215, 249, 7, 87, 119, 0, SHOW_ZONE_LADDER);
 }
 
 int32 debugProcessButton(int32 X, int32 Y) {
@@ -455,10 +455,7 @@ int32 debugProcessButton(int32 X, int32 Y) {
 
 	for (i = 0; i < numDebugWindows; i++) {
 		for (j = 0; j < debugWindows[i].numButtons; j++) {
-			if (X > (debugWindows[i].debugButtons[j].left)
-			        && X < (debugWindows[i].debugButtons[j].right)
-			        && Y > (debugWindows[i].debugButtons[j].top)
-			        && Y < (debugWindows[i].debugButtons[j].bottom)) {
+			if (X > (debugWindows[i].debugButtons[j].left) && X < (debugWindows[i].debugButtons[j].right) && Y > (debugWindows[i].debugButtons[j].top) && Y < (debugWindows[i].debugButtons[j].bottom)) {
 				return (debugWindows[i].debugButtons[j].type);
 			}
 		}
@@ -482,7 +479,7 @@ void debugPlasmaWindow(int8 *text, int32 color) {
 void debugProcessWindow() {
 	if (rightMouse) {
 		int32 quit = 0;
-		int8* text = (int8*) "Game Debug Window";
+		int8 *text = (int8 *)"Game Debug Window";
 		int32 color = 64;
 		int32 colorIdx = 4;
 		int32 count = 0;
@@ -544,9 +541,11 @@ void processDebug(int16 pKey) {
 
 	changeGrid(pKey);
 	changeGridCamera(pKey);
-	if (needChangeScene == 0);
+	if (needChangeScene == 0)
+		;
 	applyCellingGrid(pKey);
 }
 
-#endif
+} // namespace TwinE
 
+#endif

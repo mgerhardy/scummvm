@@ -21,30 +21,32 @@
  */
 
 #include "resources.h"
-#include "text.h"
-#include "scene.h"
 #include "animations.h"
+#include "scene.h"
 #include "screens.h"
 #include "sdlengine.h"
 #include "sound.h"
+#include "text.h"
 
-int8 * HQR_RESS_FILE			= "ress.hqr";
-int8 * HQR_TEXT_FILE			= "text.hqr";
-int8 * HQR_FLASAMP_FILE			= "flasamp.hqr";
-int8 * HQR_MIDI_MI_DOS_FILE		= "midi_mi.hqr";
-int8 * HQR_MIDI_MI_WIN_FILE		= "midi_mi_win.hqr";
-int8 * HQR_MIDI_MI_WIN_MP3_FILE = "midi_mi_win_mp3.hqr";
-int8 * HQR_MIDI_MI_WIN_OGG_FILE = "midi_mi_win_ogg.hqr";
-int8 * HQR_SAMPLES_FILE			= "samples.hqr";
-int8 * HQR_LBA_GRI_FILE			= "lba_gri.hqr";
-int8 * HQR_LBA_BLL_FILE			= "lba_bll.hqr";
-int8 * HQR_LBA_BRK_FILE			= "lba_brk.hqr";
-int8 * HQR_SCENE_FILE			= "scene.hqr";
-int8 * HQR_SPRITES_FILE			= "sprites.hqr";
-int8 * HQR_FILE3D_FILE			= "file3d.hqr";
-int8 * HQR_BODY_FILE			= "body.hqr";
-int8 * HQR_ANIM_FILE			= "anim.hqr";
-int8 * HQR_INVOBJ_FILE			= "invobj.hqr";
+namespace TwinE {
+
+const int8 *HQR_RESS_FILE = "ress.hqr";
+const int8 *HQR_TEXT_FILE = "text.hqr";
+const int8 *HQR_FLASAMP_FILE = "flasamp.hqr";
+const int8 *HQR_MIDI_MI_DOS_FILE = "midi_mi.hqr";
+const int8 *HQR_MIDI_MI_WIN_FILE = "midi_mi_win.hqr";
+const int8 *HQR_MIDI_MI_WIN_MP3_FILE = "midi_mi_win_mp3.hqr";
+const int8 *HQR_MIDI_MI_WIN_OGG_FILE = "midi_mi_win_ogg.hqr";
+const int8 *HQR_SAMPLES_FILE = "samples.hqr";
+const int8 *HQR_LBA_GRI_FILE = "lba_gri.hqr";
+const int8 *HQR_LBA_BLL_FILE = "lba_bll.hqr";
+const int8 *HQR_LBA_BRK_FILE = "lba_brk.hqr";
+const int8 *HQR_SCENE_FILE = "scene.hqr";
+const int8 *HQR_SPRITES_FILE = "sprites.hqr";
+const int8 *HQR_FILE3D_FILE = "file3d.hqr";
+const int8 *HQR_BODY_FILE = "body.hqr";
+const int8 *HQR_ANIM_FILE = "anim.hqr";
+const int8 *HQR_INVOBJ_FILE = "invobj.hqr";
 
 /** Init palettes */
 void initPalettes() {
@@ -123,3 +125,5 @@ void initResources() {
 	//preloadSamples();
 	preloadInventoryItems();
 }
+
+} // namespace TwinE

@@ -25,10 +25,14 @@
 
 #include "common/scummsys.h"
 
+namespace TwinE {
+
 #define MAX_TARGET_ACTOR_DISTANCE 0x7D00
 
 /** Process actor life script
 	@param actorIdx Current processed actor index */
 void processLifeScript(int32 actorIdx);
+
+} // namespace TwinE
 
 #endif

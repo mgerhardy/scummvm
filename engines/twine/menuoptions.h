@@ -25,6 +25,8 @@
 
 #include "common/scummsys.h"
 
+namespace TwinE {
+
 int32 canShowCredits;
 
 int8 playerName[256];
@@ -36,5 +38,7 @@ void newGameMenu();
 
 /** Main menu continue game options */
 void continueGameMenu();
+
+} // namespace TwinE
 
 #endif

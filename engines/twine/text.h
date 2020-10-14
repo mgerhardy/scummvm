@@ -25,9 +25,11 @@
 
 #include "common/scummsys.h"
 
+namespace TwinE {
+
 //TODO: add all 14 colors here for future use
 /** White color value */
-#define WHITE_COLOR_0		0
+#define WHITE_COLOR_0 0
 
 /** Current text bank */
 int32 currentTextBank;
@@ -37,7 +39,7 @@ int32 currDialTextSize;
 uint8 *currDialTextPtr;
 
 /** Font buffer pointer */
-uint8 * fontPtr;
+uint8 *fontPtr;
 
 /** Dialogue text size */
 int32 dialTextSize;
@@ -93,7 +95,6 @@ int32 nextDialTextEntry; // ordered entry
 int8 currentVoxBankFile[256];
 
 int32 showDialogueBubble;
-
 
 /** Initialize dialogue
 	@param bankIdx Text bank index*/
@@ -156,5 +157,7 @@ int32 playVox(int32 index);
 int32 playVoxSimple(int32 index);
 void stopVox(int32 index);
 int32 initVoxToPlay(int32 index);
+
+} // namespace TwinE
 
 #endif

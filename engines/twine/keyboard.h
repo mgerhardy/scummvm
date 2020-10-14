@@ -25,6 +25,8 @@
 
 #include "common/scummsys.h"
 
+namespace TwinE {
+
 /** Pressed key map - scanCodeTab1 */
 extern uint8 pressedKeyMap[29];
 /** Pressed key char map - scanCodeTab2 */
@@ -44,5 +46,7 @@ int16 key;
 
 int32 heroPressedKey;
 int32 heroPressedKey2;
+
+} // namespace TwinE
 
 #endif

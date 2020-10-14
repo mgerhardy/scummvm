@@ -24,16 +24,18 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "actor.h"
+#include "collision.h"
 #include "grid.h"
+#include "interface.h"
+#include "redraw.h"
+#include "renderer.h"
 #include "resources.h"
 #include "scene.h"
-#include "sdlengine.h"
-#include "interface.h"
 #include "screens.h"
-#include "actor.h"
-#include "renderer.h"
-#include "redraw.h"
-#include "collision.h"
+#include "sdlengine.h"
+
+namespace TwinE {
 
 /** Grip X size */
 #define GRID_SIZE_X 64
@@ -46,16 +48,16 @@
 #define NUM_BRICKS 9000
 
 /** Total number of bricks allowed in the game */
-#define CELLING_GRIDS_START_INDEX	120
+#define CELLING_GRIDS_START_INDEX 120
 
 /** Table with all loaded bricks */
-uint8* brickTable[NUM_BRICKS];
+uint8 *brickTable[NUM_BRICKS];
 /** Table with all loaded bricks masks */
-uint8* brickMaskTable[NUM_BRICKS];
+uint8 *brickMaskTable[NUM_BRICKS];
 /** Table with all loaded bricks sizes */
-uint32   brickSizeTable[NUM_BRICKS];
+uint32 brickSizeTable[NUM_BRICKS];
 /** Table with all loaded bricks usage */
-uint8  brickUsageTable[NUM_BRICKS];
+uint8 brickUsageTable[NUM_BRICKS];
 
 /** Current grid pointer */
 uint8 *currentGrid;
@@ -292,8 +294,8 @@ int processGridMask(uint8 *buffer, uint8 *ptr) {
 
 	bh = (ebx & 0x0000FF00) >> 8;
 
-	esi = (uint8 *) buffer;
-	edi = (uint8 *) ptr;
+	esi = (uint8 *)buffer;
+	edi = (uint8 *)ptr;
 
 	iteration = 0;
 
@@ -306,7 +308,7 @@ int processGridMask(uint8 *buffer, uint8 *ptr) {
 
 		bl = *(esi++);
 
-		if (*(esi) & 0xC0) { // the first time isn't skip. the skip size is 0 in that case
+		if (*(esi)&0xC0) { // the first time isn't skip. the skip size is 0 in that case
 			*edi++ = 0;
 			numOfBlock++;
 		}
@@ -344,7 +346,7 @@ int processGridMask(uint8 *buffer, uint8 *ptr) {
 		*ptr2 = numOfBlock;
 	} while (--bh > 0);
 
-	return ((int)((uint8 *) edi - (uint8 *) ptrSave));
+	return ((int)((uint8 *)edi - (uint8 *)ptrSave));
 }
 
 /** Create grid masks to allow display actors over the bricks */
@@ -355,7 +357,7 @@ void createGridMask() {
 		if (brickUsageTable[b]) {
 			if (brickMaskTable[b])
 				free(brickMaskTable[b]);
-			brickMaskTable[b] = (uint8*)malloc(brickSizeTable[b]);
+			brickMaskTable[b] = (uint8 *)malloc(brickSizeTable[b]);
 			processGridMask(brickTable[b], brickMaskTable[b]);
 		}
 	}
@@ -379,7 +381,7 @@ void getSpriteSize(int32 offset, int32 *width, int32 *height, uint8 *spritePtr) 
 int32 loadGridBricks(int32 gridSize) {
 	uint32 firstBrick = 60000;
 	uint32 lastBrick = 0;
-	uint8* ptrToBllBits;
+	uint8 *ptrToBllBits;
 	uint32 i;
 	uint32 j;
 	uint32 currentBllEntryIdx = 0;
@@ -398,7 +400,7 @@ int32 loadGridBricks(int32 gridSize) {
 
 		if (currentBitByte & currentBitMask) {
 			uint32 currentBllOffset = *((uint32 *)(currentBll + currentBllEntryIdx));
-			uint8* currentBllPtr = currentBll + currentBllOffset;
+			uint8 *currentBllPtr = currentBll + currentBllOffset;
 
 			uint32 bllSizeX = currentBllPtr[0];
 			uint32 bllSizeY = currentBllPtr[1];
@@ -406,10 +408,10 @@ int32 loadGridBricks(int32 gridSize) {
 
 			uint32 bllSize = bllSizeX * bllSizeY * bllSizeZ;
 
-			uint8* bllDataPtr = currentBllPtr + 5;
+			uint8 *bllDataPtr = currentBllPtr + 5;
 
 			for (j = 0; j < bllSize; j++) {
-				uint32 brickIdx = *((int16*)(bllDataPtr));
+				uint32 brickIdx = *((int16 *)(bllDataPtr));
 
 				if (brickIdx) {
 					brickIdx--;
@@ -456,8 +458,8 @@ void createGridColumn(uint8 *gridEntry, uint8 *dest) {
 
 		blockCount = (flag & 0x3F) + 1;
 
-		gridBuffer = (uint16 *) gridEntry;
-		blockByffer = (uint16 *) dest;
+		gridBuffer = (uint16 *)gridEntry;
+		blockByffer = (uint16 *)dest;
 
 		if (!(flag & 0xC0)) {
 			for (i = 0; i < blockCount; i++)
@@ -471,8 +473,8 @@ void createGridColumn(uint8 *gridEntry, uint8 *dest) {
 				*(blockByffer++) = gridIdx;
 		}
 
-		gridEntry = (uint8 *) gridBuffer;
-		dest = (uint8 *) blockByffer;
+		gridEntry = (uint8 *)gridBuffer;
+		dest = (uint8 *)blockByffer;
 
 	} while (--brickCount);
 }
@@ -496,8 +498,8 @@ void createCellingGridColumn(uint8 *gridEntry, uint8 *dest) {
 
 		blockCount = (flag & 0x3F) + 1;
 
-		gridBuffer = (uint16*) gridEntry;
-		blockByffer = (uint16 *) dest;
+		gridBuffer = (uint16 *)gridEntry;
+		blockByffer = (uint16 *)dest;
 
 		if (!(flag & 0xC0)) {
 			for (i = 0; i < blockCount; i++)
@@ -511,8 +513,8 @@ void createCellingGridColumn(uint8 *gridEntry, uint8 *dest) {
 				*(blockByffer++) = gridIdx;
 		}
 
-		gridEntry = (uint8 *) gridBuffer;
-		dest = (uint8 *) blockByffer;
+		gridEntry = (uint8 *)gridBuffer;
+		dest = (uint8 *)blockByffer;
 
 	} while (--brickCount);
 }
@@ -539,12 +541,12 @@ void createGridMap() {
 
 /** Create celling grid map from celling grid to block library buffer
 	@param gridPtr celling grid buffer pointer */
-void createCellingGridMap(uint8* gridPtr) {
+void createCellingGridMap(uint8 *gridPtr) {
 	int32 currGridOffset = 0;
 	int32 currOffset = 0;
 	int32 blockOffset;
 	int32 z, x;
-	uint8* tempGridPtr;
+	uint8 *tempGridPtr;
 
 	for (z = 0; z < GRID_SIZE_Z; z++) {
 		blockOffset = currOffset;
@@ -585,7 +587,7 @@ int32 initGrid(int32 index) {
 /** Initialize celling grid (background scenearios)
 	@param index grid index number */
 int32 initCellingGrid(int32 index) {
-	uint8* gridPtr;
+	uint8 *gridPtr;
 
 	// load grids from file
 	hqrGetallocEntry(&gridPtr, HQR_LBA_GRI_FILE, index + CELLING_GRIDS_START_INDEX);
@@ -675,16 +677,16 @@ void drawBrickSprite(int32 index, int32 posX, int32 posY, uint8 *ptr, int32 isSp
 					if (!(temp & 0x40)) {
 						temp = *(ptr++);
 						for (i = 0; i < iteration; i++) {
-							if (x >= textWindowLeft && x<textWindowRight && y >= textWindowTop && y < textWindowBottom)
-								frontVideoBuffer[y*SCREEN_WIDTH+x] = temp;
+							if (x >= textWindowLeft && x < textWindowRight && y >= textWindowTop && y < textWindowBottom)
+								frontVideoBuffer[y * SCREEN_WIDTH + x] = temp;
 
 							x++;
 							outPtr++;
 						}
 					} else {
 						for (i = 0; i < iteration; i++) {
-							if (x >= textWindowLeft && x<textWindowRight && y >= textWindowTop && y < textWindowBottom)
-								frontVideoBuffer[y*SCREEN_WIDTH+x] = *ptr;
+							if (x >= textWindowLeft && x < textWindowRight && y >= textWindowTop && y < textWindowBottom)
+								frontVideoBuffer[y * SCREEN_WIDTH + x] = *ptr;
 
 							x++;
 							ptr++;
@@ -706,7 +708,7 @@ void drawBrickSprite(int32 index, int32 posX, int32 posY, uint8 *ptr, int32 isSp
 /** Get block library
 	@param index block library index
 	@return pointer to the current block index */
-uint8* getBlockLibrary(int32 index) {
+uint8 *getBlockLibrary(int32 index) {
 	int32 offset = *((uint32 *)(currentBll + 4 * index));
 	return (uint8 *)(currentBll + offset);
 }
@@ -716,8 +718,8 @@ uint8* getBlockLibrary(int32 index) {
 	@param y column y position in the current camera
 	@param z column z position in the current camera */
 void getBrickPos(int32 x, int32 y, int32 z) {
-	brickPixelPosX = (x - z) * 24 + 288; // x pos
-	brickPixelPosY = ((x + z) * 12) - (y * 15) + 215;  // y pos
+	brickPixelPosX = (x - z) * 24 + 288;              // x pos
+	brickPixelPosY = ((x + z) * 12) - (y * 15) + 215; // y pos
 }
 
 /** Draw a specific brick in the grid column according with the block index
@@ -782,7 +784,7 @@ void drawColumnGrid(int32 blockIdx, int32 brickBlockIdx, int32 x, int32 y, int32
 void redrawGrid() {
 	int32 i, x, y, z;
 	uint8 blockIdx;
-	blockMap* map = (blockMap*)blockBuffer;
+	blockMap *map = (blockMap *)blockBuffer;
 
 	cameraX = newCameraX << 9;
 	cameraY = newCameraY << 8;
@@ -978,3 +980,5 @@ int32 getBrickSoundType(int32 x, int32 y, int32 z) { // getPos2
 
 	return 0xF0;
 }
+
+} // namespace TwinE

@@ -25,12 +25,14 @@
 
 #include "common/scummsys.h"
 
+namespace TwinE {
+
 /** Get a HQR entry pointer
 	@param ptr pointer to save the entry
 	@param filename HQR file name
 	@param index entry index to extract
 	@return entry real size */
-int32 hqrGetEntry(uint8 * ptr, int8 *filename, int32 index);
+int32 hqrGetEntry(uint8 *ptr, int8 *filename, int32 index);
 
 /** Get a HQR entry pointer
 	@param filename HQR file name
@@ -48,9 +50,11 @@ int32 hqrNumEntries(int8 *filename);
 	@param filename HQR file name
 	@param index entry index to extract
 	@return entry real size */
-int32 hqrGetallocEntry(uint8 ** ptr, int8 *filename, int32 index);
+int32 hqrGetallocEntry(uint8 **ptr, int8 *filename, int32 index);
 
-int32 hqrGetVoxEntry(uint8 * ptr, int8 *filename, int32 index, int32 hiddenIndex);
-int32 hqrGetallocVoxEntry(uint8 ** ptr, int8 *filename, int32 index, int32 hiddenIndex);
+int32 hqrGetVoxEntry(uint8 *ptr, int8 *filename, int32 index, int32 hiddenIndex);
+int32 hqrGetallocVoxEntry(uint8 **ptr, int8 *filename, int32 index, int32 hiddenIndex);
+
+} // namespace TwinE
 
 #endif

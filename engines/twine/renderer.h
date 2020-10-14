@@ -25,6 +25,8 @@
 
 #include "common/scummsys.h"
 
+namespace TwinE {
+
 int32 isUsingOrhoProjection;
 
 int16 projPosXScreen; // fullRedrawVar1
@@ -43,7 +45,6 @@ int32 destY;
 int32 destZ;
 
 int16 *shadeAngleTab3; // tab3
-
 
 int16 polyRenderType; //FillVertic_AType;
 int32 numOfVertex;
@@ -70,6 +71,8 @@ void copyActorInternAnim(uint8 *bodyPtrSrc, uint8 *bodyPtrDest);
 
 void renderBehaviourModel(int32 boxLeft, int32 boxTop, int32 boxRight, int32 boxBottom, int32 Y, int32 angle, uint8 *entityPtr);
 
-void renderInventoryItem(int32 X, int32 Y, uint8* itemBodyPtr, int32 angle, int32 param);
+void renderInventoryItem(int32 X, int32 Y, uint8 *itemBodyPtr, int32 angle, int32 param);
+
+} // namespace TwinE
 
 #endif

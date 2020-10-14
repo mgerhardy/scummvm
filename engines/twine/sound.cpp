@@ -27,15 +27,17 @@
 #include <SDL_mixer/SDL_mixer.h>
 #endif
 
-#include "sound.h"
+#include "collision.h"
 #include "flamovies.h"
-#include "twine.h"
-#include "resources.h"
+#include "grid.h"
 #include "hqrdepack.h"
 #include "movements.h"
-#include "grid.h"
-#include "collision.h"
+#include "resources.h"
+#include "sound.h"
 #include "text.h"
+#include "twine.h"
+
+namespace TwinE {
 
 /** SDL_Mixer channels */
 int32 channel;
@@ -62,9 +64,9 @@ void playFlaSample(int32 index, int32 frequency, int32 repeat, int32 x, int32 y)
 		int32 sampSize = 0;
 		int8 sampfile[256];
 		SDL_RWops *rw;
-		uint8* sampPtr;
+		uint8 *sampPtr;
 
-		sprintf(sampfile, FLA_DIR "%s",HQR_FLASAMP_FILE);
+		sprintf(sampfile, FLA_DIR "%s", HQR_FLASAMP_FILE);
 
 		sampSize = hqrGetallocEntry(&sampPtr, sampfile, index);
 
@@ -114,7 +116,7 @@ void playSample(int32 index, int32 frequency, int32 repeat, int32 x, int32 y, in
 	if (cfgfile.Sound) {
 		int32 sampSize = 0;
 		SDL_RWops *rw;
-		uint8* sampPtr;
+		uint8 *sampPtr;
 
 		sampSize = hqrGetallocEntry(&sampPtr, HQR_SAMPLES_FILE, index);
 
@@ -176,7 +178,7 @@ void stopSamples() {
 		//clean up
 		Mix_FreeChunk(sample);
 		sample = NULL; //make sure we free it
-		/*if (cfgfile.Debug)
+		               /*if (cfgfile.Debug)
 			printf("Stop VOC samples\n");*/
 	}
 }
@@ -216,7 +218,7 @@ void stopSample(int32 index) {
 			//clean up
 			Mix_FreeChunk(sample);
 			sample = NULL; //make sure we free it
-			/*if (cfgfile.Debug)
+			               /*if (cfgfile.Debug)
 				printf("Stop VOC samples\n");*/
 		}
 	}
@@ -224,7 +226,7 @@ void stopSample(int32 index) {
 
 int32 isChannelPlaying(int32 channel) {
 	if (channel != -1) {
-		if(Mix_Playing(channel)) {
+		if (Mix_Playing(channel)) {
 			return 1;
 		} else {
 			removeSampleChannel(channel);
@@ -258,7 +260,7 @@ void playVoxSample(int32 index) {
 	if (cfgfile.Sound) {
 		int32 sampSize = 0;
 		SDL_RWops *rw;
-		uint8* sampPtr = 0;
+		uint8 *sampPtr = 0;
 
 		sampSize = hqrGetallocVoxEntry(&sampPtr, currentVoxBankFile, index, voxHiddenIndex);
 
@@ -290,3 +292,5 @@ void playVoxSample(int32 index) {
 		free(sampPtr);
 	}
 }
+
+} // namespace TwinE

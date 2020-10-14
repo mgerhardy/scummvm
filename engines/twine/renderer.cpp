@@ -20,37 +20,37 @@
  *
  */
 
+#include <assert.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
-#include <assert.h>
 
-#include "renderer.h"
-#include "twine.h"
-#include "sdlengine.h"
-#include "shadeangletab.h"
-#include "redraw.h"
 #include "interface.h"
 #include "menu.h"
 #include "movements.h"
+#include "redraw.h"
+#include "renderer.h"
+#include "sdlengine.h"
+#include "shadeangletab.h"
+#include "twine.h"
 
-#define RENDERTYPE_DRAWLINE		0
-#define RENDERTYPE_DRAWPOLYGON	1
-#define RENDERTYPE_DRAWSPHERE	2
+namespace TwinE {
 
-#define POLYGONTYPE_FLAT		0
-#define POLYGONTYPE_COPPER		1
-#define POLYGONTYPE_BOPPER		2
-#define POLYGONTYPE_MARBLE		3
-#define POLYGONTYPE_TELE		4
-#define POLYGONTYPE_TRAS		5
-#define POLYGONTYPE_TRAME		6
-#define POLYGONTYPE_GOURAUD		7
-#define POLYGONTYPE_DITHER		8
+#define RENDERTYPE_DRAWLINE 0
+#define RENDERTYPE_DRAWPOLYGON 1
+#define RENDERTYPE_DRAWSPHERE 2
 
-#define ERROR_OUT_OF_SCREEN		2
+#define POLYGONTYPE_FLAT 0
+#define POLYGONTYPE_COPPER 1
+#define POLYGONTYPE_BOPPER 2
+#define POLYGONTYPE_MARBLE 3
+#define POLYGONTYPE_TELE 4
+#define POLYGONTYPE_TRAS 5
+#define POLYGONTYPE_TRAME 6
+#define POLYGONTYPE_GOURAUD 7
+#define POLYGONTYPE_DITHER 8
 
-
+#define ERROR_OUT_OF_SCREEN 2
 
 // --- structures ----
 
@@ -67,15 +67,15 @@ typedef struct pointTab {
 } pointTab;
 
 typedef struct elementEntry {
-	int16 firstPoint;		// data1
-	int16 numOfPoints;		// data2
-	int16 basePoint;		// data3
-	int16 baseElement;		// param
+	int16 firstPoint;  // data1
+	int16 numOfPoints; // data2
+	int16 basePoint;   // data3
+	int16 baseElement; // param
 	int16 flag;
 	int16 rotateZ;
 	int16 rotateY;
 	int16 rotateX;
-	int32 numOfShades;			// field_10
+	int32 numOfShades; // field_10
 	int32 field_14;
 	int32 field_18;
 	int32 Y;
@@ -90,7 +90,6 @@ typedef struct lineCoordinates {
 	int16 x2;
 	int16 y2;
 } lineCoordinates;
-
 
 typedef struct lineData {
 	int32 data;
@@ -108,7 +107,6 @@ typedef struct polyVertexHeader {
 	int16 shadeEntry;
 	int16 dataOffset;
 } polyVertexHeader;
-
 
 typedef struct computedVertex {
 	int16 shadeValue;
@@ -173,7 +171,7 @@ int32 renderZ; // _Z
 
 // ---
 
-int32 baseMatrix[3*3];
+int32 baseMatrix[3 * 3];
 
 int32 numOfPrimitives;
 
@@ -194,8 +192,8 @@ int32 lightX;
 int32 lightY;
 int32 lightZ;
 
-pointTab computedPoints[800];		// _projectedPointTable
-pointTab flattenPoints[800];	// _flattenPointTable
+pointTab computedPoints[800]; // _projectedPointTable
+pointTab flattenPoints[800];  // _flattenPointTable
 int16 shadeTable[500];
 
 int16 primitiveCounter;
@@ -207,7 +205,7 @@ renderTabEntry renderTab[1000];
 renderTabEntry renderTabSorted[1000];
 uint8 renderTab7[10000];
 
-uint8 *renderV19;   // RECHECK THIS
+uint8 *renderV19; // RECHECK THIS
 
 // render polygon vars
 int16 pRenderV3[96];
@@ -226,9 +224,6 @@ int16 polyTab[960];
 int16 polyTab2[960];
 int32 renderLoop;
 // end render polygon vars
-
-
-
 
 int32 projectPositionOnScreen(int32 cX, int32 cY, int32 cZ) {
 	if (!isUsingOrhoProjection) {
@@ -299,15 +294,13 @@ void setBaseRotation(int32 X, int32 Y, int32 Z) {
 
 	shadeAngleTab3 = &shadeAngleTable[384];
 
-
 	baseMatrixRotationX = X & 0x3FF;
 	baseMatrixRotationY = Y & 0x3FF;
 	baseMatrixRotationZ = Z & 0x3FF;
 
-    Xradians = (double)((256-X) % 1024) * 2*PI / 1024;
-    Yradians = (double)((256-Y) % 1024) * 2*PI / 1024;
-    Zradians = (double)((256-Z) % 1024) * 2*PI / 1024;
-
+	Xradians = (double)((256 - X) % 1024) * 2 * PI / 1024;
+	Yradians = (double)((256 - Y) % 1024) * 2 * PI / 1024;
+	Zradians = (double)((256 - Z) % 1024) * 2 * PI / 1024;
 
 	baseMatrix[0] = (int32)(sin(Zradians) * sin(Yradians) * 16384);
 	baseMatrix[1] = (int32)(-cos(Zradians) * 16384);
@@ -361,8 +354,8 @@ void setCameraAngle(int32 transPosX, int32 transPosY, int32 transPosZ, int32 rot
 void applyRotation(int32 *tempMatrix, int32 *currentMatrix) {
 	int32 i;
 	int32 angle;
-	int32 angleVar1;    // esi
-	int32 angleVar2;    // ecx
+	int32 angleVar1; // esi
+	int32 angleVar2; // ecx
 
 	int32 matrix1[9];
 	int32 matrix2[9];
@@ -411,9 +404,9 @@ void applyRotation(int32 *tempMatrix, int32 *currentMatrix) {
 
 	if (renderAngleY) {
 		angle = renderAngleY;
-		angleVar2 = shadeAngleTable[angle & 0x3FF];	// esi
+		angleVar2 = shadeAngleTable[angle & 0x3FF]; // esi
 		angle += 0x100;
-		angleVar1 = shadeAngleTable[angle & 0x3FF];	// ecx
+		angleVar1 = shadeAngleTable[angle & 0x3FF]; // ecx
 
 		tempMatrix[1] = matrix2[1];
 		tempMatrix[4] = matrix2[4];
@@ -432,7 +425,7 @@ void applyRotation(int32 *tempMatrix, int32 *currentMatrix) {
 	}
 }
 
-void applyPointsRotation(uint8 *firstPointsPtr, int32 numPoints, pointTab * destPoints, int32 *rotationMatrix) {
+void applyPointsRotation(uint8 *firstPointsPtr, int32 numPoints, pointTab *destPoints, int32 *rotationMatrix) {
 	int16 tmpX;
 	int16 tmpY;
 	int16 tmpZ;
@@ -494,16 +487,16 @@ void processRotatedElement(int32 rotZ, int32 rotY, int32 rotX, elementEntry *ele
 		destZ = computedPoints[pointIdx].Z;
 	}
 
-	applyRotation((int32 *) currentMatrixTableEntry, currentMatrix);
+	applyRotation((int32 *)currentMatrixTableEntry, currentMatrix);
 
 	if (!numOfPoints) {
 		printf("RENDER WARNING: No points in this model!\n");
 	}
 
-	applyPointsRotation(pointsPtr + firstPoint, numOfPoints, &computedPoints[firstPoint / 6], (int32 *) currentMatrixTableEntry);
+	applyPointsRotation(pointsPtr + firstPoint, numOfPoints, &computedPoints[firstPoint / 6], (int32 *)currentMatrixTableEntry);
 }
 
-void applyPointsTranslation(uint8 *firstPointsPtr, int32 numPoints, pointTab * destPoints, int32 *translationMatrix) {
+void applyPointsTranslation(uint8 *firstPointsPtr, int32 numPoints, pointTab *destPoints, int32 *translationMatrix) {
 	int16 tmpX;
 	int16 tmpY;
 	int16 tmpZ;
@@ -545,11 +538,11 @@ void processTranslatedElement(int32 rotX, int32 rotY, int32 rotZ, elementEntry *
 		destY = 0;
 		destZ = 0;
 
-		dest = (int32 *) currentMatrixTableEntry;
+		dest = (int32 *)currentMatrixTableEntry;
 
 		for (i = 0; i < 9; i++)
 			dest[i] = baseMatrix[i];
-	} else {   // dependent
+	} else { // dependent
 		int32 i;
 
 		destX = computedPoints[(elemPtr->basePoint) / 6].X;
@@ -557,13 +550,13 @@ void processTranslatedElement(int32 rotX, int32 rotY, int32 rotZ, elementEntry *
 		destZ = computedPoints[(elemPtr->basePoint) / 6].Z;
 
 		source = (int32 *)((uint8 *)matricesTable + elemPtr->baseElement);
-		dest = (int32 *) currentMatrixTableEntry;
+		dest = (int32 *)currentMatrixTableEntry;
 
 		for (i = 0; i < 9; i++)
 			dest[i] = source[i];
 	}
 
-	applyPointsTranslation(pointsPtr + elemPtr->firstPoint, elemPtr->numOfPoints, &computedPoints[elemPtr->firstPoint / 6], (int *) currentMatrixTableEntry);
+	applyPointsTranslation(pointsPtr + elemPtr->firstPoint, elemPtr->numOfPoints, &computedPoints[elemPtr->firstPoint / 6], (int *)currentMatrixTableEntry);
 }
 
 void translateGroup(int16 ax, int16 bx, int16 cx) {
@@ -629,9 +622,8 @@ void setLightVector(int32 angleX, int32 angleY, int32 angleZ) {
 
 // ------------------------------------------------------------------------------------------------------
 
-FORCEINLINE int16 clamp(int16 x, int16 a, int16 b)
-{
-    return x < a ? a : (x > b ? b : x);
+FORCEINLINE int16 clamp(int16 x, int16 a, int16 b) {
+	return x < a ? a : (x > b ? b : x);
 }
 
 int computePolygons() {
@@ -649,13 +641,13 @@ int computePolygons() {
 	pRenderV1 = vertexCoordinates;
 	pRenderV2 = pRenderV3;
 
-	vertices = (vertexData*)vertexCoordinates;
+	vertices = (vertexData *)vertexCoordinates;
 
 	vleft = vtop = 32767;
 	vright = vbottom = -32768;
 
 	for (i = 0; i < numOfVertex; i++) {
-		vertices[i].x = clamp(vertices[i].x, 0, SCREEN_WIDTH-1);
+		vertices[i].x = clamp(vertices[i].x, 0, SCREEN_WIDTH - 1);
 		vertexX = vertices[i].x;
 
 		if (vertexX < vleft)
@@ -663,7 +655,7 @@ int computePolygons() {
 		if (vertexX > vright)
 			vright = vertexX;
 
-		vertices[i].y = clamp(vertices[i].y, 0, SCREEN_HEIGHT-1);
+		vertices[i].y = clamp(vertices[i].y, 0, SCREEN_HEIGHT - 1);
 		vertexY = vertices[i].y;
 		if (vertexY < vtop)
 			vtop = vertexY;
@@ -671,9 +663,9 @@ int computePolygons() {
 			vbottom = vertexY;
 	}
 
-	vertexParam1 = vertexParam2 = vertices[numOfVertex-1].param;
-	currentVertexX = vertices[numOfVertex-1].x;
-	currentVertexY = vertices[numOfVertex-1].y;
+	vertexParam1 = vertexParam2 = vertices[numOfVertex - 1].param;
+	currentVertexX = vertices[numOfVertex - 1].x;
+	currentVertexY = vertices[numOfVertex - 1].y;
 
 	for (nVertex = 0; nVertex < numOfVertex; nVertex++) {
 		oldVertexY = currentVertexY;
@@ -686,46 +678,47 @@ int computePolygons() {
 
 		// drawLine(oldVertexX,oldVertexY,currentVertexX,currentVertexY,255);
 
-		if (currentVertexY == oldVertexY) continue;
+		if (currentVertexY == oldVertexY)
+			continue;
 
 		up = currentVertexY < oldVertexY;
-		direction = up ? -1: 1;
+		direction = up ? -1 : 1;
 
 		vsize = abs(currentVertexY - oldVertexY);
 		hsize = abs(currentVertexX - oldVertexX);
 
-		if (direction*oldVertexX > direction*currentVertexX) { // if we are going up right
+		if (direction * oldVertexX > direction * currentVertexX) { // if we are going up right
 			xpos = currentVertexX;
 			ypos = currentVertexY;
 			cvalue = (vertexParam2 << 8) + ((oldVertexParam - vertexParam2) << 8) % vsize;
 			cdelta = ((oldVertexParam - vertexParam2) << 8) / vsize;
-			direction = -direction;  // we will draw by going down the tab
+			direction = -direction; // we will draw by going down the tab
 		} else {
 			xpos = oldVertexX;
 			ypos = oldVertexY;
 			cvalue = (oldVertexParam << 8) + ((vertexParam2 - oldVertexParam) << 8) % vsize;
 			cdelta = ((vertexParam2 - oldVertexParam) << 8) / vsize;
 		}
-		outPtr = &polyTab[ypos + (up? 480: 0)]; // outPtr is the output ptr in the renderTab
+		outPtr = &polyTab[ypos + (up ? 480 : 0)]; // outPtr is the output ptr in the renderTab
 
-		slope = (int64)hsize/(int64)vsize;
-		slope = up ? -slope: slope;
+		slope = (int64)hsize / (int64)vsize;
+		slope = up ? -slope : slope;
 
 		for (i = 0; i < vsize + 2; i++) {
 			if ((outPtr - polyTab) < 960)
-			if ((outPtr - polyTab) > 0)
-				*(outPtr) = (int16) xpos;
+				if ((outPtr - polyTab) > 0)
+					*(outPtr) = (int16)xpos;
 			outPtr += direction;
 			xpos += slope;
 		}
 
 		if (polyRenderType >= 7) { // we must compute the color progression
-			int16* outPtr = &polyTab2[ypos + (up? 480: 0)];
+			int16 *outPtr = &polyTab2[ypos + (up ? 480 : 0)];
 
 			for (i = 0; i < vsize + 2; i++) {
 				if ((outPtr - polyTab2) < 960)
-				if ((outPtr - polyTab2) > 0)
-					*(outPtr) = cvalue;
+					if ((outPtr - polyTab2) > 0)
+						*(outPtr) = cvalue;
 				outPtr += direction;
 				cvalue += cdelta;
 			}
@@ -778,7 +771,6 @@ void renderPolygons(int32 renderType, int32 color) {
 			currentLine++;
 		} while (--vsize);
 		break;
-
 	}
 	case POLYGONTYPE_COPPER: {
 		currentLine = vtop;
@@ -804,7 +796,7 @@ void renderPolygons(int32 renderType, int32 color) {
 
 					for (j = startCopy; j < hsize + startCopy; j++) {
 						start += mask;
-						start = (start & 0xFF00) | ((start & 0xFF) & (uint8)(dx >> 8)) ;
+						start = (start & 0xFF00) | ((start & 0xFF) & (uint8)(dx >> 8));
 						start = (start & 0xFF00) | ((start & 0xFF) + (dx & 0xFF));
 						if (j >= 0 && j < 640) {
 							out[j] = start & 0xFF;
@@ -813,7 +805,6 @@ void renderPolygons(int32 renderType, int32 color) {
 						mask++;
 					}
 				}
-
 			}
 			out += 640;
 			currentLine++;
@@ -833,7 +824,7 @@ void renderPolygons(int32 renderType, int32 color) {
 					hsize++;
 					out2 = start + out;
 					for (j = start; j < hsize + start; j++) {
-						if ((start + (vtop % 1))&1) {
+						if ((start + (vtop % 1)) & 1) {
 							if (j >= 0 && j < 640) {
 								out[j] = color;
 							}
@@ -841,7 +832,6 @@ void renderPolygons(int32 renderType, int32 color) {
 						out2++;
 					}
 				}
-
 			}
 			out += 640;
 			currentLine++;
@@ -854,7 +844,7 @@ void renderPolygons(int32 renderType, int32 color) {
 	case POLYGONTYPE_TELE: { // FIXME: buggy
 		int ax;
 		int bx;
-   		unsigned short int dx;
+		unsigned short int dx;
 		unsigned short int temp;
 		bx = (unsigned short)color << 0x10;
 		renderLoop = vsize;
@@ -865,7 +855,7 @@ void renderPolygons(int32 renderType, int32 color) {
 				ptr1++;
 				hsize = stop - start;
 
-				if(hsize)
+				if (hsize)
 					break;
 
 				out2 = start + out;
@@ -880,8 +870,7 @@ void renderPolygons(int32 renderType, int32 color) {
 					return;
 			}
 
-			if(stop >= start)
-			{
+			if (stop >= start) {
 				hsize++;
 				bx = (unsigned short)(color >> 0x10);
 				out2 = start + out;
@@ -921,12 +910,12 @@ void renderPolygons(int32 renderType, int32 color) {
 					*(out2++) = ax & 0x0F;
 					ax += dx;
 				}
-     		}
+			}
 
 			out += 640;
 			--renderLoop;
 
-		}while(renderLoop);
+		} while (renderLoop);
 		break;
 	}
 	case POLYGONTYPE_TRAS: { // FIXME: buggy
@@ -939,28 +928,24 @@ void renderPolygons(int32 renderType, int32 color) {
 			ptr1++;
 			hsize = stop - start;
 
-			if(hsize >= 0)
-			{
-			  hsize++;
-			  out2 = start + out;
+			if (hsize >= 0) {
+				hsize++;
+				out2 = start + out;
 
-			  if((hsize >> 1)<0)
-			  {
-				bx = color &0x0FF;
-				bx = bx << 8;
-				bx += color &0x0FF;
-   				for(j = 0; j< hsize; j++)
-				{
-				  *(out2) = (*(out2)&0x0F0F) | bx;
+				if ((hsize >> 1) < 0) {
+					bx = color & 0x0FF;
+					bx = bx << 8;
+					bx += color & 0x0FF;
+					for (j = 0; j < hsize; j++) {
+						*(out2) = (*(out2)&0x0F0F) | bx;
+					}
+				} else {
+					*(out2++) = (*(out2)&0x0F) | color;
 				}
-			  }
-			  else{
-				*(out2++) = (*(out2) & 0x0F) | color;
-			  }
 			}
 			out += 640;
-		}while(--vsize);
-	  break;
+		} while (--vsize);
+		break;
 	}
 	case POLYGONTYPE_TRAME: { // FIXME: buggy
 		unsigned char bh = 0;
@@ -993,7 +978,6 @@ void renderPolygons(int32 renderType, int32 color) {
 						}
 					}
 				}
-
 			}
 			out += 640;
 			currentLine++;
@@ -1010,8 +994,8 @@ void renderPolygons(int32 renderType, int32 color) {
 
 				int16 colorSize = stopColor - startColor;
 
-				stop = ptr1[480];  // stop
-				start = ptr1[0]; // start
+				stop = ptr1[480]; // stop
+				start = ptr1[0];  // start
 
 				ptr1++;
 				out2 = start + out;
@@ -1158,7 +1142,6 @@ void renderPolygons(int32 renderType, int32 color) {
 							colorSize /= hsize;
 							hsize++;
 
-
 							if (hsize % 2) {
 								hsize /= 2;
 								currentColor &= 0xFF;
@@ -1223,7 +1206,7 @@ void circleFill(int32 x, int32 y, int32 radius, int8 color) {
 		width *= radius;
 
 		if (width < 0)
-			width = - width;
+			width = -width;
 
 		drawLine((int32)(x - width), currentLine + y, (int32)(x + width), currentLine + y, color);
 	}
@@ -1233,7 +1216,7 @@ int32 renderModelElements(uint8 *pointer) {
 	uint8 *edi;
 	int16 temp;
 	int32 eax;
-//	int32 ecx;
+	//	int32 ecx;
 
 	int16 counter;
 	int16 type;
@@ -1273,23 +1256,23 @@ int32 renderModelElements(uint8 *pointer) {
 
 	// prepare polygons
 
-	edi = renderTab7;			// renderTab7 coordinates buffer
-	temp = *((int16*) pointer);  // we read the number of polygons
+	edi = renderTab7;           // renderTab7 coordinates buffer
+	temp = *((int16 *)pointer); // we read the number of polygons
 	pointer += 2;
 
 	if (temp) {
-		primitiveCounter = temp;  // the number of primitives = the number of polygons
+		primitiveCounter = temp; // the number of primitives = the number of polygons
 
-		do {    // loop that load all the polygons
+		do { // loop that load all the polygons
 			render23 = edi;
-			currentPolyHeader = (polyHeader *) pointer;
+			currentPolyHeader = (polyHeader *)pointer;
 			//ecx = *((int32*) pointer);
 			pointer += 2;
 			polyRenderType = currentPolyHeader->renderType;
 
 			// TODO: RECHECK coordinates axis
 			if (polyRenderType >= 9) {
-				destinationHeader = (polyHeader *) edi;
+				destinationHeader = (polyHeader *)edi;
 
 				destinationHeader->renderType = currentPolyHeader->renderType - 2;
 				destinationHeader->numOfVertex = currentPolyHeader->numOfVertex;
@@ -1304,11 +1287,11 @@ int32 renderModelElements(uint8 *pointer) {
 				renderV19 = edi;
 
 				do {
-					currentPolyVertex = (polyVertexHeader *) pointer;
+					currentPolyVertex = (polyVertexHeader *)pointer;
 
 					shadeValue = currentPolyHeader->colorIndex + shadeTable[currentPolyVertex->shadeEntry];
 
-					currentComputedVertex = (computedVertex *) edi;
+					currentComputedVertex = (computedVertex *)edi;
 
 					currentComputedVertex->shadeValue = shadeValue;
 
@@ -1327,18 +1310,18 @@ int32 renderModelElements(uint8 *pointer) {
 						bestDepth = currentDepth;
 				} while (--counter);
 			} else if (polyRenderType >= 7) { // only 1 shade value is used
-				destinationHeader = (polyHeader *) edi;
+				destinationHeader = (polyHeader *)edi;
 
 				destinationHeader->renderType = currentPolyHeader->renderType - 7;
 				destinationHeader->numOfVertex = currentPolyHeader->numOfVertex;
 
 				color = currentPolyHeader->colorIndex;
 
-				shadeEntry = *((int16*)(pointer + 2));
+				shadeEntry = *((int16 *)(pointer + 2));
 
 				pointer += 4;
 
-				*((int16*)(edi + 2)) = color + shadeTable[shadeEntry];
+				*((int16 *)(edi + 2)) = color + shadeTable[shadeEntry];
 
 				edi += 4;
 				renderV19 = edi;
@@ -1346,7 +1329,7 @@ int32 renderModelElements(uint8 *pointer) {
 				counter = destinationHeader->numOfVertex;
 
 				do {
-					eax = *((int16*) pointer);
+					eax = *((int16 *)pointer);
 					pointer += 2;
 
 					currentVertex = &flattenPoints[eax / 6];
@@ -1364,7 +1347,7 @@ int32 renderModelElements(uint8 *pointer) {
 						bestDepth = currentDepth;
 				} while (--counter);
 			} else { // no shade is used
-				destinationHeader = (polyHeader *) edi;
+				destinationHeader = (polyHeader *)edi;
 
 				destinationHeader->renderType = currentPolyHeader->renderType;
 				destinationHeader->numOfVertex = currentPolyHeader->numOfVertex;
@@ -1379,7 +1362,7 @@ int32 renderModelElements(uint8 *pointer) {
 				counter = currentPolyHeader->numOfVertex;
 
 				do {
-					eax = *((int16*) pointer);
+					eax = *((int16 *)pointer);
 					pointer += 2;
 
 					currentVertex = &flattenPoints[eax / 6];
@@ -1403,27 +1386,27 @@ int32 renderModelElements(uint8 *pointer) {
 
 			render25 = bestDepth;
 
-			ax = *((int16*)(edi + 4));
-			bx = *((int16*)(edi + 8));
+			ax = *((int16 *)(edi + 4));
+			bx = *((int16 *)(edi + 8));
 
-			ax -= *((int16*)(edi + 16));
-			bx -= *((int16*)(edi + 2));
+			ax -= *((int16 *)(edi + 16));
+			bx -= *((int16 *)(edi + 2));
 
 			ax *= bx;
 
 			bestDepth = ax;
 			bx = currentDepth;
 
-			ax = *((int16*)(edi + 2));
-			cx = *((int16*)(edi + 10));
+			ax = *((int16 *)(edi + 2));
+			cx = *((int16 *)(edi + 10));
 
-			ax -= *((int16*)(edi + 14));
-			cx -= *((int16*)(edi + 4));
+			ax -= *((int16 *)(edi + 14));
+			cx -= *((int16 *)(edi + 4));
 
 			ax *= cx;
 
 			ax -= bestDepth;
-			currentDepth -= (bx) - 1; // peut-etre une erreur la
+			currentDepth -= (bx)-1; // peut-etre une erreur la
 
 			if (currentDepth < 0) {
 				edi = render23;
@@ -1442,28 +1425,28 @@ int32 renderModelElements(uint8 *pointer) {
 
 	// prepare lines
 
-	temp = *((int16*) pointer);
+	temp = *((int16 *)pointer);
 	pointer += 2;
 	if (temp) {
 		numOfPrimitives += temp;
 		do {
 			int32 param;
-			lineDataPtr = (lineData *) pointer;
-			lineCoordinatesPtr = (lineCoordinates *) edi;
+			lineDataPtr = (lineData *)pointer;
+			lineCoordinatesPtr = (lineCoordinates *)edi;
 
-			if (*((int16*)&lineDataPtr->p1) % 6 != 0 || *((int16*)&lineDataPtr->p2) % 6 != 0) {
+			if (*((int16 *)&lineDataPtr->p1) % 6 != 0 || *((int16 *)&lineDataPtr->p2) % 6 != 0) {
 				printf("RENDER ERROR: lineDataPtr reference is malformed !\n");
 				exit(1);
 			}
 
-			point1 = *((int16*) & lineDataPtr->p1) / 6;
-			point2 = *((int16*) & lineDataPtr->p2) / 6;
-			param = *((int32*) & lineDataPtr->data);
-			*((int32*)&lineCoordinatesPtr->data) = param;
-			*((int16*)&lineCoordinatesPtr->x1) = flattenPoints[point1].X;
-			*((int16*)&lineCoordinatesPtr->y1) = flattenPoints[point1].Y;
-			*((int16*)&lineCoordinatesPtr->x2) = flattenPoints[point2].X;
-			*((int16*)&lineCoordinatesPtr->y2) = flattenPoints[point2].Y;
+			point1 = *((int16 *)&lineDataPtr->p1) / 6;
+			point2 = *((int16 *)&lineDataPtr->p2) / 6;
+			param = *((int32 *)&lineDataPtr->data);
+			*((int32 *)&lineCoordinatesPtr->data) = param;
+			*((int16 *)&lineCoordinatesPtr->x1) = flattenPoints[point1].X;
+			*((int16 *)&lineCoordinatesPtr->y1) = flattenPoints[point1].Y;
+			*((int16 *)&lineCoordinatesPtr->x2) = flattenPoints[point2].X;
+			*((int16 *)&lineCoordinatesPtr->y2) = flattenPoints[point2].Y;
 			bestDepth = flattenPoints[point1].Z;
 			depth = flattenPoints[point2].Z;
 
@@ -1482,21 +1465,21 @@ int32 renderModelElements(uint8 *pointer) {
 
 	// prepare spheres
 
-	temp = *((int16*) pointer);
+	temp = *((int16 *)pointer);
 	pointer += 2;
 	if (temp) {
 		numOfPrimitives += temp;
 		do {
 			uint8 color = *(pointer + 1);
-			int16 center = *((uint16*)(pointer + 6));
-			int16 size = *((uint16*)(pointer + 4));
+			int16 center = *((uint16 *)(pointer + 6));
+			int16 size = *((uint16 *)(pointer + 4));
 
-			*(uint8*)edi = color;
-			*((int16*)(edi + 1)) = flattenPoints[center/6].X;
-			*((int16*)(edi + 3)) = flattenPoints[center/6].Y;
-			*((int16*)(edi + 5)) = size;
+			*(uint8 *)edi = color;
+			*((int16 *)(edi + 1)) = flattenPoints[center / 6].X;
+			*((int16 *)(edi + 3)) = flattenPoints[center / 6].Y;
+			*((int16 *)(edi + 5)) = size;
 
-			renderTabEntryPtr->depth = flattenPoints[center/6].Z;
+			renderTabEntryPtr->depth = flattenPoints[center / 6].Z;
 			renderTabEntryPtr->renderType = 2;
 			renderTabEntryPtr->dataPtr = edi;
 			renderTabEntryPtr++;
@@ -1545,29 +1528,29 @@ int32 renderModelElements(uint8 *pointer) {
 				int32 x2;
 				int32 y2;
 
-				lineCoordinatesPtr = (lineCoordinates *) pointer;
-				color = (*((int32*) &lineCoordinatesPtr->data) & 0xFF00) >> 8;
+				lineCoordinatesPtr = (lineCoordinates *)pointer;
+				color = (*((int32 *)&lineCoordinatesPtr->data) & 0xFF00) >> 8;
 
-				x1 = *((int16*) &lineCoordinatesPtr->x1);
-				y1 = *((int16*) &lineCoordinatesPtr->y1);
-				x2 = *((int16*) &lineCoordinatesPtr->x2);
-				y2 = *((int16*) &lineCoordinatesPtr->y2);
+				x1 = *((int16 *)&lineCoordinatesPtr->x1);
+				y1 = *((int16 *)&lineCoordinatesPtr->y1);
+				x2 = *((int16 *)&lineCoordinatesPtr->x2);
+				y2 = *((int16 *)&lineCoordinatesPtr->y2);
 
 				drawLine(x1, y1, x2, y2, color);
 				break;
 			}
 			case RENDERTYPE_DRAWPOLYGON: { // draw a polygon
-				eax = *((int*) pointer);
+				eax = *((int *)pointer);
 				pointer += 4;
 
 				polyRenderType = eax & 0xFF;
 				numOfVertex = (eax & 0xFF00) >> 8;
 				color = (eax & 0xFF0000) >> 16;
 
-				destPtr = (uint8 *) vertexCoordinates;
+				destPtr = (uint8 *)vertexCoordinates;
 
 				for (i = 0; i < (numOfVertex * 3); i++) {
-					*((int16*)destPtr) = *((int16*) pointer);
+					*((int16 *)destPtr) = *((int16 *)pointer);
 					destPtr += 2;
 					pointer += 2;
 				}
@@ -1585,15 +1568,15 @@ int32 renderModelElements(uint8 *pointer) {
 				int32 circleParam4;
 				int32 circleParam5;
 
-				eax = *(int*) pointer;
+				eax = *(int *)pointer;
 
-				circleParam1 = *(uint8*) pointer;
-				circleParam4 = *((int16*)(pointer + 1));
-				circleParam5 = *((int16*)(pointer + 3));
-				circleParam3 = *((int16*)(pointer + 5));
+				circleParam1 = *(uint8 *)pointer;
+				circleParam4 = *((int16 *)(pointer + 1));
+				circleParam5 = *((int16 *)(pointer + 3));
+				circleParam3 = *((int16 *)(pointer + 5));
 
 				if (!isUsingOrhoProjection) {
-					circleParam3 = (circleParam3 * cameraPosY) / (cameraPosX + *(int16*) pointer);
+					circleParam3 = (circleParam3 * cameraPosY) / (cameraPosX + *(int16 *)pointer);
 				} else {
 					circleParam3 = (circleParam3 * 34) >> 9;
 				}
@@ -1643,52 +1626,52 @@ int32 renderAnimatedModel(uint8 *bodyPtr) {
 	int32 coY;
 	int32 coZ;
 	uint8 *tmpElemPtr;
-//	int32 *tmpLightMatrix;
+	//	int32 *tmpLightMatrix;
 	uint8 *tmpShadePtr;
 	int32 numOfShades;
 
-	numOfPoints = *((uint16*)bodyPtr);
+	numOfPoints = *((uint16 *)bodyPtr);
 	bodyPtr += 2;
 	pointsPtr = bodyPtr;
 
 	bodyPtr += numOfPoints * 6;
 
-	numOfElements = *((uint16*)bodyPtr);
+	numOfElements = *((uint16 *)bodyPtr);
 	bodyPtr += 2;
 	elementsPtr = elementsPtr2 = bodyPtr;
 
-	currentMatrixTableEntry = (uint8 *) matricesTable;
+	currentMatrixTableEntry = (uint8 *)matricesTable;
 
-	processRotatedElement(renderAngleX, renderAngleY, renderAngleZ, (elementEntry *) elementsPtr);
+	processRotatedElement(renderAngleX, renderAngleY, renderAngleZ, (elementEntry *)elementsPtr);
 
 	elementsPtr += 38;
 
-	elemEntryPtr = (elementEntry *) elementsPtr;
+	elemEntryPtr = (elementEntry *)elementsPtr;
 
 	if (numOfElements - 1 != 0) {
 		numOfPrimitives = numOfElements - 1;
-		currentMatrixTableEntry = (uint8 *) &matricesTable[9];
+		currentMatrixTableEntry = (uint8 *)&matricesTable[9];
 
 		do {
 			int16 boneType = elemEntryPtr->flag;
 
 			if (boneType == 0) {
-				processRotatedElement(elemEntryPtr->rotateX, elemEntryPtr->rotateY, elemEntryPtr->rotateZ, elemEntryPtr);  // rotation
+				processRotatedElement(elemEntryPtr->rotateX, elemEntryPtr->rotateY, elemEntryPtr->rotateZ, elemEntryPtr); // rotation
 			} else if (boneType == 1) {
 				processTranslatedElement(elemEntryPtr->rotateX, elemEntryPtr->rotateY, elemEntryPtr->rotateZ, elemEntryPtr); // translation
 			}
 
 			currentMatrixTableEntry += 36;
 			elementsPtr += 38;
-			elemEntryPtr = (elementEntry *) elementsPtr;
+			elemEntryPtr = (elementEntry *)elementsPtr;
 
 		} while (--numOfPrimitives);
 	}
 
 	numOfPrimitives = numOfPoints;
 
-	pointPtr = (pointTab *) computedPoints;
-	pointPtrDest = (pointTab *) flattenPoints;
+	pointPtr = (pointTab *)computedPoints;
+	pointPtrDest = (pointTab *)flattenPoints;
 
 	if (isUsingOrhoProjection != 0) { // use standard projection
 		do {
@@ -1769,17 +1752,17 @@ int32 renderAnimatedModel(uint8 *bodyPtr) {
 		} while (--numOfPrimitives);
 	}
 
-	shadePtr = (int32 *) elementsPtr;
+	shadePtr = (int32 *)elementsPtr;
 
-	numOfShades = *((uint16*)shadePtr);
+	numOfShades = *((uint16 *)shadePtr);
 
-	shadePtr = (int32 *)(((uint8 *) shadePtr) + 2);
+	shadePtr = (int32 *)(((uint8 *)shadePtr) + 2);
 
-	if (numOfShades) {   // process normal data
+	if (numOfShades) { // process normal data
 		int32 color;
 		int32 shade;
 
-		uint8 *currentShadeDestination = (uint8 *) shadeTable;
+		uint8 *currentShadeDestination = (uint8 *)shadeTable;
 		int32 *lightMatrix = matricesTable;
 		uint8 *pri2Ptr2;
 
@@ -1790,7 +1773,7 @@ int32 renderAnimatedModel(uint8 *bodyPtr) {
 		//assert(frontVideoBufferbis == frontVideoBuffer);
 
 		do { // for each element
-			numOfShades = *((uint16*)tmpElemPtr);
+			numOfShades = *((uint16 *)tmpElemPtr);
 
 			if (numOfShades) {
 				int32 numShades = numOfShades;
@@ -1814,13 +1797,13 @@ int32 renderAnimatedModel(uint8 *bodyPtr) {
 
 					int16 *colPtr;
 
-					colPtr = (int16 *) shadePtr;
+					colPtr = (int16 *)shadePtr;
 
-					col1 = *((int16*)colPtr++);
-					col2 = *((int16*)colPtr++);
-					col3 = *((int16*)colPtr++);
+					col1 = *((int16 *)colPtr++);
+					col2 = *((int16 *)colPtr++);
+					col3 = *((int16 *)colPtr++);
 
-					color =  shadeMatrix[0] * col1 + shadeMatrix[1] * col2 + shadeMatrix[2] * col3;
+					color = shadeMatrix[0] * col1 + shadeMatrix[1] * col2 + shadeMatrix[2] * col3;
 					color += shadeMatrix[3] * col1 + shadeMatrix[4] * col2 + shadeMatrix[5] * col3;
 					color += shadeMatrix[6] * col1 + shadeMatrix[7] * col2 + shadeMatrix[8] * col3;
 
@@ -1828,12 +1811,12 @@ int32 renderAnimatedModel(uint8 *bodyPtr) {
 
 					if (color > 0) {
 						color >>= 14;
-						tmpShadePtr = (uint8 *) shadePtr;
-						color /= *((uint16*)(tmpShadePtr + 6));
-						shade = (uint16) color;
+						tmpShadePtr = (uint8 *)shadePtr;
+						color /= *((uint16 *)(tmpShadePtr + 6));
+						shade = (uint16)color;
 					}
 
-					*((uint16*)currentShadeDestination) = shade;
+					*((uint16 *)currentShadeDestination) = shade;
 					currentShadeDestination += 2;
 					shadePtr += 2;
 
@@ -1842,11 +1825,11 @@ int32 renderAnimatedModel(uint8 *bodyPtr) {
 
 			tmpElemPtr = pri2Ptr2 = pri2Ptr2 + 38; // next element
 
-			/*tmpLightMatrix =*/ lightMatrix = lightMatrix + 9;
+			/*tmpLightMatrix =*/lightMatrix = lightMatrix + 9;
 		} while (--numOfPrimitives);
 	}
 
-	return renderModelElements((uint8 *) shadePtr);
+	return renderModelElements((uint8 *)shadePtr);
 }
 
 void prepareIsoModel(uint8 *bodyPtr) { // loadGfxSub
@@ -1865,14 +1848,13 @@ void prepareIsoModel(uint8 *bodyPtr) { // loadGfxSub
 
 	// This function should only be called ONCE, otherwise it corrupts the model data.
 	// The following code implements an unused flag to indicate that a model was already processed.
-	if (!(bodyHeader->bodyFlag & 0x80))	{
+	if (!(bodyHeader->bodyFlag & 0x80)) {
 		bodyHeader->bodyFlag |= 0x80;
-	}
-	else {
+	} else {
 		return;
 	}
 
-	if (!(bodyHeader->bodyFlag & 2)) {	// no animation applicable
+	if (!(bodyHeader->bodyFlag & 2)) { // no animation applicable
 		return;
 	}
 
@@ -1880,16 +1862,16 @@ void prepareIsoModel(uint8 *bodyPtr) { // loadGfxSub
 
 	bodyDataPtr = bodyPtr + offsetToData + 16;
 
-	numOfElement1 = *((int16*)bodyDataPtr);
+	numOfElement1 = *((int16 *)bodyDataPtr);
 	ptr2 = bodyDataPtr + 2 + numOfElement1 * 6;
 
-	numOfPoint = *((int16*)ptr2);
+	numOfPoint = *((int16 *)ptr2);
 
 	ptrToKeyData = ptr2 + 2;
 
 	for (i = 0; i < numOfPoint; i++) {
 		ptrToKeyData += 38;
-		*((int16*)(ptrToKeyData + 6)) = (*((int16*)(ptrToKeyData + 6)) * bp) / bx;
+		*((int16 *)(ptrToKeyData + 6)) = (*((int16 *)(ptrToKeyData + 6)) * bp) / bx;
 	}
 }
 
@@ -1925,10 +1907,10 @@ int renderIsoModel(int32 X, int32 Y, int32 Z, int32 angleX, int32 angleY, int32 
 	// restart at the beginning of the renderTable
 	renderTabEntryPtr = renderTab;
 
-	bodyHeader = *((uint16*)bodyPtr);
+	bodyHeader = *((uint16 *)bodyPtr);
 
 	// jump after the header
-	ptr = bodyPtr + 16 + *((uint16*)(bodyPtr + 14));
+	ptr = bodyPtr + 16 + *((uint16 *)(bodyPtr + 14));
 
 	if (bodyHeader & 2) { // if animated
 		// the mostly used renderer code
@@ -1947,26 +1929,26 @@ void copyActorInternAnim(uint8 *bodyPtrSrc, uint8 *bodyPtrDest) {
 	int32 i;
 
 	// check if both characters allow animation
-	if (!(*((int16*)bodyPtrSrc)&2))
+	if (!(*((int16 *)bodyPtrSrc) & 2))
 		return;
 
-	if (!(*((int16*)bodyPtrDest)&2))
+	if (!(*((int16 *)bodyPtrDest) & 2))
 		return;
 
 	// skip header
 	bodyPtrSrc += 16;
 	bodyPtrDest += 16;
 
-	*((uint32*)bodyPtrDest) = *((uint32*)bodyPtrSrc);
-	*((uint32*)(bodyPtrDest + 4)) = *((uint32*)(bodyPtrSrc + 4));
+	*((uint32 *)bodyPtrDest) = *((uint32 *)bodyPtrSrc);
+	*((uint32 *)(bodyPtrDest + 4)) = *((uint32 *)(bodyPtrSrc + 4));
 
-	bodyPtrSrc = bodyPtrSrc + *((int16*)(bodyPtrSrc - 2));
-	bodyPtrSrc = bodyPtrSrc + (*((int16*)bodyPtrSrc)) * 6 + 2;
-	cx = *((int16*)bodyPtrSrc);
+	bodyPtrSrc = bodyPtrSrc + *((int16 *)(bodyPtrSrc - 2));
+	bodyPtrSrc = bodyPtrSrc + (*((int16 *)bodyPtrSrc)) * 6 + 2;
+	cx = *((int16 *)bodyPtrSrc);
 
-	bodyPtrDest = bodyPtrDest + *((int16*)(bodyPtrDest - 2));
-	bodyPtrDest = bodyPtrDest + (*((int16*)bodyPtrDest)) * 6 + 2;
-	ax = *((int16*)bodyPtrDest);
+	bodyPtrDest = bodyPtrDest + *((int16 *)(bodyPtrDest - 2));
+	bodyPtrDest = bodyPtrDest + (*((int16 *)bodyPtrDest)) * 6 + 2;
+	ax = *((int16 *)bodyPtrDest);
 
 	if (cx > ax)
 		cx = ax;
@@ -1975,8 +1957,8 @@ void copyActorInternAnim(uint8 *bodyPtrSrc, uint8 *bodyPtrDest) {
 	bodyPtrDest += 10;
 
 	for (i = 0; i < cx; i++) {
-		*((uint32*)bodyPtrDest) = *((uint32*)bodyPtrSrc);
-		*((uint32*)(bodyPtrDest + 4)) = *((uint32*)(bodyPtrSrc + 4));
+		*((uint32 *)bodyPtrDest) = *((uint32 *)bodyPtrSrc);
+		*((uint32 *)(bodyPtrDest + 4)) = *((uint32 *)(bodyPtrSrc + 4));
 
 		bodyPtrDest += 30;
 		bodyPtrSrc += 30;
@@ -1985,19 +1967,19 @@ void copyActorInternAnim(uint8 *bodyPtrSrc, uint8 *bodyPtrDest) {
 
 void renderBehaviourModel(int32 boxLeft, int32 boxTop, int32 boxRight, int32 boxBottom, int32 Y, int32 angle, uint8 *entityPtr) {
 	int tmpBoxRight;
-    int x;
-    int y;
-    short int newAngle;
+	int x;
+	int y;
+	short int newAngle;
 
-    tmpBoxRight = boxRight;
+	tmpBoxRight = boxRight;
 
-    y = boxBottom + boxTop;
-    y >>= 1;
+	y = boxBottom + boxTop;
+	y >>= 1;
 
-    x = boxRight + boxLeft;
-    x >>= 1;
+	x = boxRight + boxLeft;
+	x >>= 1;
 
-    setOrthoProjection(x, y, 0);
+	setOrthoProjection(x, y, 0);
 	setClip(boxLeft, boxTop, tmpBoxRight, boxBottom);
 
 	if (angle == -1) {
@@ -2006,15 +1988,16 @@ void renderBehaviourModel(int32 boxLeft, int32 boxTop, int32 boxRight, int32 box
 			setActorAngleSafe(newAngle, newAngle - 256, 50, &moveMenu);
 		}
 		renderIsoModel(0, Y, 0, 0, newAngle, 0, entityPtr);
-	}
-	else {
+	} else {
 		renderIsoModel(0, Y, 0, 0, angle, 0, entityPtr);
 	}
 }
 
-void renderInventoryItem(int32 X, int32 Y, uint8* itemBodyPtr, int32 angle, int32 param) { // Draw3DObject
+void renderInventoryItem(int32 X, int32 Y, uint8 *itemBodyPtr, int32 angle, int32 param) { // Draw3DObject
 	setCameraPosition(X, Y, 128, 200, 200);
 	setCameraAngle(0, 0, 0, 60, 0, 0, param);
 
 	renderIsoModel(0, 0, 0, 0, angle, 0, itemBodyPtr);
 }
+
+} // namespace TwinE

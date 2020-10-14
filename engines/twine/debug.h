@@ -25,6 +25,8 @@
 
 #include "common/scummsys.h"
 
+namespace TwinE {
+
 typedef struct MouseStatusStruct {
 	int32 left;
 	int32 right;
@@ -32,7 +34,8 @@ typedef struct MouseStatusStruct {
 	int32 Y;
 } MouseStatusStruct;
 
-
 void processDebug(int16 pKey);
+
+} // namespace TwinE
 
 #endif

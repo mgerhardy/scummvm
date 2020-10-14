@@ -21,16 +21,18 @@
  */
 
 #include "debug.scene.h"
-#include "scene.h"
 #include "grid.h"
-#include "redraw.h"
 #include "interface.h"
+#include "redraw.h"
 #include "renderer.h"
+#include "scene.h"
+
+namespace TwinE {
 
 int32 showingZones = 0;
 int32 typeZones = 127; // all zones on as default
 
-void drawBoundingBoxProjectPoints(ScenePoint* pPoint3d, ScenePoint* pPoint3dProjected) {
+void drawBoundingBoxProjectPoints(ScenePoint *pPoint3d, ScenePoint *pPoint3dProjected) {
 	projectPositionOnScreen(pPoint3d->X, pPoint3d->Y, pPoint3d->Z);
 
 	pPoint3dProjected->X = projPosX;
@@ -157,14 +159,14 @@ void displayZones(int16 pKey) {
 
 				// project all points
 
-				drawBoundingBoxProjectPoints(&frontBottomLeftPoint,    &frontBottomLeftPoint2D);
-				drawBoundingBoxProjectPoints(&frontBottomRightPoint,   &frontBottomRightPoint2D);
-				drawBoundingBoxProjectPoints(&frontTopLeftPoint,       &frontTopLeftPoint2D);
-				drawBoundingBoxProjectPoints(&frontTopRightPoint,      &frontTopRightPoint2D);
-				drawBoundingBoxProjectPoints(&backBottomLeftPoint,     &backBottomLeftPoint2D);
-				drawBoundingBoxProjectPoints(&backBottomRightPoint,    &backBottomRightPoint2D);
-				drawBoundingBoxProjectPoints(&backTopLeftPoint,        &backTopLeftPoint2D);
-				drawBoundingBoxProjectPoints(&backTopRightPoint,       &backTopRightPoint2D);
+				drawBoundingBoxProjectPoints(&frontBottomLeftPoint, &frontBottomLeftPoint2D);
+				drawBoundingBoxProjectPoints(&frontBottomRightPoint, &frontBottomRightPoint2D);
+				drawBoundingBoxProjectPoints(&frontTopLeftPoint, &frontTopLeftPoint2D);
+				drawBoundingBoxProjectPoints(&frontTopRightPoint, &frontTopRightPoint2D);
+				drawBoundingBoxProjectPoints(&backBottomLeftPoint, &backBottomLeftPoint2D);
+				drawBoundingBoxProjectPoints(&backBottomRightPoint, &backBottomRightPoint2D);
+				drawBoundingBoxProjectPoints(&backTopLeftPoint, &backTopLeftPoint2D);
+				drawBoundingBoxProjectPoints(&backTopRightPoint, &backTopRightPoint2D);
 
 				// draw all lines
 
@@ -197,3 +199,5 @@ void displayZones(int16 pKey) {
 		}
 	}
 }
+
+} // namespace TwinE

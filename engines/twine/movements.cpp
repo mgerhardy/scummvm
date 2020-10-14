@@ -20,18 +20,20 @@
  *
  */
 
-#include <stdio.h>
 #include <math.h>
+#include <stdio.h>
 
-#include "movements.h"
 #include "actor.h"
-#include "renderer.h"
-#include "grid.h"
-#include "scene.h"
-#include "keyboard.h"
 #include "animations.h"
 #include "collision.h"
 #include "gamestate.h"
+#include "grid.h"
+#include "keyboard.h"
+#include "movements.h"
+#include "renderer.h"
+#include "scene.h"
+
+namespace TwinE {
 
 /** Get shadow position
 	@param X Shadow X coordinate
@@ -41,7 +43,7 @@ void getShadowPosition(int32 X, int32 Y, int32 Z) {
 	int32 tempX;
 	int32 tempY;
 	int32 tempZ;
-	uint8* ptr;
+	uint8 *ptr;
 
 	tempX = (X + 0x100) >> 9;
 	tempY = Y >> 8;
@@ -49,8 +51,8 @@ void getShadowPosition(int32 X, int32 Y, int32 Z) {
 
 	ptr = blockBuffer + tempY * 2 + tempX * 25 * 2 + (tempZ << 6) * 25 * 2;
 
-	while (tempY) { // search down until either ground is found or lower border of the cube is reached
-		if (*(int16*)ptr) // found the ground
+	while (tempY) {        // search down until either ground is found or lower border of the cube is reached
+		if (*(int16 *)ptr) // found the ground
 			break;
 
 		tempY--;
@@ -68,11 +70,11 @@ void getShadowPosition(int32 X, int32 Y, int32 Z) {
 	processActorZ = Z;
 
 	if (*ptr) { //*((uint8 *)(blockPtr))
-        uint8 *blockPtr;
-        uint8 brickShape;
+		uint8 *blockPtr;
+		uint8 brickShape;
 
-        blockPtr = getBlockLibrary(*(ptr) - 1) + 3 + *(ptr + 1) * 4;
-        brickShape = *((uint8 *)(blockPtr));
+		blockPtr = getBlockLibrary(*(ptr)-1) + 3 + *(ptr + 1) * 4;
+		brickShape = *((uint8 *)(blockPtr));
 
 		shadowCollisionType = brickShape;
 		reajustActorPosition(shadowCollisionType);
@@ -88,7 +90,7 @@ void getShadowPosition(int32 X, int32 Y, int32 Z) {
 	@param endAngle end angle
 	@param stepAngle number of steps
 	@param movePtr Pointer to process movements */
-void setActorAngleSafe(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveStruct * movePtr) {
+void setActorAngleSafe(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveStruct *movePtr) {
 	movePtr->from = startAngle & 0x3FF;
 	movePtr->to = endAngle & 0x3FF;
 	movePtr->numOfStep = stepAngle & 0x3FF;
@@ -97,7 +99,7 @@ void setActorAngleSafe(int16 startAngle, int16 endAngle, int16 stepAngle, ActorM
 
 /** Clear actors safe angle
 	@param actorPtr actor pointer */
-void clearRealAngle(ActorStruct * actorPtr) {
+void clearRealAngle(ActorStruct *actorPtr) {
 	setActorAngleSafe(actorPtr->angle, actorPtr->angle, 0, &actorPtr->move);
 }
 
@@ -106,7 +108,7 @@ void clearRealAngle(ActorStruct * actorPtr) {
 	@param endAngle end angle
 	@param stepAngle number of steps
 	@param movePtr Pointer to process movements */
-void setActorAngle(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveStruct * movePtr) {
+void setActorAngle(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveStruct *movePtr) {
 	movePtr->from = startAngle;
 	movePtr->to = endAngle;
 	movePtr->numOfStep = stepAngle;
@@ -120,7 +122,7 @@ void setActorAngle(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveS
 	@param z2 Actor 2 Z */
 #define PI 3.14159265
 int32 getAngleAndSetTargetActorDistance(int32 x1, int32 z1, int32 x2, int32 z2) {
-    /*
+	/*
 	//Pythagoras
     targetActorDistance = (int32)sqrt((int64)(((z2 - z1)*(z2 - z1) + (x2 - x1)*(x2 - x1))));
 
@@ -161,7 +163,7 @@ int32 getAngleAndSetTargetActorDistance(int32 x1, int32 z1, int32 x2, int32 z2) 
 	destAngle = (difZ << 14) / targetActorDistance;
 
 	startAngle = 0;
-//	stopAngle  = 0x100;
+	//	stopAngle  = 0x100;
 
 	while (shadeAngleTab3[startAngle] > destAngle) {
 		startAngle++;
@@ -188,14 +190,14 @@ int32 getAngleAndSetTargetActorDistance(int32 x1, int32 z1, int32 x2, int32 z2) 
 
 /** Get actor real angle
 	@param movePtr Pointer to process movements */
-int32 getRealAngle(ActorMoveStruct * movePtr) {
+int32 getRealAngle(ActorMoveStruct *movePtr) {
 	int32 timePassed;
 	int32 remainingAngle;
 
 	if (movePtr->numOfStep) {
 		timePassed = lbaTime - movePtr->timeOfChange;
 
-		if (timePassed >= movePtr->numOfStep) {	// rotation is finished
+		if (timePassed >= movePtr->numOfStep) { // rotation is finished
 			movePtr->numOfStep = 0;
 			return movePtr->to;
 		}
@@ -220,7 +222,7 @@ int32 getRealAngle(ActorMoveStruct * movePtr) {
 
 /** Get actor step
 	@param movePtr Pointer to process movements */
-int32 getRealValue(ActorMoveStruct * movePtr) {
+int32 getRealValue(ActorMoveStruct *movePtr) {
 	int32 tempStep;
 
 	if (!movePtr->numOfStep)
@@ -243,9 +245,9 @@ int32 getRealValue(ActorMoveStruct * movePtr) {
 	@param Z Actor current Z coordinate
 	@param angle Actor angle to rotate */
 void rotateActor(int32 X, int32 Z, int32 angle) {
-    double radians = 2*PI*angle/0x400;
-    destX = (int32)(X*cos(radians) + Z*sin(radians));
-    destZ = (int32)(-X*sin(radians) + Z*cos(radians));
+	double radians = 2 * PI * angle / 0x400;
+	destX = (int32)(X * cos(radians) + Z * sin(radians));
+	destZ = (int32)(-X * sin(radians) + Z * cos(radians));
 }
 
 /** Get distance value in 2D
@@ -254,7 +256,7 @@ void rotateActor(int32 X, int32 Z, int32 angle) {
 	@param x2 Actor 2 X coordinate
 	@param z2 Actor 2 Z coordinate */
 int32 getDistance2D(int32 x1, int32 z1, int32 x2, int32 z2) {
-	return (int32)sqrt((int64)((x2-x1)*(x2-x1) + (z2-z1)*(z2-z1)));
+	return (int32)sqrt((int64)((x2 - x1) * (x2 - x1) + (z2 - z1) * (z2 - z1)));
 }
 
 /** Get distance value in 3D
@@ -265,7 +267,7 @@ int32 getDistance2D(int32 x1, int32 z1, int32 x2, int32 z2) {
 	@param y2 Actor 2 Y coordinate
 	@param z2 Actor 2 Z coordinate */
 int32 getDistance3D(int32 x1, int32 y1, int32 z1, int32 x2, int32 y2, int32 z2) {
-	return (int32)sqrt((int64)((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1)));
+	return (int32)sqrt((int64)((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1)));
 }
 
 /** Move actor around the scene
@@ -280,10 +282,10 @@ void moveActor(int32 angleFrom, int32 angleTo, int32 speed, ActorMoveStruct *mov
 	int16 to;
 
 	from = angleFrom & 0x3FF;
-	to   = angleTo & 0x3FF;
+	to = angleTo & 0x3FF;
 
 	movePtr->from = from;
-	movePtr->to   = to;
+	movePtr->to = to;
 
 	numOfStep = (from - to) << 6;
 
@@ -425,7 +427,7 @@ void processActorMovements(int32 actorIdx) {
 
 			if (!loopPressedKey || heroAction) {
 
-				if (key & 3) {  // if continue walking
+				if (key & 3) {     // if continue walking
 					heroMoved = 0; // don't break animation
 				}
 
@@ -484,7 +486,7 @@ void processActorMovements(int32 actorIdx) {
 
 			moveActor(actor->angle, actor->angle + tempAngle, actor->speed, &actor->move);
 
-			heroPressedKey  = key;
+			heroPressedKey = key;
 			heroPressedKey2 = loopPressedKey;
 
 			break;
@@ -495,14 +497,13 @@ void processActorMovements(int32 actorIdx) {
 			} else {
 				moveActor(actor->angle, newAngle, actor->speed, &actor->move);
 			}
-		}
-			break;
+		} break;
 		case kTrack:
 			if (actor->positionInMoveScript == -1) {
 				actor->positionInMoveScript = 0;
 			}
 			break;
-		case kFollow2:		// unused
+		case kFollow2:     // unused
 		case kTrackAttack: // unused
 			break;
 		case kSameXZ:
@@ -512,24 +513,25 @@ void processActorMovements(int32 actorIdx) {
 		case kRandom: {
 			if (!actor->dynamicFlags.bIsRotationByAnim) {
 				if (actor->brickShape & 0x80) {
-					moveActor(actor->angle, (((rand() & 0x100) + (actor->angle - 0x100)) & 0x3FF ), actor->speed, &actor->move);
+					moveActor(actor->angle, (((rand() & 0x100) + (actor->angle - 0x100)) & 0x3FF), actor->speed, &actor->move);
 					actor->info0 = Rnd(300) + lbaTime + 300;
 					initAnim(0, 0, 255, actorIdx);
 				}
 
 				if (!actor->move.numOfStep) {
 					initAnim(1, 0, 255, actorIdx);
-					if(lbaTime > actor->info0) {
+					if (lbaTime > actor->info0) {
 						moveActor(actor->angle, (((rand() & 0x100) + (actor->angle - 0x100)) & 0x3FF), actor->speed, &actor->move);
-                        actor->info0 = Rnd(300) + lbaTime + 300;
-                    }
+						actor->info0 = Rnd(300) + lbaTime + 300;
+					}
 				}
 			}
-		}
-			break;
+		} break;
 		default:
 			printf("Unknown Control mode %d\n", actor->controlMode);
 			break;
 		}
 	}
 }
+
+} // namespace TwinE

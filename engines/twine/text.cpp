@@ -20,20 +20,21 @@
  *
  */
 
-
 #include <math.h>
 
-#include "text.h"
-#include "twine.h"
 #include "hqrdepack.h"
-#include "resources.h"
-#include "sdlengine.h"
-#include "menu.h"
 #include "interface.h"
 #include "keyboard.h"
-#include "screens.h"
+#include "menu.h"
 #include "renderer.h"
+#include "resources.h"
+#include "screens.h"
+#include "sdlengine.h"
 #include "sound.h"
+#include "text.h"
+#include "twine.h"
+
+namespace TwinE {
 
 // RECHECK THIS LATER
 int32 currentBankIdx = -1; // textVar1
@@ -41,7 +42,7 @@ uint8 textVar2[256];
 uint8 textVar3;
 
 /** Dialogue text pointer */
-uint8 *dialTextPtr;  // bufText
+uint8 *dialTextPtr; // bufText
 /** Dialogue entry order pointer */
 uint8 *dialOrderPtr; // bufOrder
 /** Number of dialogues text entries */
@@ -58,32 +59,29 @@ int16 spaceChar = 0x20;
 /** Common movie directory */
 #define VOX_DIR "vox/"
 
-int8 * LanguagePrefixTypes[] = {
-	"EN_",
-	"FR_",
-	"DE_",
-	"SP_",
-	"IT_"
-};
+int8 *LanguagePrefixTypes[] = {
+    "EN_",
+    "FR_",
+    "DE_",
+    "SP_",
+    "IT_"};
 
-int8 * LanguageSufixTypes[] = {
-	"sys",
-	"cre",
-	"gam",
-	"000",
-	"001",
-	"002",
-	"003",
-	"004",
-	"005",
-	"006",
-	"007",
-	"008",
-	"009",
-	"010",
-	"011"
-};
-
+int8 *LanguageSufixTypes[] = {
+    "sys",
+    "cre",
+    "gam",
+    "000",
+    "001",
+    "002",
+    "003",
+    "004",
+    "005",
+    "006",
+    "007",
+    "008",
+    "009",
+    "010",
+    "011"};
 
 void initVoxBank(int32 bankIdx) {
 	// get the correct vox hqr file
@@ -96,13 +94,12 @@ void initVoxBank(int32 bankIdx) {
 	// TODO check the rest to reverse
 }
 
-
 int32 initVoxToPlay(int32 index) { // setVoxFileAtDigit
 	int32 i = 0;
 	int32 currIdx = 0;
 	int32 orderIdx = 0;
 
-	int16 *localOrderBuf = (int16 *) dialOrderPtr;
+	int16 *localOrderBuf = (int16 *)dialOrderPtr;
 
 	voxHiddenIndex = 0;
 	hasHiddenVox = 0;
@@ -151,8 +148,6 @@ void stopVox(int32 index) {
 	stopSample(index);
 }
 
-
-
 /** Initialize dialogue
 	@param bankIdx Text bank index*/
 void initTextBank(int32 bankIdx) { // InitDial
@@ -168,7 +163,7 @@ void initTextBank(int32 bankIdx) { // InitDial
 	textVar2[0] = textVar3;
 
 	// get index according with language
-	langIdx = (cfgfile.LanguageId * 14) * 2  + bankIdx * 2;
+	langIdx = (cfgfile.LanguageId * 14) * 2 + bankIdx * 2;
 
 	hqrSize = hqrGetallocEntry(&dialOrderPtr, HQR_TEXT_FILE, langIdx);
 
@@ -246,7 +241,7 @@ void drawCharacter(int32 x, int32 y, uint8 character) { // drawCharacter
 				number = *(data++);
 				for (i = 0; i < number; i++) {
 					if (tempX >= SCREEN_TEXTLIMIT_LEFT && tempX < SCREEN_TEXTLIMIT_RIGHT && tempY >= SCREEN_TEXTLIMIT_TOP && tempY < SCREEN_TEXTLIMIT_BOTTOM)
-						frontVideoBuffer[SCREEN_WIDTH*tempY + tempX] = usedColor;
+						frontVideoBuffer[SCREEN_WIDTH * tempY + tempX] = usedColor;
 
 					screen++;
 					tempX++;
@@ -266,7 +261,6 @@ void drawCharacter(int32 x, int32 y, uint8 character) { // drawCharacter
 			}
 		} while (1);
 	} while (1);
-
 }
 
 /** Draw character with shadow
@@ -277,8 +271,7 @@ void drawCharacter(int32 x, int32 y, uint8 character) { // drawCharacter
 void drawCharacterShadow(int32 x, int32 y, uint8 character, int32 color) { // drawDoubleLetter
 	int32 left, top, right, bottom;
 
-	if (character != 0x20)
-	{
+	if (character != 0x20) {
 		// shadow color
 		setFontColor(0);
 		drawCharacter(x + 2, y + 4, character);
@@ -304,7 +297,7 @@ void drawCharacterShadow(int32 x, int32 y, uint8 character, int32 color) { // dr
 void drawText(int32 x, int32 y, int8 *dialogue) { // Font
 	uint8 currChar;
 
-	if (fontPtr == 0)   // if the font is not defined
+	if (fontPtr == 0) // if the font is not defined
 		return;
 
 	do {
@@ -313,11 +306,11 @@ void drawText(int32 x, int32 y, int8 *dialogue) { // Font
 		if (currChar == 0) // if the char is 0x0, -> end of string
 			break;
 
-		if (currChar == 0x20)  // if it's a space char
+		if (currChar == 0x20) // if it's a space char
 			x += dialCharSpace;
 		else {
-			dialTextSize = *(fontPtr + (*((int16 *)(fontPtr + currChar * 4))));  // get the length of the character
-			drawCharacter(x, y, currChar); // draw the character on screen
+			dialTextSize = *(fontPtr + (*((int16 *)(fontPtr + currChar * 4)))); // get the length of the character
+			drawCharacter(x, y, currChar);                                      // draw the character on screen
 			// add the length of the space between 2 characters
 			x += dialSpaceBetween;
 			// add the length of the current character
@@ -328,7 +321,7 @@ void drawText(int32 x, int32 y, int8 *dialogue) { // Font
 
 /** Gets dialogue text width size
 	@param dialogue ascii text to display */
-int32 getTextSize(int8 *dialogue) {  // SizeFont
+int32 getTextSize(int8 *dialogue) { // SizeFont
 	uint8 currChar;
 	dialTextSize = 0;
 
@@ -350,7 +343,7 @@ int32 getTextSize(int8 *dialogue) {  // SizeFont
 }
 
 void initDialogueBox() { // InitDialWindow
-	blitBox(dialTextBoxLeft, dialTextBoxTop, dialTextBoxRight, dialTextBoxBottom, (int8*)workVideoBuffer, dialTextBoxLeft, dialTextBoxTop, (int8*)frontVideoBuffer);
+	blitBox(dialTextBoxLeft, dialTextBoxTop, dialTextBoxRight, dialTextBoxBottom, (int8 *)workVideoBuffer, dialTextBoxLeft, dialTextBoxTop, (int8 *)frontVideoBuffer);
 
 	if (newGameVar4 != 0) {
 		drawBox(dialTextBoxLeft, dialTextBoxTop, dialTextBoxRight, dialTextBoxBottom);
@@ -359,11 +352,11 @@ void initDialogueBox() { // InitDialWindow
 
 	copyBlockPhys(dialTextBoxLeft, dialTextBoxTop, dialTextBoxRight, dialTextBoxBottom);
 	printText8Var3 = 0;
-	blitBox(dialTextBoxLeft, dialTextBoxTop, dialTextBoxRight, dialTextBoxBottom, (int8*)frontVideoBuffer, dialTextBoxLeft, dialTextBoxTop, (int8*)workVideoBuffer);
+	blitBox(dialTextBoxLeft, dialTextBoxTop, dialTextBoxRight, dialTextBoxBottom, (int8 *)frontVideoBuffer, dialTextBoxLeft, dialTextBoxTop, (int8 *)workVideoBuffer);
 }
 
 void initInventoryDialogueBox() { // SecondInitDialWindow
-	blitBox(dialTextBoxLeft, dialTextBoxTop, dialTextBoxRight, dialTextBoxBottom, (int8*)workVideoBuffer, dialTextBoxLeft, dialTextBoxTop, (int8*)frontVideoBuffer);
+	blitBox(dialTextBoxLeft, dialTextBoxTop, dialTextBoxRight, dialTextBoxBottom, (int8 *)workVideoBuffer, dialTextBoxLeft, dialTextBoxTop, (int8 *)frontVideoBuffer);
 	copyBlockPhys(dialTextBoxLeft, dialTextBoxTop, dialTextBoxRight, dialTextBoxBottom);
 	printText8Var3 = 0;
 }
@@ -402,7 +395,7 @@ void initProgressiveTextBuffer() {
 	buf2[0] = 0;
 
 	while (i < dialTextBufferSize) {
-		strcat((char*)buf2, " ");
+		strcat((char *)buf2, " ");
 		i++;
 	};
 
@@ -420,8 +413,8 @@ void printText8Sub4(int16 a, int16 b, int16 c) {
 	if (printText8Var3 < 32) {
 		temp = printText8Var3 * 3;
 		pt8s4[temp] = c;
-		pt8s4[temp+1] = a;
-		pt8s4[temp+2] = b;
+		pt8s4[temp + 1] = a;
+		pt8s4[temp + 2] = b;
 
 		printText8Var3++;
 	} else {
@@ -429,8 +422,8 @@ void printText8Sub4(int16 a, int16 b, int16 c) {
 			var1 = (counter2 + 1) * 3;
 			var2 = counter2 * 3;
 			pt8s4[var2] = pt8s4[var1];
-			pt8s4[var2+1] = pt8s4[var1+1];
-			pt8s4[var2+2] = pt8s4[var1+2];
+			pt8s4[var2 + 1] = pt8s4[var1 + 1];
+			pt8s4[var2 + 2] = pt8s4[var1 + 2];
 			counter2++;
 		};
 		pt8s4[93] = c;
@@ -450,7 +443,7 @@ void getWordSize(uint8 *arg1, uint8 *arg2) {
 
 	wordSizeChar = temp;
 	*arg2 = 0;
-	wordSizePixel = getTextSize((int8*)arg2Save);
+	wordSizePixel = getTextSize((int8 *)arg2Save);
 }
 
 void processTextLine() {
@@ -466,8 +459,7 @@ void processTextLine() {
 	printText8PrepareBufferVar2 = 0;
 	buf2[0] = 0;
 
-	for (;;)
-	{
+	for (;;) {
 		if (*buffer == 0x20) {
 			buffer++;
 			continue;
@@ -496,8 +488,8 @@ void processTextLine() {
 					} else {
 						buffer += wordSizeChar;
 						printText8Var8 = buffer;
-						strcat((char*)buf2, (char*)buf1);
-						strcat((char*)buf2, " ");  // not 100% accurate
+						strcat((char *)buf2, (char *)buf1);
+						strcat((char *)buf2, " "); // not 100% accurate
 						printText8PrepareBufferVar2++;
 
 						addLineBreakX += wordSizePixel + dialCharSpace;
@@ -517,13 +509,12 @@ void processTextLine() {
 
 	if (*printText8Var8 != 0 && var4 == 1) {
 		dialCharSpace += (dialTextBoxParam2 - addLineBreakX) / printText8PrepareBufferVar2;
-		printText10Var1 = dialTextBoxParam2 - addLineBreakX - dialTextBoxParam2 - addLineBreakX;  // stupid... recheck
+		printText10Var1 = dialTextBoxParam2 - addLineBreakX - dialTextBoxParam2 - addLineBreakX; // stupid... recheck
 	}
 
 	printText8Var8 = buffer;
 
 	printText8Ptr2 = buf2;
-
 }
 
 // draw next page arrow polygon
@@ -541,8 +532,7 @@ void printText10Sub() { // printText10Sub()
 	polyRenderType = 0; // POLYGONTYPE_FLAT
 	numOfVertex = 3;
 
-	if (computePolygons())
-	{
+	if (computePolygons()) {
 		renderPolygons(polyRenderType, dialTextStopColor);
 	}
 
@@ -576,19 +566,18 @@ void printText10Sub2() { // printText10Sub2()
 			counter2 = dialTextStopColor;
 		ptr -= 3;
 	};
-
 }
 
-void TEXT_GetLetterSize(uint8 character, int32 *pLetterWidth, int32 *pLetterHeight, uint8 * pFont) { // TEXT_GetLetterSize
+void TEXT_GetLetterSize(uint8 character, int32 *pLetterWidth, int32 *pLetterHeight, uint8 *pFont) { // TEXT_GetLetterSize
 	uint8 *temp;
 
-	temp = (uint8*) (pFont + *((int16 *)(pFont + character * 4)));
+	temp = (uint8 *)(pFont + *((int16 *)(pFont + character * 4)));
 	*pLetterWidth = *(temp);
 	*pLetterHeight = *(temp + 1);
 }
 
 // TODO: refactor this code
-int printText10() { // printText10()
+int printText10() {              // printText10()
 	int32 charWidth, charHeight; // a, b
 
 	if (printTextVar13 == 0) {
@@ -604,7 +593,7 @@ int printText10() { // printText10()
 			return 0;
 		}
 		if (printText8Var6 != 0) {
-			blitBox(dialTextBoxLeft, dialTextBoxTop, dialTextBoxRight, dialTextBoxBottom, (int8*)workVideoBuffer, dialTextBoxLeft, dialTextBoxTop, (int8*)frontVideoBuffer);
+			blitBox(dialTextBoxLeft, dialTextBoxTop, dialTextBoxRight, dialTextBoxBottom, (int8 *)workVideoBuffer, dialTextBoxLeft, dialTextBoxTop, (int8 *)frontVideoBuffer);
 			copyBlockPhys(dialTextBoxLeft, dialTextBoxTop, dialTextBoxRight, dialTextBoxBottom);
 			printText8Var3 = 0;
 			printText8Var6 = 0;
@@ -626,7 +615,7 @@ int printText10() { // printText10()
 
 	printText8Sub4(TEXT_CurrentLetterX, TEXT_CurrentLetterY, *printText8Ptr2);
 	printText10Sub2();
-	TEXT_GetLetterSize(*printText8Ptr2, &charWidth, &charHeight, (uint8*)fontPtr);
+	TEXT_GetLetterSize(*printText8Ptr2, &charWidth, &charHeight, (uint8 *)fontPtr);
 
 	if (*(printText8Ptr2) != 0x20) {
 		TEXT_CurrentLetterX += charWidth + 2;
@@ -648,8 +637,8 @@ int printText10() { // printText10()
 	TEXT_CurrentLetterX = dialTextBoxLeft + 8;
 
 	if (printText8Var6 == 1 && printText8Var5 == 0) {
-	  printText10Sub();
-	  return 2;
+		printText10Sub();
+		return 2;
 	}
 
 	printText8Var1++;
@@ -699,7 +688,7 @@ void drawTextFullscreen(int32 index) { // printTextFullScreen
 					}
 					playVox(currDialTextEntry);
 					sdldelay(1);
-				} while(1);
+				} while (1);
 
 				do {
 					readKeys();
@@ -708,7 +697,7 @@ void drawTextFullscreen(int32 index) { // printTextFullScreen
 					}
 					playVox(currDialTextEntry);
 					sdldelay(1);
-				} while(1);
+				} while (1);
 			}
 
 			if (skipIntro == 1) {
@@ -720,7 +709,7 @@ void drawTextFullscreen(int32 index) { // printTextFullScreen
 			}
 
 			sdldelay(1);
-		} while(!skipText);
+		} while (!skipText);
 
 		hasHiddenVox = 0;
 
@@ -745,7 +734,7 @@ void drawTextFullscreen(int32 index) { // printTextFullScreen
 		do {
 			readKeys();
 			sdldelay(1);
-		} while(skipIntro || skippedKey || pressedKey);
+		} while (skipIntro || skippedKey || pressedKey);
 
 		// RECHECK this later
 		// wait key to display next text
@@ -760,9 +749,10 @@ void drawTextFullscreen(int32 index) { // printTextFullScreen
 				return;
 			}
 			sdldelay(1);
-		} while(!pressedKey);
+		} while (!pressedKey);
 	} else { // RECHECK THIS
-		while (playVox(currDialTextEntry) && skipIntro != 1 );
+		while (playVox(currDialTextEntry) && skipIntro != 1)
+			;
 		hasHiddenVox = 0;
 		voxHiddenIndex = 0;
 	}
@@ -823,8 +813,8 @@ int32 getText(int32 index) { // findString
 	int32 ptrCurrentEntry;
 	int32 ptrNextEntry;
 
-	int16 *localTextBuf = (int16 *) dialTextPtr;
-	int16 *localOrderBuf = (int16 *) dialOrderPtr;
+	int16 *localTextBuf = (int16 *)dialTextPtr;
+	int16 *localOrderBuf = (int16 *)dialOrderPtr;
 
 	numEntries = numDialTextEntries;
 
@@ -881,7 +871,7 @@ void getMenuText(int32 index, int8 *text) { // GetMultiText
 	if ((currDialTextSize - 1) > 0xFF)
 		currDialTextSize = 0xFF;
 
-	copyText((int8 *) currDialTextPtr, text, currDialTextSize);
+	copyText((int8 *)currDialTextPtr, text, currDialTextSize);
 	currDialTextSize++;
 	copyText(text, currMenuTextBuffer, currDialTextSize);
 
@@ -928,28 +918,31 @@ void drawAskQuestion(int32 index) { // MyDial
 				readKeys();
 				playVox(currDialTextEntry);
 				sdldelay(1);
-			} while(skipIntro || skippedKey || pressedKey);
+			} while (skipIntro || skippedKey || pressedKey);
 
 			do {
 				readKeys();
 				playVox(currDialTextEntry);
 				sdldelay(1);
-			} while(!skipIntro && !skippedKey && !pressedKey);
+			} while (!skipIntro && !skippedKey && !pressedKey);
 		}
 
 		sdldelay(1);
-	} while(textStatus);
+	} while (textStatus);
 
 	if (cfgfile.LanguageCDId) {
-		while(playVoxSimple(currDialTextEntry));
+		while (playVoxSimple(currDialTextEntry))
+			;
 
 		hasHiddenVox = 0;
 		voxHiddenIndex = 0;
 
-		if(isSamplePlaying(currDialTextEntry)) {
+		if (isSamplePlaying(currDialTextEntry)) {
 			stopVox(currDialTextEntry);
 		}
 	}
 
 	printTextVar13 = 0;
 }
+
+} // namespace TwinE

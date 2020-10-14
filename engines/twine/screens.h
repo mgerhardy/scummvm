@@ -26,6 +26,8 @@
 #include "common/scummsys.h"
 #include "twine.h"
 
+namespace TwinE {
+
 /** In-game palette (should not be used, except in special case. otherwise use other images functions instead) */
 uint8 palette[NUMOFCOLORS * 3];
 
@@ -48,7 +50,7 @@ int16 lockPalette;
 int16 useAlternatePalette;
 
 /** main game palette */
-uint8* mainPalette;
+uint8 *mainPalette;
 
 /** SDL converted in-game palette */
 uint8 mainPaletteRGBA[NUMOFCOLORS * 4];
@@ -76,15 +78,15 @@ void loadImageDelay(int32 index, int32 time);
 /** Converts in-game palette to SDL palette
 	@param palSource palette source with RGB
 	@param palDest palette destination with RGBA */
-void convertPalToRGBA(uint8 * palSource, uint8 * palDest);
+void convertPalToRGBA(uint8 *palSource, uint8 *palDest);
 
 /** Fade image in
 	@param palette current palette to fade in */
-void fadeIn(uint8 * palette);
+void fadeIn(uint8 *palette);
 
 /** Fade image out
 	@param palette current palette to fade out */
-void fadeOut(uint8 * palette);
+void fadeOut(uint8 *palette);
 
 /** Calculate a new color component according with an intensity
 	@param modifier color compenent
@@ -100,12 +102,12 @@ int32 crossDot(int32 modifier, int32 color, int32 param, int32 intensity);
 	@param B blue component of color
 	@param palette palette to adjust
 	@param intensity intensity value to adjust */
-void adjustPalette(uint8 R, uint8 G, uint8 B, uint8 * palette, int32 intensity);
+void adjustPalette(uint8 R, uint8 G, uint8 B, uint8 *palette, int32 intensity);
 
 /** Adjust between two palettes
 	@param pal1 palette from adjust
 	@param pal2 palette to adjust */
-void adjustCrossPalette(uint8 * pal1, uint8 * pal2);
+void adjustCrossPalette(uint8 *pal1, uint8 *pal2);
 
 /** Fade image to black
 	@param palette current palette to fade */
@@ -132,12 +134,14 @@ void fadeRedPal(uint8 *palette);
 /** Copy a determinate screen buffer to another
 	@param source screen buffer
 	@param destination screen buffer */
-void copyScreen(uint8 * source, uint8 * destination);
+void copyScreen(uint8 *source, uint8 *destination);
 
 /** Clear front buffer screen */
 void clearScreen();
 
 /** Init palettes */
 void initPalettes();
+
+} // namespace TwinE
 
 #endif

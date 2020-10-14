@@ -24,13 +24,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "screens.h"
-#include "resources.h"
-#include "twine.h"
-#include "sdlengine.h"
-#include "music.h"
 #include "hqrdepack.h"
+#include "music.h"
+#include "resources.h"
+#include "screens.h"
+#include "sdlengine.h"
+#include "twine.h"
 
+namespace TwinE {
 
 /** Load and display Adeline Logo */
 void adelineLogo() {
@@ -81,14 +82,14 @@ void loadImage(int32 index, int16 fade_in) {
 	@param time number of seconds to delay */
 void loadImageDelay(int32 index, int32 time) {
 	loadImage(index, 1);
-	delaySkip(1000*time);
+	delaySkip(1000 * time);
 	fadeOut(paletteRGBACustom);
 }
 
 /** Converts in-game palette to SDL palette
 	@param palSource palette source with RGB
 	@param palDest palette destination with RGBA */
-void convertPalToRGBA(uint8 * palSource, uint8 * palDest) {
+void convertPalToRGBA(uint8 *palSource, uint8 *palDest) {
 	int i;
 
 	for (i = 0; i < NUMOFCOLORS; i++) {
@@ -102,7 +103,7 @@ void convertPalToRGBA(uint8 * palSource, uint8 * palDest) {
 
 /** Fade image in
 	@param palette current palette to fade in */
-void fadeIn(uint8 * palette) {
+void fadeIn(uint8 *palette) {
 	if (cfgfile.CrossFade)
 		crossFade(frontVideoBuffer, palette);
 	else
@@ -113,7 +114,7 @@ void fadeIn(uint8 * palette) {
 
 /** Fade image out
 	@param palette current palette to fade out */
-void fadeOut(uint8 * palette) {
+void fadeOut(uint8 *palette) {
 	/*if(cfgfile.CrossFade)
 		crossFade(frontVideoBuffer, palette);
 	else
@@ -140,8 +141,8 @@ int32 crossDot(int32 modifier, int32 color, int32 param, int32 intensity) {
 	@param B blue component of color
 	@param palette palette to adjust
 	@param intensity intensity value to adjust */
-void adjustPalette(uint8 R, uint8 G, uint8 B, uint8 * palette, int32 intensity) {
-	uint8 localPalette[NUMOFCOLORS*4];
+void adjustPalette(uint8 R, uint8 G, uint8 B, uint8 *palette, int32 intensity) {
+	uint8 localPalette[NUMOFCOLORS * 4];
 	uint8 *newR;
 	uint8 *newG;
 	uint8 *newB;
@@ -178,8 +179,8 @@ void adjustPalette(uint8 R, uint8 G, uint8 B, uint8 * palette, int32 intensity) 
 /** Adjust between two palettes
 	@param pal1 palette from adjust
 	@param pal2 palette to adjust */
-void adjustCrossPalette(uint8 * pal1, uint8 * pal2) {
-	uint8 localPalette[NUMOFCOLORS*4];
+void adjustCrossPalette(uint8 *pal1, uint8 *pal2) {
+	uint8 localPalette[NUMOFCOLORS * 4];
 
 	uint8 *newR;
 	uint8 *newG;
@@ -190,8 +191,7 @@ void adjustCrossPalette(uint8 * pal1, uint8 * pal2) {
 	int32 counter = 0;
 	int32 intensity = 0;
 
-	do
-	{
+	do {
 		counter = 0;
 
 		newR = &localPalette[counter];
@@ -217,7 +217,7 @@ void adjustCrossPalette(uint8 * pal1, uint8 * pal2) {
 		fpsCycles(50);
 
 		intensity++;
-	} while(intensity <= 100);
+	} while (intensity <= 100);
 }
 
 /** Fade image to black
@@ -227,7 +227,7 @@ void fadeToBlack(uint8 *palette) {
 
 	if (palReseted == 0) {
 		for (i = 100; i >= 0; i -= 3) {
-			adjustPalette(0, 0, 0, (uint8 *) palette, i);
+			adjustPalette(0, 0, 0, (uint8 *)palette, i);
 			fpsCycles(50);
 		}
 	}
@@ -241,18 +241,18 @@ void fadeToPal(uint8 *palette) {
 	int32 i = 100;
 
 	for (i = 0; i <= 100; i += 3) {
-		adjustPalette(0, 0, 0, (uint8 *) palette, i);
+		adjustPalette(0, 0, 0, (uint8 *)palette, i);
 		fpsCycles(50);
 	}
 
-	setPalette((uint8*)palette);
+	setPalette((uint8 *)palette);
 
 	palReseted = 0;
 }
 
 /** Fade black palette to with palette */
 void blackToWhite() {
-	uint8 palette[NUMOFCOLORS*4];
+	uint8 palette[NUMOFCOLORS * 4];
 	int32 i;
 
 	i = 256;
@@ -265,8 +265,8 @@ void blackToWhite() {
 
 /** Resets both in-game and sdl palettes */
 void setBackPal() {
-	memset(palette, 0, NUMOFCOLORS*3);
-	memset(paletteRGBA, 0, NUMOFCOLORS*4);
+	memset(palette, 0, NUMOFCOLORS * 3);
+	memset(paletteRGBA, 0, NUMOFCOLORS * 4);
 
 	setPalette(paletteRGBA);
 
@@ -279,11 +279,10 @@ void fadePalRed(uint8 *palette) {
 	int32 i = 100;
 
 	for (i = 100; i >= 0; i -= 2) {
-		adjustPalette(0xFF, 0, 0, (uint8 *) palette, i);
+		adjustPalette(0xFF, 0, 0, (uint8 *)palette, i);
 		fpsCycles(50);
 	}
 }
-
 
 /** Fade red to palette
 	@param palette current palette to fade */
@@ -291,7 +290,7 @@ void fadeRedPal(uint8 *palette) {
 	int32 i = 0;
 
 	for (i = 0; i <= 100; i += 2) {
-		adjustPalette(0xFF, 0, 0, (uint8 *) palette, i);
+		adjustPalette(0xFF, 0, 0, (uint8 *)palette, i);
 		fpsCycles(50);
 	}
 }
@@ -299,11 +298,11 @@ void fadeRedPal(uint8 *palette) {
 /** Copy a determinate screen buffer to another
 	@param source screen buffer
 	@param destination screen buffer */
-void copyScreen(uint8 * source, uint8 * destination) {
+void copyScreen(uint8 *source, uint8 *destination) {
 	int32 w, h;
 
 	if (SCALE == 1)
-		memcpy(destination, source, SCREEN_WIDTH*SCREEN_HEIGHT);
+		memcpy(destination, source, SCREEN_WIDTH * SCREEN_HEIGHT);
 	else if (SCALE == 2)
 		for (h = 0; h < SCREEN_HEIGHT / SCALE; h++) {
 			for (w = 0; w < SCREEN_WIDTH / SCALE; w++) {
@@ -313,10 +312,11 @@ void copyScreen(uint8 * source, uint8 * destination) {
 			memcpy(destination, destination - SCREEN_WIDTH, SCREEN_WIDTH);
 			destination += SCREEN_WIDTH;
 		}
-
 }
 
 /** Clear front buffer screen */
 void clearScreen() {
-	memset(frontVideoBuffer, 0, SCREEN_WIDTH*SCREEN_HEIGHT);
+	memset(frontVideoBuffer, 0, SCREEN_WIDTH * SCREEN_HEIGHT);
 }
+
+} // namespace TwinE

@@ -24,32 +24,34 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "filereader.h"
 #include "flamovies.h"
+#include "keyboard.h"
+#include "music.h"
 #include "screens.h"
 #include "sdlengine.h"
-#include "twine.h"
 #include "sound.h"
-#include "music.h"
-#include "filereader.h"
-#include "keyboard.h"
+#include "twine.h"
+
+namespace TwinE {
 
 /** Config movie types */
-#define CONF_MOVIE_NONE    0
-#define CONF_MOVIE_FLA     1
+#define CONF_MOVIE_NONE 0
+#define CONF_MOVIE_FLA 1
 #define CONF_MOVIE_FLAWIDE 2
-#define CONF_MOVIE_FLAPCX  3
+#define CONF_MOVIE_FLAPCX 3
 
 /** FLA movie extension */
 #define FLA_EXT ".fla"
 
 /** FLA Frame Opcode types */
 enum FlaFrameOpcode {
-	kLoadPalette	= 0,
-	kFade			= 1,
-	kPlaySample		= 2,
-	kStopSample		= 4,
-	kDeltaFrame		= 5,
-	kKeyFrame		= 7
+	kLoadPalette = 0,
+	kFade = 1,
+	kPlaySample = 2,
+	kStopSample = 4,
+	kDeltaFrame = 5,
+	kKeyFrame = 7
 };
 
 /** Auxiliar FLA fade out variable */
@@ -62,7 +64,7 @@ int32 flaSampleTable[100];
 /** Number of samples in FLA movie */
 int32 samplesInFla;
 /** Auxiliar work video buffer */
-uint8* workVideoBufferCopy;
+uint8 *workVideoBufferCopy;
 /** FLA movie header data */
 FLAHeaderStruct flaHeaderData;
 /** FLA movie header data */
@@ -74,10 +76,10 @@ FileReader frFla;
 	@param ptr FLA frame buffer pointer
 	@param width FLA movie width
 	@param height FLA movie height */
-void drawKeyFrame(uint8 * ptr, int32 width, int32 height) {
+void drawKeyFrame(uint8 *ptr, int32 width, int32 height) {
 	int32 a, b;
-	uint8 * destPtr = (uint8 *)flaBuffer;
-	uint8 * startOfLine = destPtr;
+	uint8 *destPtr = (uint8 *)flaBuffer;
+	uint8 *startOfLine = destPtr;
 	int8 flag1;
 	int8 flag2;
 
@@ -88,7 +90,7 @@ void drawKeyFrame(uint8 * ptr, int32 width, int32 height) {
 			flag2 = *(ptr++);
 
 			if (flag2 < 0) {
-				flag2 = - flag2;
+				flag2 = -flag2;
 				for (b = 0; b < flag2; b++) {
 					*(destPtr++) = *(ptr++);
 				}
@@ -110,28 +112,28 @@ void drawKeyFrame(uint8 * ptr, int32 width, int32 height) {
 /** FLA movie draw delta frame
 	@param ptr FLA frame buffer pointer
 	@param width FLA movie width */
-void drawDeltaFrame(uint8 * ptr, int32 width) {
+void drawDeltaFrame(uint8 *ptr, int32 width) {
 	int32 a, b;
 	uint16 skip;
-	uint8 * destPtr;
-	uint8 * startOfLine;
+	uint8 *destPtr;
+	uint8 *startOfLine;
 	int32 height;
 
 	int8 flag1;
 	int8 flag2;
 
-	skip = *((uint16*)ptr);
+	skip = *((uint16 *)ptr);
 	ptr += 2;
 	skip *= width;
 	startOfLine = destPtr = (uint8 *)flaBuffer + skip;
-	height = *((int16*)ptr);
+	height = *((int16 *)ptr);
 	ptr += 2;
 
 	do {
 		flag1 = *(ptr++);
 
 		for (a = 0; a < flag1; a++) {
-			destPtr += (unsigned char) * (ptr++);
+			destPtr += (unsigned char)*(ptr++);
 			flag2 = *(ptr++);
 
 			if (flag2 > 0) {
@@ -140,7 +142,7 @@ void drawDeltaFrame(uint8 * ptr, int32 width) {
 				}
 			} else {
 				char colorFill;
-				flag2 = - flag2;
+				flag2 = -flag2;
 
 				colorFill = *(ptr++);
 
@@ -160,11 +162,11 @@ void drawDeltaFrame(uint8 * ptr, int32 width) {
 	to fullscreen or preserve it and use top and button black bars */
 void scaleFla2x() {
 	int32 i, j;
-	uint8* source = (uint8*)flaBuffer;
-	uint8* dest = (uint8*)workVideoBuffer;
+	uint8 *source = (uint8 *)flaBuffer;
+	uint8 *dest = (uint8 *)workVideoBuffer;
 
 	if (cfgfile.Movie == CONF_MOVIE_FLAWIDE) {
-		for (i = 0; i < SCREEN_WIDTH / SCALE*40; i++) {
+		for (i = 0; i < SCREEN_WIDTH / SCALE * 40; i++) {
 			*(dest++) = 0x00;
 		}
 	}
@@ -175,22 +177,22 @@ void scaleFla2x() {
 			*(dest++) = *(source++);
 		}
 		if (cfgfile.Movie == CONF_MOVIE_FLAWIDE) { // include wide bars
-			memcpy(dest, dest - SCREEN_WIDTH / SCALE, FLASCREEN_WIDTH*2);
+			memcpy(dest, dest - SCREEN_WIDTH / SCALE, FLASCREEN_WIDTH * 2);
 			dest += FLASCREEN_WIDTH * 2;
 		} else { // stretch the movie like original game.
 			if (i % (2)) {
-				memcpy(dest, dest - SCREEN_WIDTH / SCALE, FLASCREEN_WIDTH*2);
+				memcpy(dest, dest - SCREEN_WIDTH / SCALE, FLASCREEN_WIDTH * 2);
 				dest += FLASCREEN_WIDTH * 2;
 			}
 			if (i % 10) {
-				memcpy(dest, dest - SCREEN_WIDTH / SCALE, FLASCREEN_WIDTH*2);
+				memcpy(dest, dest - SCREEN_WIDTH / SCALE, FLASCREEN_WIDTH * 2);
 				dest += FLASCREEN_WIDTH * 2;
 			}
 		}
 	}
 
 	if (cfgfile.Movie == CONF_MOVIE_FLAWIDE) {
-		for (i = 0; i < SCREEN_WIDTH / SCALE*40; i++) {
+		for (i = 0; i < SCREEN_WIDTH / SCALE * 40; i++) {
 			*(dest++) = 0x00;
 		}
 	}
@@ -202,7 +204,7 @@ void processFrame() {
 	uint32 opcodeBlockSize;
 	uint8 opcode;
 	int32 aux = 0;
-	uint8 * ptr;
+	uint8 *ptr;
 
 	frread(&frFla, &frameData.videoSize, 1);
 	frread(&frFla, &frameData.dummy, 1);
@@ -216,16 +218,16 @@ void processFrame() {
 	ptr = workVideoBufferCopy;
 
 	do {
-		opcode = *((uint8*)ptr);
+		opcode = *((uint8 *)ptr);
 		ptr += 2;
-		opcodeBlockSize = *((uint16*)ptr);
+		opcodeBlockSize = *((uint16 *)ptr);
 		ptr += 2;
 
 		switch (opcode - 1) {
 		case kLoadPalette: {
-			int16 numOfColor = *((int16*)ptr);
-			int16 startColor = *((int16*)(ptr + 2));
-			memcpy((palette + (startColor*3)), (ptr + 4), numOfColor*3);
+			int16 numOfColor = *((int16 *)ptr);
+			int16 startColor = *((int16 *)(ptr + 2));
+			memcpy((palette + (startColor * 3)), (ptr + 4), numOfColor * 3);
 			break;
 		}
 		case kFade: {
@@ -296,7 +298,7 @@ void playFlaMovie(int8 *flaName) {
 
 	// take extension if movie name has it
 	for (i = 0; i < (int32)strlen(flaName); i++) {
-		if(flaName[i] == '.') {
+		if (flaName[i] == '.') {
 			flaName[i] = 0;
 		}
 	}
@@ -486,3 +488,5 @@ void prepareFlaPCX(int index)
 
 	osystem_FlaPCXCrossFade(image);
 }*/
+
+} // namespace TwinE

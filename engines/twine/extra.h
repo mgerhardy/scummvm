@@ -20,16 +20,17 @@
  *
  */
 
-#include "common/scummsys.h"
 #include "actor.h"
+#include "common/scummsys.h"
 
 #ifndef TWINE_EXTRA_H
 #define TWINE_EXTRA_H
 
-#define EXTRA_MAX_ENTRIES		50
+namespace TwinE {
 
-typedef struct ExtraListStruct
-{
+#define EXTRA_MAX_ENTRIES 50
+
+typedef struct ExtraListStruct {
 	int16 info0; // field_0
 	int16 X;
 	int16 Y;
@@ -47,9 +48,9 @@ typedef struct ExtraListStruct
 	int16 type;  // field_14
 	int16 angle; // field_16
 	int32 lifeTime;
-	int16 actorIdx; // field_ 1C
+	int16 actorIdx;      // field_ 1C
 	int16 strengthOfHit; // field_1E
-	int16 info1; // field_20
+	int16 info1;         // field_20
 } ExtraListStruct;
 
 ExtraListStruct extraList[EXTRA_MAX_ENTRIES];
@@ -81,6 +82,6 @@ void drawExtraSpecial(int32 extraIdx, int32 X, int32 Y);
 /** Process extras */
 void processExtras();
 
+} // namespace TwinE
 
 #endif
-

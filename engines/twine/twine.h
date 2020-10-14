@@ -129,6 +129,7 @@ typedef struct ConfigFile {
 
 class Actor;
 class Animations;
+class Collision;
 
 class TwinEEngine : public Engine {
 public:
@@ -140,6 +141,7 @@ public:
 
 	Actor *_actor;
 	Animations *_animations;
+	Collision *_collision;
 
 	/** Configuration file structure
 	 * Contains all the data used in the engine to configurated the game in particulary ways. */

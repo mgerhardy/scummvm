@@ -20,28 +20,29 @@
  *
  */
 
-#include "common/scummsys.h"
-#include "twine.h"
 #include "menu.h"
+#include "actor.h"
+#include "animations.h"
+#include "common/scummsys.h"
+#include "gamestate.h"
+#include "grid.h"
+#include "hqrdepack.h"
+#include "interface.h"
+#include "keyboard.h"
 #include "menuoptions.h"
-#include "resources.h"
+#include "movements.h"
 #include "music.h"
-#include "sound.h"
+#include "redraw.h"
+#include "renderer.h"
+#include "resources.h"
+#include "scene.h"
 #include "screens.h"
 #include "sdlengine.h"
-#include "hqrdepack.h"
+#include "sound.h"
 #include "text.h"
-#include "interface.h"
-#include "redraw.h"
-#include "keyboard.h"
-#include "scene.h"
-#include "animations.h"
-#include "actor.h"
-#include "movements.h"
-#include "gamestate.h"
-#include "renderer.h"
-#include "grid.h"
-#include "gamestate.h"
+#include "twine.h"
+
+namespace TwinE {
 
 /** Main menu background image number
 	Used when returning from credit sequence to redraw the main menu background image */
@@ -52,166 +53,164 @@ uint16 kMainMenuButtonWidth = 320;
 /** Used to calculate the spanning between button and screen */
 uint16 kMainMenuButtonSpan = 550;
 
-
 /** Main menu types */
 enum MainMenuType {
-	kNewGame		= 20,
-	kContinueGame	= 21,
-	kOptions		= 23,
-	kQuit			= 22,
-	kBackground		= 9999
+	kNewGame = 20,
+	kContinueGame = 21,
+	kOptions = 23,
+	kQuit = 22,
+	kBackground = 9999
 };
 
 /** Give up menu types */
 enum GiveUpMenuType {
-	kContinue		= 28,
-	kGiveUp			= 27 // quit
+	kContinue = 28,
+	kGiveUp = 27 // quit
 };
 
 /** Options menu types */
 enum OptionsMenuType {
-	kReturnGame		= 15,
-	kReturnMenu		= 26,
-	kVolume			= 30,
-	kSaveManage		= 46,
-	kAdvanced		= 47
+	kReturnGame = 15,
+	kReturnMenu = 26,
+	kVolume = 30,
+	kSaveManage = 46,
+	kAdvanced = 47
 };
 
 /** Volume menu types */
 enum VolumeMenuType {
-	kMusicVolume	= 1,
-	kSoundVolume	= 2,
-	kCDVolume		= 3,
-	kLineVolume		= 4,
-	kMasterVolume	= 5
+	kMusicVolume = 1,
+	kSoundVolume = 2,
+	kCDVolume = 3,
+	kLineVolume = 4,
+	kMasterVolume = 5
 };
 
 /** Main Menu Settings
 
 	Used to create the game main menu. */
 int16 MainMenuSettings[] = {
-	0,          // Current loaded button (button number)
-	4,          // Num of buttons
-	200,        // Buttons box height ( is used to calc the height where the first button will appear )
-	0,          // unused
-	0,
-	20,         // new game
-	0,
-	21,         // continue game
-	0,
-	23,         // options
-	0,
-	22,         // quit
+    0,   // Current loaded button (button number)
+    4,   // Num of buttons
+    200, // Buttons box height ( is used to calc the height where the first button will appear )
+    0,   // unused
+    0,
+    20, // new game
+    0,
+    21, // continue game
+    0,
+    23, // options
+    0,
+    22, // quit
 };
 
 /** Give Up Menu Settings
 
 	Used to create the in-game menu. */
 int16 GiveUpMenuSettings[] = {
-	0,			// Current loaded button (button number)
-	2,			// Num of buttons
-	240,		// Buttons box height ( is used to calc the height where the first button will appear )
-	0,			// unused
-	0,
-	28,			// continue game
-	0,
-	27,			// quit game
+    0,   // Current loaded button (button number)
+    2,   // Num of buttons
+    240, // Buttons box height ( is used to calc the height where the first button will appear )
+    0,   // unused
+    0,
+    28, // continue game
+    0,
+    27, // quit game
 };
 
 /** Give Up Menu Settings
 
 	Used to create the in-game menu. This menu have one extra item to save the game */
 int16 GiveUpMenuSettingsWithSave[] = {
-	0,			// Current loaded button (button number)
-	3,			// Num of buttons
-	240,		// Buttons box height ( is used to calc the height where the first button will appear )
-	0,			// unused
-	0,
-	28,			// continue game
-	0,
-	16,			// save game
-	0,
-	27,			// quit game
+    0,   // Current loaded button (button number)
+    3,   // Num of buttons
+    240, // Buttons box height ( is used to calc the height where the first button will appear )
+    0,   // unused
+    0,
+    28, // continue game
+    0,
+    16, // save game
+    0,
+    27, // quit game
 };
 
 /** Options Menu Settings
 
 	Used to create the options menu. */
 int16 OptionsMenuSettings[] = {
-	0,			// Current loaded button (button number)
-	4,			// Num of buttons
-	0,			// Buttons box height ( is used to calc the height where the first button will appear )
-	0,			// unused
-	0,
-	24,			// return to previous menu
-	0,
-	30,			// volume settings
-	0,
-	46,			// save game management
-	0,
-	47,			// advanced options
+    0, // Current loaded button (button number)
+    4, // Num of buttons
+    0, // Buttons box height ( is used to calc the height where the first button will appear )
+    0, // unused
+    0,
+    24, // return to previous menu
+    0,
+    30, // volume settings
+    0,
+    46, // save game management
+    0,
+    47, // advanced options
 };
 
 /** Advanced Options Menu Settings
 
 	Used to create the advanced options menu. */
 int16 AdvOptionsMenuSettings[] = {
-	0,			// Current loaded button (button number)
-	5,			// Num of buttons
-	0,			// Buttons box height ( is used to calc the height where the first button will appear )
-	0,			// unused
-	0,
-	26,			// return to main menu
-	0,
-	4,			// aggressive mode (manual|auto)
-	6,
-	31,			// Polygon detail (full|medium|low)
-	7,
-	32,			// Shadows (all|character|no)
-	8,
-	33,			// scenary zoon (on|off)
+    0, // Current loaded button (button number)
+    5, // Num of buttons
+    0, // Buttons box height ( is used to calc the height where the first button will appear )
+    0, // unused
+    0,
+    26, // return to main menu
+    0,
+    4, // aggressive mode (manual|auto)
+    6,
+    31, // Polygon detail (full|medium|low)
+    7,
+    32, // Shadows (all|character|no)
+    8,
+    33, // scenary zoon (on|off)
 };
 
 /** Save Game Management Menu Settings
 
 	Used to create the save game management menu. */
 int16 SaveManageMenuSettings[] = {
-	0,			// Current loaded button (button number)
-	3,			// Num of buttons
-	0,			// Buttons box height ( is used to calc the height where the first button will appear )
-	0,			// unused
-	0,
-	26,			// return to main menu
-	0,
-	41,			// copy saved game
-	0,
-	45,			// delete saved game
+    0, // Current loaded button (button number)
+    3, // Num of buttons
+    0, // Buttons box height ( is used to calc the height where the first button will appear )
+    0, // unused
+    0,
+    26, // return to main menu
+    0,
+    41, // copy saved game
+    0,
+    45, // delete saved game
 };
 
 /** Volume Menu Settings
 
 	Used to create the volume menu. */
 int16 VolumeMenuSettings[] = {
-	0,			// Current loaded button (button number)
-	7,			// Num of buttons
-	0,			// Buttons box height ( is used to calc the height where the first button will appear )
-	0,			// unused
-	0,
-	26,			// return to main menu
-	1,
-	10,			// music volume
-	2,
-	11,			// sfx volume
-	3,
-	12,			// cd volume
-	4,
-	13,			// line-in volume
-	5,
-	14,			// master volume
-	0,
-	16,			// save parameters
+    0, // Current loaded button (button number)
+    7, // Num of buttons
+    0, // Buttons box height ( is used to calc the height where the first button will appear )
+    0, // unused
+    0,
+    26, // return to main menu
+    1,
+    10, // music volume
+    2,
+    11, // sfx volume
+    3,
+    12, // cd volume
+    4,
+    13, // line-in volume
+    5,
+    14, // master volume
+    0,
+    16, // save parameters
 };
-
 
 /** Plasma Effect pointer to file content: RESS.HQR:51 */
 uint8 *plasmaEffectPtr;
@@ -231,46 +230,44 @@ int32 inventorySelectedItem; // currentSelectedObjectInInventory
 #define SCREEN_W 640
 
 void plasmaEffectRenderFrame() {
-	int16  c;
-	int32  i, j;
+	int16 c;
+	int32 i, j;
 	uint8 *dest;
 	uint8 *src;
 
 	for (j = 1; j < PLASMA_HEIGHT - 1; j++) {
-    	for (i = 1; i < PLASMA_WIDTH - 1; i++) {
-            /*Here we calculate the average of all 8 neighbour pixel values*/
+		for (i = 1; i < PLASMA_WIDTH - 1; i++) {
+			/*Here we calculate the average of all 8 neighbour pixel values*/
 
-		    c  = plasmaEffectPtr[(i-1) + (j-1) * PLASMA_WIDTH];  //top-left
-		    c += plasmaEffectPtr[(i+0) + (j-1) * PLASMA_WIDTH];   //top
-		    c += plasmaEffectPtr[(i+1) + (j-1) * PLASMA_WIDTH]; //top-right
+			c = plasmaEffectPtr[(i - 1) + (j - 1) * PLASMA_WIDTH];  //top-left
+			c += plasmaEffectPtr[(i + 0) + (j - 1) * PLASMA_WIDTH]; //top
+			c += plasmaEffectPtr[(i + 1) + (j - 1) * PLASMA_WIDTH]; //top-right
 
-		    c += plasmaEffectPtr[(i-1) + (j+0) * PLASMA_WIDTH]; //left
-		    c += plasmaEffectPtr[(i+1) + (j+0) * PLASMA_WIDTH]; //right
+			c += plasmaEffectPtr[(i - 1) + (j + 0) * PLASMA_WIDTH]; //left
+			c += plasmaEffectPtr[(i + 1) + (j + 0) * PLASMA_WIDTH]; //right
 
-		    c += plasmaEffectPtr[(i-1) + (j+1) * PLASMA_WIDTH]; // bottom-left
-		    c += plasmaEffectPtr[(i+0) + (j+1) * PLASMA_WIDTH];   // bottom
-		    c += plasmaEffectPtr[(i+1) + (j+1) * PLASMA_WIDTH]; // bottom-right
+			c += plasmaEffectPtr[(i - 1) + (j + 1) * PLASMA_WIDTH]; // bottom-left
+			c += plasmaEffectPtr[(i + 0) + (j + 1) * PLASMA_WIDTH]; // bottom
+			c += plasmaEffectPtr[(i + 1) + (j + 1) * PLASMA_WIDTH]; // bottom-right
 
-		    c = (c >> 3) | ((c & 0x0003) << 13); /* And the 2 least significant bits are used as a
+			c = (c >> 3) | ((c & 0x0003) << 13); /* And the 2 least significant bits are used as a
               randomizing parameter for statistically fading the flames */
 
+			if (!(c & 0x6500) &&
+			    (j >= (PLASMA_HEIGHT - 4) || c > 0)) {
+				c--; /*fade this pixel*/
+			}
 
-		    if (!(c & 0x6500) &&
-                (j >= (PLASMA_HEIGHT-4) || c > 0)){
-			    c--; /*fade this pixel*/
-		    }
-
-            /* plot the pixel using the calculated color */
-            plasmaEffectPtr[i + (PLASMA_HEIGHT+j)*PLASMA_WIDTH] = (uint8) c;
-        }
+			/* plot the pixel using the calculated color */
+			plasmaEffectPtr[i + (PLASMA_HEIGHT + j) * PLASMA_WIDTH] = (uint8)c;
+		}
 	}
 
-    // flip the double-buffer while scrolling the effect vertically:
+	// flip the double-buffer while scrolling the effect vertically:
 	dest = plasmaEffectPtr;
-	src = plasmaEffectPtr + (PLASMA_HEIGHT+1) * PLASMA_WIDTH;
+	src = plasmaEffectPtr + (PLASMA_HEIGHT + 1) * PLASMA_WIDTH;
 	for (i = 0; i < PLASMA_HEIGHT * PLASMA_WIDTH; i++)
 		*(dest++) = *(src++);
-
 }
 
 /** Process the plasma effect
@@ -290,12 +287,12 @@ void processPlasmaEffect(int32 top, int32 color) {
 
 	for (i = 0; i < 25; i++) {
 		for (j = 0; j < kMainMenuButtonWidth; j++) {
-			c = in[i*kMainMenuButtonWidth + j] / 2 + color;
+			c = in[i * kMainMenuButtonWidth + j] / 2 + color;
 			if (c > max_value)
 				c = max_value;
 
-        /* 2x2 squares sharing the same pixel color: */
-            target = 2*(i*SCREEN_W + j);
+			/* 2x2 squares sharing the same pixel color: */
+			target = 2 * (i * SCREEN_W + j);
 			out[target] = c;
 			out[target + 1] = c;
 			out[target + SCREEN_W] = c;
@@ -310,10 +307,10 @@ void processPlasmaEffect(int32 top, int32 color) {
 	@param right end width to draw the button
 	@param bottom end height to draw the button */
 void drawBox(int32 left, int32 top, int32 right, int32 bottom) {
-	drawLine(left, top, right, top, 79);			// top line
-	drawLine(left, top, left, bottom, 79);			// left line
-	drawLine(right, ++top, right, bottom, 73);		// right line
-	drawLine(++left, bottom, right, bottom, 73);	// bottom line
+	drawLine(left, top, right, top, 79);         // top line
+	drawLine(left, top, left, bottom, 79);       // left line
+	drawLine(right, ++top, right, bottom, 73);   // right line
+	drawLine(++left, bottom, right, bottom, 73); // bottom line
 }
 
 /** Draws main menu button
@@ -341,8 +338,8 @@ void drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, int32 mo
 	right = width + kMainMenuButtonSpan / 2;
 
 	// topheigh is the center Y pos of the button
-	top = topheight - 25;		// this makes the button be 50 height
-	bottom = bottom2 = topheight + 25;	// ||
+	top = topheight - 25;              // this makes the button be 50 height
+	bottom = bottom2 = topheight + 25; // ||
 
 	if (mode != 0) {
 		if (id <= 5 && id >= 1) {
@@ -407,7 +404,7 @@ void drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, int32 mo
 			// implement this
 		}
 	} else {
-		blitBox(left, top, right, bottom, (int8 *) workVideoBuffer, left, top, (int8 *) frontVideoBuffer);
+		blitBox(left, top, right, bottom, (int8 *)workVideoBuffer, left, top, (int8 *)frontVideoBuffer);
 		drawTransparentBox(left, top, right, bottom2, 4);
 	}
 
@@ -428,13 +425,13 @@ void drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, int32 mo
 	@param data menu settings array
 	@param mode flag to know if should draw as a hover button or not */
 void drawButton(int16 *menuSettings, int32 mode) {
-	int32  buttonNumber;
-	int32  maxButton;
-	int16  *localData = menuSettings;
-	int32  topHeight;
-	uint8  menuItemId;
+	int32 buttonNumber;
+	int32 maxButton;
+	int16 *localData = menuSettings;
+	int32 topHeight;
+	uint8 menuItemId;
 	uint16 menuItemValue; // applicable for sound menus, to save the volume/sound bar
-	int8   currentButton;
+	int8 currentButton;
 
 	buttonNumber = *localData;
 	localData += 1;
@@ -446,7 +443,7 @@ void drawButton(int16 *menuSettings, int32 mode) {
 	if (topHeight == 0) {
 		topHeight = 35;
 	} else {
-		topHeight = topHeight - (((maxButton - 1) * 6) + ((maxButton) * 50)) / 2;
+		topHeight = topHeight - (((maxButton - 1) * 6) + ((maxButton)*50)) / 2;
 	}
 
 	if (maxButton <= 0) {
@@ -457,7 +454,7 @@ void drawButton(int16 *menuSettings, int32 mode) {
 
 	do {
 		// get menu item settings
-		menuItemId = (uint8) * localData;
+		menuItemId = (uint8)*localData;
 		localData += 1;
 		menuItemValue = *localData;
 		localData += 1;
@@ -484,7 +481,7 @@ void drawButton(int16 *menuSettings, int32 mode) {
 /** Where the main menu options are processed
 	@param menuSettings menu settings array with the information to build the menu options
 	@return pressed menu button identification */
-int32 processMenu(int16 * menuSettings) {
+int32 processMenu(int16 *menuSettings) {
 	int32 localTime;
 	int32 numEntry;
 	int32 buttonNeedRedraw;
@@ -525,7 +522,7 @@ int32 processMenu(int16 * menuSettings) {
 		if (buttonReleased) {
 			key = pressedKey;
 
-			if (((uint8) key & 2)) { // on arrow key down
+			if (((uint8)key & 2)) { // on arrow key down
 				currentButton++;
 				if (currentButton == numEntry) { // if current button is the last, than next button is the first
 					currentButton = 0;
@@ -534,7 +531,7 @@ int32 processMenu(int16 * menuSettings) {
 				buttonReleased = 0;
 			}
 
-			if (((uint8) key & 1)) { // on arrow key up
+			if (((uint8)key & 1)) { // on arrow key up
 				currentButton--;
 				if (currentButton < 0) { // if current button is the first, than previous button is the last
 					currentButton = maxButton;
@@ -543,53 +540,53 @@ int32 processMenu(int16 * menuSettings) {
 				buttonReleased = 0;
 			}
 
-			if (*(localData + 8) <= 5) { // if its a volume button
+			if (*(localData + 8) <= 5) {                   // if its a volume button
 				id = *(localData + currentButton * 2 + 4); // get button parameters from settings array
 
 				switch (id) {
 				case kMusicVolume: {
-					if (((uint8) key & 4)) { // on arrow key left
+					if (((uint8)key & 4)) { // on arrow key left
 						cfgfile.MusicVolume -= 4;
 					}
-					if (((uint8) key & 8)) { // on arrow key right
+					if (((uint8)key & 8)) { // on arrow key right
 						cfgfile.MusicVolume += 4;
 					}
 					musicVolume(cfgfile.MusicVolume);
 					break;
 				}
 				case kSoundVolume: {
-					if (((uint8) key & 4)) { // on arrow key left
+					if (((uint8)key & 4)) { // on arrow key left
 						cfgfile.WaveVolume -= 4;
 					}
-					if (((uint8) key & 8)) { // on arrow key right
+					if (((uint8)key & 8)) { // on arrow key right
 						cfgfile.WaveVolume += 4;
 					}
 					sampleVolume(-1, cfgfile.WaveVolume);
 					break;
 				}
 				case kCDVolume: {
-					if (((uint8) key & 4)) { // on arrow key left
+					if (((uint8)key & 4)) { // on arrow key left
 						cfgfile.CDVolume -= 4;
 					}
-					if (((uint8) key & 8)) { // on arrow key right
+					if (((uint8)key & 8)) { // on arrow key right
 						cfgfile.CDVolume += 4;
 					}
 					break;
 				}
 				case kLineVolume: {
-					if (((uint8) key & 4)) { // on arrow key left
+					if (((uint8)key & 4)) { // on arrow key left
 						cfgfile.LineVolume -= 4;
 					}
-					if (((uint8) key & 8)) { // on arrow key right
+					if (((uint8)key & 8)) { // on arrow key right
 						cfgfile.LineVolume += 4;
 					}
 					break;
 				}
 				case kMasterVolume: {
-					if (((uint8) key & 4)) { // on arrow key left
+					if (((uint8)key & 4)) { // on arrow key left
 						cfgfile.MasterVolume -= 4;
 					}
-					if (((uint8) key & 8)) { // on arrow key right
+					if (((uint8)key & 8)) { // on arrow key right
 						cfgfile.MasterVolume += 4;
 					}
 					musicVolume(cfgfile.MusicVolume);
@@ -614,7 +611,6 @@ int32 processMenu(int16 * menuSettings) {
 		} else {
 			if (musicChanged) {
 				// TODO: update volume settings
-
 			}
 
 			buttonNeedRedraw = 0;
@@ -749,7 +745,6 @@ int32 optionsMenu() {
 	return 0;
 }
 
-
 /** Used to run the main menu */
 void mainMenu() {
 	stopSamples();
@@ -799,7 +794,7 @@ void mainMenu() {
 int32 giveupMenu() {
 	//int32 saveLangue=0;
 	int32 menuId;
-	int16 * localMenu;
+	int16 *localMenu;
 
 	copyScreen(frontVideoBuffer, workVideoBuffer);
 	pauseSamples();
@@ -823,8 +818,7 @@ int32 giveupMenu() {
 		fpsCycles(cfgfile.Fps);
 	} while (menuId != kGiveUp && menuId != kContinue);
 
-	if (menuId == kGiveUp)
-	{
+	if (menuId == kGiveUp) {
 		stopSamples();
 		return 1;
 	}
@@ -833,8 +827,7 @@ int32 giveupMenu() {
 	return 0;
 }
 
-void drawInfoMenu(int16 left, int16 top)
-{
+void drawInfoMenu(int16 left, int16 top) {
 	int32 boxLeft, boxTop, boxRight, boxBottom;
 	int32 newBoxLeft, newBoxLeft2, i;
 
@@ -857,8 +850,8 @@ void drawInfoMenu(int16 left, int16 top)
 
 	if (!gameFlags[GAMEFLAG_INVENTORY_DISABLED] && gameFlags[GAMEFLAG_TUNIC]) {
 		drawSprite(0, newBoxLeft2, top + 36, spriteTable[SPRITEHQR_MAGICPOINTS]);
-		if(magicLevelIdx > 0) {
-			drawSplittedBox(newBoxLeft, top + 35, crossDot(newBoxLeft, boxRight, 80, inventoryMagicPoints),top + 50, 75);
+		if (magicLevelIdx > 0) {
+			drawSplittedBox(newBoxLeft, top + 35, crossDot(newBoxLeft, boxRight, 80, inventoryMagicPoints), top + 50, 75);
 		}
 		drawBox(left + 25, top + 35, left + magicLevelIdx * 80 + 20, top + 35 + 15);
 	}
@@ -881,14 +874,12 @@ void drawInfoMenu(int16 left, int16 top)
 	}
 
 	// Clover leaf boxes
-	for (i = 0; i < inventoryNumLeafsBox; i++)
-	{
+	for (i = 0; i < inventoryNumLeafsBox; i++) {
 		drawSprite(0, crossDot(left + 25, left + 325, 10, i), top + 58, spriteTable[SPRITEHQR_CLOVERLEAFBOX]);
 	}
 
 	// Clover leafs
-	for (i = 0; i < inventoryNumLeafs; i++)
-	{
+	for (i = 0; i < inventoryNumLeafs; i++) {
 		drawSprite(0, crossDot(left + 25, left + 325, 10, i) + 2, top + 60, spriteTable[SPRITEHQR_CLOVERLEAF]);
 	}
 
@@ -900,9 +891,9 @@ void drawBehaviour(int16 behaviour, int32 angle, int16 cantDrawBox) {
 	int32 boxLeft, boxTop, boxRight, boxBottom, currentAnimState;
 	int8 dialText[256];
 
-	boxLeft   = behaviour * 110 + 110;
-	boxRight  = boxLeft + 99;
-	boxTop    = 110;
+	boxLeft = behaviour * 110 + 110;
+	boxRight = boxLeft + 99;
+	boxTop = 110;
 	boxBottom = 229;
 
 	currentAnim = animTable[heroAnimIdx[behaviour]];
@@ -986,10 +977,10 @@ void processBehaviourMenu() {
 
 	behaviourEntity = bodyTable[sceneHero->entity];
 
-	heroAnimIdx[kNormal]     = heroAnimIdxNORMAL;
-	heroAnimIdx[kAthletic]   = heroAnimIdxATHLETIC;
+	heroAnimIdx[kNormal] = heroAnimIdxNORMAL;
+	heroAnimIdx[kAthletic] = heroAnimIdxATHLETIC;
 	heroAnimIdx[kAggressive] = heroAnimIdxAGGRESSIVE;
-	heroAnimIdx[kDiscrete]   = heroAnimIdxDISCRETE;
+	heroAnimIdx[kDiscrete] = heroAnimIdxDISCRETE;
 
 	setActorAngleSafe(sceneHero->angle, sceneHero->angle - 256, 50, &moveMenu);
 
@@ -1068,23 +1059,23 @@ void processBehaviourMenu() {
 	@param right end width to draw the button
 	@param bottom end height to draw the button */
 void drawMagicItemsBox(int32 left, int32 top, int32 right, int32 bottom, int32 color) { // Rect
-	drawLine(left, top, right, top, color);			// top line
-	drawLine(left, top, left, bottom, color);			// left line
-	drawLine(right, ++top, right, bottom, color);		// right line
-	drawLine(++left, bottom, right, bottom, color);	// bottom line
+	drawLine(left, top, right, top, color);                                             // top line
+	drawLine(left, top, left, bottom, color);                                           // left line
+	drawLine(right, ++top, right, bottom, color);                                       // right line
+	drawLine(++left, bottom, right, bottom, color);                                     // bottom line
 }
 
 void drawItem(int32 item) {
 	int32 itemX = (item / 4) * 85 + 64;
 	int32 itemY = (item & 3) * 75 + 52;
 
-	int32 left   = itemX - 37;
-	int32 right  = itemX + 37;
-	int32 top    = itemY - 32;
+	int32 left = itemX - 37;
+	int32 right = itemX + 37;
+	int32 top = itemY - 32;
 	int32 bottom = itemY + 32;
 
 	drawSplittedBox(left, top, right, bottom,
-                    inventorySelectedItem == item ? inventorySelectedColor : 0);
+	                inventorySelectedItem == item ? inventorySelectedColor : 0);
 
 	if (gameFlags[item] && !gameFlags[GAMEFLAG_INVENTORY_DISABLED] && item < NUM_INVENTORY_ITEMS) {
 		prepareIsoModel(inventoryTable[item]);
@@ -1120,7 +1111,7 @@ void processInventoryMenu() {
 	int32 prevSelectedItem, tmpLanguageCD, bx, tmpAlphaLight, tmpBetaLight;
 
 	tmpAlphaLight = alphaLight;
-	tmpBetaLight  = betaLight;
+	tmpBetaLight = betaLight;
 
 	copyScreen(frontVideoBuffer, workVideoBuffer);
 
@@ -1149,7 +1140,7 @@ void processInventoryMenu() {
 		prevSelectedItem = inventorySelectedItem;
 
 		if (!di) {
-			key  = pressedKey;
+			key = pressedKey;
 			loopPressedKey = skippedKey;
 			loopCurrentKey = skipIntro;
 
@@ -1262,3 +1253,5 @@ void processInventoryMenu() {
 		sdldelay(1);
 	}
 }
+
+} // namespace TwinE

@@ -27,19 +27,21 @@
 #include <SDL.h>
 #include <SDL_mixer.h>
 
-#include "music.h"
-#include "twine.h"
-#include "sdlengine.h"
 #include "hqrdepack.h"
+#include "music.h"
 #include "resources.h"
+#include "sdlengine.h"
+#include "twine.h"
 #include "xmidi.h"
 
+namespace TwinE {
+
 /** MP3 music folder */
-#define MUSIC_FOLDER	"music"
+#define MUSIC_FOLDER "music"
 /** LBA1 default number of tracks */
-#define NUM_CD_TRACKS	10
+#define NUM_CD_TRACKS 10
 /** Number of miliseconds to fade music */
-#define FADE_MS			500
+#define FADE_MS 500
 
 /** SDL CD variable interface */
 SDL_CD *cdrom;
@@ -50,8 +52,7 @@ const int8 *cdname;
 Mix_Music *current_track;
 
 /** Auxiliar midi pointer to  */
-uint8 * midiPtr;
-
+uint8 *midiPtr;
 
 /** Music volume
 	@param current volume number */
@@ -77,7 +78,6 @@ void musicFadeOut(int32 ms) {
 	Mix_RewindMusic();
 	musicVolume(cfgfile.MusicVolume);
 }
-
 
 /** Play CD music
 	@param track track number to play */
@@ -131,7 +131,7 @@ void stopTrackMusic() {
 /** Play MIDI music
 	@param midiIdx music index under mini_mi_win.hqr*/
 void playMidiMusic(int32 midiIdx, int32 loop) {
-	uint8* dos_midi_ptr;
+	uint8 *dos_midi_ptr;
 	int32 midiSize;
 	int8 filename[256];
 	SDL_RWops *rw;
@@ -244,3 +244,5 @@ void stopMusic() {
 	stopTrackMusic();
 	stopMidiMusic();
 }
+
+} // namespace TwinE

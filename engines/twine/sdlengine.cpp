@@ -25,27 +25,29 @@
 #include <string.h>
 
 #include <SDL.h>
-#include <SDL_thread.h>
 #include <SDL_mixer.h>
+#include <SDL_thread.h>
 #ifdef GAMEMOD
 #include <SDL_ttf.h>
 #endif
 
-#include "sdlengine.h"
-#include "twine.h"
-#include "screens.h"
-#include "music.h"
 #include "debug.h"
 #include "keyboard.h"
+#include "music.h"
 #include "redraw.h"
+#include "screens.h"
+#include "sdlengine.h"
+#include "twine.h"
+
+namespace TwinE {
 
 /** SDL exit callback */
 //static void atexit_callback(void);
 
 /** Original audio frequency */
-#define ORIGINAL_GAME_FREQUENCY		11025
+#define ORIGINAL_GAME_FREQUENCY 11025
 /** High quality audio frequency */
-#define HIGH_QUALITY_FREQUENCY		44100
+#define HIGH_QUALITY_FREQUENCY 44100
 
 /** Main SDL screen surface buffer */
 SDL_Surface *screen = NULL;
@@ -75,7 +77,7 @@ int sdlInitialize() {
 	//SDL_Surface* icon;
 
 	Uint32 rmask, gmask, bmask;
-//	Uint32 amask;
+	//	Uint32 amask;
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 	rmask = 0xff000000;
@@ -109,7 +111,6 @@ int sdlInitialize() {
 
 	TTF_SetFontStyle(font, 0);
 #endif
-
 
 	/*icon = SDL_LoadBMP("icon.bmp");
 	SDL_WM_SetIcon(icon, NULL);*/
@@ -191,8 +192,8 @@ void delaySkip(uint32 time) {
 
 /** Set a new palette in the SDL screen buffer
 	@param palette palette to set */
-void setPalette(uint8 * palette) {
-	SDL_Color *screenColorsTemp = (SDL_Color *) palette;
+void setPalette(uint8 *palette) {
+	SDL_Color *screenColorsTemp = (SDL_Color *)palette;
 
 	SDL_SetColors(screenBuffer, screenColorsTemp, 0, 256);
 	SDL_BlitSurface(screenBuffer, NULL, screen, NULL);
@@ -229,8 +230,8 @@ void copyBlockPhys(int32 left, int32 top, int32 right, int32 bottom) {
 
 	rectangle.x = left;
 	rectangle.y = top;
-	rectangle.w = right - left + 1 ;
-	rectangle.h = bottom - top + 1 ;
+	rectangle.w = right - left + 1;
+	rectangle.h = bottom - top + 1;
 
 	SDL_BlitSurface(screenBuffer, &rectangle, screen, &rectangle);
 	SDL_UpdateRect(screen, left, top, right - left + 1, bottom - top + 1);
@@ -253,7 +254,7 @@ void crossFade(uint8 *buffer, uint8 *palette) {
 	SDL_Surface *newSurface;
 	SDL_Surface *tempSurface;
 	Uint32 rmask, gmask, bmask;
-//	Uint32 amask;
+	//	Uint32 amask;
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 	rmask = 0xff000000;
@@ -269,7 +270,7 @@ void crossFade(uint8 *buffer, uint8 *palette) {
 	newSurface = SDL_CreateRGBSurface(SDL_SWSURFACE | SDL_SRCALPHA, SCREEN_WIDTH, SCREEN_HEIGHT, 32, rmask, gmask, bmask, 0);
 
 	tempSurface = SDL_CreateRGBSurfaceFrom(buffer, SCREEN_WIDTH, SCREEN_HEIGHT, 8, SCREEN_WIDTH, 0, 0, 0, 0);
-	SDL_SetColors(tempSurface, (SDL_Color *) palette, 0, 256);
+	SDL_SetColors(tempSurface, (SDL_Color *)palette, 0, 256);
 
 	SDL_BlitSurface(screen, NULL, backupSurface, NULL);
 	SDL_BlitSurface(tempSurface, NULL, newSurface, NULL);
@@ -378,10 +379,10 @@ void readKeys() {
 			case SDLK_PAGEUP:
 				localKey = 0x49;
 				break;
-			case SDLK_p:  // pause
+			case SDLK_p: // pause
 				localKey = 0x19;
 				break;
-			case SDLK_h:  // holomap
+			case SDLK_h: // holomap
 				localKey = 0x23;
 				break;
 			case SDLK_j:
@@ -409,19 +410,19 @@ void readKeys() {
 				toggleFullscreen();
 				break;
 #ifdef GAMEMOD
-			case SDLK_r:  // next room
+			case SDLK_r: // next room
 				localKey = 0x13;
 				break;
-			case SDLK_f:  // previous room
+			case SDLK_f: // previous room
 				localKey = 0x21;
 				break;
-			case SDLK_t:  // apply celling grid
+			case SDLK_t: // apply celling grid
 				localKey = 0x14;
 				break;
-			case SDLK_g:  // increase celling grid index
+			case SDLK_g: // increase celling grid index
 				localKey = 0x22;
 				break;
-			case SDLK_b:  // decrease celling grid index
+			case SDLK_b: // decrease celling grid index
 				localKey = 0x30;
 				break;
 #endif
@@ -527,7 +528,7 @@ void readKeys() {
 		}
 
 		//if (found==0) {
-			skipIntro = localKey;
+		skipIntro = localKey;
 		//}
 	}
 }
@@ -540,7 +541,7 @@ void readKeys() {
 	@param string text to display
 	@param center if the text should be centered accoding with the giving positions */
 void ttfDrawText(int32 X, int32 Y, int8 *string, int32 center) {
-	SDL_Color white = { 0xFF, 0xFF, 0xFF, 0 };
+	SDL_Color white = {0xFF, 0xFF, 0xFF, 0};
 	SDL_Color *forecol = &white;
 	SDL_Rect rectangle;
 
@@ -573,3 +574,5 @@ void getMousePositions(MouseStatusStruct *mouseData) {
 }
 
 #endif
+
+} // namespace TwinE

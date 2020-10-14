@@ -64,6 +64,7 @@ private:
 	TwinEEngine *_engine;
 	void applyAnimStepRotation(uint8 **ptr, int32 bp, int32 bx);
 	int32 getAnimMode(uint8 **ptr);
+	void applyAnimStep(uint8 **ptr, int32 bp, int32 bx);
 public:
 	Animations(TwinEEngine* engine);
 	/** Table with all loaded animations */

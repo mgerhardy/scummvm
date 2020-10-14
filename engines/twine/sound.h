@@ -25,12 +25,14 @@
 
 #include "common/scummsys.h"
 
+namespace TwinE {
+
 /** Total number of samples allowed in the game */
 #define NUM_SAMPLES 243
 #define NUM_CHANNELS 32
 
 /** Table with all loaded samples */
-uint8* samplesTable[NUM_SAMPLES];
+uint8 *samplesTable[NUM_SAMPLES];
 /** Table with all loaded samples sizes */
 uint32 samplesSizeTable[NUM_SAMPLES];
 
@@ -93,5 +95,7 @@ int32 isSamplePlaying(int32 index);
 
 /** Play VOX sample */
 void playVoxSample(int32 index);
+
+} // namespace TwinE
 
 #endif
