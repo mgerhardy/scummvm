@@ -38,7 +38,7 @@
 // r must have strlen(path) + 2 bytes
 static int casepath(char const *path, char *r) {
 	size_t l = strlen(path);
-	char *p = alloca(l + 1);
+	char *p = (char*)alloca(l + 1);
 	strcpy(p, path);
 	size_t rl = 0;
 
@@ -103,7 +103,7 @@ FILE *fcaseopen(char const *path, char const *mode) {
 	FILE *f = fopen(path, mode);
 #ifndef WIN32
 	if (!f) {
-		char *r = alloca(strlen(path) + 2);
+		char *r = (char*)alloca(strlen(path) + 2);
 		if (casepath(path, r)) {
 			f = fopen(r, mode);
 		}
@@ -114,7 +114,7 @@ FILE *fcaseopen(char const *path, char const *mode) {
 
 void casechdir(char const *path) {
 #ifndef WIN32
-	char *r = alloca(strlen(path) + 2);
+	char *r = (char*)alloca(strlen(path) + 2);
 	if (casepath(path, r)) {
 		chdir(r);
 	} else {

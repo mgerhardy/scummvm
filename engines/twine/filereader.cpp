@@ -20,8 +20,11 @@
  *
  */
 
+#define FORBIDDEN_SYMBOL_ALLOW_ALL
+
 #include "filereader.h"
 #include "fcaseopen.h"
+#include "common/forbidden.h"
 #include <ctype.h>
 
 namespace TwinE {
@@ -84,7 +87,7 @@ void frseek(FileReader *fr, uint32 seekPosition) {
 	@param fr FileReader pointer
 	@param filename file path
 	@return true if file open and false if error occurred */
-int32 fropen2(FileReader *fr, char *filename, const char *mode) {
+int32 fropen2(FileReader *fr, const char *filename, const char *mode) {
 	fr->fd = fcaseopen(filename, mode);
 
 	if (fr->fd) {

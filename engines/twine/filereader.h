@@ -23,6 +23,8 @@
 #ifndef TWINE_FILEREADER_H
 #define TWINE_FILEREADER_H
 
+#define FORBIDDEN_SYMBOL_ALLOW_ALL
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -67,7 +69,7 @@ void frseek(FileReader *fr, uint32 seekPosition);
 	@param fr FileReader pointer
 	@param filename file path
 	@return true if file open and false if error occurred */
-int32 fropen2(FileReader *fr, char *filename, const char *mode);
+int32 fropen2(FileReader *fr, const char *filename, const char *mode);
 
 /** Write file
 	@param fr FileReader pointer
