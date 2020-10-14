@@ -470,6 +470,9 @@ TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flag
 	_hqrdepack = new HQRDepack(this);
 	_interface = new Interface(this);
 	_menu = new Menu(this);
+	_flaMovies = new FlaMovies(this);
+	_menuOptions = new MenuOptions(this);
+	_music = new Music(this);
 }
 
 TwinEEngine::~TwinEEngine() {

@@ -140,7 +140,7 @@ void GameState::initEngineVars(int32 save) { // reinitAll
 	needChangeScene = 0;
 	_engine->quitGame = -1;
 	mecaPinguinIdx = -1;
-	canShowCredits = 0;
+	_engine->_menuOptions->canShowCredits = 0;
 
 	inventoryNumLeafs = 0;
 	inventoryNumLeafsBox = 2;
@@ -324,7 +324,7 @@ void GameState::processFoundItem(int32 item) {
 	// process vox play
 	{
 		int32 tmpLanguageCDId;
-		stopMusic();
+		_engine->_music->stopMusic();
 		tmpLanguageCDId = _engine->cfgfile.LanguageCDId;
 		//_engine->cfgfile.LanguageCDId = 0; // comented so we can init vox bank
 		initTextBank(2);
@@ -487,7 +487,7 @@ void GameState::processGameoverAnimation() { // makeGameOver
 
 		prepareIsoModel(gameOverPtr);
 		stopSamples();
-		stopMidiMusic(); // stop fade music
+		_engine->_music->stopMidiMusic(); // stop fade music
 		setCameraPosition(320, 240, 128, 200, 200);
 		startLbaTime = _engine->lbaTime;
 		_engine->_interface->setClip(120, 120, 519, 359);

@@ -24,20 +24,36 @@
 #define TWINE_MENUOPTIONS_H
 
 #include "common/scummsys.h"
+#include "twine/actor.h"
 
 namespace TwinE {
 
-int32 canShowCredits;
+class MenuOptions {
+private:
+	TwinEEngine *_engine;
 
-int8 playerName[256];
-int8 enterPlayerNameVar1;
-int32 enterPlayerNameVar2;
+	int32 enterPlayerName(int32 textIdx);
+	void drawSelectableCharacters();
+	void drawPlayerName(int32 centerx, int32 top, int8 *playerName, int32 type);
+	void drawSelectableCharacter(int32 x, int32 y, int32 arg);
+	void showCredits();
+	void newGame();
 
-/** Main menu new game options */
-void newGameMenu();
+public:
+	MenuOptions(TwinEEngine *engine) : _engine(engine) {}
 
-/** Main menu continue game options */
-void continueGameMenu();
+	int32 canShowCredits;
+
+	int8 playerName[256];
+	int8 enterPlayerNameVar1;
+	int32 enterPlayerNameVar2;
+
+	/** Main menu new game options */
+	void newGameMenu();
+
+	/** Main menu continue game options */
+	void continueGameMenu();
+};
 
 } // namespace TwinE
 

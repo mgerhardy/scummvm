@@ -27,38 +27,50 @@
 
 namespace TwinE {
 
-/** Track number of the current playing music */
-int32 currentMusic;
+class TwinEEngine;
 
-/** Music volume
+class Music {
+private:
+	TwinEEngine *_engine;
+
+	void musicFadeIn(int32 loops, int32 ms);
+	void musicFadeOut(int32 ms);
+
+public:
+	Music(TwinEEngine *engine) : _engine(engine) {}
+	/** Track number of the current playing music */
+	int32 currentMusic;
+
+	/** Music volume
 	@param current volume number */
-void musicVolume(int32 volume);
-/** Play CD music
+	void musicVolume(int32 volume);
+	/** Play CD music
 	@param track track number to play */
-void playTrackMusicCd(int32 track);
-/** Stop CD music */
-void stopTrackMusicCd();
-/** Play MP3 music
+	void playTrackMusicCd(int32 track);
+	/** Stop CD music */
+	void stopTrackMusicCd();
+	/** Play MP3 music
 	@param track track number to play */
-void playTrackMusicMp3(int32 track);
-/** Stop MP3 music */
-void stopTrackMusicMp3();
-/** Generic play music, according with settings it plays CD or high quality sounds instead
+	void playTrackMusicMp3(int32 track);
+	/** Stop MP3 music */
+	void stopTrackMusicMp3();
+	/** Generic play music, according with settings it plays CD or high quality sounds instead
 	@param track track number to play*/
-void playTrackMusic(int32 track);
-/** Generic stop music according with settings */
-void stopTrackMusic();
-/** Play MIDI music
+	void playTrackMusic(int32 track);
+	/** Generic stop music according with settings */
+	void stopTrackMusic();
+	/** Play MIDI music
 	@param midiIdx music index under mini_mi_win.hqr*/
-void playMidiMusic(int32 midiIdx, int32 loop);
-/** Stop MIDI music */
-void stopMidiMusic();
+	void playMidiMusic(int32 midiIdx, int32 loop);
+	/** Stop MIDI music */
+	void stopMidiMusic();
 
-/** Initialize CD-Rom */
-int32 initCdrom();
+	/** Initialize CD-Rom */
+	int32 initCdrom();
 
-/** Stop MIDI and Track music */
-void stopMusic();
+	/** Stop MIDI and Track music */
+	void stopMusic();
+};
 
 } // namespace TwinE
 

@@ -124,7 +124,7 @@ public:
 
 	/** Play FLA movies
 	@param flaName FLA movie name */
-	void playFlaMovie(int8 *flaName);
+	void playFlaMovie(const char *flaName);
 };
 
 } // namespace TwinE

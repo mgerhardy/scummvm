@@ -133,6 +133,9 @@ class Movements;
 class HQRDepack;
 class Interface;
 class Menu;
+class FlaMovies;
+class MenuOptions;
+class Music;
 
 class TwinEEngine : public Engine {
 public:
@@ -152,13 +155,16 @@ public:
 	HQRDepack *_hqrdepack;
 	Interface *_interface;
 	Menu *_menu;
+	FlaMovies *_flaMovies;
+	MenuOptions *_menuOptions;
+	Music *_music;
 
 	/** Configuration file structure
 	 * Contains all the data used in the engine to configurated the game in particulary ways. */
 	ConfigFile cfgfile;
 
 	/** CD Game directory */
-	int8 *cdDir;
+	const char *cdDir;
 
 	int32 isTimeFreezed = 0;
 	int32 saveFreezedTime = 0;

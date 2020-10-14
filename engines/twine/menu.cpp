@@ -540,7 +540,7 @@ int32 Menu::processMenu(int16 *menuSettings) {
 					if (((uint8)key & 8)) { // on arrow key right
 						_engine->cfgfile.MusicVolume += 4;
 					}
-					musicVolume(_engine->cfgfile.MusicVolume);
+					_engine->_music->musicVolume(_engine->cfgfile.MusicVolume);
 					break;
 				}
 				case kSoundVolume: {
@@ -578,7 +578,7 @@ int32 Menu::processMenu(int16 *menuSettings) {
 					if (((uint8)key & 8)) { // on arrow key right
 						_engine->cfgfile.MasterVolume += 4;
 					}
-					musicVolume(_engine->cfgfile.MusicVolume);
+					_engine->_music->musicVolume(_engine->cfgfile.MusicVolume);
 					sampleVolume(-1, _engine->cfgfile.WaveVolume);
 					break;
 				}
@@ -748,16 +748,16 @@ void Menu::mainMenu() {
 	while (!_engine->cfgfile.Quit) {
 		initTextBank(0);
 
-		playTrackMusic(9); // LBA's Theme
+		_engine->_music->playTrackMusic(9); // LBA's Theme
 		stopSamples();
 
 		switch (processMenu(MainMenuSettings)) {
 		case kNewGame: {
-			newGameMenu();
+			_engine->_menuOptions->newGameMenu();
 			break;
 		}
 		case kContinueGame: {
-			continueGameMenu();
+			_engine->_menuOptions->continueGameMenu();
 			break;
 		}
 		case kOptions: {

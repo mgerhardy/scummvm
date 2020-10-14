@@ -32,6 +32,7 @@
 #include "sdlengine.h"
 #include "sound.h"
 #include "twine.h"
+#include "twine/grid.h"
 
 namespace TwinE {
 
@@ -245,7 +246,7 @@ void FlaMovies::processFrame() {
 
 /** Play FLA PCX Screens
 	@param flaName FLA movie name */
-void fla_pcxList(int8 *flaName) {
+static void fla_pcxList(const char *flaName) {
 	// TODO if is using FLA PCX than show the images instead
 }
 
@@ -253,7 +254,7 @@ FlaMovies::FlaMovies(TwinEEngine *engine) : _engine(engine) {}
 
 /** Play FLA movies
 	@param flaName FLA movie name */
-void FlaMovies::playFlaMovie(int8 *flaName) {
+void FlaMovies::playFlaMovie(const char *flaName) {
 	int32 i;
 	int32 quit = 0;
 	int32 currentFrame;
@@ -268,17 +269,19 @@ void FlaMovies::playFlaMovie(int8 *flaName) {
 		return;
 	}
 
-	stopMusic();
+	_engine->_music->stopMusic();
 
 	// take extension if movie name has it
-	for (i = 0; i < (int32)strlen((const char *)flaName); i++) {
+	int32 flaNameLength = (int32)strlen((const char *)flaName);
+	for (i = 0; i < flaNameLength; i++) {
 		if (flaName[i] == '.') {
-			flaName[i] = 0;
+			flaNameLength = i;
+			break;
 		}
 	}
 
 	sprintf((char *)fileNamePath, FLA_DIR);
-	strcat((char *)fileNamePath, (const char*)flaName);
+	strncat((char *)fileNamePath, (const char*)flaName, flaNameLength);
 	strcat((char *)fileNamePath, FLA_EXT);
 
 	_fadeOut = -1;
