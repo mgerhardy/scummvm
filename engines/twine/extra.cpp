@@ -486,7 +486,7 @@ void Extra::drawSpecialShape(const int16 *shapeTable, int32 X, int32 Y, int32 co
 		projPosX = currentX;
 		projPosY = currentY;
 
-		drawLine(oldComputedX, oldComputedY, currentX, currentY, color);
+		_engine->_interface->drawLine(oldComputedX, oldComputedY, currentX, currentY, color);
 
 		numEntries++;
 
@@ -496,7 +496,7 @@ void Extra::drawSpecialShape(const int16 *shapeTable, int32 X, int32 Y, int32 co
 
 	projPosX = currentX;
 	projPosY = currentY;
-	drawLine(currentX, currentY, computedX, computedY, color);
+	_engine->_interface->drawLine(currentX, currentY, computedX, computedY, color);
 }
 
 void Extra::drawExtraSpecial(int32 extraIdx, int32 X, int32 Y) {

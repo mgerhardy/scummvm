@@ -24,7 +24,6 @@
 #define TWINE_INTERFACE_H
 
 #include "common/scummsys.h"
-#include "twine.h"
 
 namespace TwinE {
 
@@ -37,24 +36,33 @@ namespace TwinE {
 /** Screen bottom limit to display the texts */
 #define SCREEN_TEXTLIMIT_BOTTOM SCREEN_HEIGHT - 1
 
-int32 textWindowTop;
-int32 textWindowTopSave;
-int32 textWindowLeft;
-int32 textWindowLeftSave;
-int32 textWindowRight;
-int32 textWindowRightSave;
-int32 textWindowBottom;
-int32 textWindowBottomSave;
+class TwinEEngine;
 
-/** Draw button line
+class Interface {
+private:
+	TwinEEngine *_engine;
+	int32 checkClipping(int32 x, int32 y);
+
+public:
+	Interface(TwinEEngine *engine);
+	int32 textWindowTop;
+	int32 textWindowTopSave;
+	int32 textWindowLeft;
+	int32 textWindowLeftSave;
+	int32 textWindowRight;
+	int32 textWindowRightSave;
+	int32 textWindowBottom;
+	int32 textWindowBottomSave;
+
+	/** Draw button line
 	@param startWidth width value where the line starts
 	@param startHeight height value where the line starts
 	@param endWidth width value where the line ends
 	@param endHeight height value where the line ends
 	@param lineColor line color in the current palette */
-void drawLine(int32 startWidth, int32 startHeight, int32 endWidth, int32 endHeight, int32 lineColor);
+	void drawLine(int32 startWidth, int32 startHeight, int32 endWidth, int32 endHeight, int32 lineColor);
 
-/** Blit button box from working buffer to front buffer
+	/** Blit button box from working buffer to front buffer
 	@param left start width to draw the button
 	@param top start height to draw the button
 	@param right end width to draw the button
@@ -63,22 +71,23 @@ void drawLine(int32 startWidth, int32 startHeight, int32 endWidth, int32 endHeig
 	@param leftDest start width to draw the button in destination buffer
 	@param topDest start height to draw the button in destination buffer
 	@dest destination screen buffer, in this case front buffer */
-void blitBox(int32 left, int32 top, int32 right, int32 bottom, int8 *source, int32 leftDest, int32 topDest, int8 *dest);
+	void blitBox(int32 left, int32 top, int32 right, int32 bottom, int8 *source, int32 leftDest, int32 topDest, int8 *dest);
 
-/** Draws inside buttons transparent area
+	/** Draws inside buttons transparent area
 	@param left start width to draw the button
 	@param top start height to draw the button
 	@param right end width to draw the button
 	@param bottom end height to draw the button
 	@param colorAdj index to adjust the transparent box color */
-void drawTransparentBox(int32 left, int32 top, int32 right, int32 bottom, int32 colorAdj);
+	void drawTransparentBox(int32 left, int32 top, int32 right, int32 bottom, int32 colorAdj);
 
-void drawSplittedBox(int32 left, int32 top, int32 right, int32 bottom, uint8 e);
+	void drawSplittedBox(int32 left, int32 top, int32 right, int32 bottom, uint8 e);
 
-void setClip(int32 left, int32 top, int32 right, int32 bottom);
-void saveClip(); // saveTextWindow
-void loadClip(); // loadSavedTextWindow
-void resetClip();
+	void setClip(int32 left, int32 top, int32 right, int32 bottom);
+	void saveClip(); // saveTextWindow
+	void loadClip(); // loadSavedTextWindow
+	void resetClip();
+};
 
 } // namespace TwinE
 

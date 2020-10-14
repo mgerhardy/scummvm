@@ -28,59 +28,93 @@
 
 namespace TwinE {
 
-int32 currMenuTextIndex;
-int32 currMenuTextBank;
-int8 currMenuTextBuffer[256];
+class Menu {
+private:
+	TwinEEngine *_engine;
 
-int16 itemAngle[255]; // objectRotation
+	/** Hero behaviour menu entity */
+	uint8 *behaviourEntity;
+	/** Behaviour menu anim state */
+	int16 behaviourAnimState[4]; // winTab
+	/** Behaviour menu anim data pointer */
+	AnimTimerDataStruct behaviourAnimData[4];
 
-extern int16 OptionsMenuSettings[];
+	int32 inventorySelectedColor;
+	int32 inventorySelectedItem; // currentSelectedObjectInInventory
 
-/** Behaviour menu move pointer */
-ActorMoveStruct moveMenu;
+	void drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, int32 mode);
+	void plasmaEffectRenderFrame();
+	void drawButton(int16 *menuSettings, int32 mode);
+	int32 advoptionsMenu();
+	int32 volumeMenu();
+	int32 savemanageMenu();
+	void drawInfoMenu(int16 left, int16 top);
+	void drawBehaviour(int16 behaviour, int32 angle, int16 cantDrawBox);
+	void drawInventoryItems();
+	void drawBehaviourMenu(int32 angle);
+	void drawItem(int32 item);
+	void drawMagicItemsBox(int32 left, int32 top, int32 right, int32 bottom, int32 color);
 
-/** Plasma Effect pointer to file content: RESS.HQR:51 */
-extern uint8 *plasmaEffectPtr;
+public:
+	Menu(TwinEEngine *engine);
 
-/** Process the plasma effect
+	int32 currMenuTextIndex;
+	int32 currMenuTextBank;
+	int8 currMenuTextBuffer[256];
+
+	int16 itemAngle[255]; // objectRotation
+
+	/** Options Menu Settings
+
+	Used to create the options menu. */
+	static int16 OptionsMenuSettings[];
+
+	/** Behaviour menu move pointer */
+	ActorMoveStruct moveMenu;
+
+	/** Plasma Effect pointer to file content: RESS.HQR:51 */
+	uint8 *plasmaEffectPtr;
+
+	/** Process the plasma effect
 	@param top top height where the effect will be draw in the front buffer
 	@param color plasma effect start color */
-void processPlasmaEffect(int32 top, int32 color);
+	void processPlasmaEffect(int32 top, int32 color);
 
-/** Draw the entire button box
+	/** Draw the entire button box
 	@param left start width to draw the button
 	@param top start height to draw the button
 	@param right end width to draw the button
 	@param bottom end height to draw the button */
-void drawBox(int32 left, int32 top, int32 right, int32 bottom);
+	void drawBox(int32 left, int32 top, int32 right, int32 bottom);
 
-/** Draws inside buttons transparent area
+	/** Draws inside buttons transparent area
 	@param left start width to draw the button
 	@param top start height to draw the button
 	@param right end width to draw the button
 	@param bottom end height to draw the button
 	@param colorAdj index to adjust the transparent box color */
-void drawTransparentBox(int32 left, int32 top, int32 right, int32 bottom, int32 colorAdj);
+	void drawTransparentBox(int32 left, int32 top, int32 right, int32 bottom, int32 colorAdj);
 
-/** Where the main menu options are processed
+	/** Where the main menu options are processed
 	@param menuSettings menu settings array with the information to build the menu options
 	@return pressed menu button identification */
-int32 processMenu(int16 *menuSettings);
+	int32 processMenu(int16 *menuSettings);
 
-/** Used to run the main menu */
-void mainMenu();
+	/** Used to run the main menu */
+	void mainMenu();
 
-/** Used to run the in-game give-up menu */
-int32 giveupMenu();
+	/** Used to run the in-game give-up menu */
+	int32 giveupMenu();
 
-/** Used to run the options menu */
-int32 optionsMenu();
+	/** Used to run the options menu */
+	int32 optionsMenu();
 
-/** Process hero behaviour menu */
-void processBehaviourMenu();
+	/** Process hero behaviour menu */
+	void processBehaviourMenu();
 
-/** Process in-game inventory menu */
-void processInventoryMenu();
+	/** Process in-game inventory menu */
+	void processInventoryMenu();
+};
 
 } // namespace TwinE
 

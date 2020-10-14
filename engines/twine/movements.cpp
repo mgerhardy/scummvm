@@ -98,7 +98,7 @@ void Movements::setActorAngleSafe(int16 startAngle, int16 endAngle, int16 stepAn
 	movePtr->from = startAngle & 0x3FF;
 	movePtr->to = endAngle & 0x3FF;
 	movePtr->numOfStep = stepAngle & 0x3FF;
-	movePtr->timeOfChange =  _engine->lbatime;
+	movePtr->timeOfChange =  _engine->lbaTime;
 }
 
 /** Clear actors safe angle
@@ -116,7 +116,7 @@ void Movements::setActorAngle(int16 startAngle, int16 endAngle, int16 stepAngle,
 	movePtr->from = startAngle;
 	movePtr->to = endAngle;
 	movePtr->numOfStep = stepAngle;
-	movePtr->timeOfChange =  _engine->lbatime;
+	movePtr->timeOfChange =  _engine->lbaTime;
 }
 
 /** Get actor angle
@@ -199,7 +199,7 @@ int32 Movements::getRealAngle(ActorMoveStruct *movePtr) {
 	int32 remainingAngle;
 
 	if (movePtr->numOfStep) {
-		timePassed =  _engine->lbatime - movePtr->timeOfChange;
+		timePassed =  _engine->lbaTime - movePtr->timeOfChange;
 
 		if (timePassed >= movePtr->numOfStep) { // rotation is finished
 			movePtr->numOfStep = 0;
@@ -232,13 +232,13 @@ int32 Movements::getRealValue(ActorMoveStruct *movePtr) {
 	if (!movePtr->numOfStep)
 		return movePtr->to;
 
-	if (!( _engine->lbatime - movePtr->timeOfChange < movePtr->numOfStep)) {
+	if (!( _engine->lbaTime - movePtr->timeOfChange < movePtr->numOfStep)) {
 		movePtr->numOfStep = 0;
 		return movePtr->to;
 	}
 
 	tempStep = movePtr->to - movePtr->from;
-	tempStep *=  _engine->lbatime - movePtr->timeOfChange;
+	tempStep *=  _engine->lbaTime - movePtr->timeOfChange;
 	tempStep /= movePtr->numOfStep;
 
 	return tempStep + movePtr->from;
@@ -305,7 +305,7 @@ void Movements::moveActor(int32 angleFrom, int32 angleTo, int32 speed, ActorMove
 	numOfStepInt >>= 8;
 
 	movePtr->numOfStep = (int16)numOfStepInt;
-	movePtr->timeOfChange =  _engine->lbatime;
+	movePtr->timeOfChange =  _engine->lbaTime;
 }
 
 void Movements::processActorMovements(int32 actorIdx) {
@@ -351,77 +351,77 @@ void Movements::processActorMovements(int32 actorIdx) {
 				}
 
 				// Process hero actions
-				switch (heroBehaviour) {
+				switch (_engine->_actor->heroBehaviour) {
 				case kNormal:
-					if (loopPressedKey & 1) {
+					if (_engine->loopPressedKey & 1) {
 						heroAction = 1;
 					}
 					break;
 				case kAthletic:
-					if (loopPressedKey & 1) {
-						initAnim(kJump, 1, 0, actorIdx);
+					if (_engine->loopPressedKey & 1) {
+						_engine->_animations->initAnim(kJump, 1, 0, actorIdx);
 					}
 					break;
 				case kAggressive:
-					if (loopPressedKey & 1) {
-						if (autoAgressive) {
+					if (_engine->loopPressedKey & 1) {
+						if (_engine->_actor->autoAgressive) {
 							heroMoved = 1;
 							actor->angle = getRealAngle(&actor->move);
-							if (!(previousLoopPressedKey & 1) || !actor->anim) {
+							if (!(_engine->previousLoopPressedKey & 1) || !actor->anim) {
 								int32 aggresiveMode = _engine->getRandomNumber(3);
 
 								switch (aggresiveMode) {
 								case 0:
-									initAnim(kKick, 1, 0, actorIdx);
+									_engine->_animations->initAnim(kKick, 1, 0, actorIdx);
 									break;
 								case 1:
-									initAnim(kRightPunch, 1, 0, actorIdx);
+									_engine->_animations->initAnim(kRightPunch, 1, 0, actorIdx);
 									break;
 								case 2:
-									initAnim(kLeftPunch, 1, 0, actorIdx);
+									_engine->_animations->initAnim(kLeftPunch, 1, 0, actorIdx);
 									break;
 								}
 							}
 						} else {
 							if (key & 8) {
-								initAnim(kRightPunch, 1, 0, actorIdx);
+								_engine->_animations->initAnim(kRightPunch, 1, 0, actorIdx);
 							}
 
 							if (key & 4) {
-								initAnim(kLeftPunch, 1, 0, actorIdx);
+								_engine->_animations->initAnim(kLeftPunch, 1, 0, actorIdx);
 							}
 
 							if (key & 1) {
-								initAnim(kKick, 1, 0, actorIdx);
+								_engine->_animations->initAnim(kKick, 1, 0, actorIdx);
 							}
 						}
 					}
 					break;
 				case kDiscrete:
-					if (loopPressedKey & 1) {
-						initAnim(kHide, 0, 255, actorIdx);
+					if (_engine->loopPressedKey & 1) {
+						_engine->_animations->initAnim(kHide, 0, 255, actorIdx);
 					}
 					break;
 				}
 			}
 
-			if ((loopPressedKey & 8) && !gameFlags[GAMEFLAG_INVENTORY_DISABLED]) {
-				if (usingSabre == 0) { // Use Magic Ball
-					if (gameFlags[GAMEFLAG_HAS_MAGICBALL]) {
-						if (magicBallIdx == -1) {
-							initAnim(kThrowBall, 1, 0, actorIdx);
+			if ((_engine->loopPressedKey & 8) && !_engine->_gameState->gameFlags[GAMEFLAG_INVENTORY_DISABLED]) {
+				if (_engine->_gameState->usingSabre == 0) { // Use Magic Ball
+					if (_engine->_gameState->gameFlags[GAMEFLAG_HAS_MAGICBALL]) {
+						if (_engine->_gameState->magicBallIdx == -1) {
+							_engine->_animations->initAnim(kThrowBall, 1, 0, actorIdx);
 						}
 
 						heroMoved = 1;
 						actor->angle = getRealAngle(&actor->move);
 					}
 				} else {
-					if (gameFlags[GAMEFLAG_HAS_SABRE]) {
+					if (_engine->_gameState->gameFlags[GAMEFLAG_HAS_SABRE]) {
 						if (actor->body != GAMEFLAG_HAS_SABRE) {
-							initModelActor(GAMEFLAG_HAS_SABRE, actorIdx);
+							_engine->_actor->initModelActor(GAMEFLAG_HAS_SABRE, actorIdx);
 						}
 
-						initAnim(kSabreAttack, 1, 0, actorIdx);
+						_engine->_animations->initAnim(kSabreAttack, 1, 0, actorIdx);
 
 						heroMoved = 1;
 						actor->angle = getRealAngle(&actor->move);
@@ -429,15 +429,15 @@ void Movements::processActorMovements(int32 actorIdx) {
 				}
 			}
 
-			if (!loopPressedKey || heroAction) {
+			if (!_engine->loopPressedKey || heroAction) {
 
 				if (key & 3) {     // if continue walking
 					heroMoved = 0; // don't break animation
 				}
 
-				if (key != heroPressedKey || loopPressedKey != heroPressedKey2) {
+				if (key != heroPressedKey || _engine->loopPressedKey != heroPressedKey2) {
 					if (heroMoved) {
-						initAnim(kStanding, 0, 255, actorIdx);
+						_engine->_animations->initAnim(kStanding, 0, 255, actorIdx);
 					}
 				}
 
@@ -445,20 +445,20 @@ void Movements::processActorMovements(int32 actorIdx) {
 
 				if (key & 1) { // walk forward
 					if (!currentActorInZone) {
-						initAnim(kForward, 0, 255, actorIdx);
+						_engine->_animations->initAnim(kForward, 0, 255, actorIdx);
 					}
 					heroMoved = 1;
 				}
 
 				if (key & 2 && !(key & 1)) { // walk backward
-					initAnim(kBackward, 0, 255, actorIdx);
+					_engine->_animations->initAnim(kBackward, 0, 255, actorIdx);
 					heroMoved = 1;
 				}
 
 				if (key & 4) { // turn left
 					heroMoved = 1;
 					if (actor->anim == 0) {
-						initAnim(kTurnLeft, 0, 255, actorIdx);
+						_engine->_animations->initAnim(kTurnLeft, 0, 255, actorIdx);
 					} else {
 						if (!actor->dynamicFlags.bIsRotationByAnim) {
 							actor->angle = getRealAngle(&actor->move);
@@ -469,7 +469,7 @@ void Movements::processActorMovements(int32 actorIdx) {
 				if (key & 8) { // turn right
 					heroMoved = 1;
 					if (actor->anim == 0) {
-						initAnim(kTurnRight, 0, 255, actorIdx);
+						_engine->_animations->initAnim(kTurnRight, 0, 255, actorIdx);
 					} else {
 						if (!actor->dynamicFlags.bIsRotationByAnim) {
 							actor->angle = getRealAngle(&actor->move);
@@ -491,7 +491,7 @@ void Movements::processActorMovements(int32 actorIdx) {
 			moveActor(actor->angle, actor->angle + tempAngle, actor->speed, &actor->move);
 
 			heroPressedKey = key;
-			heroPressedKey2 = loopPressedKey;
+			heroPressedKey2 = _engine->loopPressedKey;
 
 			break;
 		case kFollow: {
@@ -517,16 +517,16 @@ void Movements::processActorMovements(int32 actorIdx) {
 		case kRandom: {
 			if (!actor->dynamicFlags.bIsRotationByAnim) {
 				if (actor->brickShape & 0x80) {
-					moveActor(actor->angle, (((rand() & 0x100) + (actor->angle - 0x100)) & 0x3FF), actor->speed, &actor->move);
-					actor->info0 = _engine->getRandomNumber(300) +  _engine->lbatime + 300;
-					initAnim(0, 0, 255, actorIdx);
+					moveActor(actor->angle, (((_engine->getRandomNumber() & 0x100) + (actor->angle - 0x100)) & 0x3FF), actor->speed, &actor->move);
+					actor->info0 = _engine->getRandomNumber(300) +  _engine->lbaTime + 300;
+					_engine->_animations->initAnim(0, 0, 255, actorIdx);
 				}
 
 				if (!actor->move.numOfStep) {
-					initAnim(1, 0, 255, actorIdx);
-					if ( _engine->lbatime > actor->info0) {
+					_engine->_animations->initAnim(1, 0, 255, actorIdx);
+					if ( _engine->lbaTime > actor->info0) {
 						moveActor(actor->angle, (((_engine->getRandomNumber() & 0x100) + (actor->angle - 0x100)) & 0x3FF), actor->speed, &actor->move);
-						actor->info0 = _engine->getRandomNumber(300) +  _engine->lbatime + 300;
+						actor->info0 = _engine->getRandomNumber(300) +  _engine->lbaTime + 300;
 					}
 				}
 			}

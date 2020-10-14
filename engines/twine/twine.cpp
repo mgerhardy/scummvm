@@ -468,6 +468,8 @@ TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flag
 	_grid = new Grid(this);
 	_movements = new Movements(this);
 	_hqrdepack = new HQRDepack(this);
+	_interface = new Interface(this);
+	_menu = new Menu(this);
 }
 
 TwinEEngine::~TwinEEngine() {

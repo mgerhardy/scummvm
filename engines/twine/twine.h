@@ -131,6 +131,8 @@ class GameState;
 class Grid;
 class Movements;
 class HQRDepack;
+class Interface;
+class Menu;
 
 class TwinEEngine : public Engine {
 public:
@@ -148,6 +150,8 @@ public:
 	Grid *_grid;
 	Movements *_movements;
 	HQRDepack *_hqrdepack;
+	Interface *_interface;
+	Menu *_menu;
 
 	/** Configuration file structure
 	 * Contains all the data used in the engine to configurated the game in particulary ways. */

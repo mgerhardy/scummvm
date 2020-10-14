@@ -124,7 +124,7 @@ void GameState::initHeroVars() { // reinitAll3
 
 /** Initialize all engine variables */
 void GameState::initEngineVars(int32 save) { // reinitAll
-	resetClip();
+	_engine->_interface->resetClip();
 
 	alphaLight = 896;
 	betaLight = 950;
@@ -227,7 +227,7 @@ void GameState::loadGame() {
 
 void GameState::saveGame() {
 	FileReader fr;
-	int8 data;
+	uint8 data;
 
 	if (!fropen2(&fr, SAVE_DIR "S9999.LBA", "wb+")) {
 		warning("Can't save S9999.LBA saved game!\n");
@@ -298,7 +298,7 @@ void GameState::processFoundItem(int32 item) {
 	itemCameraZ = _engine->_grid->newCameraZ << 9;
 
 	renderIsoModel(sceneHero->X - itemCameraX, sceneHero->Y - itemCameraY, sceneHero->Z - itemCameraZ, 0, 0x80, 0, _engine->_actor->bodyTable[sceneHero->entity]);
-	setClip(renderLeft, renderTop, renderRight, renderBottom);
+	_engine->_interface->setClip(renderLeft, renderTop, renderRight, renderBottom);
 
 	itemX = (sceneHero->X + 0x100) >> 9;
 	itemY = sceneHero->Y >> 8;
@@ -331,7 +331,7 @@ void GameState::processFoundItem(int32 item) {
 		_engine->cfgfile.LanguageCDId = tmpLanguageCDId;
 	}
 
-	resetClip();
+	_engine->_interface->resetClip();
 	initText(item);
 	initDialogueBox();
 
@@ -357,20 +357,20 @@ void GameState::processFoundItem(int32 item) {
 	numOfRedrawBox = 0;
 
 	while (!quitItem) {
-		resetClip();
+		_engine->_interface->resetClip();
 		currNumOfRedrawBox = 0;
 		blitBackgroundAreas();
-		drawTransparentBox(boxTopLeftX, boxTopLeftY, boxBottomRightX, boxBottomRightY, 4);
+		_engine->_interface->drawTransparentBox(boxTopLeftX, boxTopLeftY, boxBottomRightX, boxBottomRightY, 4);
 
-		setClip(boxTopLeftX, boxTopLeftY, boxBottomRightX, boxBottomRightY);
+		_engine->_interface->setClip(boxTopLeftX, boxTopLeftY, boxBottomRightX, boxBottomRightY);
 
-		itemAngle[item] += 8;
+		_engine->_menu->itemAngle[item] += 8;
 
-		renderInventoryItem(projPosX, projPosY, inventoryTable[item], itemAngle[item], 10000);
+		renderInventoryItem(projPosX, projPosY, inventoryTable[item], _engine->_menu->itemAngle[item], 10000);
 
-		drawBox(boxTopLeftX, boxTopLeftY, boxBottomRightX, boxBottomRightY);
+		_engine->_menu->drawBox(boxTopLeftX, boxTopLeftY, boxBottomRightX, boxBottomRightY);
 		addRedrawArea(boxTopLeftX, boxTopLeftY, boxBottomRightX, boxBottomRightY);
-		resetClip();
+		_engine->_interface->resetClip();
 		initEngineProjections();
 
 		if (_engine->_animations->setModelAnimation(currentAnimState, currentAnim, _engine->_actor->bodyTable[sceneHero->entity], &sceneHero->animTimerData)) {
@@ -381,12 +381,12 @@ void GameState::processFoundItem(int32 item) {
 		}
 
 		renderIsoModel(sceneHero->X - itemCameraX, sceneHero->Y - itemCameraY, sceneHero->Z - itemCameraZ, 0, 0x80, 0, _engine->_actor->bodyTable[sceneHero->entity]);
-		setClip(renderLeft, renderTop, renderRight, renderBottom);
+		_engine->_interface->setClip(renderLeft, renderTop, renderRight, renderBottom);
 		_engine->_grid->drawOverModelActor(itemX, itemY, itemZ);
 		addRedrawArea(renderLeft, renderTop, renderRight, renderBottom);
 
 		if (textState) {
-			resetClip();
+			_engine->_interface->resetClip();
 			textState = printText10();
 		}
 
@@ -451,7 +451,7 @@ void GameState::processGameChoices(int32 choiceIdx) {
 
 	drawAskQuestion(choiceIdx);
 
-	processMenu(gameChoicesSettings);
+	_engine->_menu->processMenu(gameChoicesSettings);
 	choiceAnswer = gameChoices[gameChoicesSettings[0]];
 
 	// get right VOX entry index
@@ -468,7 +468,6 @@ void GameState::processGameChoices(int32 choiceIdx) {
 
 void GameState::processGameoverAnimation() { // makeGameOver
 	int32 tmpLbaTime, startLbaTime;
-	uint8 *gameOverPtr;
 
 	tmpLbaTime = _engine->lbaTime;
 
@@ -480,8 +479,8 @@ void GameState::processGameoverAnimation() { // makeGameOver
 	// TODO: drawInGameTransBox
 	setPalette(paletteRGBA);
 	copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
-	gameOverPtr = malloc(hqrEntrySize(HQR_RESS_FILE, RESSHQR_GAMEOVERMDL));
-	hqrGetEntry(gameOverPtr, HQR_RESS_FILE, RESSHQR_GAMEOVERMDL);
+	uint8 *gameOverPtr = (uint8 *)malloc(_engine->_hqrdepack->hqrEntrySize(HQR_RESS_FILE, RESSHQR_GAMEOVERMDL));
+	_engine->_hqrdepack->hqrGetEntry(gameOverPtr, HQR_RESS_FILE, RESSHQR_GAMEOVERMDL);
 
 	if (gameOverPtr) {
 		int32 avg, cdot;
@@ -491,14 +490,14 @@ void GameState::processGameoverAnimation() { // makeGameOver
 		stopMidiMusic(); // stop fade music
 		setCameraPosition(320, 240, 128, 200, 200);
 		startLbaTime = _engine->lbaTime;
-		setClip(120, 120, 519, 359);
+		_engine->_interface->setClip(120, 120, 519, 359);
 
 		while (skipIntro != 1 && (_engine->lbaTime - startLbaTime) <= 0x1F4) {
 			readKeys();
 
 			avg = _engine->_collision->getAverageValue(40000, 3200, 500, _engine->lbaTime - startLbaTime);
 			cdot = crossDot(1, 1024, 100, (_engine->lbaTime - startLbaTime) % 0x64);
-			blitBox(120, 120, 519, 359, (int8 *)_engine->workVideoBuffer, 120, 120, (int8 *)_engine->frontVideoBuffer);
+			_engine->_interface->blitBox(120, 120, 519, 359, (int8 *)_engine->workVideoBuffer, 120, 120, (int8 *)_engine->frontVideoBuffer);
 			setCameraAngle(0, 0, 0, 0, -cdot, 0, avg);
 			renderIsoModel(0, 0, 0, 0, 0, 0, gameOverPtr);
 			copyBlockPhys(120, 120, 519, 359);
@@ -508,14 +507,14 @@ void GameState::processGameoverAnimation() { // makeGameOver
 		}
 
 		playSample(37, _engine->getRandomNumber(2000) + 3096, 1, 0x80, 0x80, 0x80, -1);
-		blitBox(120, 120, 519, 359, (int8 *)_engine->workVideoBuffer, 120, 120, (int8 *)_engine->frontVideoBuffer);
+		_engine->_interface->blitBox(120, 120, 519, 359, (int8 *)_engine->workVideoBuffer, 120, 120, (int8 *)_engine->frontVideoBuffer);
 		setCameraAngle(0, 0, 0, 0, 0, 0, 3200);
 		renderIsoModel(0, 0, 0, 0, 0, 0, gameOverPtr);
 		copyBlockPhys(120, 120, 519, 359);
 
 		delaySkip(2000);
 
-		resetClip();
+		_engine->_interface->resetClip();
 		free(gameOverPtr);
 		copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 		flip();

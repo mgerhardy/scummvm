@@ -173,28 +173,28 @@ void DebugScene::displayZones(int16 pKey) {
 				color = 15 * 3 + zonePtr->type * 16;
 
 				// draw front part
-				drawLine(frontBottomLeftPoint2D.X, frontBottomLeftPoint2D.Y, frontTopLeftPoint2D.X, frontTopLeftPoint2D.Y, color);
-				drawLine(frontTopLeftPoint2D.X, frontTopLeftPoint2D.Y, frontTopRightPoint2D.X, frontTopRightPoint2D.Y, color);
-				drawLine(frontTopRightPoint2D.X, frontTopRightPoint2D.Y, frontBottomRightPoint2D.X, frontBottomRightPoint2D.Y, color);
-				drawLine(frontBottomRightPoint2D.X, frontBottomRightPoint2D.Y, frontBottomLeftPoint2D.X, frontBottomLeftPoint2D.Y, color);
+				_engine->_interface->drawLine(frontBottomLeftPoint2D.X, frontBottomLeftPoint2D.Y, frontTopLeftPoint2D.X, frontTopLeftPoint2D.Y, color);
+				_engine->_interface->drawLine(frontTopLeftPoint2D.X, frontTopLeftPoint2D.Y, frontTopRightPoint2D.X, frontTopRightPoint2D.Y, color);
+				_engine->_interface->drawLine(frontTopRightPoint2D.X, frontTopRightPoint2D.Y, frontBottomRightPoint2D.X, frontBottomRightPoint2D.Y, color);
+				_engine->_interface->drawLine(frontBottomRightPoint2D.X, frontBottomRightPoint2D.Y, frontBottomLeftPoint2D.X, frontBottomLeftPoint2D.Y, color);
 
 				// draw top part
-				drawLine(frontTopLeftPoint2D.X, frontTopLeftPoint2D.Y, backTopLeftPoint2D.X, backTopLeftPoint2D.Y, color);
-				drawLine(backTopLeftPoint2D.X, backTopLeftPoint2D.Y, backTopRightPoint2D.X, backTopRightPoint2D.Y, color);
-				drawLine(backTopRightPoint2D.X, backTopRightPoint2D.Y, frontTopRightPoint2D.X, frontTopRightPoint2D.Y, color);
-				drawLine(frontTopRightPoint2D.X, frontTopRightPoint2D.Y, frontTopLeftPoint2D.X, frontTopLeftPoint2D.Y, color);
+				_engine->_interface->drawLine(frontTopLeftPoint2D.X, frontTopLeftPoint2D.Y, backTopLeftPoint2D.X, backTopLeftPoint2D.Y, color);
+				_engine->_interface->drawLine(backTopLeftPoint2D.X, backTopLeftPoint2D.Y, backTopRightPoint2D.X, backTopRightPoint2D.Y, color);
+				_engine->_interface->drawLine(backTopRightPoint2D.X, backTopRightPoint2D.Y, frontTopRightPoint2D.X, frontTopRightPoint2D.Y, color);
+				_engine->_interface->drawLine(frontTopRightPoint2D.X, frontTopRightPoint2D.Y, frontTopLeftPoint2D.X, frontTopLeftPoint2D.Y, color);
 
 				// draw back part
-				drawLine(backBottomLeftPoint2D.X, backBottomLeftPoint2D.Y, backTopLeftPoint2D.X, backTopLeftPoint2D.Y, color);
-				drawLine(backTopLeftPoint2D.X, backTopLeftPoint2D.Y, backTopRightPoint2D.X, backTopRightPoint2D.Y, color);
-				drawLine(backTopRightPoint2D.X, backTopRightPoint2D.Y, backBottomRightPoint2D.X, backBottomRightPoint2D.Y, color);
-				drawLine(backBottomRightPoint2D.X, backBottomRightPoint2D.Y, backBottomLeftPoint2D.X, backBottomLeftPoint2D.Y, color);
+				_engine->_interface->drawLine(backBottomLeftPoint2D.X, backBottomLeftPoint2D.Y, backTopLeftPoint2D.X, backTopLeftPoint2D.Y, color);
+				_engine->_interface->drawLine(backTopLeftPoint2D.X, backTopLeftPoint2D.Y, backTopRightPoint2D.X, backTopRightPoint2D.Y, color);
+				_engine->_interface->drawLine(backTopRightPoint2D.X, backTopRightPoint2D.Y, backBottomRightPoint2D.X, backBottomRightPoint2D.Y, color);
+				_engine->_interface->drawLine(backBottomRightPoint2D.X, backBottomRightPoint2D.Y, backBottomLeftPoint2D.X, backBottomLeftPoint2D.Y, color);
 
 				// draw bottom part
-				drawLine(frontBottomLeftPoint2D.X, frontBottomLeftPoint2D.Y, backBottomLeftPoint2D.X, backBottomLeftPoint2D.Y, color);
-				drawLine(backBottomLeftPoint2D.X, backBottomLeftPoint2D.Y, backBottomRightPoint2D.X, backBottomRightPoint2D.Y, color);
-				drawLine(backBottomRightPoint2D.X, backBottomRightPoint2D.Y, frontBottomRightPoint2D.X, frontBottomRightPoint2D.Y, color);
-				drawLine(frontBottomRightPoint2D.X, frontBottomRightPoint2D.Y, frontBottomLeftPoint2D.X, frontBottomLeftPoint2D.Y, color);
+				_engine->_interface->drawLine(frontBottomLeftPoint2D.X, frontBottomLeftPoint2D.Y, backBottomLeftPoint2D.X, backBottomLeftPoint2D.Y, color);
+				_engine->_interface->drawLine(backBottomLeftPoint2D.X, backBottomLeftPoint2D.Y, backBottomRightPoint2D.X, backBottomRightPoint2D.Y, color);
+				_engine->_interface->drawLine(backBottomRightPoint2D.X, backBottomRightPoint2D.Y, frontBottomRightPoint2D.X, frontBottomRightPoint2D.Y, color);
+				_engine->_interface->drawLine(frontBottomRightPoint2D.X, frontBottomRightPoint2D.Y, frontBottomLeftPoint2D.X, frontBottomLeftPoint2D.Y, color);
 			}
 		}
 	}

@@ -79,7 +79,7 @@ void Grid::copyGridMask(int32 index, int32 x, int32 y, uint8 *buffer) {
 	right = *ptr + left - 1;
 	bottom = *(ptr + 1) + top - 1;
 
-	if (left > textWindowRight || right < textWindowLeft || bottom < textWindowTop || top > textWindowBottom)
+	if (left > _engine->_interface->textWindowRight || right < _engine->_interface->textWindowLeft || bottom < _engine->_interface->textWindowTop || top > _engine->_interface->textWindowBottom)
 		return;
 
 	ptr += 4;
@@ -98,10 +98,10 @@ void Grid::copyGridMask(int32 index, int32 x, int32 y, uint8 *buffer) {
 	bottom++;
 
 	// if line on top aren't in the blitting area...
-	if (absY < textWindowTop) {
+	if (absY < _engine->_interface->textWindowTop) {
 		int numOfLineToRemove;
 
-		numOfLineToRemove = textWindowTop - absY;
+		numOfLineToRemove = _engine->_interface->textWindowTop - absY;
 
 		vSize -= numOfLineToRemove;
 		if (vSize <= 0)
@@ -118,8 +118,8 @@ void Grid::copyGridMask(int32 index, int32 x, int32 y, uint8 *buffer) {
 	}
 
 	// reduce the vSize to remove lines on bottom
-	if (absY + vSize - 1 > textWindowBottom) {
-		vSize = textWindowBottom - absY + 1;
+	if (absY + vSize - 1 > _engine->_interface->textWindowBottom) {
+		vSize = _engine->_interface->textWindowBottom - absY + 1;
 		if (vSize <= 0)
 			return;
 	}
@@ -144,7 +144,7 @@ void Grid::copyGridMask(int32 index, int32 x, int32 y, uint8 *buffer) {
 			temp = *(ptr++); // copy size
 
 			for (j = 0; j < temp; j++) {
-				if (absX >= textWindowLeft && absX <= textWindowRight)
+				if (absX >= _engine->_interface->textWindowLeft && absX <= _engine->_interface->textWindowRight)
 					*outPtr = *inPtr;
 
 				absX++;
@@ -171,14 +171,14 @@ void Grid::drawOverModelActor(int32 X, int32 Y, int32 Z) {
 	int32 j;
 	BrickEntry *currBrickEntry;
 
-	CopyBlockPhysLeft = ((textWindowLeft + 24) / 24) - 1;
-	CopyBlockPhysRight = ((textWindowRight + 24) / 24);
+	CopyBlockPhysLeft = ((_engine->_interface->textWindowLeft + 24) / 24) - 1;
+	CopyBlockPhysRight = ((_engine->_interface->textWindowRight + 24) / 24);
 
 	for (j = CopyBlockPhysLeft; j <= CopyBlockPhysRight; j++) {
 		for (i = 0; i < brickInfoBuffer[j]; i++) {
 			currBrickEntry = &bricksDataBuffer[j][i];
 
-			if (currBrickEntry->posY + 38 > textWindowTop && currBrickEntry->posY <= textWindowBottom && currBrickEntry->y >= Y) {
+			if (currBrickEntry->posY + 38 > _engine->_interface->textWindowTop && currBrickEntry->posY <= _engine->_interface->textWindowBottom && currBrickEntry->y >= Y) {
 				if (currBrickEntry->x + currBrickEntry->z > Z + X) {
 					copyGridMask(currBrickEntry->index, (j * 24) - 24, currBrickEntry->posY, _engine->workVideoBuffer);
 				}
@@ -198,14 +198,14 @@ void Grid::drawOverSpriteActor(int32 X, int32 Y, int32 Z) {
 	int32 j;
 	BrickEntry *currBrickEntry;
 
-	CopyBlockPhysLeft = ((textWindowLeft + 24) / 24) - 1;
-	CopyBlockPhysRight = (textWindowRight + 24) / 24;
+	CopyBlockPhysLeft = ((_engine->_interface->textWindowLeft + 24) / 24) - 1;
+	CopyBlockPhysRight = (_engine->_interface->textWindowRight + 24) / 24;
 
 	for (j = CopyBlockPhysLeft; j <= CopyBlockPhysRight; j++) {
 		for (i = 0; i < brickInfoBuffer[j]; i++) {
 			currBrickEntry = &bricksDataBuffer[j][i];
 
-			if (currBrickEntry->posY + 38 > textWindowTop && currBrickEntry->posY <= textWindowBottom && currBrickEntry->y >= Y) {
+			if (currBrickEntry->posY + 38 > _engine->_interface->textWindowTop && currBrickEntry->posY <= _engine->_interface->textWindowBottom && currBrickEntry->y >= Y) {
 				if ((currBrickEntry->x == X) && (currBrickEntry->z == Z)) {
 					copyGridMask(currBrickEntry->index, (j * 24) - 24, currBrickEntry->posY, _engine->workVideoBuffer);
 				}
@@ -374,7 +374,7 @@ int32 Grid::loadGridBricks(int32 gridSize) {
 
 	for (i = firstBrick; i <= lastBrick; i++) {
 		if (brickUsageTable[i]) {
-			brickSizeTable[i] = hqrGetallocEntry(&brickTable[i], HQR_LBA_BRK_FILE, i);
+			brickSizeTable[i] = _engine->_hqrdepack->hqrGetallocEntry(&brickTable[i], HQR_LBA_BRK_FILE, i);
 		}
 	}
 
@@ -510,10 +510,10 @@ void Grid::createCellingGridMap(uint8 *gridPtr) {
 int32 Grid::initGrid(int32 index) {
 
 	// load grids from file
-	int32 gridSize = hqrGetallocEntry(&currentGrid, HQR_LBA_GRI_FILE, index);
+	int32 gridSize = _engine->_hqrdepack->hqrGetallocEntry(&currentGrid, HQR_LBA_GRI_FILE, index);
 
 	// load layouts from file
-	hqrGetallocEntry(&currentBll, HQR_LBA_BLL_FILE, index);
+	_engine->_hqrdepack->hqrGetallocEntry(&currentBll, HQR_LBA_BLL_FILE, index);
 
 	loadGridBricks(gridSize);
 
@@ -532,7 +532,7 @@ int32 Grid::initCellingGrid(int32 index) {
 	uint8 *gridPtr;
 
 	// load grids from file
-	hqrGetallocEntry(&gridPtr, HQR_LBA_GRI_FILE, index + CELLING_GRIDS_START_INDEX);
+	_engine->_hqrdepack->hqrGetallocEntry(&gridPtr, HQR_LBA_GRI_FILE, index + CELLING_GRIDS_START_INDEX);
 
 	createCellingGridMap(gridPtr);
 
@@ -619,7 +619,7 @@ void Grid::drawBrickSprite(int32 index, int32 posX, int32 posY, uint8 *ptr, int3
 					if (!(temp & 0x40)) {
 						temp = *(ptr++);
 						for (i = 0; i < iteration; i++) {
-							if (x >= textWindowLeft && x < textWindowRight && y >= textWindowTop && y < textWindowBottom)
+							if (x >= _engine->_interface->textWindowLeft && x < _engine->_interface->textWindowRight && y >= _engine->_interface->textWindowTop && y < _engine->_interface->textWindowBottom)
 								_engine->frontVideoBuffer[y * SCREEN_WIDTH + x] = temp;
 
 							x++;
@@ -627,7 +627,7 @@ void Grid::drawBrickSprite(int32 index, int32 posX, int32 posY, uint8 *ptr, int3
 						}
 					} else {
 						for (i = 0; i < iteration; i++) {
-							if (x >= textWindowLeft && x < textWindowRight && y >= textWindowTop && y < textWindowBottom)
+							if (x >= _engine->_interface->textWindowLeft && x < _engine->_interface->textWindowRight && y >= _engine->_interface->textWindowTop && y < _engine->_interface->textWindowBottom)
 								_engine->frontVideoBuffer[y * SCREEN_WIDTH + x] = *ptr;
 
 							x++;

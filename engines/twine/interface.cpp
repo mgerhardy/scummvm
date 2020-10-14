@@ -26,13 +26,15 @@
 
 namespace TwinE {
 
+Interface::Interface(TwinEEngine *engine) : _engine(engine) {}
+
 const int32 INSIDE = 0; // 0000
 const int32 LEFT = 1;   // 0001
 const int32 RIGHT = 2;  // 0010
 const int32 TOP = 4;    // 0100
 const int32 BOTTOM = 8; // 1000
 
-int32 checkClipping(int32 x, int32 y) {
+int32 Interface::checkClipping(int32 x, int32 y) {
 	int32 code = INSIDE;
 	if (x < textWindowLeft)
 		code |= LEFT;
@@ -51,7 +53,7 @@ int32 checkClipping(int32 x, int32 y) {
 	@param endWidth width value where the line ends
 	@param endHeight height value where the line ends
 	@param lineColor line color in the current palette */
-void drawLine(int32 startWidth, int32 startHeight, int32 endWidth, int32 endHeight, int32 lineColor) {
+void Interface::drawLine(int32 startWidth, int32 startHeight, int32 endWidth, int32 endHeight, int32 lineColor) {
 	int32 temp;
 	int32 flag2;
 	uint8 *out;
@@ -73,7 +75,7 @@ void drawLine(int32 startWidth, int32 startHeight, int32 endWidth, int32 endHeig
 		startHeight = temp;
 	}
 
-	// Perform proper clipping (Cohen–Sutherland algorithm)
+	// Perform proper clipping (CohenSutherland algorithm)
 	outcode0 = checkClipping(startWidth, startHeight);
 	outcode1 = checkClipping(endWidth, endHeight);
 
@@ -118,7 +120,7 @@ void drawLine(int32 startWidth, int32 startHeight, int32 endWidth, int32 endHeig
 		endHeight = -endHeight;
 	}
 
-	out = frontVideoBuffer + screenLookupTable[startHeight] + startWidth;
+	out = _engine->frontVideoBuffer + _engine->screenLookupTable[startHeight] + startWidth;
 
 	color = currentLineColor;
 	if (endWidth < endHeight) { // significant slope
@@ -167,7 +169,7 @@ void drawLine(int32 startWidth, int32 startHeight, int32 endWidth, int32 endHeig
 	@param leftDest start width to draw the button in destination buffer
 	@param topDest start height to draw the button in destination buffer
 	@dest destination screen buffer, in this case front buffer */
-void blitBox(int32 left, int32 top, int32 right, int32 bottom, int8 *source, int32 leftDest, int32 topDest, int8 *dest) {
+void Interface::blitBox(int32 left, int32 top, int32 right, int32 bottom, int8 *source, int32 leftDest, int32 topDest, int8 *dest) {
 	int32 width;
 	int32 height;
 	int8 *s;
@@ -177,8 +179,8 @@ void blitBox(int32 left, int32 top, int32 right, int32 bottom, int8 *source, int
 	int32 i;
 	int32 j;
 
-	s = screenLookupTable[top] + source + left;
-	d = screenLookupTable[topDest] + dest + leftDest;
+	s = _engine->screenLookupTable[top] + source + left;
+	d = _engine->screenLookupTable[topDest] + dest + leftDest;
 
 	width = right - left + 1;
 	height = bottom - top + 1;
@@ -205,7 +207,7 @@ void blitBox(int32 left, int32 top, int32 right, int32 bottom, int8 *source, int
 	@param right end width to draw the button
 	@param bottom end height to draw the button
 	@param colorAdj index to adjust the transparent box color */
-void drawTransparentBox(int32 left, int32 top, int32 right, int32 bottom, int32 colorAdj) {
+void Interface::drawTransparentBox(int32 left, int32 top, int32 right, int32 bottom, int32 colorAdj) {
 	uint8 *pos;
 	int32 width;
 	int32 height;
@@ -234,7 +236,7 @@ void drawTransparentBox(int32 left, int32 top, int32 right, int32 bottom, int32 
 	if (bottom > SCREEN_TEXTLIMIT_BOTTOM)
 		bottom = SCREEN_TEXTLIMIT_BOTTOM;
 
-	pos = screenLookupTable[top] + frontVideoBuffer + left;
+	pos = _engine->screenLookupTable[top] + _engine->frontVideoBuffer + left;
 	height2 = height = bottom - top;
 	height2++;
 
@@ -262,7 +264,7 @@ void drawTransparentBox(int32 left, int32 top, int32 right, int32 bottom, int32 
 	} while (height2 > 0);
 }
 
-void drawSplittedBox(int32 left, int32 top, int32 right, int32 bottom, uint8 e) { // Box
+void Interface::drawSplittedBox(int32 left, int32 top, int32 right, int32 bottom, uint8 e) { // Box
 	uint8 *ptr;
 
 	int32 offset;
@@ -282,7 +284,7 @@ void drawSplittedBox(int32 left, int32 top, int32 right, int32 bottom, uint8 e) 
 	// cropping
 	offset = -((right - left) - SCREEN_WIDTH);
 
-	ptr = frontVideoBuffer + screenLookupTable[top] + left;
+	ptr = _engine->frontVideoBuffer + _engine->screenLookupTable[top] + left;
 
 	for (x = top; x < bottom; x++) {
 		for (y = left; y < right; y++) {
@@ -292,7 +294,7 @@ void drawSplittedBox(int32 left, int32 top, int32 right, int32 bottom, uint8 e) 
 	}
 }
 
-void setClip(int32 left, int32 top, int32 right, int32 bottom) {
+void Interface::setClip(int32 left, int32 top, int32 right, int32 bottom) {
 	if (left < 0)
 		left = 0;
 	textWindowLeft = left;
@@ -310,21 +312,21 @@ void setClip(int32 left, int32 top, int32 right, int32 bottom) {
 	textWindowBottom = bottom;
 }
 
-void saveClip() { // saveTextWindow
+void Interface::saveClip() { // saveTextWindow
 	textWindowLeftSave = textWindowLeft;
 	textWindowTopSave = textWindowTop;
 	textWindowRightSave = textWindowRight;
 	textWindowBottomSave = textWindowBottom;
 }
 
-void loadClip() { // loadSavedTextWindow
+void Interface::loadClip() { // loadSavedTextWindow
 	textWindowLeft = textWindowLeftSave;
 	textWindowTop = textWindowTopSave;
 	textWindowRight = textWindowRightSave;
 	textWindowBottom = textWindowBottomSave;
 }
 
-void resetClip() {
+void Interface::resetClip() {
 	textWindowTop = textWindowLeft = SCREEN_TEXTLIMIT_TOP;
 	textWindowRight = SCREEN_TEXTLIMIT_RIGHT;
 	textWindowBottom = SCREEN_TEXTLIMIT_BOTTOM;

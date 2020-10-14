@@ -74,7 +74,7 @@ int32 fropen2(FileReader *fr, const char *filename, const char *mode);
 	@param fr FileReader pointer
 	@param destPtr content destination pointer
 	@param size size of read characters */
-void frwrite(FileReader *fr, void *destPtr, uint32 size, uint32 count);
+void frwrite(FileReader *fr, const void *destPtr, uint32 size, uint32 count);
 
 /** Close file
 	@param fr FileReader pointer */
