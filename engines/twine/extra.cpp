@@ -174,12 +174,12 @@ void Extra::throwExtra(ExtraListStruct *extra, int32 var1, int32 var2, int32 var
 
 	_engine->_movements->rotateActor(var3, 0, var1);
 
-	extra->destY = -destZ;
+	extra->destY = -_engine->_renderer->destZ;
 
-	_engine->_movements->rotateActor(0, destX, var2);
+	_engine->_movements->rotateActor(0, _engine->_renderer->destX, var2);
 
-	extra->destX = destX;
-	extra->destZ = destZ;
+	extra->destX = _engine->_renderer->destX;
+	extra->destZ = _engine->_renderer->destZ;
 
 	extra->angle = var4;
 	extra->lifeTime = _engine->lbaTime;
@@ -429,27 +429,27 @@ void Extra::drawSpecialShape(const int16 *shapeTable, int32 X, int32 Y, int32 co
 	var_8 = ((*(shapeTable++)) * size) >> 4;
 	temp1 = ((*(shapeTable++)) * size) >> 4;
 
-	renderLeft = 0x7D00;
-	renderRight = -0x7D00;
-	renderTop = 0x7D00;
-	renderBottom = -0x7D00;
+	_engine->_redraw->renderLeft = 0x7D00;
+	_engine->_redraw->renderRight = -0x7D00;
+	_engine->_redraw->renderTop = 0x7D00;
+	_engine->_redraw->renderBottom = -0x7D00;
 
 	_engine->_movements->rotateActor(var_8, temp1, angle);
 
-	computedX = destX + X;
-	computedY = destZ + Y;
+	computedX = _engine->_renderer->destX + X;
+	computedY = _engine->_renderer->destZ + Y;
 
-	if (computedX < renderLeft)
-		renderLeft = computedX;
+	if (computedX < _engine->_redraw->renderLeft)
+		_engine->_redraw->renderLeft = computedX;
 
-	if (computedX > renderRight)
-		renderRight = computedX;
+	if (computedX > _engine->_redraw->renderRight)
+		_engine->_redraw->renderRight = computedX;
 
-	if (computedY < renderTop)
-		renderTop = computedY;
+	if (computedY < _engine->_redraw->renderTop)
+		_engine->_redraw->renderTop = computedY;
 
-	if (computedY > renderBottom)
-		renderBottom = computedY;
+	if (computedY > _engine->_redraw->renderBottom)
+		_engine->_redraw->renderBottom = computedY;
 
 	numEntries = 1;
 
@@ -463,39 +463,39 @@ void Extra::drawSpecialShape(const int16 *shapeTable, int32 X, int32 Y, int32 co
 		oldComputedX = currentX;
 		oldComputedY = currentY;
 
-		projPosX = currentX;
-		projPosY = currentY;
+		_engine->_renderer->projPosX = currentX;
+		_engine->_renderer->projPosY = currentY;
 
 		_engine->_movements->rotateActor(var_8, temp1, angle);
 
-		currentX = destX + X;
-		currentY = destZ + Y;
+		currentX = _engine->_renderer->destX + X;
+		currentY = _engine->_renderer->destZ + Y;
 
-		if (currentX < renderLeft)
-			renderLeft = currentX;
+		if (currentX < _engine->_redraw->renderLeft)
+			_engine->_redraw->renderLeft = currentX;
 
-		if (currentX > renderRight)
-			renderRight = currentX;
+		if (currentX > _engine->_redraw->renderRight)
+			_engine->_redraw->renderRight = currentX;
 
-		if (currentY < renderTop)
-			renderTop = currentY;
+		if (currentY < _engine->_redraw->renderTop)
+			_engine->_redraw->renderTop = currentY;
 
-		if (currentY > renderBottom)
-			renderBottom = currentY;
+		if (currentY > _engine->_redraw->renderBottom)
+			_engine->_redraw->renderBottom = currentY;
 
-		projPosX = currentX;
-		projPosY = currentY;
+		_engine->_renderer->projPosX = currentX;
+		_engine->_renderer->projPosY = currentY;
 
 		_engine->_interface->drawLine(oldComputedX, oldComputedY, currentX, currentY, color);
 
 		numEntries++;
 
-		currentX = projPosX;
-		currentY = projPosY;
+		currentX = _engine->_renderer->projPosX;
+		currentY = _engine->_renderer->projPosY;
 	}
 
-	projPosX = currentX;
-	projPosY = currentY;
+	_engine->_renderer->projPosX = currentX;
+	_engine->_renderer->projPosY = currentY;
 	_engine->_interface->drawLine(currentX, currentY, computedX, computedY, color);
 }
 
@@ -655,11 +655,11 @@ void Extra::processExtras() {
 					}
 
 					_engine->_movements->rotateActor(pos, 0, angle2);
-					extra->Y -= destZ;
+					extra->Y -= _engine->_renderer->destZ;
 
-					_engine->_movements->rotateActor(0, destX, tmpAngle);
-					extra->X += destX;
-					extra->Z += destZ;
+					_engine->_movements->rotateActor(0, _engine->_renderer->destX, tmpAngle);
+					extra->X += _engine->_renderer->destX;
+					extra->Z += _engine->_renderer->destZ;
 
 					_engine->_movements->setActorAngle(0, extra->destZ, 50, &extra->trackActorMove);
 
@@ -687,11 +687,11 @@ void Extra::processExtras() {
 					playSample(97, 0x1000, 1, sceneHero->X, sceneHero->Y, sceneHero->Z, 0);
 
 					if (extraKey->info1 > 1) {
-						projectPositionOnScreen(extraKey->X - _engine->_grid->cameraX, extraKey->Y - _engine->_grid->cameraY, extraKey->Z - _engine->_grid->cameraZ);
-						addOverlay(koNumber, extraKey->info1, projPosX, projPosY, koNormal, 0, 2);
+						_engine->_renderer->projectPositionOnScreen(extraKey->X - _engine->_grid->cameraX, extraKey->Y - _engine->_grid->cameraY, extraKey->Z - _engine->_grid->cameraZ);
+						_engine->_redraw->addOverlay(koNumber, extraKey->info1, _engine->_renderer->projPosX, _engine->_renderer->projPosY, koNormal, 0, 2);
 					}
 
-					addOverlay(koSprite, SPRITEHQR_KEY, 10, 30, koNormal, 0, 2);
+					_engine->_redraw->addOverlay(koSprite, SPRITEHQR_KEY, 10, 30, koNormal, 0, 2);
 
 					_engine->_gameState->inventoryNumKeys += extraKey->info1;
 					extraKey->info0 = -1;
@@ -710,11 +710,11 @@ void Extra::processExtras() {
 					}
 
 					_engine->_movements->rotateActor(pos, 0, angle2);
-					extra->Y -= destZ;
+					extra->Y -= _engine->_renderer->destZ;
 
-					_engine->_movements->rotateActor(0, destX, tmpAngle);
-					extra->X += destX;
-					extra->Z += destZ;
+					_engine->_movements->rotateActor(0, _engine->_renderer->destX, tmpAngle);
+					extra->X += _engine->_renderer->destX;
+					extra->Z += _engine->_renderer->destZ;
 
 					_engine->_movements->setActorAngle(0, extra->destZ, 50, &extra->trackActorMove);
 
@@ -722,11 +722,11 @@ void Extra::processExtras() {
 						playSample(97, 0x1000, 1, sceneHero->X, sceneHero->Y, sceneHero->Z, 0);
 
 						if (extraKey->info1 > 1) {
-							projectPositionOnScreen(extraKey->X - _engine->_grid->cameraX, extraKey->Y - _engine->_grid->cameraY, extraKey->Z - _engine->_grid->cameraZ);
-							addOverlay(koNumber, extraKey->info1, projPosX, projPosY, koNormal, 0, 2);
+							_engine->_renderer->projectPositionOnScreen(extraKey->X - _engine->_grid->cameraX, extraKey->Y - _engine->_grid->cameraY, extraKey->Z - _engine->_grid->cameraZ);
+							_engine->_redraw->addOverlay(koNumber, extraKey->info1, _engine->_renderer->projPosX, _engine->_renderer->projPosY, koNormal, 0, 2);
 						}
 
-						addOverlay(koSprite, SPRITEHQR_KEY, 10, 30, koNormal, 0, 2);
+						_engine->_redraw->addOverlay(koSprite, SPRITEHQR_KEY, 10, 30, koNormal, 0, 2);
 
 						_engine->_gameState->inventoryNumKeys += extraKey->info1;
 						extraKey->info0 = -1;
@@ -874,11 +874,11 @@ void Extra::processExtras() {
 					playSample(97, 0x1000, 1, extra->X, extra->Y, extra->Z, -1);
 
 					if (extra->info1 > 1 && !(_engine->loopPressedKey & 2)) {
-						projectPositionOnScreen(extra->X - _engine->_grid->cameraX, extra->Y - _engine->_grid->cameraY, extra->Z - _engine->_grid->cameraZ);
-						addOverlay(koNumber, extra->info1, projPosX, projPosY, 158, koNormal, 2);
+						_engine->_renderer->projectPositionOnScreen(extra->X - _engine->_grid->cameraX, extra->Y - _engine->_grid->cameraY, extra->Z - _engine->_grid->cameraZ);
+						_engine->_redraw->addOverlay(koNumber, extra->info1, _engine->_renderer->projPosX, _engine->_renderer->projPosY, 158, koNormal, 2);
 					}
 
-					addOverlay(koSprite, extra->info0, 10, 30, 0, koNormal, 2);
+					_engine->_redraw->addOverlay(koSprite, extra->info0, 10, 30, 0, koNormal, 2);
 
 					if (extra->info0 == SPRITEHQR_KASHES) {
 						_engine->_gameState->inventoryNumKashes += extra->info1;

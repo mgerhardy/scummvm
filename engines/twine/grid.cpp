@@ -539,7 +539,7 @@ int32 Grid::initCellingGrid(int32 index) {
 	if (gridPtr)
 		free(gridPtr);
 
-	reqBgRedraw = 1;
+	_engine->_redraw->reqBgRedraw = 1;
 
 	return 0;
 }
@@ -732,10 +732,10 @@ void Grid::redrawGrid() {
 	cameraY = newCameraY << 8;
 	cameraZ = newCameraZ << 9;
 
-	projectPositionOnScreen(-cameraX, -cameraY, -cameraZ);
+	_engine->_renderer->projectPositionOnScreen(-cameraX, -cameraY, -cameraZ);
 
-	projPosXScreen = projPosX;
-	projPosYScreen = projPosY;
+	_engine->_renderer->projPosXScreen = _engine->_renderer->projPosX;
+	_engine->_renderer->projPosYScreen = _engine->_renderer->projPosY;
 
 	for (i = 0; i < 28; i++) {
 		brickInfoBuffer[i] = 0;

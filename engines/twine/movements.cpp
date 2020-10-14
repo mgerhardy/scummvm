@@ -169,12 +169,12 @@ int32 Movements::getAngleAndSetTargetActorDistance(int32 x1, int32 z1, int32 x2,
 	startAngle = 0;
 	//	stopAngle  = 0x100;
 
-	while (shadeAngleTab3[startAngle] > destAngle) {
+	while (_engine->_renderer->shadeAngleTab3[startAngle] > destAngle) {
 		startAngle++;
 	}
 
-	if (shadeAngleTab3[startAngle] != destAngle) {
-		if ((shadeAngleTab3[startAngle - 1] + shadeAngleTab3[startAngle]) / 2 <= destAngle) {
+	if (_engine->_renderer->shadeAngleTab3[startAngle] != destAngle) {
+		if ((_engine->_renderer->shadeAngleTab3[startAngle - 1] + _engine->_renderer->shadeAngleTab3[startAngle]) / 2 <= destAngle) {
 			startAngle--;
 		}
 	}
@@ -249,9 +249,9 @@ int32 Movements::getRealValue(ActorMoveStruct *movePtr) {
 	@param Z Actor current Z coordinate
 	@param angle Actor angle to rotate */
 void Movements::rotateActor(int32 X, int32 Z, int32 angle) {
-	double radians = 2 * PI * angle / 0x400;
-	destX = (int32)(X * cos(radians) + Z * sin(radians));
-	destZ = (int32)(-X * sin(radians) + Z * cos(radians));
+	const double radians = 2 * PI * angle / 0x400;
+	_engine->_renderer->destX = (int32)(X * cos(radians) + Z * sin(radians));
+	_engine->_renderer->destZ = (int32)(-X * sin(radians) + Z * cos(radians));
 }
 
 /** Get distance value in 2D

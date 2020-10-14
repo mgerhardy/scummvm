@@ -923,7 +923,7 @@ void Menu::drawBehaviour(int16 behaviour, int32 angle, int16 cantDrawBox) {
 		drawText((650 - getTextSize(dialText)) / 2, 240, dialText);
 	}
 
-	renderBehaviourModel(boxLeft, boxTop, boxRight, boxBottom, -600, angle, behaviourEntity);
+	_engine->_renderer->renderBehaviourModel(boxLeft, boxTop, boxRight, boxBottom, -600, angle, behaviourEntity);
 
 	copyBlockPhys(boxLeft, boxTop, boxRight, boxBottom);
 	copyBlockPhys(110, 239, 540, 279);
@@ -1067,9 +1067,9 @@ void Menu::drawItem(int32 item) {
 	                                     inventorySelectedItem == item ? inventorySelectedColor : 0);
 
 	if (_engine->_gameState->gameFlags[item] && !_engine->_gameState->gameFlags[GAMEFLAG_INVENTORY_DISABLED] && item < NUM_INVENTORY_ITEMS) {
-		prepareIsoModel(inventoryTable[item]);
+		_engine->_renderer->prepareIsoModel(inventoryTable[item]);
 		itemAngle[item] += 8;
-		renderInventoryItem(itemX, itemY, inventoryTable[item], itemAngle[item], 15000);
+		_engine->_renderer->renderInventoryItem(itemX, itemY, inventoryTable[item], itemAngle[item], 15000);
 
 		if (item == 15) { // has GAS
 			setFontColor(15);
@@ -1104,7 +1104,7 @@ void Menu::processInventoryMenu() {
 
 	copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
 
-	setLightVector(896, 950, 0);
+	_engine->_renderer->setLightVector(896, 950, 0);
 
 	inventorySelectedColor = 68;
 

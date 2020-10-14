@@ -50,10 +50,10 @@ GameState::GameState(TwinEEngine* engine) : _engine(engine) {}
 
 /** Initialize engine 3D projections */
 void GameState::initEngineProjections() { // reinitAll1
-	setOrthoProjection(311, 240, 512);
-	setBaseTranslation(0, 0, 0);
-	setBaseRotation(0, 0, 0);
-	setLightVector(alphaLight, betaLight, 0);
+	_engine->_renderer->setOrthoProjection(311, 240, 512);
+	_engine->_renderer->setBaseTranslation(0, 0, 0);
+	_engine->_renderer->setBaseRotation(0, 0, 0);
+	_engine->_renderer->setLightVector(alphaLight, betaLight, 0);
 }
 
 /** Initialize variables */
@@ -63,7 +63,7 @@ void GameState::initSceneVars() {
 	_engine->_extra->resetExtras();
 
 	for (i = 0; i < OVERLAY_MAX_ENTRIES; i++) {
-		overlayList[i].info0 = -1;
+		_engine->_redraw->overlayList[i].info0 = -1;
 	}
 
 	for (i = 0; i < NUM_SCENES_FLAGS; i++) {
@@ -288,7 +288,7 @@ void GameState::processFoundItem(int32 item) {
 
 	// Hide hero in scene
 	sceneHero->staticFlags.bIsHidden = 1;
-	redrawEngineActions(1);
+	_engine->_redraw->redrawEngineActions(1);
 	sceneHero->staticFlags.bIsHidden = 0;
 
 	copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
@@ -297,8 +297,8 @@ void GameState::processFoundItem(int32 item) {
 	itemCameraY = _engine->_grid->newCameraY << 8;
 	itemCameraZ = _engine->_grid->newCameraZ << 9;
 
-	renderIsoModel(sceneHero->X - itemCameraX, sceneHero->Y - itemCameraY, sceneHero->Z - itemCameraZ, 0, 0x80, 0, _engine->_actor->bodyTable[sceneHero->entity]);
-	_engine->_interface->setClip(renderLeft, renderTop, renderRight, renderBottom);
+	_engine->_renderer->renderIsoModel(sceneHero->X - itemCameraX, sceneHero->Y - itemCameraY, sceneHero->Z - itemCameraZ, 0, 0x80, 0, _engine->_actor->bodyTable[sceneHero->entity]);
+	_engine->_interface->setClip(_engine->_redraw->renderLeft, _engine->_redraw->renderTop, _engine->_redraw->renderRight, _engine->_redraw->renderBottom);
 
 	itemX = (sceneHero->X + 0x100) >> 9;
 	itemY = sceneHero->Y >> 8;
@@ -310,14 +310,14 @@ void GameState::processFoundItem(int32 item) {
 	_engine->_grid->drawOverModelActor(itemX, itemY, itemZ);
 	flip();
 
-	projectPositionOnScreen(sceneHero->X - itemCameraX, sceneHero->Y - itemCameraY, sceneHero->Z - itemCameraZ);
-	projPosY -= 150;
+	_engine->_renderer->projectPositionOnScreen(sceneHero->X - itemCameraX, sceneHero->Y - itemCameraY, sceneHero->Z - itemCameraZ);
+	_engine->_renderer->projPosY -= 150;
 
-	boxTopLeftX = projPosX - 65;
-	boxTopLeftY = projPosY - 65;
+	boxTopLeftX = _engine->_renderer->projPosX - 65;
+	boxTopLeftY = _engine->_renderer->projPosY - 65;
 
-	boxBottomRightX = projPosX + 65;
-	boxBottomRightY = projPosY + 65;
+	boxBottomRightX = _engine->_renderer->projPosX + 65;
+	boxBottomRightY = _engine->_renderer->projPosY + 65;
 
 	playSample(41, 0x1000, 1, 0x80, 0x80, 0x80, -1);
 
@@ -353,23 +353,23 @@ void GameState::processFoundItem(int32 item) {
 
 	currentAnimState = 0;
 
-	prepareIsoModel(inventoryTable[item]);
-	numOfRedrawBox = 0;
+	_engine->_renderer->prepareIsoModel(inventoryTable[item]);
+	_engine->_redraw->numOfRedrawBox = 0;
 
 	while (!quitItem) {
 		_engine->_interface->resetClip();
-		currNumOfRedrawBox = 0;
-		blitBackgroundAreas();
+		_engine->_redraw->currNumOfRedrawBox = 0;
+		_engine->_redraw->blitBackgroundAreas();
 		_engine->_interface->drawTransparentBox(boxTopLeftX, boxTopLeftY, boxBottomRightX, boxBottomRightY, 4);
 
 		_engine->_interface->setClip(boxTopLeftX, boxTopLeftY, boxBottomRightX, boxBottomRightY);
 
 		_engine->_menu->itemAngle[item] += 8;
 
-		renderInventoryItem(projPosX, projPosY, inventoryTable[item], _engine->_menu->itemAngle[item], 10000);
+		_engine->_renderer->renderInventoryItem(_engine->_renderer->projPosX, _engine->_renderer->projPosY, inventoryTable[item], _engine->_menu->itemAngle[item], 10000);
 
 		_engine->_menu->drawBox(boxTopLeftX, boxTopLeftY, boxBottomRightX, boxBottomRightY);
-		addRedrawArea(boxTopLeftX, boxTopLeftY, boxBottomRightX, boxBottomRightY);
+		_engine->_redraw->addRedrawArea(boxTopLeftX, boxTopLeftY, boxBottomRightX, boxBottomRightY);
 		_engine->_interface->resetClip();
 		initEngineProjections();
 
@@ -380,10 +380,10 @@ void GameState::processFoundItem(int32 item) {
 			}
 		}
 
-		renderIsoModel(sceneHero->X - itemCameraX, sceneHero->Y - itemCameraY, sceneHero->Z - itemCameraZ, 0, 0x80, 0, _engine->_actor->bodyTable[sceneHero->entity]);
-		_engine->_interface->setClip(renderLeft, renderTop, renderRight, renderBottom);
+		_engine->_renderer->renderIsoModel(sceneHero->X - itemCameraX, sceneHero->Y - itemCameraY, sceneHero->Z - itemCameraZ, 0, 0x80, 0, _engine->_actor->bodyTable[sceneHero->entity]);
+		_engine->_interface->setClip(_engine->_redraw->renderLeft, _engine->_redraw->renderTop, _engine->_redraw->renderRight, _engine->_redraw->renderBottom);
 		_engine->_grid->drawOverModelActor(itemX, itemY, itemZ);
-		addRedrawArea(renderLeft, renderTop, renderRight, renderBottom);
+		_engine->_redraw->addRedrawArea(_engine->_redraw->renderLeft, _engine->_redraw->renderTop, _engine->_redraw->renderRight, _engine->_redraw->renderBottom);
 
 		if (textState) {
 			_engine->_interface->resetClip();
@@ -394,7 +394,7 @@ void GameState::processFoundItem(int32 item) {
 			sdldelay(15);
 		}
 
-		flipRedrawAreas();
+		_engine->_redraw->flipRedrawAreas();
 
 		readKeys();
 		if (skippedKey) {
@@ -473,7 +473,7 @@ void GameState::processGameoverAnimation() { // makeGameOver
 
 	// workaround to fix hero redraw after drowning
 	sceneHero->staticFlags.bIsHidden = 1;
-	redrawEngineActions(1);
+	_engine->_redraw->redrawEngineActions(1);
 	sceneHero->staticFlags.bIsHidden = 0;
 
 	// TODO: drawInGameTransBox
@@ -485,10 +485,10 @@ void GameState::processGameoverAnimation() { // makeGameOver
 	if (gameOverPtr) {
 		int32 avg, cdot;
 
-		prepareIsoModel(gameOverPtr);
+		_engine->_renderer->prepareIsoModel(gameOverPtr);
 		stopSamples();
 		_engine->_music->stopMidiMusic(); // stop fade music
-		setCameraPosition(320, 240, 128, 200, 200);
+		_engine->_renderer->setCameraPosition(320, 240, 128, 200, 200);
 		startLbaTime = _engine->lbaTime;
 		_engine->_interface->setClip(120, 120, 519, 359);
 
@@ -498,8 +498,8 @@ void GameState::processGameoverAnimation() { // makeGameOver
 			avg = _engine->_collision->getAverageValue(40000, 3200, 500, _engine->lbaTime - startLbaTime);
 			cdot = crossDot(1, 1024, 100, (_engine->lbaTime - startLbaTime) % 0x64);
 			_engine->_interface->blitBox(120, 120, 519, 359, (int8 *)_engine->workVideoBuffer, 120, 120, (int8 *)_engine->frontVideoBuffer);
-			setCameraAngle(0, 0, 0, 0, -cdot, 0, avg);
-			renderIsoModel(0, 0, 0, 0, 0, 0, gameOverPtr);
+			_engine->_renderer->setCameraAngle(0, 0, 0, 0, -cdot, 0, avg);
+			_engine->_renderer->renderIsoModel(0, 0, 0, 0, 0, 0, gameOverPtr);
 			copyBlockPhys(120, 120, 519, 359);
 
 			_engine->lbaTime++;
@@ -508,8 +508,8 @@ void GameState::processGameoverAnimation() { // makeGameOver
 
 		playSample(37, _engine->getRandomNumber(2000) + 3096, 1, 0x80, 0x80, 0x80, -1);
 		_engine->_interface->blitBox(120, 120, 519, 359, (int8 *)_engine->workVideoBuffer, 120, 120, (int8 *)_engine->frontVideoBuffer);
-		setCameraAngle(0, 0, 0, 0, 0, 0, 3200);
-		renderIsoModel(0, 0, 0, 0, 0, 0, gameOverPtr);
+		_engine->_renderer->setCameraAngle(0, 0, 0, 0, 0, 0, 3200);
+		_engine->_renderer->renderIsoModel(0, 0, 0, 0, 0, 0, gameOverPtr);
 		copyBlockPhys(120, 120, 519, 359);
 
 		delaySkip(2000);

@@ -29,6 +29,19 @@ namespace TwinE {
 
 #define OVERLAY_MAX_ENTRIES 10
 
+enum OverlayType {
+	koSprite = 0,
+	koNumber = 1,
+	koNumberRange = 2,
+	koInventoryItem = 3,
+	koText = 4
+};
+
+enum OverlayPosType {
+	koNormal = 0,
+	koFollowActor = 1
+};
+
 class TwinEEngine;
 class Redraw {
 private:
@@ -89,19 +102,6 @@ public:
 	/** Save last actor that bubble dialog icon */
 	int32 bubbleActor;
 	int32 bubbleSpriteIndex;
-
-	enum OverlayType {
-		koSprite = 0,
-		koNumber = 1,
-		koNumberRange = 2,
-		koInventoryItem = 3,
-		koText = 4
-	};
-
-	enum OverlayPosType {
-		koNormal = 0,
-		koFollowActor = 1
-	};
 
 	/** Overlay list structure */
 	typedef struct OverlayListStruct {
