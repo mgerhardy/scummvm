@@ -309,7 +309,7 @@ void Movements::moveActor(int32 angleFrom, int32 angleTo, int32 speed, ActorMove
 }
 
 void Movements::processActorMovements(int32 actorIdx) {
-	ActorStruct *actor = &sceneActors[actorIdx];
+	ActorStruct *actor = &_engine->_scene->sceneActors[actorIdx];
 
 	if (actor->entity == -1)
 		return;
@@ -444,7 +444,7 @@ void Movements::processActorMovements(int32 actorIdx) {
 				heroMoved = 0;
 
 				if (key & 1) { // walk forward
-					if (!currentActorInZone) {
+					if (!_engine->_scene->currentActorInZone) {
 						_engine->_animations->initAnim(kForward, 0, 255, actorIdx);
 					}
 					heroMoved = 1;
@@ -495,7 +495,7 @@ void Movements::processActorMovements(int32 actorIdx) {
 
 			break;
 		case kFollow: {
-			int32 newAngle = getAngleAndSetTargetActorDistance(actor->X, actor->Z, sceneActors[actor->followedActor].X, sceneActors[actor->followedActor].Z);
+			int32 newAngle = getAngleAndSetTargetActorDistance(actor->X, actor->Z, _engine->_scene->sceneActors[actor->followedActor].X, _engine->_scene->sceneActors[actor->followedActor].Z);
 			if (actor->staticFlags.bIsSpriteActor) {
 				actor->angle = newAngle;
 			} else {
@@ -511,8 +511,8 @@ void Movements::processActorMovements(int32 actorIdx) {
 		case kTrackAttack: // unused
 			break;
 		case kSameXZ:
-			actor->X = sceneActors[actor->followedActor].X;
-			actor->Z = sceneActors[actor->followedActor].Z;
+			actor->X = _engine->_scene->sceneActors[actor->followedActor].X;
+			actor->Z = _engine->_scene->sceneActors[actor->followedActor].Z;
 			break;
 		case kRandom: {
 			if (!actor->dynamicFlags.bIsRotationByAnim) {

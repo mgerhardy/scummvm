@@ -35,6 +35,7 @@
 #include "renderer.h"
 #include "resources.h"
 #include "scene.h"
+#include "screens.h"
 #include "sound.h"
 #include "twine.h"
 #include "common/system.h"
@@ -46,24 +47,24 @@ Actor::Actor(TwinEEngine *engine) : _engine(engine) {
 
 /** Restart hero variables while opening new scenes */
 void Actor::restartHeroScene() {
-	sceneHero->controlMode = 1;
-	memset(&sceneHero->dynamicFlags, 0, 2);
-	memset(&sceneHero->staticFlags, 0, 2);
+	_engine->_scene->sceneHero->controlMode = 1;
+	memset(&_engine->_scene->sceneHero->dynamicFlags, 0, 2);
+	memset(&_engine->_scene->sceneHero->staticFlags, 0, 2);
 
-	sceneHero->staticFlags.bComputeCollisionWithObj = 1;
-	sceneHero->staticFlags.bComputeCollisionWithBricks = 1;
-	sceneHero->staticFlags.bIsZonable = 1;
-	sceneHero->staticFlags.bCanDrown = 1;
-	sceneHero->staticFlags.bCanFall = 1;
+	_engine->_scene->sceneHero->staticFlags.bComputeCollisionWithObj = 1;
+	_engine->_scene->sceneHero->staticFlags.bComputeCollisionWithBricks = 1;
+	_engine->_scene->sceneHero->staticFlags.bIsZonable = 1;
+	_engine->_scene->sceneHero->staticFlags.bCanDrown = 1;
+	_engine->_scene->sceneHero->staticFlags.bCanFall = 1;
 
-	sceneHero->armor = 1;
-	sceneHero->positionInMoveScript = -1;
-	sceneHero->labelIdx = -1;
-	sceneHero->positionInLifeScript = 0;
-	sceneHero->zone = -1;
-	sceneHero->angle = previousHeroAngle;
+	_engine->_scene->sceneHero->armor = 1;
+	_engine->_scene->sceneHero->positionInMoveScript = -1;
+	_engine->_scene->sceneHero->labelIdx = -1;
+	_engine->_scene->sceneHero->positionInLifeScript = 0;
+	_engine->_scene->sceneHero->zone = -1;
+	_engine->_scene->sceneHero->angle = previousHeroAngle;
 
-	_engine->_movements->setActorAngleSafe(sceneHero->angle, sceneHero->angle, 0, &sceneHero->move);
+	_engine->_movements->setActorAngleSafe(_engine->_scene->sceneHero->angle, _engine->_scene->sceneHero->angle, 0, &_engine->_scene->sceneHero->move);
 	setBehaviour(previousHeroBehaviour);
 
 	cropBottomScreen = 0;
@@ -72,26 +73,26 @@ void Actor::restartHeroScene() {
 /** Load hero 3D body and animations */
 void Actor::loadHeroEntities() {
 	_engine->_hqrdepack->hqrGetallocEntry(&heroEntityATHLETIC, HQR_FILE3D_FILE, FILE3DHQR_HEROATHLETIC);
-	sceneHero->entityDataPtr = heroEntityATHLETIC;
+	_engine->_scene->sceneHero->entityDataPtr = heroEntityATHLETIC;
 	heroAnimIdxATHLETIC = _engine->_animations->getBodyAnimIndex(0, 0);
 
 	_engine->_hqrdepack->hqrGetallocEntry(&heroEntityAGGRESSIVE, HQR_FILE3D_FILE, FILE3DHQR_HEROAGGRESSIVE);
-	sceneHero->entityDataPtr = heroEntityAGGRESSIVE;
+	_engine->_scene->sceneHero->entityDataPtr = heroEntityAGGRESSIVE;
 	heroAnimIdxAGGRESSIVE = _engine->_animations->getBodyAnimIndex(0, 0);
 
 	_engine->_hqrdepack->hqrGetallocEntry(&heroEntityDISCRETE, HQR_FILE3D_FILE, FILE3DHQR_HERODISCRETE);
-	sceneHero->entityDataPtr = heroEntityDISCRETE;
+	_engine->_scene->sceneHero->entityDataPtr = heroEntityDISCRETE;
 	heroAnimIdxDISCRETE = _engine->_animations->getBodyAnimIndex(0, 0);
 
 	_engine->_hqrdepack->hqrGetallocEntry(&heroEntityPROTOPACK, HQR_FILE3D_FILE, FILE3DHQR_HEROPROTOPACK);
-	sceneHero->entityDataPtr = heroEntityPROTOPACK;
+	_engine->_scene->sceneHero->entityDataPtr = heroEntityPROTOPACK;
 	heroAnimIdxPROTOPACK = _engine->_animations->getBodyAnimIndex(0, 0);
 
 	_engine->_hqrdepack->hqrGetallocEntry(&heroEntityNORMAL, HQR_FILE3D_FILE, FILE3DHQR_HERONORMAL);
-	sceneHero->entityDataPtr = heroEntityNORMAL;
+	_engine->_scene->sceneHero->entityDataPtr = heroEntityNORMAL;
 	heroAnimIdxNORMAL = _engine->_animations->getBodyAnimIndex(0, 0);
 
-	sceneHero->animExtraPtr = _engine->_animations->currentActorAnimExtraPtr;
+	_engine->_scene->sceneHero->animExtraPtr = _engine->_animations->currentActorAnimExtraPtr;
 }
 
 /** Set hero behaviour
@@ -102,35 +103,35 @@ void Actor::setBehaviour(int32 behaviour) {
 	switch (behaviour) {
 	case kNormal:
 		heroBehaviour = kNormal;
-		sceneHero->entityDataPtr = heroEntityNORMAL;
+		_engine->_scene->sceneHero->entityDataPtr = heroEntityNORMAL;
 		break;
 	case kAthletic:
 		heroBehaviour = kAthletic;
-		sceneHero->entityDataPtr = heroEntityATHLETIC;
+		_engine->_scene->sceneHero->entityDataPtr = heroEntityATHLETIC;
 		break;
 	case kAggressive:
 		heroBehaviour = kAggressive;
-		sceneHero->entityDataPtr = heroEntityAGGRESSIVE;
+		_engine->_scene->sceneHero->entityDataPtr = heroEntityAGGRESSIVE;
 		break;
 	case kDiscrete:
 		heroBehaviour = kDiscrete;
-		sceneHero->entityDataPtr = heroEntityDISCRETE;
+		_engine->_scene->sceneHero->entityDataPtr = heroEntityDISCRETE;
 		break;
 	case kProtoPack:
 		heroBehaviour = kProtoPack;
-		sceneHero->entityDataPtr = heroEntityPROTOPACK;
+		_engine->_scene->sceneHero->entityDataPtr = heroEntityPROTOPACK;
 		break;
 	};
 
-	bodyIdx = sceneHero->body;
+	bodyIdx = _engine->_scene->sceneHero->body;
 
-	sceneHero->entity = -1;
-	sceneHero->body = -1;
+	_engine->_scene->sceneHero->entity = -1;
+	_engine->_scene->sceneHero->body = -1;
 
 	initModelActor(bodyIdx, 0);
 
-	sceneHero->anim = -1;
-	sceneHero->animType = 0;
+	_engine->_scene->sceneHero->anim = -1;
+	_engine->_scene->sceneHero->animType = 0;
 
 	_engine->_animations->initAnim(kStanding, 0, 255, 0);
 }
@@ -138,10 +139,10 @@ void Actor::setBehaviour(int32 behaviour) {
 /** Initialize sprite actor
 	@param actorIdx sprite actor index */
 void Actor::initSpriteActor(int32 actorIdx) {
-	ActorStruct *localActor = &sceneActors[actorIdx];
+	ActorStruct *localActor = &_engine->_scene->sceneActors[actorIdx];
 
 	if (localActor->staticFlags.bIsSpriteActor && localActor->sprite != -1 && localActor->entity != localActor->sprite) {
-		int16 *ptr = (int16 *)(spriteBoundingBoxPtr + localActor->sprite * 16 + 4);
+		int16 *ptr = (int16 *)(_engine->_scene->spriteBoundingBoxPtr + localActor->sprite * 16 + 4);
 
 		localActor->entity = localActor->sprite;
 		localActor->boudingBox.X.bottomLeft = *(ptr++);
@@ -168,7 +169,7 @@ int32 Actor::initBody(int32 bodyIdx, int32 actorIdx) {
 	int16 flag;
 	int32 index;
 
-	localActor = &sceneActors[actorIdx];
+	localActor = &_engine->_scene->sceneActors[actorIdx];
 	bodyPtr = localActor->entityDataPtr;
 
 	do {
@@ -255,7 +256,7 @@ void Actor::initModelActor(int32 bodyIdx, int16 actorIdx) {
 
 	result = 0;
 
-	localActor = &sceneActors[actorIdx];
+	localActor = &_engine->_scene->sceneActors[actorIdx];
 
 	if (localActor->staticFlags.bIsSpriteActor)
 		return;
@@ -347,7 +348,7 @@ void Actor::initModelActor(int32 bodyIdx, int16 actorIdx) {
 /** Initialize actors
 	@param actorIdx actor index to init */
 void Actor::initActor(int16 actorIdx) {
-	ActorStruct *actor = &sceneActors[actorIdx];
+	ActorStruct *actor = &_engine->_scene->sceneActors[actorIdx];
 
 	if (actor->staticFlags.bIsSpriteActor) { // if sprite actor
 		if (actor->strengthOfHit != 0) {
@@ -389,7 +390,7 @@ void Actor::initActor(int16 actorIdx) {
 /** Reset actor
 	@param actorIdx actor index to init */
 void Actor::resetActor(int16 actorIdx) {
-	ActorStruct *actor = &sceneActors[actorIdx];
+	ActorStruct *actor = &_engine->_scene->sceneActors[actorIdx];
 
 	actor->body = 0;
 	actor->anim = 0;
@@ -445,7 +446,7 @@ void Actor::resetActor(int16 actorIdx) {
 	@param strengthOfHit actor hitting strength of hit
 	@param angle angle of actor hitting */
 void Actor::hitActor(int32 actorIdx, int32 actorIdxAttacked, int32 strengthOfHit, int32 angle) {
-	ActorStruct *actor = &sceneActors[actorIdxAttacked];
+	ActorStruct *actor = &_engine->_scene->sceneActors[actorIdxAttacked];
 
 	if (actor->life <= 0) {
 		return;
@@ -493,10 +494,10 @@ void Actor::hitActor(int32 actorIdx, int32 actorIdxAttacked, int32 strengthOfHit
 /** Process actor carrier */
 void Actor::processActorCarrier(int32 actorIdx) { // CheckCarrier
 	int32 a;
-	ActorStruct *actor = &sceneActors[actorIdx];
+	ActorStruct *actor = &_engine->_scene->sceneActors[actorIdx];
 
 	if (actor->staticFlags.bIsCarrierActor) {
-		for (a = 0; a < sceneNumActors; a++) {
+		for (a = 0; a < _engine->_scene->sceneNumActors; a++) {
 			if (actor->standOn == actorIdx) {
 				actor->standOn = -1;
 			}
@@ -508,7 +509,7 @@ void Actor::processActorCarrier(int32 actorIdx) { // CheckCarrier
 void Actor::processActorExtraBonus(int32 actorIdx) { // GiveExtraBonus
 	int32 a, numBonus;
 	int8 bonusTable[8], currentBonus;
-	ActorStruct *actor = &sceneActors[actorIdx];
+	ActorStruct *actor = &_engine->_scene->sceneActors[actorIdx];
 
 	numBonus = 0;
 
@@ -531,7 +532,7 @@ void Actor::processActorExtraBonus(int32 actorIdx) { // GiveExtraBonus
 			// FIXME add constant for sample index
 			playSample(11, 0x1000, 1, actor->X, actor->Y, actor->Z, actorIdx);
 		} else {
-			int32 angle = _engine->_movements->getAngleAndSetTargetActorDistance(actor->X, actor->Z, sceneHero->X, sceneHero->Z);
+			int32 angle = _engine->_movements->getAngleAndSetTargetActorDistance(actor->X, actor->Z, _engine->_scene->sceneHero->X, _engine->_scene->sceneHero->Z);
 			_engine->_extra->addExtraBonus(actor->X, actor->Y + actor->boudingBox.Y.topRight, actor->Z, 200, angle, currentBonus, actor->bonusAmount);
 			// FIXME add constant for sample index
 			playSample(11, 0x1000, 1, actor->X, actor->Y + actor->boudingBox.Y.topRight, actor->Z, actorIdx);

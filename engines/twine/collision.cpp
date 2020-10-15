@@ -48,8 +48,8 @@ int32 Collision::standingOnActor(int32 actorIdx1, int32 actorIdx2) { // CheckZvO
 	ActorStruct *actor1;
 	ActorStruct *actor2;
 
-	actor1 = &sceneActors[actorIdx1];
-	actor2 = &sceneActors[actorIdx2];
+	actor1 = &_engine->_scene->sceneActors[actorIdx1];
+	actor2 = &_engine->_scene->sceneActors[actorIdx2];
 
 	// Current actor (actor 1)
 	x1Left = _engine->_movements->processActorX + actor1->boudingBox.X.bottomLeft;
@@ -213,7 +213,7 @@ int32 Collision::checkCollisionWithActors(int32 actorIdx) {
 	int32 a, xLeft, xRight, yLeft, yRight, zLeft, zRight;
 	ActorStruct *actor, *actorTest;
 
-	actor = &sceneActors[actorIdx];
+	actor = &_engine->_scene->sceneActors[actorIdx];
 
 	xLeft = _engine->_movements->processActorX + actor->boudingBox.X.bottomLeft;
 	xRight = _engine->_movements->processActorX + actor->boudingBox.X.topRight;
@@ -226,8 +226,8 @@ int32 Collision::checkCollisionWithActors(int32 actorIdx) {
 
 	actor->collision = -1;
 
-	for (a = 0; a < sceneNumActors; a++) {
-		actorTest = &sceneActors[a];
+	for (a = 0; a < _engine->_scene->sceneNumActors; a++) {
+		actorTest = &_engine->_scene->sceneActors[a];
 
 		// aviod current processed actor
 		if (a != actorIdx && actorTest->entity != -1 && !actor->staticFlags.bComputeLowCollision && actorTest->standOn != actorIdx) {
@@ -372,8 +372,8 @@ int32 Collision::checkCollisionWithActors(int32 actorIdx) {
 		zLeft = _engine->_renderer->destZ + _engine->_movements->processActorZ + actor->boudingBox.Z.bottomLeft;
 		zRight = _engine->_renderer->destZ + _engine->_movements->processActorZ + actor->boudingBox.Z.topRight;
 
-		for (a = 0; a < sceneNumActors; a++) {
-			actorTest = &sceneActors[a];
+		for (a = 0; a < _engine->_scene->sceneNumActors; a++) {
+			actorTest = &_engine->_scene->sceneActors[a];
 
 			// aviod current processed actor
 			if (a != actorIdx && actorTest->entity != -1 && !actorTest->staticFlags.bIsHidden && actorTest->standOn != actorIdx) {
@@ -482,7 +482,7 @@ void Collision::stopFalling() { // ReceptionObj()
 	int32 fall;
 
 	if (_engine->_animations->currentlyProcessedActorIdx == 0) {
-		fall = heroYBeforeFall - _engine->_movements->processActorY;
+		fall = _engine->_scene->heroYBeforeFall - _engine->_movements->processActorY;
 
 		if (fall >= 0x1000) {
 			_engine->_extra->addExtraSpecial(_engine->_movements->processActorPtr->X, _engine->_movements->processActorPtr->Y + 1000, _engine->_movements->processActorPtr->Z, kHitStars);
@@ -498,7 +498,7 @@ void Collision::stopFalling() { // ReceptionObj()
 			_engine->_animations->initAnim(kStanding, 0, 0, _engine->_animations->currentlyProcessedActorIdx);
 		}
 
-		heroYBeforeFall = 0;
+		_engine->_scene->heroYBeforeFall = 0;
 	} else {
 		_engine->_animations->initAnim(kLanding, 2, _engine->_movements->processActorPtr->animExtra, _engine->_animations->currentlyProcessedActorIdx);
 	}
@@ -515,7 +515,7 @@ int32 Collision::checkExtraCollisionWithActors(ExtraListStruct *extra, int32 act
 	int16 *spriteBounding;
 	ActorStruct *actorTest;
 
-	spriteBounding = (int16 *)(spriteBoundingBoxPtr + extra->info0 * 16 + 4);
+	spriteBounding = (int16 *)(_engine->_scene->spriteBoundingBoxPtr + extra->info0 * 16 + 4);
 
 	xLeft = *(spriteBounding++) + extra->X;
 	xRight = *(spriteBounding++) + extra->X;
@@ -526,8 +526,8 @@ int32 Collision::checkExtraCollisionWithActors(ExtraListStruct *extra, int32 act
 	zLeft = *(spriteBounding++) + extra->Z;
 	zRight = *(spriteBounding++) + extra->Z;
 
-	for (a = 0; a < sceneNumActors; a++) {
-		actorTest = &sceneActors[a];
+	for (a = 0; a < _engine->_scene->sceneNumActors; a++) {
+		actorTest = &_engine->_scene->sceneActors[a];
 
 		if (a != actorIdx && actorTest->entity != -1) {
 			int32 xLeftTest, xRightTest, yLeftTest, yRightTest, zLeftTest, zRightTest;
@@ -589,7 +589,7 @@ int32 Collision::checkExtraCollisionWithExtra(ExtraListStruct *extra, int32 extr
 	int32 xLeft, xRight, yLeft, yRight, zLeft, zRight;
 	int16 *spriteBounding;
 
-	spriteBounding = (int16 *)(spriteBoundingBoxPtr + extra->info0 * 16 + 4);
+	spriteBounding = (int16 *)(_engine->_scene->spriteBoundingBoxPtr + extra->info0 * 16 + 4);
 
 	xLeft = *(spriteBounding++) + extra->X;
 	xRight = *(spriteBounding++) + extra->X;
@@ -605,7 +605,7 @@ int32 Collision::checkExtraCollisionWithExtra(ExtraListStruct *extra, int32 extr
 		if (i != extraIdx && extraTest->info0 != -1) {
 			int32 xLeftTest, xRightTest, yLeftTest, yRightTest, zLeftTest, zRightTest;
 			//            int16 * spriteBoundingTest;
-			//	        spriteBoundingTest = (int16*)(spriteBoundingBoxPtr + extraTest->info0 * 16 + 4);
+			//	        spriteBoundingTest = (int16*)(_engine->_scene->spriteBoundingBoxPtr + extraTest->info0 * 16 + 4);
 
 			xLeftTest = *(spriteBounding++) + extraTest->X;
 			xRightTest = *(spriteBounding++) + extraTest->X;

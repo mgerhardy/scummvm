@@ -28,119 +28,128 @@
 
 namespace TwinE {
 
-/** In-game palette (should not be used, except in special case. otherwise use other images functions instead) */
-uint8 palette[NUMOFCOLORS * 3];
+class TwinEEngine;
+class Screens {
+private:
+	TwinEEngine *_engine;
 
-/** SDL converted in-game palette */
-uint8 paletteRGBA[NUMOFCOLORS * 4];
+public:
+	Screens(TwinEEngine *engine) : _engine(engine) {}
 
-/** SDL converted custom palette */
-uint8 paletteRGBACustom[NUMOFCOLORS * 4];
+	/** In-game palette (should not be used, except in special case. otherwise use other images functions instead) */
+	uint8 palette[NUMOFCOLORS * 3];
 
-/** flag to check if a custom palette is in use */
-int16 palCustom;
+	/** SDL converted in-game palette */
+	uint8 paletteRGBA[NUMOFCOLORS * 4];
 
-/** flag to check in the game palette was changed */
-int16 palReseted;
+	/** SDL converted custom palette */
+	uint8 paletteRGBACustom[NUMOFCOLORS * 4];
 
-/** flag to check if the main flag is locked */
-int16 lockPalette;
+	/** flag to check if a custom palette is in use */
+	int16 palCustom;
 
-/** flag to check if we are using a different palette than the main one */
-int16 useAlternatePalette;
+	/** flag to check in the game palette was changed */
+	int16 palReseted;
 
-/** main game palette */
-uint8 *mainPalette;
+	/** flag to check if the main flag is locked */
+	int16 lockPalette;
 
-/** SDL converted in-game palette */
-uint8 mainPaletteRGBA[NUMOFCOLORS * 4];
+	/** flag to check if we are using a different palette than the main one */
+	int16 useAlternatePalette;
 
-/** Load and display Adeline Logo */
-void adelineLogo();
+	/** main game palette */
+	uint8 *mainPalette;
 
-/** Load a custom palette
+	/** SDL converted in-game palette */
+	uint8 mainPaletteRGBA[NUMOFCOLORS * 4];
+
+	/** Load and display Adeline Logo */
+	void adelineLogo();
+
+	/** Load a custom palette
 	@param index \a RESS.HQR entry index (starting from 0) */
-void loadCustomPalette(int32 index);
+	void loadCustomPalette(int32 index);
 
-/** Load and display Main Menu image */
-void loadMenuImage(int16 fade_in);
+	/** Load and display Main Menu image */
+	void loadMenuImage(int16 fade_in);
 
-/** Load and display a particulary image on \a RESS.HQR file with cross fade effect
+	/** Load and display a particulary image on \a RESS.HQR file with cross fade effect
 	@param index \a RESS.HQR entry index (starting from 0)
 	@param fade_in if we fade in before using the palette */
-void loadImage(int32 index, int16 fade_in);
+	void loadImage(int32 index, int16 fade_in);
 
-/** Load and display a particulary image on \a RESS.HQR file with cross fade effect and delay
+	/** Load and display a particulary image on \a RESS.HQR file with cross fade effect and delay
 	@param index \a RESS.HQR entry index (starting from 0)
 	@param time number of seconds to delay */
-void loadImageDelay(int32 index, int32 time);
+	void loadImageDelay(int32 index, int32 time);
 
-/** Converts in-game palette to SDL palette
+	/** Converts in-game palette to SDL palette
 	@param palSource palette source with RGB
 	@param palDest palette destination with RGBA */
-void convertPalToRGBA(uint8 *palSource, uint8 *palDest);
+	void convertPalToRGBA(uint8 *palSource, uint8 *palDest);
 
-/** Fade image in
+	/** Fade image in
 	@param palette current palette to fade in */
-void fadeIn(uint8 *palette);
+	void fadeIn(uint8 *palette);
 
-/** Fade image out
+	/** Fade image out
 	@param palette current palette to fade out */
-void fadeOut(uint8 *palette);
+	void fadeOut(uint8 *palette);
 
-/** Calculate a new color component according with an intensity
+	/** Calculate a new color component according with an intensity
 	@param modifier color compenent
 	@param color color value
 	@param param unknown
 	@param intensity intensity value to adjust
 	@return new color component*/
-int32 crossDot(int32 modifier, int32 color, int32 param, int32 intensity);
+	int32 crossDot(int32 modifier, int32 color, int32 param, int32 intensity);
 
-/** Adjust palette intensity
+	/** Adjust palette intensity
 	@param R red component of color
 	@param G green component of color
 	@param B blue component of color
 	@param palette palette to adjust
 	@param intensity intensity value to adjust */
-void adjustPalette(uint8 R, uint8 G, uint8 B, uint8 *palette, int32 intensity);
+	void adjustPalette(uint8 R, uint8 G, uint8 B, uint8 *palette, int32 intensity);
 
-/** Adjust between two palettes
+	/** Adjust between two palettes
 	@param pal1 palette from adjust
 	@param pal2 palette to adjust */
-void adjustCrossPalette(uint8 *pal1, uint8 *pal2);
+	void adjustCrossPalette(uint8 *pal1, uint8 *pal2);
 
-/** Fade image to black
+	/** Fade image to black
 	@param palette current palette to fade */
-void fadeToBlack(uint8 *palette);
+	void fadeToBlack(uint8 *palette);
 
-/** Fade image with another palette source
+	/** Fade image with another palette source
 	@param palette current palette to fade */
-void fadeToPal(uint8 *palette);
+	void fadeToPal(uint8 *palette);
 
-/** Fade black palette to white palette */
-void blackToWhite();
+	/** Fade black palette to white palette */
+	void blackToWhite();
 
-/** Resets both in-game and sdl palettes */
-void setBackPal();
+	/** Resets both in-game and sdl palettes */
+	void setBackPal();
 
-/** Fade palette to red palette
+	/** Fade palette to red palette
 	@param palette current palette to fade */
-void fadePalRed(uint8 *palette);
+	void fadePalRed(uint8 *palette);
 
-/** Fade red to palette
+	/** Fade red to palette
 	@param palette current palette to fade */
-void fadeRedPal(uint8 *palette);
+	void fadeRedPal(uint8 *palette);
 
-/** Copy a determinate screen buffer to another
+	/** Copy a determinate screen buffer to another
 	@param source screen buffer
 	@param destination screen buffer */
-void copyScreen(uint8 *source, uint8 *destination);
+	void copyScreen(uint8 *source, uint8 *destination);
 
-/** Clear front buffer screen */
-void clearScreen();
+	/** Clear front buffer screen */
+	void clearScreen();
 
-/** Init palettes */
-void initPalettes();
+	/** Init palettes */
+	void initPalettes();
+};
 
 } // namespace TwinE
 

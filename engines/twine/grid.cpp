@@ -741,7 +741,7 @@ void Grid::redrawGrid() {
 		brickInfoBuffer[i] = 0;
 	}
 
-	if (changeRoomVar10 == 0)
+	if (_engine->_scene->changeRoomVar10 == 0)
 		return;
 
 	for (z = 0; z < GRID_SIZE_Z; z++) {

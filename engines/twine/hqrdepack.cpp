@@ -112,7 +112,7 @@ void HQRDepack::hqrDecompressLZEntry(uint8 *dst, uint8 *src, int32 decompsize, i
 	@param filename HQR file name
 	@param index entry index to extract
 	@return entry real size*/
-int32 HQRDepack::hqrGetEntry(uint8 *ptr, int8 *filename, int32 index) {
+int32 HQRDepack::hqrGetEntry(uint8 *ptr, const char *filename, int32 index) {
 	uint32 headerSize;
 	uint32 offsetToData;
 	uint32 realSize;
@@ -122,7 +122,7 @@ int32 HQRDepack::hqrGetEntry(uint8 *ptr, int8 *filename, int32 index) {
 	if (!filename)
 		return 0;
 
-	if (!fropen2(&fr, (char *)filename, "rb"))
+	if (!fropen2(&fr, filename, "rb"))
 		warning("HQR: %s can't be found !", filename);
 
 	frread(&fr, &headerSize, 4);
@@ -172,7 +172,7 @@ int32 HQRDepack::hqrGetEntry(uint8 *ptr, int8 *filename, int32 index) {
 	@param filename HQR file name
 	@param index entry index to extract
 	@return entry real size */
-int HQRDepack::hqrEntrySize(int8 *filename, int32 index) {
+int HQRDepack::hqrEntrySize(const char *filename, int32 index) {
 	uint32 headerSize;
 	uint32 offsetToData;
 	uint32 realSize;
@@ -180,7 +180,7 @@ int HQRDepack::hqrEntrySize(int8 *filename, int32 index) {
 	if (!filename)
 		return 0;
 
-	if (!fropen2(&fr, (char *)filename, "rb")) {
+	if (!fropen2(&fr, filename, "rb")) {
 		error("HQR: %s can't be found !\n", filename);
 		g_system->fatalError();
 	}
@@ -207,13 +207,13 @@ int HQRDepack::hqrEntrySize(int8 *filename, int32 index) {
 /** Get a HQR total number of entries
 	@param filename HQR file name
 	@return total number of entries */
-int HQRDepack::hqrNumEntries(int8 *filename) {
+int HQRDepack::hqrNumEntries(const char *filename) {
 	uint32 headerSize;
 
 	if (!filename)
 		return 0;
 
-	if (!fropen2(&fr, (char *)filename, "rb")) {
+	if (!fropen2(&fr, filename, "rb")) {
 		error("HQR: %s can't be found !\n", filename);
 		g_system->fatalError();
 	}
@@ -228,7 +228,7 @@ int HQRDepack::hqrNumEntries(int8 *filename) {
 	@param filename HQR file name
 	@param index entry index to extract
 	@return entry real size */
-int32 HQRDepack::hqrGetallocEntry(uint8 **ptr, int8 *filename, int32 index) {
+int32 HQRDepack::hqrGetallocEntry(uint8 **ptr, const char *filename, int32 index) {
 	int32 size;
 	size = hqrEntrySize(filename, index);
 
@@ -247,7 +247,7 @@ int32 HQRDepack::hqrGetallocEntry(uint8 **ptr, int8 *filename, int32 index) {
 	@param filename HQR file name
 	@param index entry index to extract
 	@return entry real size*/
-int32 HQRDepack::hqrGetVoxEntry(uint8 *ptr, int8 *filename, int32 index, int32 hiddenIndex) {
+int32 HQRDepack::hqrGetVoxEntry(uint8 *ptr, const char *filename, int32 index, int32 hiddenIndex) {
 	uint32 headerSize;
 	uint32 offsetToData;
 	uint32 realSize;
@@ -257,7 +257,7 @@ int32 HQRDepack::hqrGetVoxEntry(uint8 *ptr, int8 *filename, int32 index, int32 h
 	if (!filename)
 		return 0;
 
-	if (!fropen2(&fr, (char *)filename, "rb"))
+	if (!fropen2(&fr, filename, "rb"))
 		warning("HQR: %s can't be found!", filename);
 
 	frread(&fr, &headerSize, 4);
@@ -320,7 +320,7 @@ int32 HQRDepack::hqrGetVoxEntry(uint8 *ptr, int8 *filename, int32 index, int32 h
 	@param filename HQR file name
 	@param index entry index to extract
 	@return entry real size */
-int HQRDepack::hqrVoxEntrySize(int8 *filename, int32 index, int32 hiddenIndex) {
+int HQRDepack::hqrVoxEntrySize(const char *filename, int32 index, int32 hiddenIndex) {
 	uint32 headerSize;
 	uint32 offsetToData;
 	uint32 realSize;
@@ -329,7 +329,7 @@ int HQRDepack::hqrVoxEntrySize(int8 *filename, int32 index, int32 hiddenIndex) {
 	if (!filename)
 		return 0;
 
-	if (!fropen2(&fr, (char *)filename, "rb")) {
+	if (!fropen2(&fr, filename, "rb")) {
 		warning("HQR: %s can't be found !", filename);
 		g_system->fatalError();
 	}
@@ -371,7 +371,7 @@ int HQRDepack::hqrVoxEntrySize(int8 *filename, int32 index, int32 hiddenIndex) {
 	@param filename HQR file name
 	@param index entry index to extract
 	@return entry real size */
-int32 HQRDepack::hqrGetallocVoxEntry(uint8 **ptr, int8 *filename, int32 index, int32 hiddenIndex) {
+int32 HQRDepack::hqrGetallocVoxEntry(uint8 **ptr, const char *filename, int32 index, int32 hiddenIndex) {
 	int32 size;
 	size = hqrVoxEntrySize(filename, index, hiddenIndex);
 

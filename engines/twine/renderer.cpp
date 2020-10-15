@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "common/textconsole.h"
 #include "interface.h"
 #include "menu.h"
 #include "movements.h"
@@ -259,11 +260,11 @@ void Renderer::applyPointsRotation(uint8 *firstPointsPtr, int32 numPoints, point
 
 	int16 *tempPtr;
 
-	int32 numOfPoints = numPoints;
-	uint8 *pointsPtr;
+	int32 numOfPoints2 = numPoints;
+	uint8 *pointsPtr2;
 
 	do {
-		pointsPtr = firstPointsPtr;
+		pointsPtr2 = firstPointsPtr;
 		tempPtr = (int16 *)(firstPointsPtr);
 
 		tmpX = tempPtr[0];
@@ -275,8 +276,8 @@ void Renderer::applyPointsRotation(uint8 *firstPointsPtr, int32 numPoints, point
 		destPoints->Z = ((rotationMatrix[6] * tmpX + rotationMatrix[7] * tmpY + rotationMatrix[8] * tmpZ) >> 14) + destZ;
 
 		destPoints++;
-		firstPointsPtr = pointsPtr + 6;
-	} while (--numOfPoints);
+		firstPointsPtr = pointsPtr2 + 6;
+	} while (--numOfPoints2);
 }
 
 void Renderer::processRotatedElement(int32 rotZ, int32 rotY, int32 rotX, elementEntry *elemPtr) { // unsigned char * elemPtr) // loadPart
@@ -284,15 +285,14 @@ void Renderer::processRotatedElement(int32 rotZ, int32 rotY, int32 rotX, element
 	int16 baseElement;
 
 	int32 firstPoint = elemPtr->firstPoint;
-	int32 numOfPoints = elemPtr->numOfPoints;
+	int32 numOfPoints2 = elemPtr->numOfPoints;
 
 	renderAngleX = rotX;
 	renderAngleY = rotY;
 	renderAngleZ = rotZ;
 
 	if (firstPoint % 6) {
-		printf("RENDER ERROR: invalid firstPoint in process_rotated_element func\n");
-		exit(1);
+		error("RENDER ERROR: invalid firstPoint in process_rotated_element func");
 	}
 
 	//baseElement = *((unsigned short int*)elemPtr+6);
@@ -316,11 +316,11 @@ void Renderer::processRotatedElement(int32 rotZ, int32 rotY, int32 rotX, element
 
 	applyRotation((int32 *)currentMatrixTableEntry, currentMatrix);
 
-	if (!numOfPoints) {
-		printf("RENDER WARNING: No points in this model!\n");
+	if (!numOfPoints2) {
+		warning("RENDER WARNING: No points in this model!");
 	}
 
-	applyPointsRotation(pointsPtr + firstPoint, numOfPoints, &computedPoints[firstPoint / 6], (int32 *)currentMatrixTableEntry);
+	applyPointsRotation(pointsPtr + firstPoint, numOfPoints2, &computedPoints[firstPoint / 6], (int32 *)currentMatrixTableEntry);
 }
 
 void Renderer::applyPointsTranslation(uint8 *firstPointsPtr, int32 numPoints, pointTab *destPoints, int32 *translationMatrix) {
@@ -330,11 +330,11 @@ void Renderer::applyPointsTranslation(uint8 *firstPointsPtr, int32 numPoints, po
 
 	int16 *tempPtr;
 
-	int32 numOfPoints = numPoints;
-	uint8 *pointsPtr;
+	int32 numOfPoints2 = numPoints;
+	uint8 *pointsPtr2;
 
 	do {
-		pointsPtr = firstPointsPtr;
+		pointsPtr2 = firstPointsPtr;
 		tempPtr = (int16 *)(firstPointsPtr);
 
 		tmpX = tempPtr[0] + renderAngleZ;
@@ -346,8 +346,8 @@ void Renderer::applyPointsTranslation(uint8 *firstPointsPtr, int32 numPoints, po
 		destPoints->Z = ((translationMatrix[6] * tmpX + translationMatrix[7] * tmpY + translationMatrix[8] * tmpZ) >> 14) + destZ;
 
 		destPoints++;
-		firstPointsPtr = pointsPtr + 6;
-	} while (--numOfPoints);
+		firstPointsPtr = pointsPtr2 + 6;
+	} while (--numOfPoints2);
 }
 
 void Renderer::processTranslatedElement(int32 rotX, int32 rotY, int32 rotZ, elementEntry *elemPtr) {
@@ -540,13 +540,13 @@ int Renderer::computePolygons() {
 		}
 
 		if (polyRenderType >= 7) { // we must compute the color progression
-			int16 *outPtr = &polyTab2[ypos + (up ? 480 : 0)];
+			int16 *outPtr2 = &polyTab2[ypos + (up ? 480 : 0)];
 
 			for (i = 0; i < vsize + 2; i++) {
-				if ((outPtr - polyTab2) < 960)
-					if ((outPtr - polyTab2) > 0)
-						*(outPtr) = cvalue;
-				outPtr += direction;
+				if ((outPtr2 - polyTab2) < 960)
+					if ((outPtr2 - polyTab2) > 0)
+						*(outPtr2) = cvalue;
+				outPtr2 += direction;
 				cvalue += cdelta;
 			}
 		}
@@ -565,7 +565,7 @@ void Renderer::renderPolygons(int32 renderType, int32 color) {
 
 	int16 start, stop;
 
-	out = frontVideoBuffer + 640 * vtop;
+	out = _engine->frontVideoBuffer + 640 * vtop;
 
 	ptr1 = &polyTab[vtop];
 	ptr2 = &polyTab2[vtop];
@@ -1035,7 +1035,7 @@ void Renderer::circleFill(int32 x, int32 y, int32 radius, int8 color) {
 		if (width < 0)
 			width = -width;
 
-		drawLine((int32)(x - width), currentLine + y, (int32)(x + width), currentLine + y, color);
+		_engine->_interface->drawLine((int32)(x - width), currentLine + y, (int32)(x + width), currentLine + y, color);
 	}
 }
 
@@ -1262,8 +1262,7 @@ int32 Renderer::renderModelElements(uint8 *pointer) {
 			lineCoordinatesPtr = (lineCoordinates *)edi;
 
 			if (*((int16 *)&lineDataPtr->p1) % 6 != 0 || *((int16 *)&lineDataPtr->p2) % 6 != 0) {
-				printf("RENDER ERROR: lineDataPtr reference is malformed !\n");
-				exit(1);
+				error("RENDER ERROR: lineDataPtr reference is malformed!");
 			}
 
 			point1 = *((int16 *)&lineDataPtr->p1) / 6;
@@ -1297,11 +1296,11 @@ int32 Renderer::renderModelElements(uint8 *pointer) {
 	if (temp) {
 		numOfPrimitives += temp;
 		do {
-			uint8 color = *(pointer + 1);
+			uint8 color2 = *(pointer + 1);
 			int16 center = *((uint16 *)(pointer + 6));
 			int16 size = *((uint16 *)(pointer + 4));
 
-			*(uint8 *)edi = color;
+			*(uint8 *)edi = color2;
 			*((int16 *)(edi + 1)) = flattenPoints[center / 6].X;
 			*((int16 *)(edi + 3)) = flattenPoints[center / 6].Y;
 			*((int16 *)(edi + 5)) = size;
@@ -1363,7 +1362,7 @@ int32 Renderer::renderModelElements(uint8 *pointer) {
 				x2 = *((int16 *)&lineCoordinatesPtr->x2);
 				y2 = *((int16 *)&lineCoordinatesPtr->y2);
 
-				drawLine(x1, y1, x2, y2, color);
+				_engine->_interface->drawLine(x1, y1, x2, y2, color);
 				break;
 			}
 			case RENDERTYPE_DRAWPOLYGON: { // draw a polygon
@@ -1410,17 +1409,17 @@ int32 Renderer::renderModelElements(uint8 *pointer) {
 
 				circleParam3 += 3;
 
-				if (circleParam4 + circleParam3 > renderRight)
-					renderRight = circleParam4 + circleParam3;
+				if (circleParam4 + circleParam3 > _engine->_redraw->renderRight)
+					_engine->_redraw->renderRight = circleParam4 + circleParam3;
 
-				if (circleParam4 - circleParam3 < renderLeft)
-					renderLeft = circleParam4 - circleParam3;
+				if (circleParam4 - circleParam3 < _engine->_redraw->renderLeft)
+					_engine->_redraw->renderLeft = circleParam4 - circleParam3;
 
-				if (circleParam5 + circleParam3 > renderBottom)
-					renderBottom = circleParam5 + circleParam3;
+				if (circleParam5 + circleParam3 > _engine->_redraw->renderBottom)
+					_engine->_redraw->renderBottom = circleParam5 + circleParam3;
 
-				if (circleParam5 - circleParam3 < renderTop)
-					renderTop = circleParam5 - circleParam3;
+				if (circleParam5 - circleParam3 < _engine->_redraw->renderTop)
+					_engine->_redraw->renderTop = circleParam5 - circleParam3;
 
 				circleParam3 -= 3;
 
@@ -1435,10 +1434,10 @@ int32 Renderer::renderModelElements(uint8 *pointer) {
 			renderTabEntryPtr2++;
 		} while (--primitiveCounter);
 	} else {
-		renderRight = -1;
-		renderBottom = -1;
-		renderLeft = -1;
-		renderTop = -1;
+		_engine->_redraw->renderRight = -1;
+		_engine->_redraw->renderBottom = -1;
+		_engine->_redraw->renderLeft = -1;
+		_engine->_redraw->renderTop = -1;
 		return (-1);
 	}
 
@@ -1510,15 +1509,15 @@ int32 Renderer::renderAnimatedModel(uint8 *bodyPtr) {
 			pointPtrDest->Y = (((coX - coZ) * 12) - coY * 30) / 512 + orthoProjY;
 			pointPtrDest->Z = coZ - coX - coY;
 
-			if (pointPtrDest->X < renderLeft)
-				renderLeft = pointPtrDest->X;
-			if (pointPtrDest->X > renderRight)
-				renderRight = pointPtrDest->X;
+			if (pointPtrDest->X < _engine->_redraw->renderLeft)
+				_engine->_redraw->renderLeft = pointPtrDest->X;
+			if (pointPtrDest->X > _engine->_redraw->renderRight)
+				_engine->_redraw->renderRight = pointPtrDest->X;
 
-			if (pointPtrDest->Y < renderTop)
-				renderTop = pointPtrDest->Y;
-			if (pointPtrDest->Y > renderBottom)
-				renderBottom = pointPtrDest->Y;
+			if (pointPtrDest->Y < _engine->_redraw->renderTop)
+				_engine->_redraw->renderTop = pointPtrDest->Y;
+			if (pointPtrDest->Y > _engine->_redraw->renderBottom)
+				_engine->_redraw->renderBottom = pointPtrDest->Y;
 
 			pointPtr++;
 			pointPtrDest++;
@@ -1543,11 +1542,11 @@ int32 Renderer::renderAnimatedModel(uint8 *bodyPtr) {
 
 				pointPtrDest->X = coX;
 
-				if (pointPtrDest->X < renderLeft)
-					renderLeft = pointPtrDest->X;
+				if (pointPtrDest->X < _engine->_redraw->renderLeft)
+					_engine->_redraw->renderLeft = pointPtrDest->X;
 
-				if (pointPtrDest->X > renderRight)
-					renderRight = pointPtrDest->X;
+				if (pointPtrDest->X > _engine->_redraw->renderRight)
+					_engine->_redraw->renderRight = pointPtrDest->X;
 			}
 
 			// Y projection
@@ -1559,10 +1558,10 @@ int32 Renderer::renderAnimatedModel(uint8 *bodyPtr) {
 
 				pointPtrDest->Y = coY;
 
-				if (pointPtrDest->Y < renderTop)
-					renderTop = pointPtrDest->Y;
-				if (pointPtrDest->Y > renderBottom)
-					renderBottom = pointPtrDest->Y;
+				if (pointPtrDest->Y < _engine->_redraw->renderTop)
+					_engine->_redraw->renderTop = pointPtrDest->Y;
+				if (pointPtrDest->Y > _engine->_redraw->renderBottom)
+					_engine->_redraw->renderBottom = pointPtrDest->Y;
 			}
 
 			// Z projection
@@ -1591,11 +1590,11 @@ int32 Renderer::renderAnimatedModel(uint8 *bodyPtr) {
 
 		uint8 *currentShadeDestination = (uint8 *)shadeTable;
 		int32 *lightMatrix = matricesTable;
-		uint8 *pri2Ptr2;
+		uint8 *pri2Ptr3;
 
 		numOfPrimitives = numOfElements;
 
-		tmpElemPtr = pri2Ptr2 = elementsPtr2 + 18;
+		tmpElemPtr = pri2Ptr3 = elementsPtr2 + 18;
 
 		//assert(frontVideoBufferbis == frontVideoBuffer);
 
@@ -1650,7 +1649,7 @@ int32 Renderer::renderAnimatedModel(uint8 *bodyPtr) {
 				} while (--numShades);
 			}
 
-			tmpElemPtr = pri2Ptr2 = pri2Ptr2 + 38; // next element
+			tmpElemPtr = pri2Ptr3 = pri2Ptr3 + 38; // next element
 
 			/*tmpLightMatrix =*/lightMatrix = lightMatrix + 9;
 		} while (--numOfPrimitives);
@@ -1711,10 +1710,10 @@ int Renderer::renderIsoModel(int32 X, int32 Y, int32 Z, int32 angleX, int32 angl
 	renderAngleZ = angleZ;
 
 	// model render size reset
-	renderLeft = 32767;
-	renderTop = 32767;
-	renderRight = -32767;
-	renderBottom = -32767;
+	_engine->_redraw->renderLeft = 32767;
+	_engine->_redraw->renderTop = 32767;
+	_engine->_redraw->renderRight = -32767;
+	_engine->_redraw->renderBottom = -32767;
 
 	if (isUsingOrhoProjection == 0) {
 		getBaseRotationPosition(X, Y, Z);
@@ -1806,12 +1805,12 @@ void Renderer::renderBehaviourModel(int32 boxLeft, int32 boxTop, int32 boxRight,
 	x >>= 1;
 
 	setOrthoProjection(x, y, 0);
-	setClip(boxLeft, boxTop, tmpBoxRight, boxBottom);
+	_engine->_interface->setClip(boxLeft, boxTop, tmpBoxRight, boxBottom);
 
 	if (angle == -1) {
-		newAngle = getRealAngle(&moveMenu);
-		if (moveMenu.numOfStep == 0) {
-			setActorAngleSafe(newAngle, newAngle - 256, 50, &moveMenu);
+		newAngle = _engine->_movements->getRealAngle(&_engine->_menu->moveMenu);
+		if (_engine->_menu->moveMenu.numOfStep == 0) {
+			_engine->_movements->setActorAngleSafe(newAngle, newAngle - 256, 50, &_engine->_menu->moveMenu);
 		}
 		renderIsoModel(0, Y, 0, 0, newAngle, 0, entityPtr);
 	} else {

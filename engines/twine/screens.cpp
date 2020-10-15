@@ -34,8 +34,8 @@
 namespace TwinE {
 
 /** Load and display Adeline Logo */
-void adelineLogo() {
-	playMidiMusic(31, 0);
+void Screens::adelineLogo() {
+	_engine->_music->playMidiMusic(31, 0);
 
 	loadImage(RESSHQR_ADELINEIMG, 1);
 	delaySkip(7000);
@@ -44,9 +44,9 @@ void adelineLogo() {
 }
 
 /** Load and display Main Menu image */
-void loadMenuImage(int16 fade_in) {
-	hqrGetEntry(workVideoBuffer, HQR_RESS_FILE, RESSHQR_MENUIMG);
-	copyScreen(workVideoBuffer, frontVideoBuffer);
+void Screens::loadMenuImage(int16 fade_in) {
+	_engine->_hqrdepack->hqrGetEntry(_engine->workVideoBuffer, HQR_RESS_FILE, RESSHQR_MENUIMG);
+	copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 	if (fade_in) {
 		fadeToPal(paletteRGBA);
 	} else {
@@ -57,16 +57,16 @@ void loadMenuImage(int16 fade_in) {
 }
 
 /** Load a custom palette */
-void loadCustomPalette(int32 index) {
-	hqrGetEntry(palette, HQR_RESS_FILE, index);
+void Screens::loadCustomPalette(int32 index) {
+	_engine->_hqrdepack->hqrGetEntry(palette, HQR_RESS_FILE, index);
 	convertPalToRGBA(palette, paletteRGBACustom);
 }
 
 /** Load and display a particulary image on \a RESS.HQR file with cross fade effect
 	@param index \a RESS.HQR entry index (starting from 0) */
-void loadImage(int32 index, int16 fade_in) {
-	hqrGetEntry(workVideoBuffer, HQR_RESS_FILE, index);
-	copyScreen(workVideoBuffer, frontVideoBuffer);
+void Screens::loadImage(int32 index, int16 fade_in) {
+	_engine->_hqrdepack->hqrGetEntry(_engine->workVideoBuffer, HQR_RESS_FILE, index);
+	copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 	loadCustomPalette(index + 1);
 	if (fade_in) {
 		fadeToPal(paletteRGBACustom);
@@ -80,7 +80,7 @@ void loadImage(int32 index, int16 fade_in) {
 /** Load and display a particulary image on \a RESS.HQR file with cross fade effect and delay
 	@param index \a RESS.HQR entry index (starting from 0)
 	@param time number of seconds to delay */
-void loadImageDelay(int32 index, int32 time) {
+void Screens::loadImageDelay(int32 index, int32 time) {
 	loadImage(index, 1);
 	delaySkip(1000 * time);
 	fadeOut(paletteRGBACustom);
@@ -89,7 +89,7 @@ void loadImageDelay(int32 index, int32 time) {
 /** Converts in-game palette to SDL palette
 	@param palSource palette source with RGB
 	@param palDest palette destination with RGBA */
-void convertPalToRGBA(uint8 *palSource, uint8 *palDest) {
+void Screens::convertPalToRGBA(uint8 *palSource, uint8 *palDest) {
 	int i;
 
 	for (i = 0; i < NUMOFCOLORS; i++) {
@@ -103,9 +103,9 @@ void convertPalToRGBA(uint8 *palSource, uint8 *palDest) {
 
 /** Fade image in
 	@param palette current palette to fade in */
-void fadeIn(uint8 *palette) {
-	if (cfgfile.CrossFade)
-		crossFade(frontVideoBuffer, palette);
+void Screens::fadeIn(uint8 *palette) {
+	if (_engine->cfgfile.CrossFade)
+		crossFade(_engine->frontVideoBuffer, palette);
 	else
 		fadeToPal(palette);
 
@@ -114,12 +114,12 @@ void fadeIn(uint8 *palette) {
 
 /** Fade image out
 	@param palette current palette to fade out */
-void fadeOut(uint8 *palette) {
+void Screens::fadeOut(uint8 *palette) {
 	/*if(cfgfile.CrossFade)
 		crossFade(frontVideoBuffer, palette);
 	else
 		fadeToBlack(palette);*/
-	if (!cfgfile.CrossFade)
+	if (!_engine->cfgfile.CrossFade)
 		fadeToBlack(palette);
 }
 
@@ -129,7 +129,7 @@ void fadeOut(uint8 *palette) {
 	@param param unknown
 	@param intensity intensity value to adjust
 	@return new color component*/
-int32 crossDot(int32 modifier, int32 color, int32 param, int32 intensity) {
+int32 Screens::crossDot(int32 modifier, int32 color, int32 param, int32 intensity) {
 	if (!param)
 		return (color);
 	return (((color - modifier) * intensity) / param) + modifier;
@@ -141,7 +141,7 @@ int32 crossDot(int32 modifier, int32 color, int32 param, int32 intensity) {
 	@param B blue component of color
 	@param palette palette to adjust
 	@param intensity intensity value to adjust */
-void adjustPalette(uint8 R, uint8 G, uint8 B, uint8 *palette, int32 intensity) {
+void Screens::adjustPalette(uint8 R, uint8 G, uint8 B, uint8 *palette, int32 intensity) {
 	uint8 localPalette[NUMOFCOLORS * 4];
 	uint8 *newR;
 	uint8 *newG;
@@ -179,7 +179,7 @@ void adjustPalette(uint8 R, uint8 G, uint8 B, uint8 *palette, int32 intensity) {
 /** Adjust between two palettes
 	@param pal1 palette from adjust
 	@param pal2 palette to adjust */
-void adjustCrossPalette(uint8 *pal1, uint8 *pal2) {
+void Screens::adjustCrossPalette(uint8 *pal1, uint8 *pal2) {
 	uint8 localPalette[NUMOFCOLORS * 4];
 
 	uint8 *newR;
@@ -222,7 +222,7 @@ void adjustCrossPalette(uint8 *pal1, uint8 *pal2) {
 
 /** Fade image to black
 	@param palette current palette to fade */
-void fadeToBlack(uint8 *palette) {
+void Screens::fadeToBlack(uint8 *palette) {
 	int32 i = 0;
 
 	if (palReseted == 0) {
@@ -237,7 +237,7 @@ void fadeToBlack(uint8 *palette) {
 
 /** Fade image with another palette source
 	@param palette current palette to fade */
-void fadeToPal(uint8 *palette) {
+void Screens::fadeToPal(uint8 *palette) {
 	int32 i = 100;
 
 	for (i = 0; i <= 100; i += 3) {
@@ -251,7 +251,7 @@ void fadeToPal(uint8 *palette) {
 }
 
 /** Fade black palette to with palette */
-void blackToWhite() {
+void Screens::blackToWhite() {
 	uint8 palette[NUMOFCOLORS * 4];
 	int32 i;
 
@@ -264,7 +264,7 @@ void blackToWhite() {
 }
 
 /** Resets both in-game and sdl palettes */
-void setBackPal() {
+void Screens::setBackPal() {
 	memset(palette, 0, NUMOFCOLORS * 3);
 	memset(paletteRGBA, 0, NUMOFCOLORS * 4);
 
@@ -275,7 +275,7 @@ void setBackPal() {
 
 /** Fade palette to red palette
 	@param palette current palette to fade */
-void fadePalRed(uint8 *palette) {
+void Screens::fadePalRed(uint8 *palette) {
 	int32 i = 100;
 
 	for (i = 100; i >= 0; i -= 2) {
@@ -286,7 +286,7 @@ void fadePalRed(uint8 *palette) {
 
 /** Fade red to palette
 	@param palette current palette to fade */
-void fadeRedPal(uint8 *palette) {
+void Screens::fadeRedPal(uint8 *palette) {
 	int32 i = 0;
 
 	for (i = 0; i <= 100; i += 2) {
@@ -298,7 +298,7 @@ void fadeRedPal(uint8 *palette) {
 /** Copy a determinate screen buffer to another
 	@param source screen buffer
 	@param destination screen buffer */
-void copyScreen(uint8 *source, uint8 *destination) {
+void Screens::copyScreen(uint8 *source, uint8 *destination) {
 	int32 w, h;
 
 	if (SCALE == 1)
@@ -315,8 +315,8 @@ void copyScreen(uint8 *source, uint8 *destination) {
 }
 
 /** Clear front buffer screen */
-void clearScreen() {
-	memset(frontVideoBuffer, 0, SCREEN_WIDTH * SCREEN_HEIGHT);
+void Screens::clearScreen() {
+	memset(_engine->frontVideoBuffer, 0, SCREEN_WIDTH * SCREEN_HEIGHT);
 }
 
 } // namespace TwinE

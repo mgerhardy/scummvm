@@ -475,6 +475,9 @@ TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flag
 	_music = new Music(this);
 	_redraw = new Redraw(this);
 	_renderer = new Renderer(this);
+	_resources = new Resources(this);
+	_scene = new Scene(this);
+	_screens = new Screens(this);
 }
 
 TwinEEngine::~TwinEEngine() {
@@ -493,6 +496,9 @@ TwinEEngine::~TwinEEngine() {
 	delete _music;
 	delete _redraw;
 	delete _renderer;
+	delete _resources;
+	delete _scene;
+	delete _screens;
 }
 
 bool TwinEEngine::hasFeature(EngineFeature f) const {

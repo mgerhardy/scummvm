@@ -42,9 +42,7 @@
 
 namespace TwinE {
 
-uint8 *currentScene;
-
-void setActorStaticFlags(int32 actorIdx, uint16 staticFlags) {
+void Scene::setActorStaticFlags(int32 actorIdx, uint16 staticFlags) {
 	if (staticFlags & 0x1) {
 		sceneActors[actorIdx].staticFlags.bComputeCollisionWithObj = 1;
 	}
@@ -96,7 +94,7 @@ void setActorStaticFlags(int32 actorIdx, uint16 staticFlags) {
 	}
 }
 
-void loadScene() {
+void Scene::loadScene() {
 	int32 i;
 	int32 scriptSize = 0;
 	uint8 *localScene = currentScene;
@@ -174,7 +172,7 @@ void loadScene() {
 	for (i = 1; i < sceneNumActors; i++) {
 		uint16 staticFlags;
 
-		resetActor(i);
+		_engine->_actor->resetActor(i);
 
 		staticFlags = *((uint16 *)localScene);
 		localScene += 2;
@@ -184,7 +182,7 @@ void loadScene() {
 		localScene += 2;
 
 		if (!sceneActors[i].staticFlags.bIsSpriteActor) {
-			hqrGetallocEntry(&sceneActors[i].entityDataPtr, HQR_FILE3D_FILE, sceneActors[i].entity);
+			_engine->_hqrdepack->hqrGetallocEntry(&sceneActors[i].entityDataPtr, HQR_FILE3D_FILE, sceneActors[i].entity);
 		}
 
 		sceneActors[i].body = *(localScene++);
@@ -283,9 +281,9 @@ void loadScene() {
 }
 
 /** Initialize new scene */
-int32 initScene(int32 index) {
+int32 Scene::initScene(int32 index) {
 	// load scene from file
-	hqrGetallocEntry(&currentScene, HQR_SCENE_FILE, index);
+	_engine->_hqrdepack->hqrGetallocEntry(&currentScene, HQR_SCENE_FILE, index);
 
 	loadScene();
 
@@ -293,29 +291,29 @@ int32 initScene(int32 index) {
 }
 
 /** Reset scene */
-void resetScene() {
+void Scene::resetScene() {
 	int32 i;
 
-	resetExtras();
+	_engine->_extra->resetExtras();
 
 	for (i = 0; i < NUM_SCENES_FLAGS; i++) {
 		sceneFlags[i] = 0;
 	}
 
 	for (i = 0; i < OVERLAY_MAX_ENTRIES; i++) {
-		overlayList[i].info0 = -1;
+		_engine->_redraw->overlayList[i].info0 = -1;
 	}
 
-	currentPositionInBodyPtrTab = 0;
-	useAlternatePalette = 0;
+	_engine->_actor->currentPositionInBodyPtrTab = 0;
+	_engine->_screens->useAlternatePalette = 0;
 }
 
 /** Change to another scene */
-void changeScene() {
+void Scene::changeScene() {
 	int32 a;
 
 	// change twinsen house destroyed hard-coded
-	if (needChangeScene == 4 && gameFlags[30] != 0)
+	if (needChangeScene == 4 && _engine->_gameState->gameFlags[30] != 0)
 		needChangeScene = 118;
 
 	// local backup previous scene
@@ -325,7 +323,7 @@ void changeScene() {
 	stopSamples();
 
 	resetScene();
-	loadHeroEntities();
+	_engine->_actor->loadHeroEntities();
 
 	sceneHero->controlMode = 1;
 	sceneHero->zone = -1;
@@ -341,7 +339,7 @@ void changeScene() {
 		currentTextBank = 10;
 
 	initTextBank(currentTextBank + 3);
-	initGrid(needChangeScene);
+	_engine->_grid->initGrid(needChangeScene);
 
 	if (heroPositionType == kZone) {
 		newHeroX = zoneHeroX;
@@ -359,54 +357,54 @@ void changeScene() {
 	sceneHero->Y = heroYBeforeFall = newHeroY;
 	sceneHero->Z = newHeroZ;
 
-	setLightVector(alphaLight, betaLight, 0);
+	_engine->_renderer->setLightVector(alphaLight, betaLight, 0);
 
 	if (previousSceneIdx != needChangeScene) {
-		previousHeroBehaviour = heroBehaviour;
-		previousHeroAngle = sceneHero->angle;
-		saveGame();
+		_engine->_actor->previousHeroBehaviour = _engine->_actor->heroBehaviour;
+		_engine->_actor->previousHeroAngle = sceneHero->angle;
+		_engine->_gameState->saveGame();
 	}
 
-	restartHeroScene();
+	_engine->_actor->restartHeroScene();
 
 	for (a = 1; a < sceneNumActors; a++) {
-		initActor(a);
+		_engine->_actor->initActor(a);
 	}
 
-	inventoryNumKeys = 0;
-	disableScreenRecenter = 0;
+	_engine->_gameState->inventoryNumKeys = 0;
+	_engine->disableScreenRecenter = 0;
 	heroPositionType = kNoPosition;
 	sampleAmbienceTime = 0;
 
-	newCameraX = sceneActors[currentlyFollowedActor].X >> 9;
-	newCameraY = sceneActors[currentlyFollowedActor].Y >> 8;
-	newCameraZ = sceneActors[currentlyFollowedActor].Z >> 9;
+	_engine->_grid->newCameraX = sceneActors[currentlyFollowedActor].X >> 9;
+	_engine->_grid->newCameraY = sceneActors[currentlyFollowedActor].Y >> 8;
+	_engine->_grid->newCameraZ = sceneActors[currentlyFollowedActor].Z >> 9;
 
-	magicBallIdx = -1;
-	heroMoved = 1;
-	useCellingGrid = -1;
-	cellingGridIdx = -1;
-	reqBgRedraw = 1;
-	lockPalette = 0;
+	_engine->_gameState->magicBallIdx = -1;
+	_engine->_movements->heroMoved = 1;
+	_engine->_grid->useCellingGrid = -1;
+	_engine->_grid->cellingGridIdx = -1;
+	_engine->_redraw->reqBgRedraw = 1;
+	_engine->_screens->lockPalette = 0;
 
 	needChangeScene = -1;
 	changeRoomVar10 = 1;
 	changeRoomVar11 = 14;
 
-	setLightVector(alphaLight, betaLight, 0);
+	_engine->_renderer->setLightVector(alphaLight, betaLight, 0);
 
 	if (sceneMusic != -1) {
-		playMidiMusic(sceneMusic, 0); // TODO this should play midi or cd tracks
+		_engine->_music->playMidiMusic(sceneMusic, 0); // TODO this should play midi or cd tracks
 	}
 }
 
 /** Process scene environment sound */
-void processEnvironmentSound() {
+void Scene::processEnvironmentSound() {
 	int16 s, currentAmb, decal, repeat;
 	int16 sampleIdx = -1;
 
-	if (lbaTime >= sampleAmbienceTime) {
-		currentAmb = Rnd(4); // random ambiance
+	if (_engine->lbaTime >= sampleAmbienceTime) {
+		currentAmb = _engine->getRandomNumber(4); // random ambiance
 
 		for (s = 0; s < 4; s++) {
 			if (!(samplePlayed & (1 << currentAmb))) { // if not already played
@@ -421,7 +419,7 @@ void processEnvironmentSound() {
 					decal = sampleRound[currentAmb];
 					repeat = sampleRepeat[currentAmb];
 
-					playSample(sampleIdx, (0x1000 + Rnd(decal) - (decal / 2)), repeat, 110, -1, 110, -1);
+					playSample(sampleIdx, (0x1000 + _engine->getRandomNumber(decal) - (decal / 2)), repeat, 110, -1, 110, -1);
 					break;
 				}
 			}
@@ -431,12 +429,12 @@ void processEnvironmentSound() {
 		}
 
 		// compute next ambiance timer
-		sampleAmbienceTime = lbaTime + (Rnd(sampleMinDelayRnd) + sampleMinDelay) * 50;
+		sampleAmbienceTime = _engine->lbaTime + (_engine->getRandomNumber(sampleMinDelayRnd) + sampleMinDelay) * 50;
 	}
 }
 
 /** Process zone extra bonus */
-void processZoneExtraBonus(ZoneStruct *zone) {
+void Scene::processZoneExtraBonus(ZoneStruct *zone) {
 	int32 a, numBonus;
 	int8 bonusTable[8], currentBonus;
 
@@ -452,18 +450,18 @@ void processZoneExtraBonus(ZoneStruct *zone) {
 
 		if (numBonus) {
 			int32 angle, index;
-			currentBonus = bonusTable[Rnd(numBonus)];
+			currentBonus = bonusTable[_engine->getRandomNumber(numBonus)];
 
 			// if bonus is magic an no magic level yet, then give life points
-			if (!magicLevelIdx && currentBonus == 2) {
+			if (!_engine->_gameState->magicLevelIdx && currentBonus == 2) {
 				currentBonus = 1;
 			}
 
-			angle = getAngleAndSetTargetActorDistance(Abs(zone->topRight.X + zone->bottomLeft.X) / 2, Abs(zone->topRight.Z + zone->bottomLeft.Z) / 2, sceneHero->X, sceneHero->Z);
-			index = addExtraBonus(Abs(zone->topRight.X + zone->bottomLeft.X) / 2, zone->topRight.Y, Abs(zone->topRight.Z + zone->bottomLeft.Z) / 2, 180, angle, currentBonus + 3, zone->infoData.generic.info2);
+			angle = _engine->_movements->getAngleAndSetTargetActorDistance(ABS(zone->topRight.X + zone->bottomLeft.X) / 2, ABS(zone->topRight.Z + zone->bottomLeft.Z) / 2, sceneHero->X, sceneHero->Z);
+			index = _engine->_extra->addExtraBonus(ABS(zone->topRight.X + zone->bottomLeft.X) / 2, zone->topRight.Y, ABS(zone->topRight.Z + zone->bottomLeft.Z) / 2, 180, angle, currentBonus + 3, zone->infoData.generic.info2);
 
 			if (index != -1) {
-				extraList[index].type |= 0x400;
+				_engine->_extra->extraList[index].type |= 0x400;
 				zone->infoData.generic.info3 = 1; // set as used
 			}
 		}
@@ -472,7 +470,7 @@ void processZoneExtraBonus(ZoneStruct *zone) {
 
 /** Process actor zones
 	@param actorIdx Process actor index */
-void processActorZones(int32 actorIdx) {
+void Scene::processActorZones(int32 actorIdx) {
 	int32 currentX, currentY, currentZ, z, tmpCellingGrid;
 	ActorStruct *actor;
 
@@ -508,12 +506,12 @@ void processActorZones(int32 actorIdx) {
 				break;
 			case kCamera:
 				if (currentlyFollowedActor == actorIdx) {
-					disableScreenRecenter = 1;
-					if (newCameraX != zone->infoData.CameraView.X || newCameraY != zone->infoData.CameraView.Y || newCameraZ != zone->infoData.CameraView.Z) {
-						newCameraX = zone->infoData.CameraView.X;
-						newCameraY = zone->infoData.CameraView.Y;
-						newCameraZ = zone->infoData.CameraView.Z;
-						reqBgRedraw = 1;
+					_engine->disableScreenRecenter = 1;
+					if (_engine->_grid->newCameraX != zone->infoData.CameraView.X || _engine->_grid->newCameraY != zone->infoData.CameraView.Y || _engine->_grid->newCameraZ != zone->infoData.CameraView.Z) {
+						_engine->_grid->newCameraX = zone->infoData.CameraView.X;
+						_engine->_grid->newCameraY = zone->infoData.CameraView.Y;
+						_engine->_grid->newCameraZ = zone->infoData.CameraView.Z;
+						_engine->_redraw->reqBgRedraw = 1;
 					}
 				}
 				break;
@@ -523,48 +521,48 @@ void processActorZones(int32 actorIdx) {
 			case kGrid:
 				if (currentlyFollowedActor == actorIdx) {
 					tmpCellingGrid = 1;
-					if (useCellingGrid != zone->infoData.CeillingGrid.newGrid) {
+					if (_engine->_grid->useCellingGrid != zone->infoData.CeillingGrid.newGrid) {
 						if (zone->infoData.CeillingGrid.newGrid != -1) {
-							createGridMap();
+							_engine->_grid->createGridMap();
 						}
 
-						useCellingGrid = zone->infoData.CeillingGrid.newGrid;
-						cellingGridIdx = z;
-						freezeTime();
-						initCellingGrid(useCellingGrid);
-						unfreezeTime();
+						_engine->_grid->useCellingGrid = zone->infoData.CeillingGrid.newGrid;
+						_engine->_grid->cellingGridIdx = z;
+						_engine->freezeTime();
+						_engine->_grid->initCellingGrid(_engine->_grid->useCellingGrid);
+						_engine->unfreezeTime();
 					}
 				}
 				break;
 			case kObject:
-				if (!actorIdx && heroAction != 0) {
-					initAnim(kAction, 1, 0, 0);
+				if (!actorIdx && _engine->_movements->heroAction != 0) {
+					_engine->_animations->initAnim(kAction, 1, 0, 0);
 					processZoneExtraBonus(zone);
 				}
 				break;
 			case kText:
-				if (!actorIdx && heroAction != 0) {
-					freezeTime();
+				if (!actorIdx && _engine->_movements->heroAction != 0) {
+					_engine->freezeTime();
 					setFontCrossColor(zone->infoData.DisplayText.textColor);
 					talkingActor = actorIdx;
 					drawTextFullscreen(zone->infoData.DisplayText.textIdx);
-					unfreezeTime();
-					redrawEngineActions(1);
+					_engine->unfreezeTime();
+					_engine->_redraw->redrawEngineActions(1);
 				}
 				break;
 			case kLadder:
-				if (!actorIdx && heroBehaviour != kProtoPack && (actor->anim == kForward || actor->anim == kTopLadder || actor->anim == kClimbLadder)) {
-					rotateActor(actor->boudingBox.X.bottomLeft, actor->boudingBox.Z.bottomLeft, actor->angle + 0x580);
-					destX += processActorX;
-					destZ += processActorZ;
+				if (!actorIdx && _engine->_actor->heroBehaviour != kProtoPack && (actor->anim == kForward || actor->anim == kTopLadder || actor->anim == kClimbLadder)) {
+					_engine->_movements->rotateActor(actor->boudingBox.X.bottomLeft, actor->boudingBox.Z.bottomLeft, actor->angle + 0x580);
+					_engine->_renderer->destX += _engine->_movements->processActorX;
+					_engine->_renderer->destZ += _engine->_movements->processActorZ;
 
-					if (destX >= 0 && destZ >= 0 && destX <= 0x7E00 && destZ <= 0x7E00) {
-						if (getBrickShape(destX, actor->Y + 0x100, destZ)) {
+					if (_engine->_renderer->destX >= 0 && _engine->_renderer->destZ >= 0 && _engine->_renderer->destX <= 0x7E00 && _engine->_renderer->destZ <= 0x7E00) {
+						if (_engine->_grid->getBrickShape(_engine->_renderer->destX, actor->Y + 0x100, _engine->_renderer->destZ)) {
 							currentActorInZone = 1;
-							if (actor->Y >= Abs(zone->bottomLeft.Y + zone->topRight.Y) / 2) {
-								initAnim(kTopLadder, 2, 0, actorIdx); // reached end of ladder
+							if (actor->Y >= ABS(zone->bottomLeft.Y + zone->topRight.Y) / 2) {
+								_engine->_animations->initAnim(kTopLadder, 2, 0, actorIdx); // reached end of ladder
 							} else {
-								initAnim(kClimbLadder, 0, 255, actorIdx); // go up in ladder
+								_engine->_animations->initAnim(kClimbLadder, 0, 255, actorIdx); // go up in ladder
 							}
 						}
 					}
@@ -574,11 +572,11 @@ void processActorZones(int32 actorIdx) {
 		}
 	}
 
-	if (!tmpCellingGrid && actorIdx == currentlyFollowedActor && useCellingGrid != -1) {
-		useCellingGrid = -1;
-		cellingGridIdx = -1;
-		createGridMap();
-		reqBgRedraw = 1;
+	if (!tmpCellingGrid && actorIdx == currentlyFollowedActor && _engine->_grid->useCellingGrid != -1) {
+		_engine->_grid->useCellingGrid = -1;
+		_engine->_grid->cellingGridIdx = -1;
+		_engine->_grid->createGridMap();
+		_engine->_redraw->reqBgRedraw = 1;
 	}
 }
 

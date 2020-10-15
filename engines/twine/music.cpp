@@ -164,7 +164,7 @@ void Music::playMidiMusic(int32 midiIdx, int32 loop) {
 		stopMidiMusic();
 	}
 
-	midiSize = _engine->_hqrdepack->hqrGetallocEntry(&midiPtr, (int8 *)filename, midiIdx);
+	midiSize = _engine->_hqrdepack->hqrGetallocEntry(&midiPtr, filename, midiIdx);
 
 	if (_engine->cfgfile.Sound == 1 && _engine->cfgfile.MidiType == 0) {
 		midiSize = convert_to_midi(midiPtr, midiSize, &dos_midi_ptr);

@@ -53,7 +53,7 @@ void GameState::initEngineProjections() { // reinitAll1
 	_engine->_renderer->setOrthoProjection(311, 240, 512);
 	_engine->_renderer->setBaseTranslation(0, 0, 0);
 	_engine->_renderer->setBaseRotation(0, 0, 0);
-	_engine->_renderer->setLightVector(alphaLight, betaLight, 0);
+	_engine->_renderer->setLightVector(_engine->_scene->alphaLight, _engine->_scene->betaLight, 0);
 }
 
 /** Initialize variables */
@@ -67,7 +67,7 @@ void GameState::initSceneVars() {
 	}
 
 	for (i = 0; i < NUM_SCENES_FLAGS; i++) {
-		sceneFlags[i] = 0;
+		_engine->_scene->sceneFlags[i] = 0;
 	}
 
 	for (i = 0; i < NUM_GAME_FLAGS; i++) {
@@ -78,28 +78,28 @@ void GameState::initSceneVars() {
 		inventoryFlags[i] = 0;
 	}
 
-	sampleAmbiance[0] = -1;
-	sampleAmbiance[1] = -1;
-	sampleAmbiance[2] = -1;
-	sampleAmbiance[3] = -1;
+	_engine->_scene->sampleAmbiance[0] = -1;
+	_engine->_scene->sampleAmbiance[1] = -1;
+	_engine->_scene->sampleAmbiance[2] = -1;
+	_engine->_scene->sampleAmbiance[3] = -1;
 
-	sampleRepeat[0] = 0;
-	sampleRepeat[1] = 0;
-	sampleRepeat[2] = 0;
-	sampleRepeat[3] = 0;
+	_engine->_scene->sampleRepeat[0] = 0;
+	_engine->_scene->sampleRepeat[1] = 0;
+	_engine->_scene->sampleRepeat[2] = 0;
+	_engine->_scene->sampleRepeat[3] = 0;
 
-	sampleRound[0] = 0;
-	sampleRound[1] = 0;
-	sampleRound[2] = 0;
-	sampleRound[3] = 0;
+	_engine->_scene->sampleRound[0] = 0;
+	_engine->_scene->sampleRound[1] = 0;
+	_engine->_scene->sampleRound[2] = 0;
+	_engine->_scene->sampleRound[3] = 0;
 
 	for (i = 0; i < 150; i++) {
 		holomapFlags[i] = 0;
 	}
 
-	sceneNumActors = 0;
-	sceneNumZones = 0;
-	sceneNumTracks = 0;
+	_engine->_scene->sceneNumActors = 0;
+	_engine->_scene->sceneNumZones = 0;
+	_engine->_scene->sceneNumTracks = 0;
 
 	_engine->_actor->currentPositionInBodyPtrTab = 0;
 }
@@ -117,29 +117,29 @@ void GameState::initHeroVars() { // reinitAll3
 
 	usingSabre = 0;
 
-	sceneHero->body = 0;
-	sceneHero->life = 50;
-	sceneHero->talkColor = 4;
+	_engine->_scene->sceneHero->body = 0;
+	_engine->_scene->sceneHero->life = 50;
+	_engine->_scene->sceneHero->talkColor = 4;
 }
 
 /** Initialize all engine variables */
 void GameState::initEngineVars(int32 save) { // reinitAll
 	_engine->_interface->resetClip();
 
-	alphaLight = 896;
-	betaLight = 950;
+	_engine->_scene->alphaLight = 896;
+	_engine->_scene->betaLight = 950;
 	initEngineProjections();
 	initSceneVars();
 	initHeroVars();
 
-	newHeroX = 0x2000;
-	newHeroY = 0x1800;
-	newHeroZ = 0x2000;
+	_engine->_scene->newHeroX = 0x2000;
+	_engine->_scene->newHeroY = 0x1800;
+	_engine->_scene->newHeroZ = 0x2000;
 
-	currentSceneIdx = -1;
-	needChangeScene = 0;
+	_engine->_scene->currentSceneIdx = -1;
+	_engine->_scene->needChangeScene = 0;
 	_engine->quitGame = -1;
-	mecaPinguinIdx = -1;
+	_engine->_scene->mecaPinguinIdx = -1;
 	_engine->_menuOptions->canShowCredits = 0;
 
 	inventoryNumLeafs = 0;
@@ -157,15 +157,15 @@ void GameState::initEngineVars(int32 save) { // reinitAll
 	gameChapter = 0;
 
 	currentTextBank = 0;
-	currentlyFollowedActor = 0;
+	_engine->_scene->currentlyFollowedActor = 0;
 	_engine->_actor->heroBehaviour = 0;
 	_engine->_actor->previousHeroAngle = 0;
 	_engine->_actor->previousHeroBehaviour = 0;
 
 	if (save == -1) {
 		loadGame();
-		if (newHeroX == -1) {
-			heroPositionType = kNoPosition;
+		if (_engine->_scene->newHeroX == -1) {
+			_engine->_scene->heroPositionType = kNoPosition;
 		}
 	}
 }
@@ -191,22 +191,22 @@ void GameState::loadGame() {
 
 	frread(&fr, &data, 1); // number of game flags, always 0xFF
 	frread(&fr, gameFlags, data);
-	frread(&fr, &needChangeScene, 1); // scene index
+	frread(&fr, &_engine->_scene->needChangeScene, 1); // scene index
 	frread(&fr, &gameChapter, 1);
 
 	frread(&fr, &_engine->_actor->heroBehaviour, 1);
 	_engine->_actor->previousHeroBehaviour = _engine->_actor->heroBehaviour;
-	frread(&fr, &sceneHero->life, 1);
+	frread(&fr, &_engine->_scene->sceneHero->life, 1);
 	frread(&fr, &inventoryNumKashes, 2);
 	frread(&fr, &magicLevelIdx, 1);
 	frread(&fr, &inventoryMagicPoints, 1);
 	frread(&fr, &inventoryNumLeafsBox, 1);
-	frread(&fr, &newHeroX, 2);
-	frread(&fr, &newHeroY, 2);
-	frread(&fr, &newHeroZ, 2);
-	frread(&fr, &sceneHero->angle, 2);
-	_engine->_actor->previousHeroAngle = sceneHero->angle;
-	frread(&fr, &sceneHero->body, 1);
+	frread(&fr, &_engine->_scene->newHeroX, 2);
+	frread(&fr, &_engine->_scene->newHeroY, 2);
+	frread(&fr, &_engine->_scene->newHeroZ, 2);
+	frread(&fr, &_engine->_scene->sceneHero->angle, 2);
+	_engine->_actor->previousHeroAngle = _engine->_scene->sceneHero->angle;
+	frread(&fr, &_engine->_scene->sceneHero->body, 1);
 
 	frread(&fr, &data, 1); // number of holomap locations, always 0x96
 	frread(&fr, holomapFlags, data);
@@ -221,8 +221,8 @@ void GameState::loadGame() {
 
 	frclose(&fr);
 
-	currentSceneIdx = -1;
-	heroPositionType = kReborn;
+	_engine->_scene->currentSceneIdx = -1;
+	_engine->_scene->heroPositionType = kReborn;
 }
 
 void GameState::saveGame() {
@@ -244,19 +244,19 @@ void GameState::saveGame() {
 	frwrite(&fr, &data, 1, 1);
 	frwrite(&fr, gameFlags, 255, 1);
 
-	frwrite(&fr, &currentSceneIdx, 1, 1);
+	frwrite(&fr, &_engine->_scene->currentSceneIdx, 1, 1);
 	frwrite(&fr, &gameChapter, 1, 1);
 	frwrite(&fr, &_engine->_actor->heroBehaviour, 1, 1);
-	frwrite(&fr, &sceneHero->life, 1, 1);
+	frwrite(&fr, &_engine->_scene->sceneHero->life, 1, 1);
 	frwrite(&fr, &inventoryNumKashes, 2, 1);
 	frwrite(&fr, &magicLevelIdx, 1, 1);
 	frwrite(&fr, &inventoryMagicPoints, 1, 1);
 	frwrite(&fr, &inventoryNumLeafsBox, 1, 1);
-	frwrite(&fr, &newHeroX, 2, 1);
-	frwrite(&fr, &newHeroY, 2, 1);
-	frwrite(&fr, &newHeroZ, 2, 1);
-	frwrite(&fr, &sceneHero->angle, 2, 1);
-	frwrite(&fr, &sceneHero->body, 1, 1);
+	frwrite(&fr, &_engine->_scene->newHeroX, 2, 1);
+	frwrite(&fr, &_engine->_scene->newHeroY, 2, 1);
+	frwrite(&fr, &_engine->_scene->newHeroZ, 2, 1);
+	frwrite(&fr, &_engine->_scene->sceneHero->angle, 2, 1);
+	frwrite(&fr, &_engine->_scene->sceneHero->body, 1, 1);
 
 	data = 0x96; // number of holomap locations
 	frwrite(&fr, &data, 1, 1);
@@ -282,35 +282,35 @@ void GameState::processFoundItem(int32 item) {
 	uint8 *currentAnim;
 	AnimTimerDataStruct tmpAnimTimer;
 
-	_engine->_grid->newCameraX = (sceneHero->X + 0x100) >> 9;
-	_engine->_grid->newCameraY = (sceneHero->Y + 0x100) >> 8;
-	_engine->_grid->newCameraZ = (sceneHero->Z + 0x100) >> 9;
+	_engine->_grid->newCameraX = (_engine->_scene->sceneHero->X + 0x100) >> 9;
+	_engine->_grid->newCameraY = (_engine->_scene->sceneHero->Y + 0x100) >> 8;
+	_engine->_grid->newCameraZ = (_engine->_scene->sceneHero->Z + 0x100) >> 9;
 
 	// Hide hero in scene
-	sceneHero->staticFlags.bIsHidden = 1;
+	_engine->_scene->sceneHero->staticFlags.bIsHidden = 1;
 	_engine->_redraw->redrawEngineActions(1);
-	sceneHero->staticFlags.bIsHidden = 0;
+	_engine->_scene->sceneHero->staticFlags.bIsHidden = 0;
 
-	copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
+	_engine->_screens->copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
 
 	itemCameraX = _engine->_grid->newCameraX << 9;
 	itemCameraY = _engine->_grid->newCameraY << 8;
 	itemCameraZ = _engine->_grid->newCameraZ << 9;
 
-	_engine->_renderer->renderIsoModel(sceneHero->X - itemCameraX, sceneHero->Y - itemCameraY, sceneHero->Z - itemCameraZ, 0, 0x80, 0, _engine->_actor->bodyTable[sceneHero->entity]);
+	_engine->_renderer->renderIsoModel(_engine->_scene->sceneHero->X - itemCameraX, _engine->_scene->sceneHero->Y - itemCameraY, _engine->_scene->sceneHero->Z - itemCameraZ, 0, 0x80, 0, _engine->_actor->bodyTable[_engine->_scene->sceneHero->entity]);
 	_engine->_interface->setClip(_engine->_redraw->renderLeft, _engine->_redraw->renderTop, _engine->_redraw->renderRight, _engine->_redraw->renderBottom);
 
-	itemX = (sceneHero->X + 0x100) >> 9;
-	itemY = sceneHero->Y >> 8;
-	if (sceneHero->brickShape & 0x7F) {
+	itemX = (_engine->_scene->sceneHero->X + 0x100) >> 9;
+	itemY = _engine->_scene->sceneHero->Y >> 8;
+	if (_engine->_scene->sceneHero->brickShape & 0x7F) {
 		itemY++;
 	}
-	itemZ = (sceneHero->Z + 0x100) >> 9;
+	itemZ = (_engine->_scene->sceneHero->Z + 0x100) >> 9;
 
 	_engine->_grid->drawOverModelActor(itemX, itemY, itemZ);
 	flip();
 
-	_engine->_renderer->projectPositionOnScreen(sceneHero->X - itemCameraX, sceneHero->Y - itemCameraY, sceneHero->Z - itemCameraZ);
+	_engine->_renderer->projectPositionOnScreen(_engine->_scene->sceneHero->X - itemCameraX, _engine->_scene->sceneHero->Y - itemCameraY, _engine->_scene->sceneHero->Z - itemCameraZ);
 	_engine->_renderer->projPosY -= 150;
 
 	boxTopLeftX = _engine->_renderer->projPosX - 65;
@@ -344,16 +344,16 @@ void GameState::processFoundItem(int32 item) {
 
 	currentAnim = _engine->_animations->animTable[_engine->_animations->getBodyAnimIndex(kFoundItem, 0)];
 
-	tmpAnimTimer = sceneHero->animTimerData;
+	tmpAnimTimer = _engine->_scene->sceneHero->animTimerData;
 
-	_engine->_animations->animBuffer2 += _engine->_animations->stockAnimation(_engine->_animations->animBuffer2, _engine->_actor->bodyTable[sceneHero->entity], &sceneHero->animTimerData);
+	_engine->_animations->animBuffer2 += _engine->_animations->stockAnimation(_engine->_animations->animBuffer2, _engine->_actor->bodyTable[_engine->_scene->sceneHero->entity], &_engine->_scene->sceneHero->animTimerData);
 	if (_engine->_animations->animBuffer1 + 4488 < _engine->_animations->animBuffer2) {
 		_engine->_animations->animBuffer2 = _engine->_animations->animBuffer1;
 	}
 
 	currentAnimState = 0;
 
-	_engine->_renderer->prepareIsoModel(inventoryTable[item]);
+	_engine->_renderer->prepareIsoModel(_engine->_resources->inventoryTable[item]);
 	_engine->_redraw->numOfRedrawBox = 0;
 
 	while (!quitItem) {
@@ -366,21 +366,21 @@ void GameState::processFoundItem(int32 item) {
 
 		_engine->_menu->itemAngle[item] += 8;
 
-		_engine->_renderer->renderInventoryItem(_engine->_renderer->projPosX, _engine->_renderer->projPosY, inventoryTable[item], _engine->_menu->itemAngle[item], 10000);
+		_engine->_renderer->renderInventoryItem(_engine->_renderer->projPosX, _engine->_renderer->projPosY, _engine->_resources->inventoryTable[item], _engine->_menu->itemAngle[item], 10000);
 
 		_engine->_menu->drawBox(boxTopLeftX, boxTopLeftY, boxBottomRightX, boxBottomRightY);
 		_engine->_redraw->addRedrawArea(boxTopLeftX, boxTopLeftY, boxBottomRightX, boxBottomRightY);
 		_engine->_interface->resetClip();
 		initEngineProjections();
 
-		if (_engine->_animations->setModelAnimation(currentAnimState, currentAnim, _engine->_actor->bodyTable[sceneHero->entity], &sceneHero->animTimerData)) {
+		if (_engine->_animations->setModelAnimation(currentAnimState, currentAnim, _engine->_actor->bodyTable[_engine->_scene->sceneHero->entity], &_engine->_scene->sceneHero->animTimerData)) {
 			currentAnimState++; // keyframe
 			if (currentAnimState >= _engine->_animations->getNumKeyframes(currentAnim)) {
 				currentAnimState = _engine->_animations->getStartKeyframe(currentAnim);
 			}
 		}
 
-		_engine->_renderer->renderIsoModel(sceneHero->X - itemCameraX, sceneHero->Y - itemCameraY, sceneHero->Z - itemCameraZ, 0, 0x80, 0, _engine->_actor->bodyTable[sceneHero->entity]);
+		_engine->_renderer->renderIsoModel(_engine->_scene->sceneHero->X - itemCameraX, _engine->_scene->sceneHero->Y - itemCameraY, _engine->_scene->sceneHero->Z - itemCameraZ, 0, 0x80, 0, _engine->_actor->bodyTable[_engine->_scene->sceneHero->entity]);
 		_engine->_interface->setClip(_engine->_redraw->renderLeft, _engine->_redraw->renderTop, _engine->_redraw->renderRight, _engine->_redraw->renderBottom);
 		_engine->_grid->drawOverModelActor(itemX, itemY, itemZ);
 		_engine->_redraw->addRedrawArea(_engine->_redraw->renderLeft, _engine->_redraw->renderTop, _engine->_redraw->renderRight, _engine->_redraw->renderBottom);
@@ -430,12 +430,12 @@ void GameState::processFoundItem(int32 item) {
 		stopVox(currDialTextEntry);
 	}
 
-	sceneHero->animTimerData = tmpAnimTimer;
+	_engine->_scene->sceneHero->animTimerData = tmpAnimTimer;
 }
 
 void GameState::processGameChoices(int32 choiceIdx) {
 	int32 i;
-	copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
+	_engine->_screens->copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
 
 	gameChoicesSettings[0] = 0;          // Current loaded button (button number)
 	gameChoicesSettings[1] = numChoices; // Num of buttons
@@ -472,13 +472,13 @@ void GameState::processGameoverAnimation() { // makeGameOver
 	tmpLbaTime = _engine->lbaTime;
 
 	// workaround to fix hero redraw after drowning
-	sceneHero->staticFlags.bIsHidden = 1;
+	_engine->_scene->sceneHero->staticFlags.bIsHidden = 1;
 	_engine->_redraw->redrawEngineActions(1);
-	sceneHero->staticFlags.bIsHidden = 0;
+	_engine->_scene->sceneHero->staticFlags.bIsHidden = 0;
 
 	// TODO: drawInGameTransBox
-	setPalette(paletteRGBA);
-	copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
+	setPalette(_engine->_screens->paletteRGBA);
+	_engine->_screens->copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
 	uint8 *gameOverPtr = (uint8 *)malloc(_engine->_hqrdepack->hqrEntrySize(HQR_RESS_FILE, RESSHQR_GAMEOVERMDL));
 	_engine->_hqrdepack->hqrGetEntry(gameOverPtr, HQR_RESS_FILE, RESSHQR_GAMEOVERMDL);
 
@@ -496,7 +496,7 @@ void GameState::processGameoverAnimation() { // makeGameOver
 			readKeys();
 
 			avg = _engine->_collision->getAverageValue(40000, 3200, 500, _engine->lbaTime - startLbaTime);
-			cdot = crossDot(1, 1024, 100, (_engine->lbaTime - startLbaTime) % 0x64);
+			cdot = _engine->_screens->crossDot(1, 1024, 100, (_engine->lbaTime - startLbaTime) % 0x64);
 			_engine->_interface->blitBox(120, 120, 519, 359, (int8 *)_engine->workVideoBuffer, 120, 120, (int8 *)_engine->frontVideoBuffer);
 			_engine->_renderer->setCameraAngle(0, 0, 0, 0, -cdot, 0, avg);
 			_engine->_renderer->renderIsoModel(0, 0, 0, 0, 0, 0, gameOverPtr);
@@ -516,7 +516,7 @@ void GameState::processGameoverAnimation() { // makeGameOver
 
 		_engine->_interface->resetClip();
 		free(gameOverPtr);
-		copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
+		_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 		flip();
 		initEngineProjections();
 

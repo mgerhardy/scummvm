@@ -138,6 +138,9 @@ class MenuOptions;
 class Music;
 class Redraw;
 class Renderer;
+class Resources;
+class Scene;
+class Screens;
 
 class TwinEEngine : public Engine {
 public:
@@ -162,6 +165,9 @@ public:
 	Music *_music;
 	Redraw *_redraw;
 	Renderer *_renderer;
+	Resources *_resources;
+	Scene *_scene;
+	Screens *_screens;
 
 	/** Configuration file structure
 	 * Contains all the data used in the engine to configurated the game in particulary ways. */

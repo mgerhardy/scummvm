@@ -92,9 +92,9 @@ int32 DebugScene::checkZoneType(int32 type) {
 void DebugScene::displayZones(int16 pKey) {
 	if (showingZones == 1) {
 		int z;
-		ZoneStruct *zonePtr = sceneZones;
-		for (z = 0; z < sceneNumZones; z++) {
-			zonePtr = &sceneZones[z];
+		ZoneStruct *zonePtr = _engine->_scene->sceneZones;
+		for (z = 0; z < _engine->_scene->sceneNumZones; z++) {
+			zonePtr = &_engine->_scene->sceneZones[z];
 
 			if (checkZoneType(zonePtr->type)) {
 				ScenePoint frontBottomLeftPoint;

@@ -118,6 +118,18 @@ private:
 		uint16 temp;
 	} packed16;
 
+	int32 renderAnimatedModel(uint8 *bodyPtr);
+	void circleFill(int32 x, int32 y, int32 radius, int8 color);
+	int32 renderModelElements(uint8 *pointer);
+	void getBaseRotationPosition(int32 X, int32 Y, int32 Z);
+	void getCameraAnglePositions(int32 X, int32 Y, int32 Z);
+	void applyRotation(int32 *tempMatrix, int32 *currentMatrix);
+	void applyPointsRotation(uint8 *firstPointsPtr, int32 numPoints, pointTab *destPoints, int32 *rotationMatrix);
+	void processRotatedElement(int32 rotZ, int32 rotY, int32 rotX, elementEntry *elemPtr);
+	void applyPointsTranslation(uint8 *firstPointsPtr, int32 numPoints, pointTab *destPoints, int32 *translationMatrix);
+	void processTranslatedElement(int32 rotX, int32 rotY, int32 rotZ, elementEntry *elemPtr);
+	void translateGroup(int16 ax, int16 bx, int16 cx);
+
 	// ---- variables ----
 
 	int32 baseMatrixRotationX;
@@ -222,7 +234,7 @@ public:
 	int32 destY;
 	int32 destZ;
 
-	int16 *shadeAngleTab3; // tab3
+	const int16 *shadeAngleTab3; // tab3
 
 	int16 polyRenderType; //FillVertic_AType;
 	int32 numOfVertex;

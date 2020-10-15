@@ -36,7 +36,7 @@ private:
 
 	FileReader fr;
 
-	int hqrVoxEntrySize(int8 *filename, int32 index, int32 hiddenIndex);
+	int hqrVoxEntrySize(const char *filename, int32 index, int32 hiddenIndex);
 	void hqrDecompressLZEntry(uint8 *dst, uint8 *src, int32 decompsize, int32 mode);
 	void hqrDecompressEntry(uint8 *dst, uint8 *src, int32 decompsize, int32 mode);
 
@@ -48,28 +48,28 @@ public:
 	@param filename HQR file name
 	@param index entry index to extract
 	@return entry real size */
-	int32 hqrGetEntry(uint8 *ptr, int8 *filename, int32 index);
+	int32 hqrGetEntry(uint8 *ptr, const char *filename, int32 index);
 
 	/** Get a HQR entry pointer
 	@param filename HQR file name
 	@param index entry index to extract
 	@return entry real size */
-	int32 hqrEntrySize(int8 *filename, int32 index);
+	int32 hqrEntrySize(const char *filename, int32 index);
 
 	/** Get a HQR total number of entries
 	@param filename HQR file name
 	@return total number of entries */
-	int32 hqrNumEntries(int8 *filename);
+	int32 hqrNumEntries(const char *filename);
 
 	/** Get a HQR entry pointer with memory allocation
 	@param ptr pointer to save the entry
 	@param filename HQR file name
 	@param index entry index to extract
 	@return entry real size */
-	int32 hqrGetallocEntry(uint8 **ptr, int8 *filename, int32 index);
+	int32 hqrGetallocEntry(uint8 **ptr, const char *filename, int32 index);
 
-	int32 hqrGetVoxEntry(uint8 *ptr, int8 *filename, int32 index, int32 hiddenIndex);
-	int32 hqrGetallocVoxEntry(uint8 **ptr, int8 *filename, int32 index, int32 hiddenIndex);
+	int32 hqrGetVoxEntry(uint8 *ptr, const char *filename, int32 index, int32 hiddenIndex);
+	int32 hqrGetallocVoxEntry(uint8 **ptr, const char *filename, int32 index, int32 hiddenIndex);
 };
 
 } // namespace TwinE

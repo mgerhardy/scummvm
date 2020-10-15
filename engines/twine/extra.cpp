@@ -122,7 +122,7 @@ int32 Extra::addExtra(int32 actorIdx, int32 X, int32 Y, int32 Z, int32 info0, in
 			extra->strengthOfHit = strengthOfHit;
 
 			_engine->_movements->setActorAngle(0, maxSpeed, 50, &extra->trackActorMove);
-			extra->angle = _engine->_movements->getAngleAndSetTargetActorDistance(X, Z, sceneActors[targetActor].X, sceneActors[targetActor].Z);
+			extra->angle = _engine->_movements->getAngleAndSetTargetActorDistance(X, Z, _engine->_scene->sceneActors[targetActor].X, _engine->_scene->sceneActors[targetActor].Z);
 			return i;
 		}
 	}
@@ -303,7 +303,7 @@ int32 Extra::addExtraAiming(int32 actorIdx, int32 X, int32 Y, int32 Z, int32 spr
 			extra->destZ = maxSpeed;
 			extra->strengthOfHit = strengthOfHit;
 			_engine->_movements->setActorAngle(0, maxSpeed, 50, &extra->trackActorMove);
-			extra->angle = _engine->_movements->getAngleAndSetTargetActorDistance(X, Z, sceneActors[targetActorIdx].X, sceneActors[targetActorIdx].Z);
+			extra->angle = _engine->_movements->getAngleAndSetTargetActorDistance(X, Z, _engine->_scene->sceneActors[targetActorIdx].X, _engine->_scene->sceneActors[targetActorIdx].Z);
 
 			return i;
 		}
@@ -627,9 +627,9 @@ void Extra::processExtras() {
 				actorIdxAttacked = extra->lifeTime;
 				actorIdx = extra->actorIdx;
 
-				currentExtraX = sceneActors[actorIdxAttacked].X;
-				currentExtraY = sceneActors[actorIdxAttacked].Y + 1000;
-				currentExtraZ = sceneActors[actorIdxAttacked].Z;
+				currentExtraX = _engine->_scene->sceneActors[actorIdxAttacked].X;
+				currentExtraY = _engine->_scene->sceneActors[actorIdxAttacked].Y + 1000;
+				currentExtraZ = _engine->_scene->sceneActors[actorIdxAttacked].Z;
 
 				tmpAngle = _engine->_movements->getAngleAndSetTargetActorDistance(extra->X, extra->Z, currentExtraX, currentExtraZ);
 				angle = (tmpAngle - extra->angle) & 0x3FF;
@@ -684,7 +684,7 @@ void Extra::processExtras() {
 				angle = (tmpAngle - extra->angle) & 0x3FF;
 
 				if (angle > 400 && angle < 600) {
-					playSample(97, 0x1000, 1, sceneHero->X, sceneHero->Y, sceneHero->Z, 0);
+					playSample(97, 0x1000, 1, _engine->_scene->sceneHero->X, _engine->_scene->sceneHero->Y, _engine->_scene->sceneHero->Z, 0);
 
 					if (extraKey->info1 > 1) {
 						_engine->_renderer->projectPositionOnScreen(extraKey->X - _engine->_grid->cameraX, extraKey->Y - _engine->_grid->cameraY, extraKey->Z - _engine->_grid->cameraZ);
@@ -719,7 +719,7 @@ void Extra::processExtras() {
 					_engine->_movements->setActorAngle(0, extra->destZ, 50, &extra->trackActorMove);
 
 					if (actorIdx == _engine->_collision->checkExtraCollisionWithExtra(extra, _engine->_gameState->magicBallIdx)) {
-						playSample(97, 0x1000, 1, sceneHero->X, sceneHero->Y, sceneHero->Z, 0);
+						playSample(97, 0x1000, 1, _engine->_scene->sceneHero->X, _engine->_scene->sceneHero->Y, _engine->_scene->sceneHero->Z, 0);
 
 						if (extraKey->info1 > 1) {
 							_engine->_renderer->projectPositionOnScreen(extraKey->X - _engine->_grid->cameraX, extraKey->Y - _engine->_grid->cameraY, extraKey->Z - _engine->_grid->cameraZ);
@@ -860,7 +860,7 @@ void Extra::processExtras() {
 				if (process) {
 					int16 *spriteBounds;
 
-					spriteBounds = (int16 *)(spriteBoundingBoxPtr + extra->info0 * 16 + 8);
+					spriteBounds = (int16 *)(_engine->_scene->spriteBoundingBoxPtr + extra->info0 * 16 + 8);
 					extra->Y = (_engine->_collision->collisionY << 8) + 0x100 - *(spriteBounds);
 					extra->type &= 0xFFED;
 					continue;
@@ -888,9 +888,9 @@ void Extra::processExtras() {
 					}
 
 					if (extra->info0 == SPRITEHQR_LIFEPOINTS) {
-						sceneHero->life += extra->info1;
-						if (sceneHero->life > 50) {
-							sceneHero->life = 50;
+						_engine->_scene->sceneHero->life += extra->info1;
+						if (_engine->_scene->sceneHero->life > 50) {
+							_engine->_scene->sceneHero->life = 50;
 						}
 					}
 

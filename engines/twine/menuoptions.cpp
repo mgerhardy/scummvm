@@ -52,7 +52,7 @@ void MenuOptions::newGame() {
 	_engine->cfgfile.FlagDisplayText = 1;
 
 	// intro screen 1 - twinsun
-	loadImage(RESSHQR_INTROSCREEN1IMG, 1);
+	_engine->_screens->loadImage(RESSHQR_INTROSCREEN1IMG, 1);
 
 	newGameVar4 = 0;
 	newGameVar5 = 1;
@@ -66,12 +66,12 @@ void MenuOptions::newGame() {
 
 	if (skipIntro != 1) {
 		// intro screen 1 - twinsun
-		loadImage(RESSHQR_INTROSCREEN2IMG, 1);
+		_engine->_screens->loadImage(RESSHQR_INTROSCREEN2IMG, 1);
 		drawTextFullscreen(151);
 		readKeys();
 
 		if (skipIntro != 1) {
-			loadImage(RESSHQR_INTROSCREEN3IMG, 1);
+			_engine->_screens->loadImage(RESSHQR_INTROSCREEN3IMG, 1);
 			drawTextFullscreen(152);
 		}
 	}
@@ -80,18 +80,18 @@ void MenuOptions::newGame() {
 	textClipSmall();
 	newGameVar4 = 1;
 
-	fadeToBlack(paletteRGBACustom);
-	clearScreen();
+	_engine->_screens->fadeToBlack(_engine->_screens->paletteRGBACustom);
+	_engine->_screens->clearScreen();
 	flip();
 
 	_engine->_music->playMidiMusic(1, 0);
 	_engine->_flaMovies->playFlaMovie(FLA_INTROD);
 
-	clearScreen();
+	_engine->_screens->clearScreen();
 	flip();
 
 	// set main palette back
-	setPalette(paletteRGBA);
+	setPalette(_engine->_screens->paletteRGBA);
 
 	_engine->cfgfile.FlagDisplayText = tmpFlagDisplayText;
 }
@@ -105,8 +105,8 @@ void MenuOptions::showCredits() {
 	_engine->cfgfile.ShadowMode = 0;
 	_engine->cfgfile.LanguageCDId = 0;
 	_engine->_gameState->initEngineVars(1);
-	currentSceneIdx = 119;
-	needChangeScene = 119;
+	_engine->_scene->currentSceneIdx = 119;
+	_engine->_scene->needChangeScene = 119;
 
 	_engine->gameEngineLoop();
 
@@ -114,14 +114,14 @@ void MenuOptions::showCredits() {
 	_engine->cfgfile.ShadowMode = tmpShadowMode;
 	_engine->cfgfile.LanguageCDId = tmpLanguageCDIdx;
 
-	clearScreen();
+	_engine->_screens->clearScreen();
 	flip();
 
 	_engine->_flaMovies->playFlaMovie(FLA_THEEND);
 
-	clearScreen();
+	_engine->_screens->clearScreen();
 	flip();
-	setPalette(paletteRGBA);
+	setPalette(_engine->_screens->paletteRGBA);
 }
 
 void MenuOptions::drawSelectableCharacter(int32 x, int32 y, int32 arg) {
@@ -166,7 +166,7 @@ void MenuOptions::drawSelectableCharacters() {
 }
 
 // 0001F18C
-void MenuOptions::drawPlayerName(int32 centerx, int32 top, int8 */*playerName*/, int32 type) {
+void MenuOptions::drawPlayerName(int32 centerx, int32 top, int8 * /*playerName*/, int32 type) {
 	/*
 	int v4; // ebp@0
   int v6; // [sp+0h] [bp-14h]@0
@@ -214,7 +214,7 @@ int32 MenuOptions::enterPlayerName(int32 textIdx) {
 	int8 buffer[256];
 
 	while (1) {
-		copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
+		_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 		flip(); //frontVideoBuffer
 		initTextBank(0);
 		getMenuText(textIdx, buffer);
@@ -250,7 +250,7 @@ int32 MenuOptions::enterPlayerName(int32 textIdx) {
 	}
 
 	enterPlayerNameVar2 = 0;
-	copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
+	_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 	flip(); // frontVideoBuffer
 
 	return 1;
@@ -267,7 +267,7 @@ void MenuOptions::newGameMenu() {
 			showCredits();
 		}
 
-		copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
+		_engine->_screens->copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
 		// TODO: recheck this
 		do {
 			readKeys();
@@ -284,7 +284,7 @@ void MenuOptions::continueGameMenu() {
 	//if(chooseSave(MAINMENU_CONTINUEGAME))
 	{
 		_engine->_gameState->initEngineVars(-1); // will load game
-		if (_engine->_gameState->gameChapter == 0 && currentSceneIdx == 0) {
+		if (_engine->_gameState->gameChapter == 0 && _engine->_scene->currentSceneIdx == 0) {
 			newGame();
 		} else {
 			newGameVar5 = 0;
@@ -296,7 +296,7 @@ void MenuOptions::continueGameMenu() {
 			showCredits();
 		}
 
-		copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
+		_engine->_screens->copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
 		// TODO: recheck this
 		do {
 			readKeys();

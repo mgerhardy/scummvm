@@ -340,7 +340,7 @@ void Menu::drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, in
 					_engine->cfgfile.MusicVolume = 255;
 				if (_engine->cfgfile.MusicVolume < 0)
 					_engine->cfgfile.MusicVolume = 0;
-				newWidth = crossDot(left, right, 255, _engine->cfgfile.MusicVolume);
+				newWidth = _engine->_screens->crossDot(left, right, 255, _engine->cfgfile.MusicVolume);
 				break;
 			}
 			case 2: {
@@ -348,7 +348,7 @@ void Menu::drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, in
 					_engine->cfgfile.WaveVolume = 255;
 				if (_engine->cfgfile.WaveVolume < 0)
 					_engine->cfgfile.WaveVolume = 0;
-				newWidth = crossDot(left, right, 255, _engine->cfgfile.WaveVolume);
+				newWidth = _engine->_screens->crossDot(left, right, 255, _engine->cfgfile.WaveVolume);
 				break;
 			}
 			case 3: {
@@ -356,7 +356,7 @@ void Menu::drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, in
 					_engine->cfgfile.CDVolume = 255;
 				if (_engine->cfgfile.CDVolume < 0)
 					_engine->cfgfile.CDVolume = 0;
-				newWidth = crossDot(left, right, 255, _engine->cfgfile.CDVolume);
+				newWidth = _engine->_screens->crossDot(left, right, 255, _engine->cfgfile.CDVolume);
 				break;
 			}
 			case 4: {
@@ -364,7 +364,7 @@ void Menu::drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, in
 					_engine->cfgfile.LineVolume = 255;
 				if (_engine->cfgfile.LineVolume < 0)
 					_engine->cfgfile.LineVolume = 0;
-				newWidth = crossDot(left, right, 255, _engine->cfgfile.LineVolume);
+				newWidth = _engine->_screens->crossDot(left, right, 255, _engine->cfgfile.LineVolume);
 				break;
 			}
 			case 5: {
@@ -372,7 +372,7 @@ void Menu::drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, in
 					_engine->cfgfile.MasterVolume = 255;
 				if (_engine->cfgfile.MasterVolume < 0)
 					_engine->cfgfile.MasterVolume = 0;
-				newWidth = crossDot(left, right, 255, _engine->cfgfile.MasterVolume);
+				newWidth = _engine->_screens->crossDot(left, right, 255, _engine->cfgfile.MasterVolume);
 				break;
 			}
 			};
@@ -606,7 +606,7 @@ int32 Menu::processMenu(int16 *menuSettings) {
 			drawButton(localData, 1);
 			readKeys();
 			// WARNING: this is here to prevent a fade bug while quit the menu
-			copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
+			_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 		}
 	} while (!(skippedKey & 2) && !(skippedKey & 1));
 
@@ -621,7 +621,7 @@ int32 Menu::processMenu(int16 *menuSettings) {
 int32 Menu::advoptionsMenu() {
 	int32 ret = 0;
 
-	copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
+	_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 
 	do {
 		switch (processMenu(AdvOptionsMenuSettings)) {
@@ -635,7 +635,7 @@ int32 Menu::advoptionsMenu() {
 		}
 	} while (ret != 1);
 
-	copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
+	_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 	flip();
 
 	return 0;
@@ -645,7 +645,7 @@ int32 Menu::advoptionsMenu() {
 int32 Menu::savemanageMenu() {
 	int32 ret = 0;
 
-	copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
+	_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 
 	do {
 		switch (processMenu(SaveManageMenuSettings)) {
@@ -659,7 +659,7 @@ int32 Menu::savemanageMenu() {
 		}
 	} while (ret != 1);
 
-	copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
+	_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 	flip();
 
 	return 0;
@@ -669,7 +669,7 @@ int32 Menu::savemanageMenu() {
 int32 Menu::volumeMenu() {
 	int32 ret = 0;
 
-	copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
+	_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 
 	do {
 		switch (processMenu(VolumeMenuSettings)) {
@@ -683,7 +683,7 @@ int32 Menu::volumeMenu() {
 		}
 	} while (ret != 1);
 
-	copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
+	_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 	flip();
 
 	return 0;
@@ -693,7 +693,7 @@ int32 Menu::volumeMenu() {
 int32 Menu::optionsMenu() {
 	int32 ret = 0;
 
-	copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
+	_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 
 	stopSamples();
 	//playCDtrack(9);
@@ -706,19 +706,19 @@ int32 Menu::optionsMenu() {
 			break;
 		}
 		case kVolume: {
-			copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
+			_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 			flip();
 			volumeMenu();
 			break;
 		}
 		case kSaveManage: {
-			copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
+			_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 			flip();
 			savemanageMenu();
 			break;
 		}
 		case kAdvanced: {
-			copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
+			_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 			flip();
 			advoptionsMenu();
 			break;
@@ -728,7 +728,7 @@ int32 Menu::optionsMenu() {
 		}
 	} while (ret != 1);
 
-	copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
+	_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 	flip();
 
 	return 0;
@@ -738,7 +738,7 @@ int32 Menu::optionsMenu() {
 void Menu::mainMenu() {
 	stopSamples();
 
-	copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
+	_engine->_screens->copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
 
 	// load menu effect file only once
 	plasmaEffectPtr = (uint8 *)malloc(kPlasmaEffectFilesize);
@@ -761,7 +761,7 @@ void Menu::mainMenu() {
 			break;
 		}
 		case kOptions: {
-			copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
+			_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 			flip();
 			OptionsMenuSettings[5] = kReturnMenu;
 			optionsMenu();
@@ -772,7 +772,7 @@ void Menu::mainMenu() {
 			break;
 		}
 		case kBackground: {
-			loadMenuImage(1);
+			_engine->_screens->loadMenuImage(1);
 		}
 		}
 		fpsCycles(_engine->cfgfile.Fps);
@@ -785,7 +785,7 @@ int32 Menu::giveupMenu() {
 	int32 menuId;
 	int16 *localMenu;
 
-	copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
+	_engine->_screens->copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
 	pauseSamples();
 
 	if (_engine->cfgfile.UseAutoSaving == 1)
@@ -830,7 +830,7 @@ void Menu::drawInfoMenu(int16 left, int16 top) {
 
 	boxRight = left + 325;
 	newBoxLeft = left + 25;
-	boxLeft = crossDot(newBoxLeft, boxRight, 50, sceneHero->life);
+	boxLeft = _engine->_screens->crossDot(newBoxLeft, boxRight, 50, _engine->_scene->sceneHero->life);
 
 	boxTop = top + 10;
 	boxBottom = top + 25;
@@ -840,7 +840,7 @@ void Menu::drawInfoMenu(int16 left, int16 top) {
 	if (!_engine->_gameState->gameFlags[GAMEFLAG_INVENTORY_DISABLED] && _engine->_gameState->gameFlags[GAMEFLAG_TUNIC]) {
 		_engine->_grid->drawSprite(0, newBoxLeft2, top + 36, _engine->_actor->spriteTable[SPRITEHQR_MAGICPOINTS]);
 		if (_engine->_gameState->magicLevelIdx > 0) {
-			_engine->_interface->drawSplittedBox(newBoxLeft, top + 35, crossDot(newBoxLeft, boxRight, 80, _engine->_gameState->inventoryMagicPoints), top + 50, 75);
+			_engine->_interface->drawSplittedBox(newBoxLeft, top + 35, _engine->_screens->crossDot(newBoxLeft, boxRight, 80, _engine->_gameState->inventoryMagicPoints), top + 50, 75);
 		}
 		drawBox(left + 25, top + 35, left + _engine->_gameState->magicLevelIdx * 80 + 20, top + 35 + 15);
 	}
@@ -864,12 +864,12 @@ void Menu::drawInfoMenu(int16 left, int16 top) {
 
 	// Clover leaf boxes
 	for (i = 0; i < _engine->_gameState->inventoryNumLeafsBox; i++) {
-		_engine->_grid->drawSprite(0, crossDot(left + 25, left + 325, 10, i), top + 58, _engine->_actor->spriteTable[SPRITEHQR_CLOVERLEAFBOX]);
+		_engine->_grid->drawSprite(0, _engine->_screens->crossDot(left + 25, left + 325, 10, i), top + 58, _engine->_actor->spriteTable[SPRITEHQR_CLOVERLEAFBOX]);
 	}
 
 	// Clover leafs
 	for (i = 0; i < _engine->_gameState->inventoryNumLeafs; i++) {
-		_engine->_grid->drawSprite(0, crossDot(left + 25, left + 325, 10, i) + 2, top + 60, _engine->_actor->spriteTable[SPRITEHQR_CLOVERLEAF]);
+		_engine->_grid->drawSprite(0, _engine->_screens->crossDot(left + 25, left + 325, 10, i) + 2, top + 60, _engine->_actor->spriteTable[SPRITEHQR_CLOVERLEAF]);
 	}
 
 	copyBlockPhys(left, top, left + 450, top + 135);
@@ -964,16 +964,16 @@ void Menu::processBehaviourMenu() {
 		_engine->_actor->setBehaviour(kNormal);
 	}
 
-	behaviourEntity = _engine->_actor->bodyTable[sceneHero->entity];
+	behaviourEntity = _engine->_actor->bodyTable[_engine->_scene->sceneHero->entity];
 
 	_engine->_actor->heroAnimIdx[kNormal] = _engine->_actor->heroAnimIdxNORMAL;
 	_engine->_actor->heroAnimIdx[kAthletic] = _engine->_actor->heroAnimIdxATHLETIC;
 	_engine->_actor->heroAnimIdx[kAggressive] = _engine->_actor->heroAnimIdxAGGRESSIVE;
 	_engine->_actor->heroAnimIdx[kDiscrete] = _engine->_actor->heroAnimIdxDISCRETE;
 
-	_engine->_movements->setActorAngleSafe(sceneHero->angle, sceneHero->angle - 256, 50, &moveMenu);
+	_engine->_movements->setActorAngleSafe(_engine->_scene->sceneHero->angle, _engine->_scene->sceneHero->angle - 256, 50, &moveMenu);
 
-	copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
+	_engine->_screens->copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
 
 	tmpLanguageCD = _engine->cfgfile.LanguageCDId;
 	_engine->cfgfile.LanguageCDId = 0;
@@ -983,7 +983,7 @@ void Menu::processBehaviourMenu() {
 
 	initTextBank(0);
 
-	drawBehaviourMenu(sceneHero->angle);
+	drawBehaviourMenu(_engine->_scene->sceneHero->angle);
 
 	tmpHeroBehaviour = _engine->_actor->heroBehaviour;
 
@@ -1014,9 +1014,9 @@ void Menu::processBehaviourMenu() {
 		}
 
 		if (tmpHeroBehaviour != _engine->_actor->heroBehaviour) {
-			drawBehaviour(tmpHeroBehaviour, sceneHero->angle, 1);
+			drawBehaviour(tmpHeroBehaviour, _engine->_scene->sceneHero->angle, 1);
 			tmpHeroBehaviour = _engine->_actor->heroBehaviour;
-			_engine->_movements->setActorAngleSafe(sceneHero->angle, sceneHero->angle - 256, 50, &moveMenu);
+			_engine->_movements->setActorAngleSafe(_engine->_scene->sceneHero->angle, _engine->_scene->sceneHero->angle - 256, 50, &moveMenu);
 			_engine->_animations->setAnimAtKeyframe(behaviourAnimState[_engine->_actor->heroBehaviour], _engine->_animations->animTable[_engine->_actor->heroAnimIdx[_engine->_actor->heroBehaviour]], behaviourEntity, &behaviourAnimData[_engine->_actor->heroBehaviour]);
 
 			while (pressedKey) {
@@ -1067,9 +1067,9 @@ void Menu::drawItem(int32 item) {
 	                                     inventorySelectedItem == item ? inventorySelectedColor : 0);
 
 	if (_engine->_gameState->gameFlags[item] && !_engine->_gameState->gameFlags[GAMEFLAG_INVENTORY_DISABLED] && item < NUM_INVENTORY_ITEMS) {
-		_engine->_renderer->prepareIsoModel(inventoryTable[item]);
+		_engine->_renderer->prepareIsoModel(_engine->_resources->inventoryTable[item]);
 		itemAngle[item] += 8;
-		_engine->_renderer->renderInventoryItem(itemX, itemY, inventoryTable[item], itemAngle[item], 15000);
+		_engine->_renderer->renderInventoryItem(itemX, itemY, _engine->_resources->inventoryTable[item], itemAngle[item], 15000);
 
 		if (item == 15) { // has GAS
 			setFontColor(15);
@@ -1099,10 +1099,10 @@ void Menu::processInventoryMenu() {
 	int32 di = 1;
 	int32 prevSelectedItem, tmpLanguageCD, bx, tmpAlphaLight, tmpBetaLight;
 
-	tmpAlphaLight = alphaLight;
-	tmpBetaLight = betaLight;
+	tmpAlphaLight = _engine->_scene->alphaLight;
+	tmpBetaLight = _engine->_scene->betaLight;
 
-	copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
+	_engine->_screens->copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
 
 	_engine->_renderer->setLightVector(896, 950, 0);
 
@@ -1228,8 +1228,8 @@ void Menu::processInventoryMenu() {
 
 	printTextVar13 = 0;
 
-	alphaLight = tmpAlphaLight;
-	betaLight = tmpBetaLight;
+	_engine->_scene->alphaLight = tmpAlphaLight;
+	_engine->_scene->betaLight = tmpBetaLight;
 
 	_engine->_gameState->initEngineProjections();
 

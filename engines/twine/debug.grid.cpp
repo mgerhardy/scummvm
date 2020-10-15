@@ -69,24 +69,24 @@ void DebugGrid::changeGrid(int16 pKey) {
 	if (canChangeScenes) {
 		// Press up - more X positions
 		if (pKey == 0x13) {
-			currentSceneIdx++;
-			if (currentSceneIdx > NUM_SCENES)
-				currentSceneIdx = 0;
-			needChangeScene = currentSceneIdx;
+			_engine->_scene->currentSceneIdx++;
+			if (_engine->_scene->currentSceneIdx > NUM_SCENES)
+				_engine->_scene->currentSceneIdx = 0;
+			_engine->_scene->needChangeScene = _engine->_scene->currentSceneIdx;
 			_engine->_redraw->reqBgRedraw = 1;
 		}
 
 		// Press down - less X positions
 		if (pKey == 0x21) {
-			currentSceneIdx--;
-			if (currentSceneIdx < 0)
-				currentSceneIdx = NUM_SCENES;
-			needChangeScene = currentSceneIdx;
+			_engine->_scene->currentSceneIdx--;
+			if (_engine->_scene->currentSceneIdx < 0)
+				_engine->_scene->currentSceneIdx = NUM_SCENES;
+			_engine->_scene->needChangeScene = _engine->_scene->currentSceneIdx;
 			_engine->_redraw->reqBgRedraw = 1;
 		}
 
 		if (_engine->cfgfile.Debug && (pKey == 'f' || pKey == 'r'))
-			debug("\nGrid index changed: %d\n", needChangeScene);
+			debug("\nGrid index changed: %d\n", _engine->_scene->needChangeScene);
 	}
 }
 
@@ -112,14 +112,14 @@ void DebugGrid::applyCellingGrid(int16 pKey) {
 		_engine->_grid->initCellingGrid(_engine->_grid->cellingGridIdx);
 		if (_engine->cfgfile.Debug && pKey == 0x14)
 			debug("\nEnable Celling Grid index: %d\n", _engine->_grid->cellingGridIdx);
-		needChangeScene = -2; // tricky to make the fade
+		_engine->_scene->needChangeScene = -2; // tricky to make the fade
 	} else if (pKey == 0x14 && _engine->_grid->useCellingGrid == 1) {
 		_engine->_grid->useCellingGrid = -1;
 		_engine->_grid->createGridMap();
 		_engine->_redraw->reqBgRedraw = 1;
 		if (_engine->cfgfile.Debug && pKey == 0x14)
 			debug("\nDisable Celling Grid index: %d\n", _engine->_grid->cellingGridIdx);
-		needChangeScene = -2; // tricky to make the fade
+		_engine->_scene->needChangeScene = -2; // tricky to make the fade
 	}
 }
 

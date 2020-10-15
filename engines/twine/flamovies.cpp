@@ -200,15 +200,15 @@ void FlaMovies::processFrame() {
 		case kLoadPalette: {
 			int16 numOfColor = *((int16 *)ptr);
 			int16 startColor = *((int16 *)(ptr + 2));
-			memcpy((palette + (startColor * 3)), (ptr + 4), numOfColor * 3);
+			memcpy((_engine->_screens->palette + (startColor * 3)), (ptr + 4), numOfColor * 3);
 			break;
 		}
 		case kFade: {
 			// FLA movies don't use cross fade
 			// fade out tricky
 			if (_fadeOut != 1) {
-				convertPalToRGBA(palette, paletteRGBACustom);
-				fadeToBlack(paletteRGBACustom);
+				_engine->_screens->convertPalToRGBA(_engine->_screens->palette, _engine->_screens->paletteRGBACustom);
+				_engine->_screens->fadeToBlack(_engine->_screens->paletteRGBACustom);
 				_fadeOut = 1;
 			}
 			break;
@@ -320,22 +320,22 @@ void FlaMovies::playFlaMovie(const char *flaName) {
 				else {
 					processFrame();
 					scaleFla2x();
-					copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
+					_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 
 					// Only blit to screen if isn't a fade
 					if (_fadeOut == -1) {
-						convertPalToRGBA(palette, paletteRGBACustom);
+						_engine->_screens->convertPalToRGBA(_engine->_screens->palette, _engine->_screens->paletteRGBACustom);
 						if (!currentFrame) // fade in the first frame
-							fadeIn(paletteRGBACustom);
+							_engine->_screens->fadeIn(_engine->_screens->paletteRGBACustom);
 						else
-							setPalette(paletteRGBACustom);
+							setPalette(_engine->_screens->paletteRGBACustom);
 					}
 
 					// TRICKY: fade in tricky
 					if (fadeOutFrames >= 2) {
 						flip();
-						convertPalToRGBA(palette, paletteRGBACustom);
-						fadeToPal(paletteRGBACustom);
+						_engine->_screens->convertPalToRGBA(_engine->_screens->palette, _engine->_screens->paletteRGBACustom);
+						_engine->_screens->fadeToPal(_engine->_screens->paletteRGBACustom);
 						_fadeOut = -1;
 						fadeOutFrames = 0;
 					}
@@ -354,9 +354,9 @@ void FlaMovies::playFlaMovie(const char *flaName) {
 	}
 
 	if (_engine->cfgfile.CrossFade) {
-		crossFade(_engine->frontVideoBuffer, paletteRGBACustom);
+		crossFade(_engine->frontVideoBuffer, _engine->_screens->paletteRGBACustom);
 	} else {
-		fadeToBlack(paletteRGBACustom);
+		_engine->_screens->fadeToBlack(_engine->_screens->paletteRGBACustom);
 	}
 
 	stopSamples();

@@ -385,7 +385,7 @@ int32 Animations::getBodyAnimIndex(int32 animIdx, int32 actorIdx) {
 	uint8 *costumePtr = NULL;
 	ActorStruct *actor;
 
-	actor = &sceneActors[actorIdx];
+	actor = &_engine->_scene->sceneActors[actorIdx];
 	bodyPtr = actor->entityDataPtr;
 
 	do {
@@ -570,7 +570,7 @@ void Animations::processAnimActions(int32 actorIdx) {
 	ActorStruct *actor;
 	DataReader *data;
 
-	actor = &sceneActors[actorIdx];
+	actor = &_engine->_scene->sceneActors[actorIdx];
 	if (!actor->animExtraPtr)
 		return; // avoid null pointers
 
@@ -770,7 +770,7 @@ void Animations::processAnimActions(int32 actorIdx) {
 			strength = readByte(data);
 
 			if (animPos == actor->animPosition) {
-				newAngle = _engine->_movements->getAngleAndSetTargetActorDistance(actor->Y, 0, sceneHero->Y, _engine->_movements->getDistance2D(actor->X, actor->Z, sceneHero->X, sceneHero->Z));
+				newAngle = _engine->_movements->getAngleAndSetTargetActorDistance(actor->Y, 0, _engine->_scene->sceneHero->Y, _engine->_movements->getDistance2D(actor->X, actor->Z, _engine->_scene->sceneHero->X, _engine->_scene->sceneHero->Z));
 
 				_engine->_movements->rotateActor(distanceX, distanceZ, actor->angle);
 
@@ -819,7 +819,7 @@ int32 Animations::initAnim(int32 newAnim, int16 animType, uint8 animExtra, int32
 	ActorStruct *actor;
 	int32 animIndex;
 
-	actor = &sceneActors[actorIdx];
+	actor = &_engine->_scene->sceneActors[actorIdx];
 
 	if (actor->entity == -1)
 		return 0;
@@ -893,7 +893,7 @@ void Animations::processActorAnimations(int32 actorIdx) { // DoAnim
 	uint8 *animPtr;
 	ActorStruct *actor;
 
-	actor = &sceneActors[actorIdx];
+	actor = &_engine->_scene->sceneActors[actorIdx];
 
 	currentlyProcessedActorIdx = actorIdx;
 	_engine->_movements->processActorPtr = actor;
@@ -1080,13 +1080,13 @@ void Animations::processActorAnimations(int32 actorIdx) { // DoAnim
 
 	// actor standing on another actor
 	if (actor->standOn != -1) {
-		_engine->_movements->processActorX -= sceneActors[actor->standOn].collisionX;
-		_engine->_movements->processActorY -= sceneActors[actor->standOn].collisionY;
-		_engine->_movements->processActorZ -= sceneActors[actor->standOn].collisionZ;
+		_engine->_movements->processActorX -= _engine->_scene->sceneActors[actor->standOn].collisionX;
+		_engine->_movements->processActorY -= _engine->_scene->sceneActors[actor->standOn].collisionY;
+		_engine->_movements->processActorZ -= _engine->_scene->sceneActors[actor->standOn].collisionZ;
 
-		_engine->_movements->processActorX += sceneActors[actor->standOn].X;
-		_engine->_movements->processActorY += sceneActors[actor->standOn].Y;
-		_engine->_movements->processActorZ += sceneActors[actor->standOn].Z;
+		_engine->_movements->processActorX += _engine->_scene->sceneActors[actor->standOn].X;
+		_engine->_movements->processActorY += _engine->_scene->sceneActors[actor->standOn].Y;
+		_engine->_movements->processActorZ += _engine->_scene->sceneActors[actor->standOn].Z;
 
 		if (!_engine->_collision->standingOnActor(actorIdx, actor->standOn)) {
 			actor->standOn = -1; // no longer standing on other actor
@@ -1222,8 +1222,8 @@ void Animations::processActorAnimations(int32 actorIdx) { // DoAnim
 					if (!actor->dynamicFlags.bIsRotationByAnim) {
 						actor->dynamicFlags.bIsFalling = 1;
 
-						if (!actorIdx && heroYBeforeFall == 0) {
-							heroYBeforeFall = _engine->_movements->processActorY;
+						if (!actorIdx && _engine->_scene->heroYBeforeFall == 0) {
+							_engine->_scene->heroYBeforeFall = _engine->_movements->processActorY;
 						}
 
 						initAnim(kFall, 0, 255, actorIdx);
