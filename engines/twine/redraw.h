@@ -42,6 +42,17 @@ enum OverlayPosType {
 	koFollowActor = 1
 };
 
+/** Overlay list structure */
+typedef struct OverlayListStruct {
+	int16 type;
+	int16 info0; // sprite/3d model entry | number | number range
+	int16 X;
+	int16 Y;
+	int16 info1; // followed actor | total coins
+	int16 posType;
+	int16 lifeTime;
+} OverlayListStruct;
+
 class TwinEEngine;
 class Redraw {
 private:
@@ -102,17 +113,6 @@ public:
 	/** Save last actor that bubble dialog icon */
 	int32 bubbleActor;
 	int32 bubbleSpriteIndex;
-
-	/** Overlay list structure */
-	typedef struct OverlayListStruct {
-		int16 type;
-		int16 info0; // sprite/3d model entry | number | number range
-		int16 X;
-		int16 Y;
-		int16 info1; // followed actor | total coins
-		int16 posType;
-		int16 lifeTime;
-	} OverlayListStruct;
 
 	OverlayListStruct overlayList[OVERLAY_MAX_ENTRIES];
 

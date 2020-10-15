@@ -31,12 +31,6 @@
 
 namespace TwinE {
 
-uint8 *scriptPtr;
-int32 continueMove;
-int32 scriptPosition;
-ActorMoveStruct *move;
-int32 numRepeatSample = 1;
-
 typedef int32 ScriptMoveFunc(int32 actorIdx, ActorStruct *actor);
 
 typedef struct ScriptMoveFunction {
@@ -48,19 +42,19 @@ typedef struct ScriptMoveFunction {
 	{ (uint8 *)name, func }
 
 /*0x00*/
-int32 mEND(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mEND(int32 actorIdx, ActorStruct *actor) {
 	continueMove = 0;
 	actor->positionInMoveScript = -1;
 	return 0;
 }
 
 /*0x01*/
-int32 mNOP(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mNOP(int32 actorIdx, ActorStruct *actor) {
 	return 0;
 }
 
 /*0x02*/
-int32 mBODY(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mBODY(int32 actorIdx, ActorStruct *actor) {
 	int32 bodyIdx = *(scriptPtr);
 	initModelActor(bodyIdx, actorIdx);
 	actor->positionInMoveScript++;
@@ -68,7 +62,7 @@ int32 mBODY(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x03*/
-int32 mANIM(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mANIM(int32 actorIdx, ActorStruct *actor) {
 	int32 animIdx = *(scriptPtr++);
 	if (initAnim(animIdx, 0, 0, actorIdx)) {
 		actor->positionInMoveScript++;
@@ -80,15 +74,15 @@ int32 mANIM(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x04*/
-int32 mGOTO_POINT(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mGOTO_POINT(int32 actorIdx, ActorStruct *actor) {
 	int32 newAngle;
 
 	actor->positionInMoveScript++;
-	currentScriptValue = *(scriptPtr);
+	_engine->_scene->currentScriptValue = *(scriptPtr);
 
-	destX = sceneTracks[currentScriptValue].X;
-	destY = sceneTracks[currentScriptValue].Y;
-	destZ = sceneTracks[currentScriptValue].Z;
+	destX = sceneTracks[_engine->_scene->currentScriptValue].X;
+	destY = sceneTracks[_engine->_scene->currentScriptValue].Y;
+	destZ = sceneTracks[_engine->_scene->currentScriptValue].Z;
 
 	newAngle = getAngleAndSetTargetActorDistance(actor->X, actor->Z, destX, destZ);
 
@@ -107,7 +101,7 @@ int32 mGOTO_POINT(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x05*/
-int32 mWAIT_ANIM(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mWAIT_ANIM(int32 actorIdx, ActorStruct *actor) {
 	if (!actor->dynamicFlags.bAnimEnded) {
 		continueMove = 0;
 		actor->positionInMoveScript--;
@@ -119,20 +113,20 @@ int32 mWAIT_ANIM(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x06*/
-int32 mLOOP(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mLOOP(int32 actorIdx, ActorStruct *actor) {
 	// TODO
 	return -1;
 }
 
 /*0x07*/
-int32 mANGLE(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mANGLE(int32 actorIdx, ActorStruct *actor) {
 	actor->positionInMoveScript += 2;
 	if (!actor->staticFlags.bIsSpriteActor) {
-		currentScriptValue = *((int16 *)scriptPtr);
+		_engine->_scene->currentScriptValue = *((int16 *)scriptPtr);
 		if (actor->move.numOfStep == 0) {
-			moveActor(actor->angle, currentScriptValue, actor->speed, move);
+			moveActor(actor->angle, _engine->_scene->currentScriptValue, actor->speed, move);
 		}
-		if (actor->angle == currentScriptValue) {
+		if (actor->angle == _engine->_scene->currentScriptValue) {
 			clearRealAngle(actor);
 			return 0;
 		}
@@ -143,13 +137,13 @@ int32 mANGLE(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x08*/
-int32 mPOS_POINT(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mPOS_POINT(int32 actorIdx, ActorStruct *actor) {
 	actor->positionInMoveScript++;
-	currentScriptValue = *(scriptPtr);
+	_engine->_scene->currentScriptValue = *(scriptPtr);
 
-	destX = sceneTracks[currentScriptValue].X;
-	destY = sceneTracks[currentScriptValue].Y;
-	destZ = sceneTracks[currentScriptValue].Z;
+	destX = sceneTracks[_engine->_scene->currentScriptValue].X;
+	destY = sceneTracks[_engine->_scene->currentScriptValue].Y;
+	destZ = sceneTracks[_engine->_scene->currentScriptValue].Z;
 
 	if (actor->staticFlags.bIsSpriteActor) {
 		actor->speed = 0;
@@ -163,7 +157,7 @@ int32 mPOS_POINT(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x09*/
-int32 mLABEL(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mLABEL(int32 actorIdx, ActorStruct *actor) {
 	actor->labelIdx = *(scriptPtr);
 	actor->positionInMoveScript++;
 	actor->currentLabelPtr = actor->positionInMoveScript - 2;
@@ -171,28 +165,28 @@ int32 mLABEL(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x0A*/
-int32 mGOTO(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mGOTO(int32 actorIdx, ActorStruct *actor) {
 	actor->positionInMoveScript = *((int16 *)scriptPtr);
 	return 0;
 }
 
 /*0x0B*/
-int32 mSTOP(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mSTOP(int32 actorIdx, ActorStruct *actor) {
 	continueMove = 0;
 	actor->positionInMoveScript = -1;
 	return 0;
 }
 
 /*0x0C*/
-int32 mGOTO_SYM_POINT(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mGOTO_SYM_POINT(int32 actorIdx, ActorStruct *actor) {
 	int32 newAngle;
 
 	actor->positionInMoveScript++;
-	currentScriptValue = *(scriptPtr);
+	_engine->_scene->currentScriptValue = *(scriptPtr);
 
-	destX = sceneTracks[currentScriptValue].X;
-	destY = sceneTracks[currentScriptValue].Y;
-	destZ = sceneTracks[currentScriptValue].Z;
+	destX = sceneTracks[_engine->_scene->currentScriptValue].X;
+	destY = sceneTracks[_engine->_scene->currentScriptValue].Y;
+	destZ = sceneTracks[_engine->_scene->currentScriptValue].Z;
 
 	newAngle = 0x200 + getAngleAndSetTargetActorDistance(actor->X, actor->Z, destX, destZ);
 
@@ -211,7 +205,7 @@ int32 mGOTO_SYM_POINT(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x0D*/
-int32 mWAIT_NUM_ANIM(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mWAIT_NUM_ANIM(int32 actorIdx, ActorStruct *actor) {
 	actor->positionInMoveScript += 2;
 
 	if (actor->dynamicFlags.bAnimEnded) {
@@ -241,7 +235,7 @@ int32 mWAIT_NUM_ANIM(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x0E*/
-int32 mSAMPLE(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mSAMPLE(int32 actorIdx, ActorStruct *actor) {
 	int32 sampleIdx = *((int16 *)scriptPtr);
 	playSample(sampleIdx, 0x1000, 1, actor->X, actor->Y, actor->Z, actorIdx);
 	actor->positionInMoveScript += 2;
@@ -249,15 +243,15 @@ int32 mSAMPLE(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x0F*/
-int32 mGOTO_POINT_3D(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mGOTO_POINT_3D(int32 actorIdx, ActorStruct *actor) {
 	actor->positionInMoveScript++;
 
 	if (actor->staticFlags.bIsSpriteActor) {
-		currentScriptValue = *(scriptPtr);
+		_engine->_scene->currentScriptValue = *(scriptPtr);
 
-		destX = sceneTracks[currentScriptValue].X;
-		destY = sceneTracks[currentScriptValue].Y;
-		destZ = sceneTracks[currentScriptValue].Z;
+		destX = sceneTracks[_engine->_scene->currentScriptValue].X;
+		destY = sceneTracks[_engine->_scene->currentScriptValue].Y;
+		destZ = sceneTracks[_engine->_scene->currentScriptValue].Z;
 
 		actor->angle = getAngleAndSetTargetActorDistance(actor->X, actor->Z, destX, destZ);
 		actor->animType = getAngleAndSetTargetActorDistance(actor->Y, 0, destY, targetActorDistance);
@@ -276,7 +270,7 @@ int32 mGOTO_POINT_3D(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x10*/
-int32 mSPEED(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mSPEED(int32 actorIdx, ActorStruct *actor) {
 	actor->positionInMoveScript += 2;
 	actor->speed = *((int16 *)scriptPtr);
 
@@ -288,7 +282,7 @@ int32 mSPEED(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x11*/
-int32 mBACKGROUND(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mBACKGROUND(int32 actorIdx, ActorStruct *actor) {
 	actor->positionInMoveScript++;
 
 	if (*(scriptPtr) != 0) {
@@ -311,7 +305,7 @@ int32 mBACKGROUND(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x12*/
-int32 mWAIT_NUM_SECOND(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mWAIT_NUM_SECOND(int32 actorIdx, ActorStruct *actor) {
 	int32 numSeconds, currentTime;
 	actor->positionInMoveScript += 5;
 
@@ -334,13 +328,13 @@ int32 mWAIT_NUM_SECOND(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x13*/
-int32 mNO_BODY(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mNO_BODY(int32 actorIdx, ActorStruct *actor) {
 	initModelActor(-1, actorIdx);
 	return 0;
 }
 
 /*0x14*/
-int32 mBETA(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mBETA(int32 actorIdx, ActorStruct *actor) {
 	int16 beta;
 
 	beta = *((int16 *)scriptPtr);
@@ -356,7 +350,7 @@ int32 mBETA(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x15*/
-int32 mOPEN_LEFT(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mOPEN_LEFT(int32 actorIdx, ActorStruct *actor) {
 	actor->positionInMoveScript += 2;
 	if (actor->staticFlags.bIsSpriteActor && actor->staticFlags.bUsesClipping) {
 		actor->angle = 0x300;
@@ -369,7 +363,7 @@ int32 mOPEN_LEFT(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x16*/
-int32 mOPEN_RIGHT(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mOPEN_RIGHT(int32 actorIdx, ActorStruct *actor) {
 	actor->positionInMoveScript += 2;
 	if (actor->staticFlags.bIsSpriteActor && actor->staticFlags.bUsesClipping) {
 		actor->angle = 0x100;
@@ -382,7 +376,7 @@ int32 mOPEN_RIGHT(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x17*/
-int32 mOPEN_UP(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mOPEN_UP(int32 actorIdx, ActorStruct *actor) {
 	actor->positionInMoveScript += 2;
 	if (actor->staticFlags.bIsSpriteActor && actor->staticFlags.bUsesClipping) {
 		actor->angle = 0x200;
@@ -395,7 +389,7 @@ int32 mOPEN_UP(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x18*/
-int32 mOPEN_DOWN(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mOPEN_DOWN(int32 actorIdx, ActorStruct *actor) {
 	actor->positionInMoveScript += 2;
 	if (actor->staticFlags.bIsSpriteActor && actor->staticFlags.bUsesClipping) {
 		actor->angle = 0;
@@ -408,7 +402,7 @@ int32 mOPEN_DOWN(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x19*/
-int32 mCLOSE(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mCLOSE(int32 actorIdx, ActorStruct *actor) {
 	if (actor->staticFlags.bIsSpriteActor && actor->staticFlags.bUsesClipping) {
 		actor->doorStatus = 0;
 		actor->dynamicFlags.bIsSpriteMoving = 1;
@@ -419,7 +413,7 @@ int32 mCLOSE(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x1A*/
-int32 mWAIT_DOOR(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mWAIT_DOOR(int32 actorIdx, ActorStruct *actor) {
 	if (actor->staticFlags.bIsSpriteActor && actor->staticFlags.bUsesClipping) {
 		if (actor->speed) {
 			continueMove = 0;
@@ -430,7 +424,7 @@ int32 mWAIT_DOOR(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x1B*/
-int32 mSAMPLE_RND(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mSAMPLE_RND(int32 actorIdx, ActorStruct *actor) {
 	int32 freq = Rnd(2048) + 2048;
 	int32 sampleIdx = *((int16 *)scriptPtr);
 	playSample(sampleIdx, freq, 1, actor->X, actor->Y, actor->Z, actorIdx);
@@ -439,7 +433,7 @@ int32 mSAMPLE_RND(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x1C*/
-int32 mSAMPLE_ALWAYS(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mSAMPLE_ALWAYS(int32 actorIdx, ActorStruct *actor) {
 	int32 sampleIdx = *((int16 *)scriptPtr);
 	if (getSampleChannel(sampleIdx) == -1) { // if its not playing
 		playSample(sampleIdx, 0x1000, -1, actor->X, actor->Y, actor->Z, actorIdx);
@@ -449,7 +443,7 @@ int32 mSAMPLE_ALWAYS(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x1D*/
-int32 mSAMPLE_STOP(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mSAMPLE_STOP(int32 actorIdx, ActorStruct *actor) {
 	int32 sampleIdx = *((int16 *)scriptPtr);
 	stopSample(sampleIdx);
 	actor->positionInMoveScript += 2;
@@ -457,20 +451,20 @@ int32 mSAMPLE_STOP(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x1E*/
-int32 mPLAY_FLA(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mPLAY_FLA(int32 actorIdx, ActorStruct *actor) {
 	// TODO
 	return -1;
 }
 
 /*0x1F*/
-int32 mREPEAT_SAMPLE(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mREPEAT_SAMPLE(int32 actorIdx, ActorStruct *actor) {
 	numRepeatSample = *((int16 *)scriptPtr);
 	actor->positionInMoveScript += 2;
 	return 0;
 }
 
 /*0x20*/
-int32 mSIMPLE_SAMPLE(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mSIMPLE_SAMPLE(int32 actorIdx, ActorStruct *actor) {
 	int32 sampleIdx = *((int16 *)scriptPtr);
 	playSample(sampleIdx, 0x1000, numRepeatSample, actor->X, actor->Y, actor->Z, actorIdx);
 	numRepeatSample = 1;
@@ -479,17 +473,17 @@ int32 mSIMPLE_SAMPLE(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x21*/
-int32 mFACE_HERO(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mFACE_HERO(int32 actorIdx, ActorStruct *actor) {
 	actor->positionInMoveScript += 2;
 	if (!actor->staticFlags.bIsSpriteActor) {
-		currentScriptValue = *((int16 *)scriptPtr);
-		if (currentScriptValue == -1 && actor->move.numOfStep == 0) {
-			currentScriptValue = getAngleAndSetTargetActorDistance(actor->X, actor->Z, sceneHero->X, sceneHero->Z);
-			moveActor(actor->angle, currentScriptValue, actor->speed, &actor->move);
-			*((int16 *)scriptPtr) = currentScriptValue;
+		_engine->_scene->currentScriptValue = *((int16 *)scriptPtr);
+		if (_engine->_scene->currentScriptValue == -1 && actor->move.numOfStep == 0) {
+			_engine->_scene->currentScriptValue = getAngleAndSetTargetActorDistance(actor->X, actor->Z, sceneHero->X, sceneHero->Z);
+			moveActor(actor->angle, _engine->_scene->currentScriptValue, actor->speed, &actor->move);
+			*((int16 *)scriptPtr) = _engine->_scene->currentScriptValue;
 		}
 
-		if (actor->angle != currentScriptValue) {
+		if (actor->angle != _engine->_scene->currentScriptValue) {
 			continueMove = 0;
 			actor->positionInMoveScript -= 3;
 		} else {
@@ -501,29 +495,29 @@ int32 mFACE_HERO(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x22*/
-int32 mANGLE_RND(int32 actorIdx, ActorStruct *actor) {
+int32 ScriptMove::mANGLE_RND(int32 actorIdx, ActorStruct *actor) {
 	int32 newAngle;
 
 	actor->positionInMoveScript += 4;
 	if (!actor->staticFlags.bIsSpriteActor) {
-		currentScriptValue = *((int16 *)scriptPtr + 2);
+		_engine->_scene->currentScriptValue = *((int16 *)scriptPtr + 2);
 
-		if (currentScriptValue == -1 && actor->move.numOfStep == 0) {
+		if (_engine->_scene->currentScriptValue == -1 && actor->move.numOfStep == 0) {
 			if (rand() & 1) {
-				currentScriptValue = *((int16 *)scriptPtr);
-				newAngle = actor->angle + 0x100 + (Abs(currentScriptValue) >> 1);
-				currentScriptValue = (newAngle - Rnd(currentScriptValue)) & 0x3FF;
+				_engine->_scene->currentScriptValue = *((int16 *)scriptPtr);
+				newAngle = actor->angle + 0x100 + (Abs(_engine->_scene->currentScriptValue) >> 1);
+				_engine->_scene->currentScriptValue = (newAngle - Rnd(_engine->_scene->currentScriptValue)) & 0x3FF;
 			} else {
-				currentScriptValue = *((int16 *)scriptPtr);
-				newAngle = actor->angle - 0x100 + (Abs(currentScriptValue) >> 1);
-				currentScriptValue = (newAngle - Rnd(currentScriptValue)) & 0x3FF;
+				_engine->_scene->currentScriptValue = *((int16 *)scriptPtr);
+				newAngle = actor->angle - 0x100 + (Abs(_engine->_scene->currentScriptValue) >> 1);
+				_engine->_scene->currentScriptValue = (newAngle - Rnd(_engine->_scene->currentScriptValue)) & 0x3FF;
 			}
 
-			moveActor(actor->angle, currentScriptValue, actor->speed, &actor->move);
-			*((int16 *)scriptPtr + 2) = currentScriptValue;
+			moveActor(actor->angle, _engine->_scene->currentScriptValue, actor->speed, &actor->move);
+			*((int16 *)scriptPtr + 2) = _engine->_scene->currentScriptValue;
 		}
 
-		if (actor->angle != currentScriptValue) {
+		if (actor->angle != _engine->_scene->currentScriptValue) {
 			continueMove = 0;
 			actor->positionInMoveScript -= 5;
 		} else {
@@ -573,12 +567,12 @@ static const ScriptMoveFunction function_map[] = {
 
 /** Process actor move script
 	@param actorIdx Current processed actor index */
-void processMoveScript(int32 actorIdx) {
+void ScriptMove::processMoveScript(int32 actorIdx) {
 	int32 scriptOpcode;
 	ActorStruct *actor;
 
 	continueMove = 1;
-	actor = &sceneActors[actorIdx];
+	actor = &_engine->_scene->sceneActors[actorIdx];
 	move = &actor->move;
 
 	do {

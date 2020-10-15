@@ -478,6 +478,8 @@ TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flag
 	_resources = new Resources(this);
 	_scene = new Scene(this);
 	_screens = new Screens(this);
+	_scriptLife = new ScriptLife(this);
+	_scriptMove = new ScriptMove(this);
 }
 
 TwinEEngine::~TwinEEngine() {
@@ -499,6 +501,8 @@ TwinEEngine::~TwinEEngine() {
 	delete _resources;
 	delete _scene;
 	delete _screens;
+	delete _scriptLife;
+	delete _scriptMove;
 }
 
 bool TwinEEngine::hasFeature(EngineFeature f) const {

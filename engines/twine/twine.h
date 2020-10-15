@@ -141,6 +141,8 @@ class Renderer;
 class Resources;
 class Scene;
 class Screens;
+class ScriptLife;
+class ScriptMove;
 
 class TwinEEngine : public Engine {
 public:
@@ -168,6 +170,8 @@ public:
 	Resources *_resources;
 	Scene *_scene;
 	Screens *_screens;
+	ScriptLife *_scriptLife;
+	ScriptMove *_scriptMove;
 
 	/** Configuration file structure
 	 * Contains all the data used in the engine to configurated the game in particulary ways. */
