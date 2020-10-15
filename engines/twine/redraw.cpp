@@ -347,7 +347,7 @@ void Redraw::redrawEngineActions(int32 bgRedraw) { // fullRedraw
 					extra->lifeTime = _engine->lbaTime;
 					extra->type &= 0xFBFF;
 					// FIXME make constant for sample index
-					playSample(11, 0x1000, 1, extra->X, extra->Y, extra->Z, -1);
+					_engine->_sound->playSample(11, 0x1000, 1, extra->X, extra->Y, extra->Z, -1);
 				}
 			} else {
 				if ((extra->type & 1) || (extra->type & 0x40) || (extra->actorIdx + extra->lifeTime - 150 < _engine->lbaTime) || (!((_engine->lbaTime + extra->lifeTime) & 8))) {
@@ -629,7 +629,7 @@ void Redraw::redrawEngineActions(int32 bgRedraw) { // fullRedraw
 				char text[10];
 				sprintf(text, "%d", overlay->info0);
 
-				textLength = getTextSize((int8 *)text);
+				textLength = _engine->_text->getTextSize((int8 *)text);
 				textHeight = 48;
 
 				renderLeft = overlay->X - (textLength / 2);
@@ -639,9 +639,9 @@ void Redraw::redrawEngineActions(int32 bgRedraw) { // fullRedraw
 
 				_engine->_interface->setClip(renderLeft, renderTop, renderRight, renderBottom);
 
-				setFontColor(overlay->info1);
+				_engine->_text->setFontColor(overlay->info1);
 
-				drawText(renderLeft, renderTop, (int8 *)text);
+				_engine->_text->drawText(renderLeft, renderTop, (int8 *)text);
 
 				if (_engine->_interface->textWindowLeft <= _engine->_interface->textWindowRight && _engine->_interface->textWindowTop <= _engine->_interface->textWindowBottom) {
 					addRedrawArea(_engine->_interface->textWindowLeft, _engine->_interface->textWindowTop, renderRight, renderBottom);
@@ -655,7 +655,7 @@ void Redraw::redrawEngineActions(int32 bgRedraw) { // fullRedraw
 
 				sprintf(text, "%d", range);
 
-				textLength = getTextSize((int8 *)text);
+				textLength = _engine->_text->getTextSize((int8 *)text);
 				textHeight = 48;
 
 				renderLeft = overlay->X - (textLength / 2);
@@ -665,9 +665,9 @@ void Redraw::redrawEngineActions(int32 bgRedraw) { // fullRedraw
 
 				_engine->_interface->setClip(renderLeft, renderTop, renderRight, renderBottom);
 
-				setFontColor(155);
+				_engine->_text->setFontColor(155);
 
-				drawText(renderLeft, renderTop, (int8 *)text);
+				_engine->_text->drawText(renderLeft, renderTop, (int8 *)text);
 
 				if (_engine->_interface->textWindowLeft <= _engine->_interface->textWindowRight && _engine->_interface->textWindowTop <= _engine->_interface->textWindowBottom) {
 					addRedrawArea(_engine->_interface->textWindowLeft, _engine->_interface->textWindowTop, renderRight, renderBottom);
@@ -694,9 +694,9 @@ void Redraw::redrawEngineActions(int32 bgRedraw) { // fullRedraw
 				int32 textLength, textHeight;
 				int8 text[256];
 
-				getMenuText(overlay->info0, text);
+				_engine->_text->getMenuText(overlay->info0, text);
 
-				textLength = getTextSize(text);
+				textLength = _engine->_text->getTextSize(text);
 				textHeight = 48;
 
 				renderLeft = overlay->X - (textLength / 2);
@@ -722,9 +722,9 @@ void Redraw::redrawEngineActions(int32 bgRedraw) { // fullRedraw
 
 				_engine->_interface->setClip(renderLeft, renderTop, renderRight, renderBottom);
 
-				setFontColor(_engine->_scene->sceneActors[overlay->info1].talkColor);
+				_engine->_text->setFontColor(_engine->_scene->sceneActors[overlay->info1].talkColor);
 
-				drawText(renderLeft, renderTop, text);
+				_engine->_text->drawText(renderLeft, renderTop, text);
 
 				if (_engine->_interface->textWindowLeft <= _engine->_interface->textWindowRight && _engine->_interface->textWindowTop <= _engine->_interface->textWindowBottom) {
 					addRedrawArea(_engine->_interface->textWindowLeft, _engine->_interface->textWindowTop, renderRight, renderBottom);

@@ -20,12 +20,7 @@
  *
  */
 
-#include <SDL/SDL.h>
-#ifndef MACOSX
-#include <SDL/SDL_mixer.h>
-#else
-#include <SDL_mixer/SDL_mixer.h>
-#endif
+#include <SDL_mixer.h>
 
 #include "collision.h"
 #include "flamovies.h"
@@ -39,18 +34,14 @@
 
 namespace TwinE {
 
-/** SDL_Mixer channels */
-int32 channel;
 /** Samples chunk variable */
 Mix_Chunk *sample;
 
-int32 channelIdx = -1;
-
 /** Sample volume
-	@param channel sample channel
+	@param chan sample channel
 	@param volume sample volume number */
-void sampleVolume(int32 channel, int32 volume) {
-	Mix_Volume(channel, volume / 2);
+void Sound::sampleVolume(int32 chan, int32 volume) {
+	Mix_Volume(chan, volume / 2);
 }
 
 /** Play FLA movie samples
@@ -59,16 +50,16 @@ void sampleVolume(int32 channel, int32 volume) {
 	@param repeat number of times to repeat the sample
 	@param x unknown x variable
 	@param y unknown y variable */
-void playFlaSample(int32 index, int32 frequency, int32 repeat, int32 x, int32 y) {
-	if (cfgfile.Sound) {
+void Sound::playFlaSample(int32 index, int32 frequency, int32 repeat, int32 x, int32 y) {
+	if (_engine->cfgfile.Sound) {
 		int32 sampSize = 0;
-		int8 sampfile[256];
+		char sampfile[256];
 		SDL_RWops *rw;
 		uint8 *sampPtr;
 
 		sprintf(sampfile, FLA_DIR "%s", HQR_FLASAMP_FILE);
 
-		sampSize = hqrGetallocEntry(&sampPtr, sampfile, index);
+		sampSize = _engine->_hqrdepack->hqrGetallocEntry(&sampPtr, sampfile, index);
 
 		// Fix incorrect sample files first byte
 		if (*sampPtr != 'C')
@@ -82,27 +73,24 @@ void playFlaSample(int32 index, int32 frequency, int32 repeat, int32 x, int32 y)
 			samplesPlaying[channelIdx] = index;
 		}
 
-		sampleVolume(channelIdx, cfgfile.WaveVolume);
+		sampleVolume(channelIdx, _engine->cfgfile.WaveVolume);
 
 		if (Mix_PlayChannel(channelIdx, sample, repeat - 1) == -1)
-			printf("Error while playing VOC: Sample %d \n", index);
-
-		/*if (cfgfile.Debug)
-			printf("Playing VOC: Sample %d\n", index);*/
+			error("Error while playing VOC: Sample %d \n", index);
 
 		free(sampPtr);
 	}
 }
 
-void setSamplePosition(int32 channelIdx, int32 x, int32 y, int32 z) {
+void Sound::setSamplePosition(int32 chan, int32 x, int32 y, int32 z) {
 	int32 distance;
-	distance = Abs(getDistance3D(newCameraX << 9, newCameraY << 8, newCameraZ << 9, x, y, z));
-	distance = getAverageValue(0, distance, 10000, 255);
+	distance = ABS(_engine->_movements->getDistance3D(_engine->_grid->newCameraX << 9, _engine->_grid->newCameraY << 8, _engine->_grid->newCameraZ << 9, x, y, z));
+	distance = _engine->_collision->getAverageValue(0, distance, 10000, 255);
 	if (distance > 255) { // don't play it if its to far away
 		distance = 255;
 	}
 
-	Mix_SetDistance(channelIdx, distance);
+	Mix_SetDistance(chan, distance);
 }
 
 /** Play samples
@@ -112,13 +100,13 @@ void setSamplePosition(int32 channelIdx, int32 x, int32 y, int32 z) {
 	@param x unknown x variable
 	@param y unknown y variable
 	@param z unknown z variable */
-void playSample(int32 index, int32 frequency, int32 repeat, int32 x, int32 y, int32 z, int32 actorIdx) {
-	if (cfgfile.Sound) {
+void Sound::playSample(int32 index, int32 frequency, int32 repeat, int32 x, int32 y, int32 z, int32 actorIdx) {
+	if (_engine->cfgfile.Sound) {
 		int32 sampSize = 0;
 		SDL_RWops *rw;
 		uint8 *sampPtr;
 
-		sampSize = hqrGetallocEntry(&sampPtr, HQR_SAMPLES_FILE, index);
+		sampSize = _engine->_hqrdepack->hqrGetallocEntry(&sampPtr, HQR_SAMPLES_FILE, index);
 
 		// Fix incorrect sample files first byte
 		if (*sampPtr != 'C')
@@ -132,7 +120,7 @@ void playSample(int32 index, int32 frequency, int32 repeat, int32 x, int32 y, in
 		// only play if we have a free channel, otherwise we won't be able to control the sample
 		if (channelIdx != -1) {
 			samplesPlaying[channelIdx] = index;
-			sampleVolume(channelIdx, cfgfile.WaveVolume);
+			sampleVolume(channelIdx, _engine->cfgfile.WaveVolume);
 
 			if (actorIdx != -1) {
 				setSamplePosition(channelIdx, x, y, z);
@@ -142,10 +130,7 @@ void playSample(int32 index, int32 frequency, int32 repeat, int32 x, int32 y, in
 			}
 
 			if (Mix_PlayChannel(channelIdx, sample, repeat - 1) == -1)
-				printf("Error while playing VOC: Sample %d \n", index);
-
-			/*if (cfgfile.Debug)
-				printf("Playing VOC: Sample %d\n", index);*/
+				error("Error while playing VOC: Sample %d \n", index);
 		}
 
 		free(sampPtr);
@@ -153,8 +138,8 @@ void playSample(int32 index, int32 frequency, int32 repeat, int32 x, int32 y, in
 }
 
 /** Resume samples */
-void resumeSamples() {
-	if (cfgfile.Sound) {
+void Sound::resumeSamples() {
+	if (_engine->cfgfile.Sound) {
 		Mix_Resume(-1);
 		/*if (cfgfile.Debug)
 			printf("Resume VOC samples\n");*/
@@ -162,8 +147,8 @@ void resumeSamples() {
 }
 
 /** Pause samples */
-void pauseSamples() {
-	if (cfgfile.Sound) {
+void Sound::pauseSamples() {
+	if (_engine->cfgfile.Sound) {
 		Mix_HaltChannel(-1);
 		/*if (cfgfile.Debug)
 			printf("Pause VOC samples\n");*/
@@ -171,8 +156,8 @@ void pauseSamples() {
 }
 
 /** Stop samples */
-void stopSamples() {
-	if (cfgfile.Sound) {
+void Sound::stopSamples() {
+	if (_engine->cfgfile.Sound) {
 		memset(samplesPlaying, -1, sizeof(int32) * NUM_CHANNELS);
 		Mix_HaltChannel(-1);
 		//clean up
@@ -183,7 +168,7 @@ void stopSamples() {
 	}
 }
 
-int32 getActorChannel(int32 index) {
+int32 Sound::getActorChannel(int32 index) {
 	int32 c = 0;
 	for (c = 0; c < NUM_CHANNELS; c++) {
 		if (samplesPlayingActors[c] == index) {
@@ -193,7 +178,7 @@ int32 getActorChannel(int32 index) {
 	return -1;
 }
 
-int32 getSampleChannel(int32 index) {
+int32 Sound::getSampleChannel(int32 index) {
 	int32 c = 0;
 	for (c = 0; c < NUM_CHANNELS; c++) {
 		if (samplesPlaying[c] == index) {
@@ -203,14 +188,14 @@ int32 getSampleChannel(int32 index) {
 	return -1;
 }
 
-void removeSampleChannel(int32 c) {
+void Sound::removeSampleChannel(int32 c) {
 	samplesPlaying[c] = -1;
 	samplesPlayingActors[c] = -1;
 }
 
 /** Stop samples */
-void stopSample(int32 index) {
-	if (cfgfile.Sound) {
+void Sound::stopSample(int32 index) {
+	if (_engine->cfgfile.Sound) {
 		int32 stopChannel = getSampleChannel(index);
 		if (stopChannel != -1) {
 			removeSampleChannel(stopChannel);
@@ -224,23 +209,23 @@ void stopSample(int32 index) {
 	}
 }
 
-int32 isChannelPlaying(int32 channel) {
-	if (channel != -1) {
-		if (Mix_Playing(channel)) {
+int32 Sound::isChannelPlaying(int32 chan) {
+	if (chan != -1) {
+		if (Mix_Playing(chan)) {
 			return 1;
 		} else {
-			removeSampleChannel(channel);
+			removeSampleChannel(chan);
 		}
 	}
 	return 0;
 }
 
-int32 isSamplePlaying(int32 index) {
-	int32 channel = getSampleChannel(index);
-	return isChannelPlaying(channel);
+int32 Sound::isSamplePlaying(int32 index) {
+	const int32 chan = getSampleChannel(index);
+	return isChannelPlaying(chan);
 }
 
-int32 getFreeSampleChannelIndex() {
+int32 Sound::getFreeSampleChannelIndex() {
 	int i = 0;
 	for (i = 0; i < NUM_CHANNELS; i++) {
 		if (samplesPlaying[i] == -1) {
@@ -256,18 +241,18 @@ int32 getFreeSampleChannelIndex() {
 	return -1;
 }
 
-void playVoxSample(int32 index) {
-	if (cfgfile.Sound) {
+void Sound::playVoxSample(int32 index) {
+	if (_engine->cfgfile.Sound) {
 		int32 sampSize = 0;
 		SDL_RWops *rw;
 		uint8 *sampPtr = 0;
 
-		sampSize = hqrGetallocVoxEntry(&sampPtr, currentVoxBankFile, index, voxHiddenIndex);
+		sampSize = _engine->_hqrdepack->hqrGetallocVoxEntry(&sampPtr, _engine->_text->currentVoxBankFile, index, _engine->_text->voxHiddenIndex);
 
 		// Fix incorrect sample files first byte
 		if (*sampPtr != 'C') {
-			hasHiddenVox = *sampPtr;
-			voxHiddenIndex++;
+			_engine->_text->hasHiddenVox = *sampPtr;
+			_engine->_text->voxHiddenIndex++;
 			*sampPtr = 'C';
 		}
 
@@ -280,13 +265,10 @@ void playVoxSample(int32 index) {
 		if (channelIdx != -1) {
 			samplesPlaying[channelIdx] = index;
 
-			sampleVolume(channelIdx, cfgfile.VoiceVolume - 1);
+			sampleVolume(channelIdx, _engine->cfgfile.VoiceVolume - 1);
 
 			if (Mix_PlayChannel(channelIdx, sample, 0) == -1)
-				printf("Error while playing VOC: Sample %d \n", index);
-
-			/*if (cfgfile.Debug)
-				printf("Playing VOC: Sample %d\n", index);*/
+				error("Error while playing VOC: Sample %d \n", index);
 		}
 
 		free(sampPtr);

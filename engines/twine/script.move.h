@@ -27,54 +27,11 @@
 
 namespace TwinE {
 
-class ActorMoveStruct;
 class TwinEEngine;
-class ActorStruct;
 
 class ScriptMove {
 private:
 	TwinEEngine *_engine;
-
-	uint8 *scriptPtr;
-	int32 continueMove;
-	int32 scriptPosition;
-	ActorMoveStruct *move;
-	int32 numRepeatSample = 1;
-	int32 mEND(int32 actorIdx, ActorStruct *actor);
-	int32 mNOP(int32 actorIdx, ActorStruct *actor);
-	int32 mBODY(int32 actorIdx, ActorStruct *actor);
-	int32 mANIM(int32 actorIdx, ActorStruct *actor);
-	int32 mGOTO_POINT(int32 actorIdx, ActorStruct *actor);
-	int32 mWAIT_ANIM(int32 actorIdx, ActorStruct *actor);
-	int32 mLOOP(int32 actorIdx, ActorStruct *actor);
-	int32 mANGLE(int32 actorIdx, ActorStruct *actor);
-	int32 mPOS_POINT(int32 actorIdx, ActorStruct *actor);
-	int32 mLABEL(int32 actorIdx, ActorStruct *actor);
-	int32 mGOTO(int32 actorIdx, ActorStruct *actor);
-	int32 mSTOP(int32 actorIdx, ActorStruct *actor);
-	int32 mGOTO_SYM_POINT(int32 actorIdx, ActorStruct *actor);
-	int32 mWAIT_NUM_ANIM(int32 actorIdx, ActorStruct *actor);
-	int32 mSAMPLE(int32 actorIdx, ActorStruct *actor);
-	int32 mGOTO_POINT_3D(int32 actorIdx, ActorStruct *actor);
-	int32 mSPEED(int32 actorIdx, ActorStruct *actor);
-	int32 mBACKGROUND(int32 actorIdx, ActorStruct *actor);
-	int32 mWAIT_NUM_SECOND(int32 actorIdx, ActorStruct *actor);
-	int32 mNO_BODY(int32 actorIdx, ActorStruct *actor);
-	int32 mBETA(int32 actorIdx, ActorStruct *actor);
-	int32 mOPEN_LEFT(int32 actorIdx, ActorStruct *actor);
-	int32 mOPEN_RIGHT(int32 actorIdx, ActorStruct *actor);
-	int32 mOPEN_UP(int32 actorIdx, ActorStruct *actor);
-	int32 mOPEN_DOWN(int32 actorIdx, ActorStruct *actor);
-	int32 mCLOSE(int32 actorIdx, ActorStruct *actor);
-	int32 mWAIT_DOOR(int32 actorIdx, ActorStruct *actor);
-	int32 mSAMPLE_RND(int32 actorIdx, ActorStruct *actor);
-	int32 mSAMPLE_ALWAYS(int32 actorIdx, ActorStruct *actor);
-	int32 mSAMPLE_STOP(int32 actorIdx, ActorStruct *actor);
-	int32 mPLAY_FLA(int32 actorIdx, ActorStruct *actor);
-	int32 mREPEAT_SAMPLE(int32 actorIdx, ActorStruct *actor);
-	int32 mSIMPLE_SAMPLE(int32 actorIdx, ActorStruct *actor);
-	int32 mFACE_HERO(int32 actorIdx, ActorStruct *actor);
-	int32 mANGLE_RND(int32 actorIdx, ActorStruct *actor);
 
 public:
 	ScriptMove(TwinEEngine *engine) : _engine(engine) {}

@@ -27,7 +27,9 @@
 #include <SDL.h>
 #include <SDL_mixer.h>
 
+#include "backends/audiocd/audiocd.h"
 #include "common/debug.h"
+#include "common/system.h"
 #include "common/textconsole.h"
 #include "hqrdepack.h"
 #include "music.h"
@@ -44,13 +46,6 @@ namespace TwinE {
 #define NUM_CD_TRACKS 10
 /** Number of miliseconds to fade music */
 #define FADE_MS 500
-
-/** SDL CD variable interface */
-#if TODO_SDL_CD
-SDL_CD *cdrom;
-/** CD drive letter */
-const int8 *cdname;
-#endif
 
 /** SDL_Mixer track variable interface */
 Mix_Music *current_track;
@@ -89,12 +84,8 @@ void Music::playTrackMusicCd(int32 track) {
 	if (!_engine->cfgfile.UseCD) {
 		return;
 	}
-#if TODO_SDL_CD
-	if (cdrom->numtracks == 10) {
-		if (CD_INDRIVE(SDL_CDStatus(cdrom)))
-			SDL_CDPlayTracks(cdrom, track, 0, 1, 0);
-	}
-#endif
+	AudioCDManager* cdrom = g_system->getAudioCDManager();
+	cdrom->play(track, 1, 0, 0);
 }
 
 /** Stop CD music */
@@ -103,11 +94,8 @@ void Music::stopTrackMusicCd() {
 		return;
 	}
 
-#if TODO_SDL_CD
-	if (cdrom != NULL) {
-		SDL_CDStop(cdrom);
-	}
-#endif
+	AudioCDManager* cdrom = g_system->getAudioCDManager();
+	cdrom->stop();
 }
 
 /** Generic play music, according with settings it plays CD or MP3 instead
@@ -200,50 +188,19 @@ void Music::stopMidiMusic() {
 
 /** Initialize CD-Rom */
 int Music::initCdrom() {
-#if TODO_SDL_CD
-	int32 numOfCDROM;
-	int32 cdNum;
-
 	if (!_engine->cfgfile.Sound) {
 		return 0;
 	}
-
-	numOfCDROM = SDL_CDNumDrives();
-
-	if (_engine->cfgfile.Debug)
-		debug("Found %d CDROM devices\n", numOfCDROM);
-
-	if (!numOfCDROM) {
-		warning("No CDROM devices available\n");
-		return 0;
+	#if 0 // TODO: mgerhardy
+	AudioCDManager* cdrom = g_system->getAudioCDManager();
+	if (cdrom->numtracks == NUM_CD_TRACKS) {
+		_engine->cdDir = "LBA";
+		_engine->cfgfile.UseCD = 1;
+		return 1;
 	}
-
-	for (cdNum = 0; cdNum < numOfCDROM; cdNum++) {
-		cdname = SDL_CDName(cdNum);
-		if (_engine->cfgfile.Debug)
-			debug("Testing drive %s\n", cdname);
-		cdrom = SDL_CDOpen(cdNum);
-		if (!cdrom) {
-			if (_engine->cfgfile.Debug)
-				warning("Couldn't open CD drive: %s", SDL_GetError());
-		} else {
-			SDL_CDStatus(cdrom);
-			if (cdrom->numtracks == NUM_CD_TRACKS) {
-				debug("Assuming that it is LBA cd... %s", cdname);
-				_engine->cdDir = "LBA";
-				_engine->cfgfile.UseCD = 1;
-				return 1;
-			}
-		}
-		// not found the right CD
-		_engine->cfgfile.UseCD = 0;
-		SDL_CDClose(cdrom);
-	}
-
-	cdrom = NULL;
-
-	warning("Can't find LBA CD!");
-#endif
+	#endif
+	// not found the right CD
+	_engine->cfgfile.UseCD = 0;
 	return 0;
 }
 

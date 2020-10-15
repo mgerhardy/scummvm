@@ -215,11 +215,11 @@ void FlaMovies::processFrame() {
 		}
 		case kPlaySample: {
 			memcpy(&sample, ptr, sizeof(FLASampleStruct));
-			playFlaSample(sample.sampleNum, sample.freq, sample.repeat, sample.x, sample.y);
+			_engine->_sound->playFlaSample(sample.sampleNum, sample.freq, sample.repeat, sample.x, sample.y);
 			break;
 		}
 		case kStopSample: {
-			stopSample(sample.sampleNum);
+			_engine->_sound->stopSample(sample.sampleNum);
 			break;
 		}
 		case kDeltaFrame: {
@@ -261,7 +261,7 @@ void FlaMovies::playFlaMovie(const char *flaName) {
 	int16 tmpValue;
 	int8 fileNamePath[256];
 
-	stopSamples();
+	_engine->_sound->stopSamples();
 
 	// Play FLA PCX instead of movies
 	if (_engine->cfgfile.Movie == CONF_MOVIE_FLAPCX) {
@@ -281,13 +281,13 @@ void FlaMovies::playFlaMovie(const char *flaName) {
 	}
 
 	sprintf((char *)fileNamePath, FLA_DIR);
-	strncat((char *)fileNamePath, (const char*)flaName, flaNameLength);
+	strncat((char *)fileNamePath, (const char *)flaName, flaNameLength);
 	strcat((char *)fileNamePath, FLA_EXT);
 
 	_fadeOut = -1;
 	fadeOutFrames = 0;
 
-	if (!fropen2(&frFla, (char*)fileNamePath, "rb"))
+	if (!fropen2(&frFla, (char *)fileNamePath, "rb"))
 		return;
 
 	workVideoBufferCopy = _engine->workVideoBuffer;
@@ -359,7 +359,7 @@ void FlaMovies::playFlaMovie(const char *flaName) {
 		_engine->_screens->fadeToBlack(_engine->_screens->paletteRGBACustom);
 	}
 
-	stopSamples();
+	_engine->_sound->stopSamples();
 }
 
 /*

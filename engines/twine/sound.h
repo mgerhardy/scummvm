@@ -31,70 +31,84 @@ namespace TwinE {
 #define NUM_SAMPLES 243
 #define NUM_CHANNELS 32
 
-/** Table with all loaded samples */
-uint8 *samplesTable[NUM_SAMPLES];
-/** Table with all loaded samples sizes */
-uint32 samplesSizeTable[NUM_SAMPLES];
+class TwinEEngine;
+class Sound {
+private:
+	TwinEEngine *_engine;
 
-/** Samples playing at the same time */
-int32 samplesPlaying[NUM_CHANNELS];
+	/** SDL_Mixer channels */
+	int32 channel;
+	int32 channelIdx = -1;
+	int32 isChannelPlaying(int32 channel);
 
-/** Samples playing at a actors position */
-int32 samplesPlayingActors[NUM_CHANNELS];
+public:
+	Sound(TwinEEngine *engine) : _engine(engine) {}
 
-/** Sample volume
+	/** Table with all loaded samples */
+	uint8 *samplesTable[NUM_SAMPLES];
+	/** Table with all loaded samples sizes */
+	uint32 samplesSizeTable[NUM_SAMPLES];
+
+	/** Samples playing at the same time */
+	int32 samplesPlaying[NUM_CHANNELS];
+
+	/** Samples playing at a actors position */
+	int32 samplesPlayingActors[NUM_CHANNELS];
+
+	/** Sample volume
 	@param channel sample channel
 	@param volume sample volume number */
-void sampleVolume(int32 channel, int32 volume);
+	void sampleVolume(int32 channel, int32 volume);
 
-/** Play FLA movie samples
+	/** Play FLA movie samples
 	@param index sample index under flasamp.hqr file
 	@param frequency frequency used to play the sample
 	@param repeat number of times to repeat the sample
 	@param x unknown x variable
 	@param y unknown y variable */
-void playFlaSample(int32 index, int32 frequency, int32 repeat, int32 x, int32 y);
+	void playFlaSample(int32 index, int32 frequency, int32 repeat, int32 x, int32 y);
 
-/** Update sample position in channel */
-void setSamplePosition(int32 channelIdx, int32 x, int32 y, int32 z);
+	/** Update sample position in channel */
+	void setSamplePosition(int32 channelIdx, int32 x, int32 y, int32 z);
 
-/** Play samples
+	/** Play samples
 	@param index sample index under flasamp.hqr file
 	@param frequency frequency used to play the sample
 	@param repeat number of times to repeat the sample
 	@param x unknown x variable
 	@param y unknown y variable
 	@param z unknown z variable */
-void playSample(int32 index, int32 frequency, int32 repeat, int32 x, int32 y, int32 z, int32 actorIdx);
+	void playSample(int32 index, int32 frequency, int32 repeat, int32 x, int32 y, int32 z, int32 actorIdx);
 
-/** Pause samples */
-void pauseSamples();
+	/** Pause samples */
+	void pauseSamples();
 
-void resumeSamples();
+	void resumeSamples();
 
-/** Stop samples */
-void stopSamples();
+	/** Stop samples */
+	void stopSamples();
 
-/** Get the channel where the actor sample is playing */
-int32 getActorChannel(int32 index);
+	/** Get the channel where the actor sample is playing */
+	int32 getActorChannel(int32 index);
 
-/** Get the channel where the sample is playing */
-int32 getSampleChannel(int32 index);
+	/** Get the channel where the sample is playing */
+	int32 getSampleChannel(int32 index);
 
-/** Stops a specific sample */
-void stopSample(int32 index);
+	/** Stops a specific sample */
+	void stopSample(int32 index);
 
-/** Find a free channel slot to use */
-int32 getFreeSampleChannelIndex();
+	/** Find a free channel slot to use */
+	int32 getFreeSampleChannelIndex();
 
-/** Remove a sample from the channel usage list */
-void removeSampleChannel(int32 index);
+	/** Remove a sample from the channel usage list */
+	void removeSampleChannel(int32 index);
 
-/** Check if a sample is playing */
-int32 isSamplePlaying(int32 index);
+	/** Check if a sample is playing */
+	int32 isSamplePlaying(int32 index);
 
-/** Play VOX sample */
-void playVoxSample(int32 index);
+	/** Play VOX sample */
+	void playVoxSample(int32 index);
+};
 
 } // namespace TwinE
 

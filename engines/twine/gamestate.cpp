@@ -156,7 +156,7 @@ void GameState::initEngineVars(int32 save) { // reinitAll
 
 	gameChapter = 0;
 
-	currentTextBank = 0;
+	_engine->_text->currentTextBank = 0;
 	_engine->_scene->currentlyFollowedActor = 0;
 	_engine->_actor->heroBehaviour = 0;
 	_engine->_actor->previousHeroAngle = 0;
@@ -319,7 +319,7 @@ void GameState::processFoundItem(int32 item) {
 	boxBottomRightX = _engine->_renderer->projPosX + 65;
 	boxBottomRightY = _engine->_renderer->projPosY + 65;
 
-	playSample(41, 0x1000, 1, 0x80, 0x80, 0x80, -1);
+	_engine->_sound->playSample(41, 0x1000, 1, 0x80, 0x80, 0x80, -1);
 
 	// process vox play
 	{
@@ -327,19 +327,19 @@ void GameState::processFoundItem(int32 item) {
 		_engine->_music->stopMusic();
 		tmpLanguageCDId = _engine->cfgfile.LanguageCDId;
 		//_engine->cfgfile.LanguageCDId = 0; // comented so we can init vox bank
-		initTextBank(2);
+		_engine->_text->initTextBank(2);
 		_engine->cfgfile.LanguageCDId = tmpLanguageCDId;
 	}
 
 	_engine->_interface->resetClip();
-	initText(item);
-	initDialogueBox();
+	_engine->_text->initText(item);
+	_engine->_text->initDialogueBox();
 
 	textState = 1;
 	quitItem = 0;
 
 	if (_engine->cfgfile.LanguageCDId) {
-		initVoxToPlay(item);
+		_engine->_text->initVoxToPlay(item);
 	}
 
 	currentAnim = _engine->_animations->animTable[_engine->_animations->getBodyAnimIndex(kFoundItem, 0)];
@@ -387,7 +387,7 @@ void GameState::processFoundItem(int32 item) {
 
 		if (textState) {
 			_engine->_interface->resetClip();
-			textState = printText10();
+			textState = _engine->_text->printText10();
 		}
 
 		if (textState == 0 || textState == 2) {
@@ -410,7 +410,7 @@ void GameState::processFoundItem(int32 item) {
 		_engine->lbaTime++;
 	}
 
-	while (playVoxSimple(currDialTextEntry)) {
+	while (_engine->_text->playVoxSimple(_engine->_text->currDialTextEntry)) {
 		readKeys();
 		if (skipIntro == 1) {
 			break;
@@ -419,15 +419,15 @@ void GameState::processFoundItem(int32 item) {
 	}
 
 	initEngineProjections();
-	initTextBank(currentTextBank + 3);
+	_engine->_text->initTextBank(_engine->_text->currentTextBank + 3);
 
 	/*do {
 		readKeys();
 		delaySkip(1);
 	} while (!skipIntro);*/
 
-	if (_engine->cfgfile.LanguageCDId && isSamplePlaying(currDialTextEntry)) {
-		stopVox(currDialTextEntry);
+	if (_engine->cfgfile.LanguageCDId && _engine->_sound->isSamplePlaying(_engine->_text->currDialTextEntry)) {
+		_engine->_text->stopVox(_engine->_text->currDialTextEntry);
 	}
 
 	_engine->_scene->sceneHero->animTimerData = tmpAnimTimer;
@@ -440,7 +440,7 @@ void GameState::processGameChoices(int32 choiceIdx) {
 	gameChoicesSettings[0] = 0;          // Current loaded button (button number)
 	gameChoicesSettings[1] = numChoices; // Num of buttons
 	gameChoicesSettings[2] = 0;          // Buttons box height
-	gameChoicesSettings[3] = currentTextBank + 3;
+	gameChoicesSettings[3] = _engine->_text->currentTextBank + 3;
 
 	if (numChoices > 0) {
 		for (i = 0; i < numChoices; i++) {
@@ -449,20 +449,20 @@ void GameState::processGameChoices(int32 choiceIdx) {
 		}
 	}
 
-	drawAskQuestion(choiceIdx);
+	_engine->_text->drawAskQuestion(choiceIdx);
 
 	_engine->_menu->processMenu(gameChoicesSettings);
 	choiceAnswer = gameChoices[gameChoicesSettings[0]];
 
 	// get right VOX entry index
 	if (_engine->cfgfile.LanguageCDId) {
-		initVoxToPlay(choiceAnswer);
-		while (playVoxSimple(currDialTextEntry))
+		_engine->_text->initVoxToPlay(choiceAnswer);
+		while (_engine->_text->playVoxSimple(_engine->_text->currDialTextEntry))
 			;
-		stopVox(currDialTextEntry);
+		_engine->_text->stopVox(_engine->_text->currDialTextEntry);
 
-		hasHiddenVox = 0;
-		voxHiddenIndex = 0;
+		_engine->_text->hasHiddenVox = 0;
+		_engine->_text->voxHiddenIndex = 0;
 	}
 }
 
@@ -486,7 +486,7 @@ void GameState::processGameoverAnimation() { // makeGameOver
 		int32 avg, cdot;
 
 		_engine->_renderer->prepareIsoModel(gameOverPtr);
-		stopSamples();
+		_engine->_sound->stopSamples();
 		_engine->_music->stopMidiMusic(); // stop fade music
 		_engine->_renderer->setCameraPosition(320, 240, 128, 200, 200);
 		startLbaTime = _engine->lbaTime;
@@ -506,7 +506,7 @@ void GameState::processGameoverAnimation() { // makeGameOver
 			sdldelay(15);
 		}
 
-		playSample(37, _engine->getRandomNumber(2000) + 3096, 1, 0x80, 0x80, 0x80, -1);
+		_engine->_sound->playSample(37, _engine->getRandomNumber(2000) + 3096, 1, 0x80, 0x80, 0x80, -1);
 		_engine->_interface->blitBox(120, 120, 519, 359, (int8 *)_engine->workVideoBuffer, 120, 120, (int8 *)_engine->frontVideoBuffer);
 		_engine->_renderer->setCameraAngle(0, 0, 0, 0, 0, 0, 3200);
 		_engine->_renderer->renderIsoModel(0, 0, 0, 0, 0, 0, gameOverPtr);

@@ -29,11 +29,14 @@
 
 #include "actor.h"
 #include "animations.h"
+#include "common/debug.h"
+#include "common/error.h"
 #include "common/textconsole.h"
 #include "fcaseopen.h"
 #include "flamovies.h"
 #include "gamestate.h"
 #include "grid.h"
+#include "holomap.h"
 #include "hqrdepack.h"
 #include "interface.h"
 #include "keyboard.h"
@@ -70,6 +73,7 @@
 #include "sdlengine.h"
 #include "sound.h"
 #include "text.h"
+#include "twine/filereader.h"
 
 #ifdef GAMEMOD
 #include "debug.h"
@@ -89,10 +93,10 @@ enum InventoryItems {
 };
 
 /** Engine current version */
-const int8 *ENGINE_VERSION = (const int8 *)"0.2.0";
+const char *ENGINE_VERSION = "0.2.0";
 
 /** Engine configuration filename */
-const int8 *CONFIG_FILENAME = (const int8 *)"lba.cfg";
+const char *CONFIG_FILENAME = "lba.cfg";
 
 /** Engine install setup filename
 
@@ -100,7 +104,7 @@ const int8 *CONFIG_FILENAME = (const int8 *)"lba.cfg";
 	This is only used for original games. For mod games project you can
 	used \a lba.cfg file \b Version tag. If this tag is set for original game
 	it will be used instead of \a setup.lst file. */
-const int8 *SETUP_FILENAME = (const int8 *)"setup.lst";
+const char *SETUP_FILENAME = "setup.lst";
 
 /** Configuration types at \a lba.cfg file
 
@@ -152,11 +156,11 @@ static char CFGList[][22] = {
 
 static char LanguageTypes[][10] = {
     "English",
-    "Français",
+    "Francais",
     "Deutsch",
-    "Español",
+    "Espanol",
     "Italiano",
-    "Português"};
+    "Portugues"};
 
 /** Allocate video memory, both front and back buffers */
 void TwinEEngine::allocVideoMemory() {
@@ -185,7 +189,7 @@ int TwinEEngine::getConfigTypeIndex(int8 *lineBuffer) {
 	char buffer[256];
 	char *ptr;
 
-	strcpy(buffer, (char*)lineBuffer);
+	strcpy(buffer, (char *)lineBuffer);
 
 	ptr = strchr(buffer, ' ');
 
@@ -212,7 +216,7 @@ int TwinEEngine::getLanguageTypeIndex(int8 *language) {
 	char buffer[256];
 	char *ptr;
 
-	strcpy(buffer, (char*)language);
+	strcpy(buffer, (char *)language);
 
 	ptr = strchr(buffer, ' ');
 
@@ -233,116 +237,120 @@ int TwinEEngine::getLanguageTypeIndex(int8 *language) {
 
 /** Init configuration file \a lba.cfg */
 void TwinEEngine::initConfigurations() {
-	FILE *fd, *fd_test;
-	int8 buffer[256], tmp[16];
+	FileReader fr;
+	char buffer[256], tmp[16];
 	int32 cfgtype = -1;
 
-	fd = fcaseopen(CONFIG_FILENAME, "rb");
-	if (!fd)
+	if (fropen2(&fr, CONFIG_FILENAME, "rb") != 0) {
 		error("Error: Can't find config file %s\n", CONFIG_FILENAME);
+	}
+
+	frfeed(&fr);
 
 	// make sure it quit when it reaches the end of file
-	while (fgets((char*)buffer, 256, fd) != NULL) {
-		*strchr((char*)buffer, 0x0D0A) = 0;
-		cfgtype = getConfigTypeIndex(buffer);
+	while (frread(&fr, buffer, 256)) {
+		*strchr((char *)buffer, 0x0D0A) = 0;
+		cfgtype = getConfigTypeIndex((int8 *)buffer);
 		if (cfgtype != -1) {
 			switch (cfgtype) {
 			case 0:
-				sscanf((const char*)buffer, "Language: %s", cfgfile.Language);
+				sscanf((const char *)buffer, "Language: %s", cfgfile.Language);
 				cfgfile.LanguageId = getLanguageTypeIndex(cfgfile.Language);
 				break;
 			case 1:
-				sscanf((const char*)buffer, "LanguageCD: %s", cfgfile.LanguageCD);
+				sscanf((const char *)buffer, "LanguageCD: %s", cfgfile.LanguageCD);
 				cfgfile.LanguageCDId = getLanguageTypeIndex(cfgfile.Language) + 1;
 				break;
 			case 2:
-				sscanf((const char*)buffer, "FlagDisplayText: %s", cfgfile.FlagDisplayTextStr);
-				if (!strcmp((char*)cfgfile.FlagDisplayTextStr, "ON")) {
+				sscanf((const char *)buffer, "FlagDisplayText: %s", cfgfile.FlagDisplayTextStr);
+				if (!strcmp((char *)cfgfile.FlagDisplayTextStr, "ON")) {
 					cfgfile.FlagDisplayText = 1;
 				} else {
 					cfgfile.FlagDisplayText = 0;
 				}
 				break;
 			case 3:
-				sscanf((const char*)buffer, "FlagKeepVoice: %s", cfgfile.FlagKeepVoiceStr);
+				sscanf((const char *)buffer, "FlagKeepVoice: %s", cfgfile.FlagKeepVoiceStr);
 				break;
 			case 8:
-				sscanf((const char*)buffer, "MidiType: %s", tmp);
-				if (strcmp((char*)tmp, "auto") == 0) {
+				sscanf((const char *)buffer, "MidiType: %s", tmp);
+				if (strcmp((char *)tmp, "auto") == 0) {
+#if 0 // TODO: mgerhardy - scummvm port to filesystem
 					fd_test = fcaseopen(HQR_MIDI_MI_WIN_FILE, "rb");
 					if (fd_test) {
 						fclose(fd_test);
 						cfgfile.MidiType = 1;
 					} else
-						cfgfile.MidiType = 0;
-				} else if (strcmp((char*)tmp, "midi") == 0)
+#endif
+					cfgfile.MidiType = 0;
+				} else if (strcmp((char *)tmp, "midi") == 0)
 					cfgfile.MidiType = 1;
 				else
 					cfgfile.MidiType = 0;
 				break;
 			case 19:
-				sscanf((const char*)buffer, "WaveVolume: %d", &cfgfile.WaveVolume);
+				sscanf((const char *)buffer, "WaveVolume: %d", &cfgfile.WaveVolume);
 				cfgfile.VoiceVolume = cfgfile.WaveVolume;
 				break;
 			case 20:
-				sscanf((const char*)buffer, "VoiceVolume: %d", &cfgfile.VoiceVolume);
+				sscanf((const char *)buffer, "VoiceVolume: %d", &cfgfile.VoiceVolume);
 				break;
 			case 21:
-				sscanf((const char*)buffer, "MusicVolume: %d", &cfgfile.MusicVolume);
+				sscanf((const char *)buffer, "MusicVolume: %d", &cfgfile.MusicVolume);
 				break;
 			case 22:
-				sscanf((const char*)buffer, "CDVolume: %d", &cfgfile.CDVolume);
+				sscanf((const char *)buffer, "CDVolume: %d", &cfgfile.CDVolume);
 				break;
 			case 23:
-				sscanf((const char*)buffer, "LineVolume: %d", &cfgfile.LineVolume);
+				sscanf((const char *)buffer, "LineVolume: %d", &cfgfile.LineVolume);
 				break;
 			case 24:
-				sscanf((const char*)buffer, "MasterVolume: %d", &cfgfile.MasterVolume);
+				sscanf((const char *)buffer, "MasterVolume: %d", &cfgfile.MasterVolume);
 				break;
 			case 25:
-				sscanf((const char*)buffer, "Version: %d", &cfgfile.Version);
+				sscanf((const char *)buffer, "Version: %d", &cfgfile.Version);
 				break;
 			case 26:
-				sscanf((const char*)buffer, "FullScreen: %d", &cfgfile.FullScreen);
+				sscanf((const char *)buffer, "FullScreen: %d", &cfgfile.FullScreen);
 				break;
 			case 27:
-				sscanf((const char*)buffer, "UseCD: %d", &cfgfile.UseCD);
+				sscanf((const char *)buffer, "UseCD: %d", &cfgfile.UseCD);
 				break;
 			case 28:
-				sscanf((const char*)buffer, "Sound: %d", &cfgfile.Sound);
+				sscanf((const char *)buffer, "Sound: %d", &cfgfile.Sound);
 				break;
 			case 29:
-				sscanf((const char*)buffer, "Movie: %d", &cfgfile.Movie);
+				sscanf((const char *)buffer, "Movie: %d", &cfgfile.Movie);
 				break;
 			case 30:
-				sscanf((const char*)buffer, "CrossFade: %d", &cfgfile.CrossFade);
+				sscanf((const char *)buffer, "CrossFade: %d", &cfgfile.CrossFade);
 				break;
 			case 31:
-				sscanf((const char*)buffer, "Fps: %d", &cfgfile.Fps);
+				sscanf((const char *)buffer, "Fps: %d", &cfgfile.Fps);
 				break;
 			case 32:
-				sscanf((const char*)buffer, "Debug: %d", &cfgfile.Debug);
+				sscanf((const char *)buffer, "Debug: %d", &cfgfile.Debug);
 				break;
 			case 33:
-				sscanf((const char*)buffer, "UseAutoSaving: %d", &cfgfile.UseAutoSaving);
+				sscanf((const char *)buffer, "UseAutoSaving: %d", &cfgfile.UseAutoSaving);
 				break;
 			case 34:
-				sscanf((const char*)buffer, "CombatAuto: %d", &cfgfile.AutoAgressive);
+				sscanf((const char *)buffer, "CombatAuto: %d", &cfgfile.AutoAgressive);
 				break;
 			case 35:
-				sscanf((const char*)buffer, "Shadow: %d", &cfgfile.ShadowMode);
+				sscanf((const char *)buffer, "Shadow: %d", &cfgfile.ShadowMode);
 				break;
 			case 36:
-				sscanf((const char*)buffer, "SceZoom: %d", &cfgfile.SceZoom);
+				sscanf((const char *)buffer, "SceZoom: %d", &cfgfile.SceZoom);
 				break;
 			case 37:
-				sscanf((const char*)buffer, "FillDetails: %d", &cfgfile.FillDetails);
+				sscanf((const char *)buffer, "FillDetails: %d", &cfgfile.FillDetails);
 				break;
 			case 38:
-				sscanf((const char*)buffer, "InterfaceStyle: %d", &cfgfile.InterfaceStyle);
+				sscanf((const char *)buffer, "InterfaceStyle: %d", &cfgfile.InterfaceStyle);
 				break;
 			case 39:
-				sscanf((const char*)buffer, "WallCollision: %d", &cfgfile.WallCollision);
+				sscanf((const char *)buffer, "WallCollision: %d", &cfgfile.WallCollision);
 				break;
 			}
 		}
@@ -350,8 +358,6 @@ void TwinEEngine::initConfigurations() {
 
 	if (!cfgfile.Fps)
 		cfgfile.Fps = DEFAULT_FRAMES_PER_SECOND;
-
-	fclose(fd);
 }
 
 /** Initialize LBA engine */
@@ -360,83 +366,83 @@ void TwinEEngine::initEngine() {
 	initConfigurations();
 
 	// Show engine information
-	printf("TwinEngine v%s\n\n", ENGINE_VERSION);
-	printf("(c)2002 The TwinEngine team. Refer to AUTHORS file for further details.\n");
-	printf("Released under the terms of the GNU GPL license version 2 (or, at your opinion, any later). See COPYING file.\n\n");
-	printf("The original Little Big Adventure game is:\n\t(c)1994 by Adeline Software International, All Rights Reserved.\n\n");
+	debug("TwinEngine v%s\n\n", ENGINE_VERSION);
+	debug("(c)2002 The TwinEngine team. Refer to AUTHORS file for further details.\n");
+	debug("Released under the terms of the GNU GPL license version 2 (or, at your opinion, any later). See COPYING file.\n\n");
+	debug("The original Little Big Adventure game is:\n\t(c)1994 by Adeline Software International, All Rights Reserved.\n\n");
 
 	allocVideoMemory();
-	clearScreen();
+	_screens->clearScreen();
 
 	// Toggle fullscreen if Fullscreen flag is set
 	toggleFullscreen();
 
 	// Check if LBA CD-Rom is on drive
-	initCdrom();
+	_music->initCdrom();
 
 	// Display company logo
-	adelineLogo();
+	_screens->adelineLogo();
 
 	// verify game version screens
 	if (cfgfile.Version == EUROPE_VERSION) {
 		// Little Big Adventure screen
-		loadImageDelay(RESSHQR_LBAIMG, 3);
+		_screens->loadImageDelay(RESSHQR_LBAIMG, 3);
 		// Electronic Arts Logo
-		loadImageDelay(RESSHQR_EAIMG, 2);
+		_screens->loadImageDelay(RESSHQR_EAIMG, 2);
 	} else if (cfgfile.Version == USA_VERSION) {
 		// Relentless screen
-		loadImageDelay(RESSHQR_RELLENTIMG, 3);
+		_screens->loadImageDelay(RESSHQR_RELLENTIMG, 3);
 		// Electronic Arts Logo
-		loadImageDelay(RESSHQR_EAIMG, 2);
+		_screens->loadImageDelay(RESSHQR_EAIMG, 2);
 	} else if (cfgfile.Version == MODIFICATION_VERSION) {
 		// Modification screen
-		loadImageDelay(RESSHQR_RELLENTIMG, 2);
+		_screens->loadImageDelay(RESSHQR_RELLENTIMG, 2);
 	}
 
-	playFlaMovie(FLA_DRAGON3);
+	_flaMovies->playFlaMovie(FLA_DRAGON3);
 
-	loadMenuImage(1);
+	_screens->loadMenuImage(1);
 
-	mainMenu();
+	_menu->mainMenu();
 }
 
 void TwinEEngine::initMCGA() {
-	drawInGameTransBox = 1;
+	_redraw->drawInGameTransBox = 1;
 }
 
 void TwinEEngine::initSVGA() {
-	drawInGameTransBox = 0;
+	_redraw->drawInGameTransBox = 0;
 }
 
 /** Initialize all needed stuffs at first time running engine */
 void TwinEEngine::initAll() {
-	blockBuffer = (uint8 *)malloc(64 * 64 * 25 * 2 * sizeof(uint8));
-	animBuffer1 = animBuffer2 = (uint8 *)malloc(5000 * sizeof(uint8));
-	memset(samplesPlaying, -1, sizeof(int32) * NUM_CHANNELS);
-	memset(itemAngle, 256, sizeof(itemAngle)); // reset inventory items angles
+	_grid->blockBuffer = (uint8 *)malloc(64 * 64 * 25 * 2 * sizeof(uint8));
+	_animations->animBuffer1 = _animations->animBuffer2 = (uint8 *)malloc(5000 * sizeof(uint8));
+	memset(_sound->samplesPlaying, -1, sizeof(int32) * NUM_CHANNELS);
+	memset(_menu->itemAngle, 256, sizeof(_menu->itemAngle)); // reset inventory items angles
 
-	bubbleSpriteIndex = SPRITEHQR_DIAG_BUBBLE_LEFT;
-	bubbleActor = -1;
-	showDialogueBubble = 1;
+	_redraw->bubbleSpriteIndex = SPRITEHQR_DIAG_BUBBLE_LEFT;
+	_redraw->bubbleActor = -1;
+	_text->showDialogueBubble = 1;
 
-	currentTextBank = -1;
-	currMenuTextIndex = -1;
-	currMenuTextBank = -1;
-	autoAgressive = 1;
+	_text->currentTextBank = -1;
+	_menu->currMenuTextIndex = -1;
+	_menu->currMenuTextBank = -1;
+	_actor->autoAgressive = 1;
 
-	sceneHero = &sceneActors[0];
+	_scene->sceneHero = &_scene->sceneActors[0];
 
-	renderLeft = 0;
-	renderTop = 0;
-	renderRight = SCREEN_TEXTLIMIT_RIGHT;
-	renderBottom = SCREEN_TEXTLIMIT_BOTTOM;
+	_redraw->renderLeft = 0;
+	_redraw->renderTop = 0;
+	_redraw->renderRight = SCREEN_TEXTLIMIT_RIGHT;
+	_redraw->renderBottom = SCREEN_TEXTLIMIT_BOTTOM;
 	// Set clip to fullscreen by default, allows main menu to render properly after load
-	resetClip();
+	_interface->resetClip();
 
 	rightMouse = 0;
 	leftMouse = 0;
 
-	initResources();
+	_resources->initResources();
 
 	initSVGA();
 }
@@ -445,7 +451,7 @@ void TwinEEngine::initAll() {
 
 int8 *TwinEEngine::ITOA(int32 number) {
 	int32 numDigits = 1;
-	int8 *text;
+	char *text;
 
 	if (number >= 10 && number <= 99) {
 		numDigits = 2;
@@ -453,9 +459,9 @@ int8 *TwinEEngine::ITOA(int32 number) {
 		numDigits = 3;
 	}
 
-	text = (int8 *)malloc(sizeof(int8) * (numDigits + 1));
+	text = (char *)malloc(sizeof(char) * (numDigits + 1));
 	sprintf(text, "%d", number);
-	return text;
+	return (int8 *)text;
 }
 
 TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flags)
@@ -480,6 +486,10 @@ TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flag
 	_screens = new Screens(this);
 	_scriptLife = new ScriptLife(this);
 	_scriptMove = new ScriptMove(this);
+	_holomap = new Holomap(this);
+	_sound = new Sound(this);
+	_text = new Text(this);
+	_debugGrid = new DebugGrid(this);
 }
 
 TwinEEngine::~TwinEEngine() {
@@ -503,6 +513,9 @@ TwinEEngine::~TwinEEngine() {
 	delete _screens;
 	delete _scriptLife;
 	delete _scriptMove;
+	delete _holomap;
+	delete _sound;
+	delete _text;
 }
 
 bool TwinEEngine::hasFeature(EngineFeature f) const {
@@ -510,12 +523,11 @@ bool TwinEEngine::hasFeature(EngineFeature f) const {
 }
 
 Common::Error TwinEEngine::run() {
-	initGraphics(kScreenWidth, kScreenHeight);
 	syncSoundSettings();
 	initAll();
 	initEngine();
-	stopTrackMusic();
-	stopMidiMusic();
+	_music->stopTrackMusic();
+	_music->stopMidiMusic();
 	return Common::kNoError;
 }
 
@@ -537,9 +549,9 @@ void TwinEEngine::unfreezeTime() {
 
 void TwinEEngine::processActorSamplePosition(int32 actorIdx) {
 	int32 channelIdx;
-	ActorStruct *actor = &sceneActors[actorIdx];
-	channelIdx = getActorChannel(actorIdx);
-	setSamplePosition(channelIdx, actor->X, actor->Y, actor->Z);
+	ActorStruct *actor = &_scene->sceneActors[actorIdx];
+	channelIdx = _sound->getActorChannel(actorIdx);
+	_sound->setSamplePosition(channelIdx, actor->X, actor->Y, actor->Z);
 }
 
 /** Game engine main loop
@@ -548,8 +560,8 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 	int32 a;
 	readKeys();
 
-	if (needChangeScene > -1) {
-		changeScene();
+	if (_scene->needChangeScene > -1) {
+		_scene->changeScene();
 	}
 
 	previousLoopPressedKey = loopPressedKey;
@@ -561,7 +573,7 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 	processDebug(loopCurrentKey);
 #endif
 
-	if (canShowCredits != 0) {
+	if (_menuOptions->canShowCredits != 0) {
 		// TODO: if current music playing != 8, than play_track(8);
 		if (skipIntro != 0) {
 			return 0;
@@ -574,20 +586,20 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 		}
 	} else {
 		// Process give up menu - Press ESC
-		if (skipIntro == 1 && sceneHero->life > 0 && sceneHero->entity != -1 && !sceneHero->staticFlags.bIsHidden) {
+		if (skipIntro == 1 && _scene->sceneHero->life > 0 && _scene->sceneHero->entity != -1 && !_scene->sceneHero->staticFlags.bIsHidden) {
 			freezeTime();
-			if (giveupMenu()) {
+			if (_menu->giveupMenu()) {
 				unfreezeTime();
-				redrawEngineActions(1);
+				_redraw->redrawEngineActions(1);
 				freezeTime();
-				saveGame(); // auto save game
+				_gameState->saveGame(); // auto save game
 				quitGame = 0;
 				cfgfile.Quit = 0;
 				unfreezeTime();
 				return 0;
 			} else {
 				unfreezeTime();
-				redrawEngineActions(1);
+				_redraw->redrawEngineActions(1);
 			}
 		}
 
@@ -595,99 +607,99 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 		if (loopCurrentKey == 0x40) {
 			int tmpLangCD = cfgfile.LanguageCDId;
 			freezeTime();
-			pauseSamples();
-			OptionsMenuSettings[5] = 15;
+			_sound->pauseSamples();
+			_menu->OptionsMenuSettings[5] = 15;
 			cfgfile.LanguageCDId = 0;
-			initTextBank(0);
-			optionsMenu();
+			_text->initTextBank(0);
+			_menu->optionsMenu();
 			cfgfile.LanguageCDId = tmpLangCD;
-			initTextBank(currentTextBank + 3);
+			_text->initTextBank(_text->currentTextBank + 3);
 			//TODO: play music
-			resumeSamples();
+			_sound->resumeSamples();
 			unfreezeTime();
-			redrawEngineActions(1);
+			_redraw->redrawEngineActions(1);
 		}
 
 		// inventory menu
 		loopInventoryItem = -1;
-		if (loopCurrentKey == 0x36 && sceneHero->entity != -1 && sceneHero->controlMode == kManual) {
+		if (loopCurrentKey == 0x36 && _scene->sceneHero->entity != -1 && _scene->sceneHero->controlMode == kManual) {
 			freezeTime();
-			processInventoryMenu();
+			_menu->processInventoryMenu();
 
 			switch (loopInventoryItem) {
 			case kiHolomap:
-				printf("Use Inventory [kiHolomap] not implemented!\n");
+				warning("Use Inventory [kiHolomap] not implemented!\n");
 				break;
 			case kiMagicBall:
-				if (usingSabre == 1) {
-					initModelActor(0, 0);
+				if (_gameState->usingSabre == 1) {
+					_actor->initModelActor(0, 0);
 				}
-				usingSabre = 0;
+				_gameState->usingSabre = 0;
 				break;
 			case kiUseSabre:
-				if (sceneHero->body != GAMEFLAG_HAS_SABRE) {
-					if (heroBehaviour == kProtoPack) {
-						setBehaviour(kNormal);
+				if (_scene->sceneHero->body != GAMEFLAG_HAS_SABRE) {
+					if (_actor->heroBehaviour == kProtoPack) {
+						_actor->setBehaviour(kNormal);
 					}
-					initModelActor(GAMEFLAG_HAS_SABRE, 0);
-					initAnim(24, 1, 0, 0);
+					_actor->initModelActor(GAMEFLAG_HAS_SABRE, 0);
+					_animations->initAnim(24, 1, 0, 0);
 
-					usingSabre = 1;
+					_gameState->usingSabre = 1;
 				}
 				break;
 			case kiBookOfBu: {
 				int32 tmpFlagDisplayText;
 
-				fadeToBlack(paletteRGBA);
-				loadImage(RESSHQR_INTROSCREEN1IMG, 1);
-				initTextBank(2);
-				newGameVar4 = 0;
-				textClipFull();
-				setFontCrossColor(15);
+				_screens->fadeToBlack(_screens->paletteRGBA);
+				_screens->loadImage(RESSHQR_INTROSCREEN1IMG, 1);
+				_text->initTextBank(2);
+				_text->newGameVar4 = 0;
+				_text->textClipFull();
+				_text->setFontCrossColor(15);
 				tmpFlagDisplayText = cfgfile.FlagDisplayText;
 				cfgfile.FlagDisplayText = 1;
-				drawTextFullscreen(161);
+				_text->drawTextFullscreen(161);
 				cfgfile.FlagDisplayText = tmpFlagDisplayText;
-				textClipSmall();
-				newGameVar4 = 1;
-				initTextBank(currentTextBank + 3);
-				fadeToBlack(paletteRGBACustom);
-				clearScreen();
+				_text->textClipSmall();
+				_text->newGameVar4 = 1;
+				_text->initTextBank(_text->currentTextBank + 3);
+				_screens->fadeToBlack(_screens->paletteRGBACustom);
+				_screens->clearScreen();
 				flip();
-				setPalette(paletteRGBA);
-				lockPalette = 1;
+				setPalette(_screens->paletteRGBA);
+				_screens->lockPalette = 1;
 			} break;
 			case kiProtoPack:
-				if (gameFlags[GAMEFLAG_BOOKOFBU]) {
-					sceneHero->body = 0;
+				if (_gameState->gameFlags[GAMEFLAG_BOOKOFBU]) {
+					_scene->sceneHero->body = 0;
 				} else {
-					sceneHero->body = 1;
+					_scene->sceneHero->body = 1;
 				}
 
-				if (heroBehaviour == kProtoPack) {
-					setBehaviour(kNormal);
+				if (_actor->heroBehaviour == kProtoPack) {
+					_actor->setBehaviour(kNormal);
 				} else {
-					setBehaviour(kProtoPack);
+					_actor->setBehaviour(kProtoPack);
 				}
 				break;
 			case kiPinguin: {
-				ActorStruct *pinguin = &sceneActors[mecaPinguinIdx];
+				ActorStruct *pinguin = &_scene->sceneActors[_scene->mecaPinguinIdx];
 
-				pinguin->X = destX + sceneHero->X;
-				pinguin->Y = sceneHero->Y;
-				pinguin->Z = destZ + sceneHero->Z;
-				pinguin->angle = sceneHero->angle;
+				pinguin->X = _renderer->destX + _scene->sceneHero->X;
+				pinguin->Y = _scene->sceneHero->Y;
+				pinguin->Z = _renderer->destZ + _scene->sceneHero->Z;
+				pinguin->angle = _scene->sceneHero->angle;
 
-				rotateActor(0, 800, pinguin->angle);
+				_movements->rotateActor(0, 800, pinguin->angle);
 
-				if (!checkCollisionWithActors(mecaPinguinIdx)) {
+				if (!_collision->checkCollisionWithActors(_scene->mecaPinguinIdx)) {
 					pinguin->life = 50;
 					pinguin->body = -1;
-					initModelActor(0, mecaPinguinIdx);
+					_actor->initModelActor(0, _scene->mecaPinguinIdx);
 					pinguin->dynamicFlags.bIsDead = 0; // &= 0xDF
 					pinguin->brickShape = 0;
-					moveActor(pinguin->angle, pinguin->angle, pinguin->speed, &pinguin->move);
-					gameFlags[GAMEFLAG_MECA_PINGUIN] = 0; // byte_50D89 = 0;
+					_movements->moveActor(pinguin->angle, pinguin->angle, pinguin->speed, &pinguin->move);
+					_gameState->gameFlags[GAMEFLAG_MECA_PINGUIN] = 0; // byte_50D89 = 0;
 					pinguin->info0 = lbaTime + 1500;
 				}
 			} break;
@@ -695,65 +707,65 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 				int32 tmpLanguageCDIdx;
 				tmpLanguageCDIdx = cfgfile.LanguageCDId;
 				unfreezeTime();
-				redrawEngineActions(1);
+				_redraw->redrawEngineActions(1);
 				freezeTime();
 				cfgfile.LanguageCDId = 0;
-				initTextBank(2);
-				textClipFull();
-				setFontCrossColor(15);
-				drawTextFullscreen(162);
-				textClipSmall();
+				_text->initTextBank(2);
+				_text->textClipFull();
+				_text->setFontCrossColor(15);
+				_text->drawTextFullscreen(162);
+				_text->textClipSmall();
 				cfgfile.LanguageCDId = tmpLanguageCDIdx;
-				initTextBank(currentTextBank + 3);
+				_text->initTextBank(_text->currentTextBank + 3);
 			} break;
 			case kiCloverLeaf:
-				if (sceneHero->life < 50) {
-					if (inventoryNumLeafs > 0) {
-						sceneHero->life = 50;
-						inventoryMagicPoints = magicLevelIdx * 20;
-						inventoryNumLeafs--;
-						addOverlay(koInventoryItem, 27, 0, 0, 0, koNormal, 3);
+				if (_scene->sceneHero->life < 50) {
+					if (_gameState->inventoryNumLeafs > 0) {
+						_scene->sceneHero->life = 50;
+						_gameState->inventoryMagicPoints = _gameState->magicLevelIdx * 20;
+						_gameState->inventoryNumLeafs--;
+						_redraw->addOverlay(koInventoryItem, 27, 0, 0, 0, koNormal, 3);
 					}
 				}
 				break;
 			}
 
 			unfreezeTime();
-			redrawEngineActions(1);
+			_redraw->redrawEngineActions(1);
 		}
 
 		// Process behaviour menu - Press CTRL and F1..F4 Keys
-		if ((loopCurrentKey == 0x1D || loopCurrentKey == 0x3B || loopCurrentKey == 0x3C || loopCurrentKey == 0x3D || loopCurrentKey == 0x3E) && sceneHero->entity != -1 && sceneHero->controlMode == kManual) {
+		if ((loopCurrentKey == 0x1D || loopCurrentKey == 0x3B || loopCurrentKey == 0x3C || loopCurrentKey == 0x3D || loopCurrentKey == 0x3E) && _scene->sceneHero->entity != -1 && _scene->sceneHero->controlMode == kManual) {
 			if (loopCurrentKey != 0x1D) {
-				heroBehaviour = loopCurrentKey - 0x3B;
+				_actor->heroBehaviour = loopCurrentKey - 0x3B;
 			}
 			freezeTime();
-			processBehaviourMenu();
+			_menu->processBehaviourMenu();
 			unfreezeTime();
-			redrawEngineActions(1);
+			_redraw->redrawEngineActions(1);
 		}
 
 		// use Proto-Pack
-		if (loopCurrentKey == 0x24 && gameFlags[GAMEFLAG_PROTOPACK] == 1) {
-			if (gameFlags[GAMEFLAG_BOOKOFBU]) {
-				sceneHero->body = 0;
+		if (loopCurrentKey == 0x24 && _gameState->gameFlags[GAMEFLAG_PROTOPACK] == 1) {
+			if (_gameState->gameFlags[GAMEFLAG_BOOKOFBU]) {
+				_scene->sceneHero->body = 0;
 			} else {
-				sceneHero->body = 1;
+				_scene->sceneHero->body = 1;
 			}
 
-			if (heroBehaviour == kProtoPack) {
-				setBehaviour(kNormal);
+			if (_actor->heroBehaviour == kProtoPack) {
+				_actor->setBehaviour(kNormal);
 			} else {
-				setBehaviour(kProtoPack);
+				_actor->setBehaviour(kProtoPack);
 			}
 		}
 
 		// Press Enter to Recenter Screen
 		if ((loopPressedKey & 2) && !disableScreenRecenter) {
-			newCameraX = sceneActors[currentlyFollowedActor].X >> 9;
-			newCameraY = sceneActors[currentlyFollowedActor].Y >> 8;
-			newCameraZ = sceneActors[currentlyFollowedActor].Z >> 9;
-			reqBgRedraw = 1;
+			_grid->newCameraX = _scene->sceneActors[_scene->currentlyFollowedActor].X >> 9;
+			_grid->newCameraY = _scene->sceneActors[_scene->currentlyFollowedActor].Y >> 8;
+			_grid->newCameraZ = _scene->sceneActors[_scene->currentlyFollowedActor].Z >> 9;
+			_redraw->reqBgRedraw = 1;
 		}
 
 		// TODO: draw holomap
@@ -761,74 +773,74 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 		// Process Pause - Press P
 		if (loopCurrentKey == 0x19) {
 			freezeTime();
-			setFontColor(15);
-			drawText(5, 446, (int8 *)"Pause"); // no key for pause in Text Bank
+			_text->setFontColor(15);
+			_text->drawText(5, 446, (int8 *)"Pause"); // no key for pause in Text Bank
 			copyBlockPhys(5, 446, 100, 479);
 			do {
 				readKeys();
 				SDL_Delay(10);
 			} while (skipIntro != 0x19 && !pressedKey);
 			unfreezeTime();
-			redrawEngineActions(1);
+			_redraw->redrawEngineActions(1);
 		}
 	}
 
-	loopActorStep = getRealValue(&loopMovePtr);
+	loopActorStep = _movements->getRealValue(&loopMovePtr);
 	if (!loopActorStep) {
 		loopActorStep = 1;
 	}
 
-	setActorAngle(0, -256, 5, &loopMovePtr);
+	_movements->setActorAngle(0, -256, 5, &loopMovePtr);
 	disableScreenRecenter = 0;
 
-	processEnvironmentSound();
+	_scene->processEnvironmentSound();
 
 	// Reset HitBy state
-	for (a = 0; a < sceneNumActors; a++) {
-		sceneActors[a].hitBy = -1;
+	for (a = 0; a < _scene->sceneNumActors; a++) {
+		_scene->sceneActors[a].hitBy = -1;
 	}
 
-	processExtras();
+	_extra->processExtras();
 
-	for (a = 0; a < sceneNumActors; a++) {
-		ActorStruct *actor = &sceneActors[a];
+	for (a = 0; a < _scene->sceneNumActors; a++) {
+		ActorStruct *actor = &_scene->sceneActors[a];
 
 		if (!actor->dynamicFlags.bIsDead) {
 			if (actor->life == 0) {
 				if (a == 0) { // if its hero who died
-					initAnim(kLandDeath, 4, 0, 0);
+					_animations->initAnim(kLandDeath, 4, 0, 0);
 					actor->controlMode = 0;
 				} else {
-					playSample(37, Rnd(2000) + 3096, 1, actor->X, actor->Y, actor->Z, a);
+					_sound->playSample(37, getRandomNumber(2000) + 3096, 1, actor->X, actor->Y, actor->Z, a);
 
-					if (a == mecaPinguinIdx) {
-						addExtraExplode(actor->X, actor->Y, actor->Z);
+					if (a == _scene->mecaPinguinIdx) {
+						_extra->addExtraExplode(actor->X, actor->Y, actor->Z);
 					}
 				}
 
 				if (actor->bonusParameter & 0x1F0 && !(actor->bonusParameter & 1)) {
-					processActorExtraBonus(a);
+					_actor->processActorExtraBonus(a);
 				}
 			}
 
-			processActorMovements(a);
+			_movements->processActorMovements(a);
 
 			actor->collisionX = actor->X;
 			actor->collisionY = actor->Y;
 			actor->collisionZ = actor->Z;
 
 			if (actor->positionInMoveScript != -1) {
-				processMoveScript(a);
+				_scriptMove->processMoveScript(a);
 			}
 
-			processActorAnimations(a);
+			_animations->processActorAnimations(a);
 
 			if (actor->staticFlags.bIsZonable) {
-				processActorZones(a);
+				_scene->processActorZones(a);
 			}
 
 			if (actor->positionInLifeScript != -1) {
-				processLifeScript(a);
+				_scriptLife->processLifeScript(a);
 			}
 
 			processActorSamplePosition(a);
@@ -839,31 +851,31 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 
 			if (actor->staticFlags.bCanDrown) {
 				int32 brickSound;
-				brickSound = getBrickSoundType(actor->X, actor->Y - 1, actor->Z);
+				brickSound = _grid->getBrickSoundType(actor->X, actor->Y - 1, actor->Z);
 				actor->brickSound = brickSound;
 
 				if ((brickSound & 0xF0) == 0xF0) {
 					if ((brickSound & 0xF) == 1) {
 						if (a) { // all other actors
-							int32 rnd = Rnd(2000) + 3096;
-							playSample(0x25, rnd, 1, actor->X, actor->Y, actor->Z, a);
+							int32 rnd = getRandomNumber(2000) + 3096;
+							_sound->playSample(0x25, rnd, 1, actor->X, actor->Y, actor->Z, a);
 							if (actor->bonusParameter & 0x1F0) {
 								if (!(actor->bonusParameter & 1)) {
-									processActorExtraBonus(a);
+									_actor->processActorExtraBonus(a);
 								}
 								actor->life = 0;
 							}
 						} else { // if Hero
-							if (heroBehaviour != 4 || (brickSound & 0x0F) != actor->anim) {
-								if (!cropBottomScreen) {
-									initAnim(kDrawn, 4, 0, 0);
-									projectPositionOnScreen(actor->X - cameraX, actor->Y - cameraY, actor->Z - cameraZ);
-									cropBottomScreen = projPosY;
+							if (_actor->heroBehaviour != 4 || (brickSound & 0x0F) != actor->anim) {
+								if (!_actor->cropBottomScreen) {
+									_animations->initAnim(kDrawn, 4, 0, 0);
+									_renderer->projectPositionOnScreen(actor->X - _grid->cameraX, actor->Y - _grid->cameraY, actor->Z - _grid->cameraZ);
+									_actor->cropBottomScreen = _renderer->projPosY;
 								}
-								projectPositionOnScreen(actor->X - cameraX, actor->Y - cameraY, actor->Z - cameraZ);
+								_renderer->projectPositionOnScreen(actor->X - _grid->cameraX, actor->Y - _grid->cameraY, actor->Z - _grid->cameraZ);
 								actor->controlMode = 0;
 								actor->life = -1;
-								cropBottomScreen = projPosY;
+								_actor->cropBottomScreen = _renderer->projPosY;
 								actor->staticFlags.bCanDrown |= 0x10;
 							}
 						}
@@ -874,94 +886,94 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 			if (actor->life <= 0) {
 				if (!a) { // if its Hero
 					if (actor->dynamicFlags.bAnimEnded) {
-						if (inventoryNumLeafs > 0) { // use clover leaf automaticaly
-							sceneHero->X = newHeroX;
-							sceneHero->Y = newHeroY;
-							sceneHero->Z = newHeroZ;
+						if (_gameState->inventoryNumLeafs > 0) { // use clover leaf automaticaly
+							_scene->sceneHero->X = _scene->newHeroX;
+							_scene->sceneHero->Y = _scene->newHeroY;
+							_scene->sceneHero->Z = _scene->newHeroZ;
 
-							needChangeScene = currentSceneIdx;
-							inventoryMagicPoints = magicLevelIdx * 20;
+							_scene->needChangeScene = _scene->currentSceneIdx;
+							_gameState->inventoryMagicPoints = _gameState->magicLevelIdx * 20;
 
-							newCameraX = (sceneHero->X >> 9);
-							newCameraY = (sceneHero->Y >> 8);
-							newCameraZ = (sceneHero->Z >> 9);
+							_grid->newCameraX = (_scene->sceneHero->X >> 9);
+							_grid->newCameraY = (_scene->sceneHero->Y >> 8);
+							_grid->newCameraZ = (_scene->sceneHero->Z >> 9);
 
-							heroPositionType = kReborn;
+							_scene->heroPositionType = kReborn;
 
-							sceneHero->life = 50;
-							reqBgRedraw = 1;
-							lockPalette = 1;
-							inventoryNumLeafs--;
-							cropBottomScreen = 0;
+							_scene->sceneHero->life = 50;
+							_redraw->reqBgRedraw = 1;
+							_screens->lockPalette = 1;
+							_gameState->inventoryNumLeafs--;
+							_actor->cropBottomScreen = 0;
 						} else { // game over
-							inventoryNumLeafsBox = 2;
-							inventoryNumLeafs = 1;
-							inventoryMagicPoints = magicLevelIdx * 20;
-							heroBehaviour = previousHeroBehaviour;
-							actor->angle = previousHeroAngle;
+							_gameState->inventoryNumLeafsBox = 2;
+							_gameState->inventoryNumLeafs = 1;
+							_gameState->inventoryMagicPoints = _gameState->magicLevelIdx * 20;
+							_actor->heroBehaviour = _actor->previousHeroBehaviour;
+							actor->angle = _actor->previousHeroAngle;
 							actor->life = 50;
 
-							if (previousSceneIdx != currentSceneIdx) {
-								newHeroX = -1;
-								newHeroY = -1;
-								newHeroZ = -1;
-								currentSceneIdx = previousSceneIdx;
+							if (_scene->previousSceneIdx != _scene->currentSceneIdx) {
+								_scene->newHeroX = -1;
+								_scene->newHeroY = -1;
+								_scene->newHeroZ = -1;
+								_scene->currentSceneIdx = _scene->previousSceneIdx;
 							}
 
-							saveGame();
-							processGameoverAnimation();
+							_gameState->saveGame();
+							_gameState->processGameoverAnimation();
 							quitGame = 0;
 							return 0;
 						}
 					}
 				} else {
-					processActorCarrier(a);
+					_actor->processActorCarrier(a);
 					actor->dynamicFlags.bIsDead = 1;
 					actor->entity = -1;
 					actor->zone = -1;
 				}
 			}
 
-			if (needChangeScene != -1) {
+			if (_scene->needChangeScene != -1) {
 				return 0;
 			}
 		}
 	}
 
 	// recenter screen automatically
-	if (!disableScreenRecenter && !useFreeCamera) {
-		ActorStruct *actor = &sceneActors[currentlyFollowedActor];
-		projectPositionOnScreen(actor->X - (newCameraX << 9),
-		                        actor->Y - (newCameraY << 8),
-		                        actor->Z - (newCameraZ << 9));
-		if (projPosX < 80 || projPosX > 539 || projPosY < 80 || projPosY > 429) {
-			newCameraX = ((actor->X + 0x100) >> 9) + (((actor->X + 0x100) >> 9) - newCameraX) / 2;
-			newCameraY = actor->Y >> 8;
-			newCameraZ = ((actor->Z + 0x100) >> 9) + (((actor->Z + 0x100) >> 9) - newCameraZ) / 2;
+	if (!disableScreenRecenter && !_debugGrid->useFreeCamera) {
+		ActorStruct *actor = &_scene->sceneActors[_scene->currentlyFollowedActor];
+		_renderer->projectPositionOnScreen(actor->X - (_grid->newCameraX << 9),
+		                                   actor->Y - (_grid->newCameraY << 8),
+		                                   actor->Z - (_grid->newCameraZ << 9));
+		if (_renderer->projPosX < 80 || _renderer->projPosX > 539 || _renderer->projPosY < 80 || _renderer->projPosY > 429) {
+			_grid->newCameraX = ((actor->X + 0x100) >> 9) + (((actor->X + 0x100) >> 9) - _grid->newCameraX) / 2;
+			_grid->newCameraY = actor->Y >> 8;
+			_grid->newCameraZ = ((actor->Z + 0x100) >> 9) + (((actor->Z + 0x100) >> 9) - _grid->newCameraZ) / 2;
 
-			if (newCameraX >= 64) {
-				newCameraX = 63;
+			if (_grid->newCameraX >= 64) {
+				_grid->newCameraX = 63;
 			}
 
-			if (newCameraZ >= 64) {
-				newCameraZ = 63;
+			if (_grid->newCameraZ >= 64) {
+				_grid->newCameraZ = 63;
 			}
 
-			reqBgRedraw = 1;
+			_redraw->reqBgRedraw = 1;
 		}
 	}
 
-	redrawEngineActions(reqBgRedraw);
+	_redraw->redrawEngineActions(_redraw->reqBgRedraw);
 
 	// workaround to fix hero redraw after drowning
-	if (cropBottomScreen && reqBgRedraw == 1) {
-		sceneHero->staticFlags.bIsHidden = 1;
-		redrawEngineActions(1);
-		sceneHero->staticFlags.bIsHidden = 0;
+	if (_actor->cropBottomScreen && _redraw->reqBgRedraw == 1) {
+		_scene->sceneHero->staticFlags.bIsHidden = 1;
+		_redraw->redrawEngineActions(1);
+		_scene->sceneHero->staticFlags.bIsHidden = 0;
 	}
 
-	needChangeScene = -1;
-	reqBgRedraw = 0;
+	_scene->needChangeScene = -1;
+	_redraw->reqBgRedraw = 0;
 
 	return 0;
 }
@@ -971,9 +983,9 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 int32 TwinEEngine::gameEngineLoop() { // mainLoop
 	uint32 start;
 
-	reqBgRedraw = 1;
-	lockPalette = 1;
-	setActorAngle(0, -256, 5, &loopMovePtr);
+	_redraw->reqBgRedraw = 1;
+	_screens->lockPalette = 1;
+	_movements->setActorAngle(0, -256, 5, &loopMovePtr);
 
 	while (quitGame == -1) {
 		start = SDL_GetTicks();

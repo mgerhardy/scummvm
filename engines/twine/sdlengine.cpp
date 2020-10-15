@@ -20,15 +20,19 @@
  *
  */
 
+#include "common/debug.h"
+#include "common/textconsole.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#if 0
 #include <SDL.h>
 #include <SDL_mixer.h>
 #include <SDL_thread.h>
 #ifdef GAMEMOD
 #include <SDL_ttf.h>
+#endif
 #endif
 
 #include "debug.h"
@@ -49,6 +53,8 @@ namespace TwinE {
 /** High quality audio frequency */
 #define HIGH_QUALITY_FREQUENCY 44100
 
+#if 0
+
 /** Main SDL screen surface buffer */
 SDL_Surface *screen = NULL;
 /** Auxiliar SDL screen surface buffer */
@@ -61,11 +67,14 @@ SDL_Surface *surfaceTable[16];
 #ifdef GAMEMOD
 TTF_Font *font;
 #endif
+#endif
 
 /** SDL exit callback */
 //static void atexit_callback(void) {
 //	sdlClose();
 //}
+
+#if 0
 
 /** SDL initializer
 	@return SDL init state */
@@ -74,10 +83,8 @@ int sdlInitialize() {
 	int32 size;
 	int32 i;
 	int32 freq;
-	//SDL_Surface* icon;
 
 	Uint32 rmask, gmask, bmask;
-	//	Uint32 amask;
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 	rmask = 0xff000000;
@@ -89,11 +96,8 @@ int sdlInitialize() {
 	bmask = 0x00ff0000;
 #endif
 
-	printf("Initialising SDL device. Please wait...\n");
-
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
-		fprintf(stderr, "Couldn't initialize SDL: %s\n", SDL_GetError());
-		exit(1);
+		error("Couldn't initialize SDL: %s\n", SDL_GetError());
 	}
 
 #ifdef GAMEMOD
@@ -112,20 +116,6 @@ int sdlInitialize() {
 	TTF_SetFontStyle(font, 0);
 #endif
 
-	/*icon = SDL_LoadBMP("icon.bmp");
-	SDL_WM_SetIcon(icon, NULL);*/
-
-	if (cfgfile.Debug) {
-		SDL_version compile_version;
-		const SDL_version *link_version;
-		SDL_VERSION(&compile_version);
-		printf("Compiled with SDL version: %d.%d.%d\n", compile_version.major, compile_version.minor, compile_version.patch);
-		link_version = SDL_Linked_Version();
-		printf("Running with SDL version: %d.%d.%d\n\n", link_version->major, link_version->minor, link_version->patch);
-	}
-
-	printf("Initialising Sound device. Please wait...\n\n");
-
 	// Verify if we want to use high quality sounds
 	if (cfgfile.Sound > 1)
 		freq = HIGH_QUALITY_FREQUENCY;
@@ -133,8 +123,7 @@ int sdlInitialize() {
 		freq = ORIGINAL_GAME_FREQUENCY;
 
 	if (Mix_OpenAudio(freq, AUDIO_S16, 2, 256) < 0) {
-		printf("Mix_OpenAudio: %s\n", Mix_GetError());
-		exit(1);
+		error("Mix_OpenAudio: %s\n", Mix_GetError());
 	}
 
 	Mix_AllocateChannels(32);
@@ -149,15 +138,12 @@ int sdlInitialize() {
 	screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32, SDL_SWSURFACE);
 
 	if (screen == NULL) {
-		fprintf(stderr, "Couldn't set 640x480x8 video mode: %s\n\n", SDL_GetError());
-		exit(1);
+		error("Couldn't set 640x480x8 video mode: %s\n\n", SDL_GetError());
 	}
 
 	for (i = 0; i < 16; i++) {
 		surfaceTable[i] = SDL_CreateRGBSurface(SDL_SWSURFACE, SCREEN_WIDTH, SCREEN_HEIGHT, 32, rmask, gmask, bmask, 0);
 	}
-
-	atexit(SDL_Quit);
 
 	return 0;
 }
@@ -572,6 +558,8 @@ void getMousePositions(MouseStatusStruct *mouseData) {
 	leftMouse = 0;
 	rightMouse = 0;
 }
+
+#endif
 
 #endif
 

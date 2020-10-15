@@ -602,7 +602,7 @@ void Animations::processAnimActions(int32 actorIdx) {
 			sampleIdx = readWord(data);
 
 			if (animPos == actor->animPosition)
-				playSample(sampleIdx, 0x1000, 1, actor->X, actor->Y, actor->Z, actorIdx);
+				_engine->_sound->playSample(sampleIdx, 0x1000, 1, actor->X, actor->Y, actor->Z, actorIdx);
 		} break;
 		case ACTION_SAMPLE_FREQ: {
 			int16 sampleIdx, frequency;
@@ -613,7 +613,7 @@ void Animations::processAnimActions(int32 actorIdx) {
 
 			if (animPos == actor->animPosition) {
 				frequency = _engine->getRandomNumber(frequency) + 0x1000 - (ABS(frequency) >> 1);
-				playSample(sampleIdx, frequency, 1, actor->X, actor->Y, actor->Z, actorIdx);
+				_engine->_sound->playSample(sampleIdx, frequency, 1, actor->X, actor->Y, actor->Z, actorIdx);
 			}
 		} break;
 		case ACTION_THROW_EXTRA_BONUS: {
@@ -651,7 +651,7 @@ void Animations::processAnimActions(int32 actorIdx) {
 			repeat = readWord(data);
 
 			if (animPos == actor->animPosition)
-				playSample(sampleIdx, 0x1000, repeat, actor->X, actor->Y, actor->Z, actorIdx);
+				_engine->_sound->playSample(sampleIdx, 0x1000, repeat, actor->X, actor->Y, actor->Z, actorIdx);
 		} break;
 		case ACTION_UNKNOWN_6:
 			animPos = readByte(data);
@@ -694,21 +694,21 @@ void Animations::processAnimActions(int32 actorIdx) {
 			skipBytes(data, 1);         //what is the meaning of this extra byte?
 
 			if (animPos == actor->animPosition) {
-				stopSample(sampleIdx);
+				_engine->_sound->stopSample(sampleIdx);
 			}
 		} break;
 		case ACTION_SAMPLE_BRICK_1:
 			animPos = readByte(data);
 			if (animPos == actor->animPosition && (actor->brickSound & 0x0F0) != 0x0F0) {
 				int16 sampleIdx = (actor->brickSound & 0x0F) + 126;
-				playSample(sampleIdx, _engine->getRandomNumber(1000) + 3596, 1, actor->X, actor->Y, actor->Z, actorIdx);
+				_engine->_sound->playSample(sampleIdx, _engine->getRandomNumber(1000) + 3596, 1, actor->X, actor->Y, actor->Z, actorIdx);
 			}
 			break;
 		case ACTION_SAMPLE_BRICK_2:
 			animPos = readByte(data);
 			if (animPos == actor->animPosition && (actor->brickSound & 0x0F0) != 0x0F0) {
 				int16 sampleIdx = (actor->brickSound & 0x0F) + 126;
-				playSample(sampleIdx, _engine->getRandomNumber(1000) + 3596, 1, actor->X, actor->Y, actor->Z, actorIdx);
+				_engine->_sound->playSample(sampleIdx, _engine->getRandomNumber(1000) + 3596, 1, actor->X, actor->Y, actor->Z, actorIdx);
 			}
 			break;
 		case ACTION_HERO_HITTING:

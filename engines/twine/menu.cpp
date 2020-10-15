@@ -399,11 +399,11 @@ void Menu::drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, in
 
 	drawBox(left, top, right, bottom);
 
-	setFontColor(15);
-	setFontParameters(2, 8);
-	getMenuText(value, dialText);
-	textSize = getTextSize(dialText);
-	drawText(width - (textSize / 2), topheight - 18, dialText);
+	_engine->_text->setFontColor(15);
+	_engine->_text->setFontParameters(2, 8);
+	_engine->_text->getMenuText(value, dialText);
+	textSize = _engine->_text->getTextSize(dialText);
+	_engine->_text->drawText(width - (textSize / 2), topheight - 18, dialText);
 
 	// TODO: make volume buttons
 
@@ -550,7 +550,7 @@ int32 Menu::processMenu(int16 *menuSettings) {
 					if (((uint8)key & 8)) { // on arrow key right
 						_engine->cfgfile.WaveVolume += 4;
 					}
-					sampleVolume(-1, _engine->cfgfile.WaveVolume);
+					_engine->_sound->sampleVolume(-1, _engine->cfgfile.WaveVolume);
 					break;
 				}
 				case kCDVolume: {
@@ -579,7 +579,7 @@ int32 Menu::processMenu(int16 *menuSettings) {
 						_engine->cfgfile.MasterVolume += 4;
 					}
 					_engine->_music->musicVolume(_engine->cfgfile.MusicVolume);
-					sampleVolume(-1, _engine->cfgfile.WaveVolume);
+					_engine->_sound->sampleVolume(-1, _engine->cfgfile.WaveVolume);
 					break;
 				}
 				default:
@@ -695,8 +695,8 @@ int32 Menu::optionsMenu() {
 
 	_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 
-	stopSamples();
-	//playCDtrack(9);
+	_engine->_sound->stopSamples();
+	//_engine->_music->playCDtrack(9);
 
 	do {
 		switch (processMenu(OptionsMenuSettings)) {
@@ -736,7 +736,7 @@ int32 Menu::optionsMenu() {
 
 /** Used to run the main menu */
 void Menu::mainMenu() {
-	stopSamples();
+	_engine->_sound->stopSamples();
 
 	_engine->_screens->copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
 
@@ -746,10 +746,10 @@ void Menu::mainMenu() {
 	_engine->_hqrdepack->hqrGetEntry(plasmaEffectPtr, HQR_RESS_FILE, RESSHQR_PLASMAEFFECT);
 
 	while (!_engine->cfgfile.Quit) {
-		initTextBank(0);
+		_engine->_text->initTextBank(0);
 
 		_engine->_music->playTrackMusic(9); // LBA's Theme
-		stopSamples();
+		_engine->_sound->stopSamples();
 
 		switch (processMenu(MainMenuSettings)) {
 		case kNewGame: {
@@ -786,7 +786,7 @@ int32 Menu::giveupMenu() {
 	int16 *localMenu;
 
 	_engine->_screens->copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
-	pauseSamples();
+	_engine->_sound->pauseSamples();
 
 	if (_engine->cfgfile.UseAutoSaving == 1)
 		localMenu = GiveUpMenuSettings;
@@ -796,23 +796,23 @@ int32 Menu::giveupMenu() {
 	do {
 		//saveLangue = languageCD1;
 		//languageCD1 = 0;
-		initTextBank(0);
+		_engine->_text->initTextBank(0);
 
 		menuId = processMenu(localMenu);
 
 		//languageCD1 = saveLangue;
 
-		initTextBank(currentTextBank + 3);
+		_engine->_text->initTextBank(_engine->_text->currentTextBank + 3);
 
 		fpsCycles(_engine->cfgfile.Fps);
 	} while (menuId != kGiveUp && menuId != kContinue);
 
 	if (menuId == kGiveUp) {
-		stopSamples();
+		_engine->_sound->stopSamples();
 		return 1;
 	}
 
-	resumeSamples();
+	_engine->_sound->resumeSamples();
 	return 0;
 }
 
@@ -849,13 +849,13 @@ void Menu::drawInfoMenu(int16 left, int16 top) {
 
 	/** draw coin sprite */
 	_engine->_grid->drawSprite(0, boxLeft, top + 15, _engine->_actor->spriteTable[SPRITEHQR_KASHES]);
-	setFontColor(155);
-	drawText(left + 370, top + 5, _engine->ITOA(_engine->_gameState->inventoryNumKashes));
+	_engine->_text->setFontColor(155);
+	_engine->_text->drawText(left + 370, top + 5, _engine->ITOA(_engine->_gameState->inventoryNumKashes));
 
 	/** draw key sprite */
 	_engine->_grid->drawSprite(0, boxLeft, top + 55, _engine->_actor->spriteTable[SPRITEHQR_KEY]);
-	setFontColor(155);
-	drawText(left + 370, top + 40, _engine->ITOA(_engine->_gameState->inventoryNumKeys));
+	_engine->_text->setFontColor(155);
+	_engine->_text->drawText(left + 370, top + 40, _engine->ITOA(_engine->_gameState->inventoryNumKeys));
 
 	// prevent
 	if (_engine->_gameState->inventoryNumLeafs > _engine->_gameState->inventoryNumLeafsBox) {
@@ -912,15 +912,15 @@ void Menu::drawBehaviour(int16 behaviour, int32 angle, int16 cantDrawBox) {
 		_engine->_interface->drawSplittedBox(110, 239, 540, 279, 0);
 		drawBox(110, 239, 540, 279);
 
-		setFontColor(15);
+		_engine->_text->setFontColor(15);
 
 		if (_engine->_actor->heroBehaviour == 2 && _engine->_actor->autoAgressive == 1) {
-			getMenuText(4, dialText);
+			_engine->_text->getMenuText(4, dialText);
 		} else {
-			getMenuText(_engine->_actor->heroBehaviour, dialText);
+			_engine->_text->getMenuText(_engine->_actor->heroBehaviour, dialText);
 		}
 
-		drawText((650 - getTextSize(dialText)) / 2, 240, dialText);
+		_engine->_text->drawText((650 - _engine->_text->getTextSize(dialText)) / 2, 240, dialText);
 	}
 
 	_engine->_renderer->renderBehaviourModel(boxLeft, boxTop, boxRight, boxBottom, -600, angle, behaviourEntity);
@@ -960,7 +960,7 @@ void Menu::processBehaviourMenu() {
 	int32 tmpTime;
 
 	if (_engine->_actor->heroBehaviour == kProtoPack) {
-		stopSamples();
+		_engine->_sound->stopSamples();
 		_engine->_actor->setBehaviour(kNormal);
 	}
 
@@ -978,10 +978,10 @@ void Menu::processBehaviourMenu() {
 	tmpLanguageCD = _engine->cfgfile.LanguageCDId;
 	_engine->cfgfile.LanguageCDId = 0;
 
-	tmpTextBank = currentTextBank;
-	currentTextBank = -1;
+	tmpTextBank = _engine->_text->currentTextBank;
+	_engine->_text->currentTextBank = -1;
 
-	initTextBank(0);
+	_engine->_text->initTextBank(0);
 
 	drawBehaviourMenu(_engine->_scene->sceneHero->angle);
 
@@ -1036,8 +1036,8 @@ void Menu::processBehaviourMenu() {
 	_engine->_actor->setBehaviour(_engine->_actor->heroBehaviour);
 	_engine->_gameState->initEngineProjections();
 
-	currentTextBank = tmpTextBank;
-	initTextBank(currentTextBank + 3);
+	_engine->_text->currentTextBank = tmpTextBank;
+	_engine->_text->initTextBank(_engine->_text->currentTextBank + 3);
 
 	_engine->cfgfile.LanguageCDId = tmpLanguageCD;
 }
@@ -1072,8 +1072,8 @@ void Menu::drawItem(int32 item) {
 		_engine->_renderer->renderInventoryItem(itemX, itemY, _engine->_resources->inventoryTable[item], itemAngle[item], 15000);
 
 		if (item == 15) { // has GAS
-			setFontColor(15);
-			drawText(left + 3, top + 32, _engine->ITOA(_engine->_gameState->inventoryNumGas));
+			_engine->_text->setFontColor(15);
+			_engine->_text->drawText(left + 3, top + 32, _engine->ITOA(_engine->_gameState->inventoryNumGas));
 		}
 	}
 
@@ -1117,12 +1117,12 @@ void Menu::processInventoryMenu() {
 	tmpLanguageCD = _engine->cfgfile.LanguageCDId;
 	_engine->cfgfile.LanguageCDId = 0;
 
-	initTextBank(2);
+	_engine->_text->initTextBank(2);
 
 	bx = 3;
 
-	setFontCrossColor(4);
-	initDialogueBox();
+	_engine->_text->setFontCrossColor(4);
+	_engine->_text->initDialogueBox();
 
 	while (skipIntro != 1) {
 		readKeys();
@@ -1185,18 +1185,18 @@ void Menu::processInventoryMenu() {
 		}
 
 		if (bx == 3) {
-			initInventoryDialogueBox();
+			_engine->_text->initInventoryDialogueBox();
 
 			if (_engine->_gameState->gameFlags[inventorySelectedItem] == 1 && !_engine->_gameState->gameFlags[GAMEFLAG_INVENTORY_DISABLED] && inventorySelectedItem < NUM_INVENTORY_ITEMS) {
-				initText(inventorySelectedItem + 100);
+				_engine->_text->initText(inventorySelectedItem + 100);
 			} else {
-				initText(128);
+				_engine->_text->initText(128);
 			}
 			bx = 0;
 		}
 
 		if (bx != 2) {
-			bx = printText10();
+			bx = _engine->_text->printText10();
 		}
 
 		// TRICKY: 3D model rotation delay - only apply when no text is drawing
@@ -1206,12 +1206,12 @@ void Menu::processInventoryMenu() {
 
 		if (_engine->loopPressedKey & 1) {
 			if (bx == 2) {
-				initInventoryDialogueBox();
+				_engine->_text->initInventoryDialogueBox();
 				bx = 0;
 			} else {
 				if (_engine->_gameState->gameFlags[inventorySelectedItem] == 1 && !_engine->_gameState->gameFlags[GAMEFLAG_INVENTORY_DISABLED] && inventorySelectedItem < NUM_INVENTORY_ITEMS) {
-					initInventoryDialogueBox();
-					initText(inventorySelectedItem + 100);
+					_engine->_text->initInventoryDialogueBox();
+					_engine->_text->initText(inventorySelectedItem + 100);
 				}
 			}
 		}
@@ -1226,7 +1226,7 @@ void Menu::processInventoryMenu() {
 		}
 	}
 
-	printTextVar13 = 0;
+	_engine->_text->printTextVar13 = 0;
 
 	_engine->_scene->alphaLight = tmpAlphaLight;
 	_engine->_scene->betaLight = tmpBetaLight;
@@ -1235,7 +1235,7 @@ void Menu::processInventoryMenu() {
 
 	_engine->cfgfile.LanguageCDId = tmpLanguageCD;
 
-	initTextBank(currentTextBank + 3);
+	_engine->_text->initTextBank(_engine->_text->currentTextBank + 3);
 
 	while (skipIntro != 0 && skippedKey != 0) {
 		readKeys();

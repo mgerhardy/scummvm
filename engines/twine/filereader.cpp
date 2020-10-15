@@ -30,41 +30,50 @@ namespace TwinE {
 
 /** Feed buffer from file
 	@param fr FileReader pointer */
-void frfeed(FileReader *fr) {
-	fread(fr->buffer, BUFFER_SIZE, 1, (FILE*)fr->fd);
+bool frfeed(FileReader *fr) {
+	const size_t retVal = fread(fr->buffer, BUFFER_SIZE, 1, (FILE *)fr->fd);
 	fr->bufferPos = 0;
+	return retVal > 0;
 }
 
 /** Read file
 	@param fr FileReader pointer
 	@param destPtr content destination pointer
 	@param size size of read characters */
-void frread(FileReader *fr, void *destPtr, uint32 size) {
+bool frread(FileReader *fr, void *destPtr, uint32 size) {
 	if (BUFFER_SIZE - fr->bufferPos >= size) {
 		memcpy(destPtr, &fr->buffer[fr->bufferPos], size);
 		fr->bufferPos += size;
-	} else {
-		// feed what we can
-		int8 *tempPtr = (int8 *)destPtr;
-		memcpy(tempPtr, &fr->buffer[fr->bufferPos], BUFFER_SIZE - fr->bufferPos);
-		tempPtr += BUFFER_SIZE - fr->bufferPos;
-		size -= BUFFER_SIZE - fr->bufferPos;
-
-		// feed the rest
-		do {
-			fr->currSector++;
-			frfeed(fr);
-			if (size >= BUFFER_SIZE) {
-				memcpy(tempPtr, fr->buffer, BUFFER_SIZE);
-				tempPtr += BUFFER_SIZE;
-				size -= BUFFER_SIZE;
-			} else {
-				memcpy(tempPtr, fr->buffer, size);
-				fr->bufferPos += size;
-				size = 0;
-			}
-		} while (size > 0);
+		return true;
 	}
+	if (BUFFER_SIZE - fr->bufferPos <= 0) {
+		return false;
+	}
+	// feed what we can
+	int8 *tempPtr = (int8 *)destPtr;
+	memcpy(tempPtr, &fr->buffer[fr->bufferPos], BUFFER_SIZE - fr->bufferPos);
+	tempPtr += BUFFER_SIZE - fr->bufferPos;
+	size -= BUFFER_SIZE - fr->bufferPos;
+
+	// feed the rest
+	do {
+		fr->currSector++;
+		if (!frfeed(fr)) {
+			fr->bufferPos = BUFFER_SIZE;
+			return true;
+		}
+		if (size >= BUFFER_SIZE) {
+			memcpy(tempPtr, fr->buffer, BUFFER_SIZE);
+			tempPtr += BUFFER_SIZE;
+			size -= BUFFER_SIZE;
+		} else {
+			memcpy(tempPtr, fr->buffer, size);
+			fr->bufferPos += size;
+			size = 0;
+		}
+	} while (size > 0);
+
+	return true;
 }
 
 /** Seek file
@@ -75,7 +84,7 @@ void frseek(FileReader *fr, uint32 seekPosition) {
 
 	sectorToSeek = seekPosition / 2048;
 
-	fseek((FILE*)fr->fd, sectorToSeek * 2048, SEEK_SET);
+	fseek((FILE *)fr->fd, sectorToSeek * 2048, SEEK_SET);
 
 	fr->currSector = sectorToSeek;
 	frfeed(fr);
@@ -103,13 +112,13 @@ int32 fropen2(FileReader *fr, const char *filename, const char *mode) {
 	@param destPtr content destination pointer
 	@param size size of read characters */
 void frwrite(FileReader *fr, const void *destPtr, uint32 size, uint32 count) {
-	fwrite(destPtr, size, count, (FILE*)fr->fd);
+	fwrite(destPtr, size, count, (FILE *)fr->fd);
 }
 
 /** Close file
 	@param fr FileReader pointer */
 void frclose(FileReader *fr) {
-	fclose((FILE*)fr->fd);
+	fclose((FILE *)fr->fd);
 }
 
 } // namespace TwinE

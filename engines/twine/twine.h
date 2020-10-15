@@ -143,6 +143,10 @@ class Scene;
 class Screens;
 class ScriptLife;
 class ScriptMove;
+class Holomap;
+class Sound;
+class Text;
+class DebugGrid;
 
 class TwinEEngine : public Engine {
 public:
@@ -172,6 +176,10 @@ public:
 	Screens *_screens;
 	ScriptLife *_scriptLife;
 	ScriptMove *_scriptMove;
+	Holomap *_holomap;
+	Sound *_sound;
+	Text *_text;
+	DebugGrid *_debugGrid;
 
 	/** Configuration file structure
 	 * Contains all the data used in the engine to configurated the game in particulary ways. */
@@ -189,9 +197,11 @@ public:
 
 	int8 *ITOA(int32 number);
 	void initConfigurations();
+	void initAll();
 	int getLanguageTypeIndex(int8 *language);
 	int getConfigTypeIndex(int8 *lineBuffer);
-
+	void processActorSamplePosition(int32 actorIdx);
+	int32 runGameEngine();
 	void allocVideoMemory();
 	int getRandomNumber(uint max = 0x7FFF);
 	int32 quitGame;

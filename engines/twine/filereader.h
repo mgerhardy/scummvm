@@ -51,13 +51,13 @@ typedef struct FileReader {
 
 /** Feed buffer from file
 	@param fr FileReader pointer */
-void frfeed(FileReader *fr);
+bool frfeed(FileReader *fr);
 
 /** Read file
 	@param fr FileReader pointer
 	@param destPtr content destination pointer
 	@param size size of read characters */
-void frread(FileReader *fr, void *destPtr, uint32 size);
+bool frread(FileReader *fr, void *destPtr, uint32 size);
 
 /** Seek file
 	@param fr FileReader pointer

@@ -46,19 +46,25 @@
 
 namespace TwinE {
 
+static uint8 *scriptPtr; // local script pointer
+static uint8 *opcodePtr; // local opcode script pointer
+
+static int32 drawVar1;
+static int8 textStr[256]; // string
+
 /** Returns:
 	   -1 - Need implementation
 		0 - Completed
 		1 - Break script */
-typedef int32 ScriptLifeFunc(int32 actorIdx, ActorStruct *actor);
+typedef int32 ScriptLifeFunc(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor);
 
 typedef struct ScriptLifeFunction {
-	const uint8 *name;
+	const char *name;
 	ScriptLifeFunc *function;
 } ScriptLifeFunction;
 
 #define MAPFUNC(name, func) \
-	{ (uint8 *)name, func }
+	{ name, func }
 
 /** Script condition operators */
 enum LifeScriptOperators {
@@ -108,7 +114,7 @@ enum LifeScriptConditions {
 	   -1 - Need implementation
 		1 - Condition value size (1 byte)
 		2 - Condition value size (2 byes) */
-int32 ScriptLife::processLifeConditions(ActorStruct *actor) {
+static int32 processLifeConditions(TwinEEngine *engine, ActorStruct *actor) {
 	int32 conditionOpcode, conditionValueSize;
 
 	conditionValueSize = 1;
@@ -117,71 +123,71 @@ int32 ScriptLife::processLifeConditions(ActorStruct *actor) {
 	switch (conditionOpcode) {
 	case kcCOL:
 		if (actor->life <= 0) {
-			_engine->_scene->currentScriptValue = -1;
+			engine->_scene->currentScriptValue = -1;
 		} else {
-			_engine->_scene->currentScriptValue = actor->collision;
+			engine->_scene->currentScriptValue = actor->collision;
 		}
 		break;
 	case kcCOL_OBJ: {
 		int32 actorIdx = *(scriptPtr++);
-		if (_engine->_scene->sceneActors[actorIdx].life <= 0) {
-			_engine->_scene->currentScriptValue = -1;
+		if (engine->_scene->sceneActors[actorIdx].life <= 0) {
+			engine->_scene->currentScriptValue = -1;
 		} else {
-			_engine->_scene->currentScriptValue = _engine->_scene->sceneActors[actorIdx].collision;
+			engine->_scene->currentScriptValue = engine->_scene->sceneActors[actorIdx].collision;
 		}
 	} break;
 	case kcDISTANCE: {
 		ActorStruct *otherActor;
 		int32 actorIdx = *(scriptPtr++);
 		conditionValueSize = 2;
-		otherActor = &_engine->_scene->sceneActors[actorIdx];
+		otherActor = &engine->_scene->sceneActors[actorIdx];
 		if (!otherActor->dynamicFlags.bIsDead) {
 			if (ABS(actor->Y - otherActor->Y) >= 1500) {
-				_engine->_scene->currentScriptValue = MAX_TARGET_ACTOR_DISTANCE;
+				engine->_scene->currentScriptValue = MAX_TARGET_ACTOR_DISTANCE;
 			} else {
 				// Returns int32, so we check for integer overflow
-				int32 distance = _engine->_movements->getDistance2D(actor->X, actor->Z, otherActor->X, otherActor->Z);
+				int32 distance = engine->_movements->getDistance2D(actor->X, actor->Z, otherActor->X, otherActor->Z);
 				if (ABS(distance) > MAX_TARGET_ACTOR_DISTANCE) {
-					_engine->_scene->currentScriptValue = MAX_TARGET_ACTOR_DISTANCE;
+					engine->_scene->currentScriptValue = MAX_TARGET_ACTOR_DISTANCE;
 				} else {
-					_engine->_scene->currentScriptValue = distance;
+					engine->_scene->currentScriptValue = distance;
 				}
 			}
 		} else {
-			_engine->_scene->currentScriptValue = MAX_TARGET_ACTOR_DISTANCE;
+			engine->_scene->currentScriptValue = MAX_TARGET_ACTOR_DISTANCE;
 		}
 	} break;
 	case kcZONE:
-		_engine->_scene->currentScriptValue = actor->zone;
+		engine->_scene->currentScriptValue = actor->zone;
 		break;
 	case kcZONE_OBJ: {
 		int32 actorIdx = *(scriptPtr++);
-		_engine->_scene->currentScriptValue = _engine->_scene->sceneActors[actorIdx].zone;
+		engine->_scene->currentScriptValue = engine->_scene->sceneActors[actorIdx].zone;
 	} break;
 	case kcBODY:
-		_engine->_scene->currentScriptValue = actor->body;
+		engine->_scene->currentScriptValue = actor->body;
 		break;
 	case kcBODY_OBJ: {
 		int32 actorIdx = *(scriptPtr++);
-		_engine->_scene->currentScriptValue = _engine->_scene->sceneActors[actorIdx].body;
+		engine->_scene->currentScriptValue = engine->_scene->sceneActors[actorIdx].body;
 	} break;
 	case kcANIM:
-		_engine->_scene->currentScriptValue = actor->anim;
+		engine->_scene->currentScriptValue = actor->anim;
 		break;
 	case kcANIM_OBJ: {
 		int32 actorIdx = *(scriptPtr++);
-		_engine->_scene->currentScriptValue = _engine->_scene->sceneActors[actorIdx].anim;
+		engine->_scene->currentScriptValue = engine->_scene->sceneActors[actorIdx].anim;
 	} break;
 	case kcL_TRACK:
-		_engine->_scene->currentScriptValue = actor->labelIdx;
+		engine->_scene->currentScriptValue = actor->labelIdx;
 		break;
 	case kcL_TRACK_OBJ: {
 		int32 actorIdx = *(scriptPtr++);
-		_engine->_scene->currentScriptValue = _engine->_scene->sceneActors[actorIdx].labelIdx;
+		engine->_scene->currentScriptValue = engine->_scene->sceneActors[actorIdx].labelIdx;
 	} break;
 	case kcFLAG_CUBE: {
 		int32 flagIdx = *(scriptPtr++);
-		_engine->_scene->currentScriptValue = _engine->_scene->sceneFlags[flagIdx];
+		engine->_scene->currentScriptValue = engine->_scene->sceneFlags[flagIdx];
 	} break;
 	case kcCONE_VIEW: {
 		int32 newAngle;
@@ -190,18 +196,18 @@ int32 ScriptLife::processLifeConditions(ActorStruct *actor) {
 
 		newAngle = 0;
 		targetActorIdx = *(scriptPtr++);
-		targetActor = &_engine->_scene->sceneActors[targetActorIdx];
+		targetActor = &engine->_scene->sceneActors[targetActorIdx];
 
 		conditionValueSize = 2;
 
 		if (!targetActor->dynamicFlags.bIsDead) {
 			if (ABS(targetActor->Y - actor->Y) < 1500) {
-				newAngle = _engine->_movements->getAngleAndSetTargetActorDistance(actor->X, actor->Z, targetActor->X, targetActor->Z);
-				if (ABS(_engine->_movements->targetActorDistance) > MAX_TARGET_ACTOR_DISTANCE) {
-					_engine->_movements->targetActorDistance = MAX_TARGET_ACTOR_DISTANCE;
+				newAngle = engine->_movements->getAngleAndSetTargetActorDistance(actor->X, actor->Z, targetActor->X, targetActor->Z);
+				if (ABS(engine->_movements->targetActorDistance) > MAX_TARGET_ACTOR_DISTANCE) {
+					engine->_movements->targetActorDistance = MAX_TARGET_ACTOR_DISTANCE;
 				}
 			} else {
-				_engine->_movements->targetActorDistance = MAX_TARGET_ACTOR_DISTANCE;
+				engine->_movements->targetActorDistance = MAX_TARGET_ACTOR_DISTANCE;
 			}
 
 			if (!targetActorIdx) {
@@ -211,88 +217,88 @@ int32 ScriptLife::processLifeConditions(ActorStruct *actor) {
 				heroAngle &= 0x3FF;
 
 				if (ABS(heroAngle) > 0x100) {
-					_engine->_scene->currentScriptValue = MAX_TARGET_ACTOR_DISTANCE;
+					engine->_scene->currentScriptValue = MAX_TARGET_ACTOR_DISTANCE;
 				} else {
-					_engine->_scene->currentScriptValue = _engine->_movements->targetActorDistance;
+					engine->_scene->currentScriptValue = engine->_movements->targetActorDistance;
 				}
 			} else {
-				if (_engine->_actor->heroBehaviour == kDiscrete) {
+				if (engine->_actor->heroBehaviour == kDiscrete) {
 					int32 heroAngle;
 
 					heroAngle = actor->angle + 0x480 - newAngle + 0x400;
 					heroAngle &= 0x3FF;
 
 					if (ABS(heroAngle) > 0x100) {
-						_engine->_scene->currentScriptValue = MAX_TARGET_ACTOR_DISTANCE;
+						engine->_scene->currentScriptValue = MAX_TARGET_ACTOR_DISTANCE;
 					} else {
-						_engine->_scene->currentScriptValue = _engine->_movements->targetActorDistance;
+						engine->_scene->currentScriptValue = engine->_movements->targetActorDistance;
 					}
 				} else {
-					_engine->_scene->currentScriptValue = _engine->_movements->targetActorDistance;
+					engine->_scene->currentScriptValue = engine->_movements->targetActorDistance;
 				}
 			}
 		} else {
-			_engine->_scene->currentScriptValue = MAX_TARGET_ACTOR_DISTANCE;
+			engine->_scene->currentScriptValue = MAX_TARGET_ACTOR_DISTANCE;
 		}
 	} break;
 	case kcHIT_BY:
-		_engine->_scene->currentScriptValue = actor->hitBy;
+		engine->_scene->currentScriptValue = actor->hitBy;
 		break;
 	case kcACTION:
-		_engine->_scene->currentScriptValue = _engine->_movements->heroAction;
+		engine->_scene->currentScriptValue = engine->_movements->heroAction;
 		break;
 	case kcFLAG_GAME: {
 		int32 flagIdx = *(scriptPtr++);
-		if (!_engine->_gameState->gameFlags[GAMEFLAG_INVENTORY_DISABLED] ||
-		    (_engine->_gameState->gameFlags[GAMEFLAG_INVENTORY_DISABLED] && flagIdx >= 28)) {
-			_engine->_scene->currentScriptValue = _engine->_gameState->gameFlags[flagIdx];
+		if (!engine->_gameState->gameFlags[GAMEFLAG_INVENTORY_DISABLED] ||
+		    (engine->_gameState->gameFlags[GAMEFLAG_INVENTORY_DISABLED] && flagIdx >= 28)) {
+			engine->_scene->currentScriptValue = engine->_gameState->gameFlags[flagIdx];
 		} else {
 			if (flagIdx == GAMEFLAG_INVENTORY_DISABLED) {
-				_engine->_scene->currentScriptValue = _engine->_gameState->gameFlags[flagIdx];
+				engine->_scene->currentScriptValue = engine->_gameState->gameFlags[flagIdx];
 			} else {
-				_engine->_scene->currentScriptValue = 0;
+				engine->_scene->currentScriptValue = 0;
 			}
 		}
 	} break;
 	case kcLIFE_POINT:
-		_engine->_scene->currentScriptValue = actor->life;
+		engine->_scene->currentScriptValue = actor->life;
 		break;
 	case kcLIFE_POINT_OBJ: {
 		int32 actorIdx = *(scriptPtr++);
-		_engine->_scene->currentScriptValue = _engine->_scene->sceneActors[actorIdx].life;
+		engine->_scene->currentScriptValue = engine->_scene->sceneActors[actorIdx].life;
 	} break;
 	case kcNUM_LITTLE_KEYS:
-		_engine->_scene->currentScriptValue = _engine->_gameState->inventoryNumKeys;
+		engine->_scene->currentScriptValue = engine->_gameState->inventoryNumKeys;
 		break;
 	case kcNUM_GOLD_PIECES:
 		conditionValueSize = 2;
-		_engine->_scene->currentScriptValue = _engine->_gameState->inventoryNumKashes;
+		engine->_scene->currentScriptValue = engine->_gameState->inventoryNumKashes;
 		break;
 	case kcBEHAVIOUR:
-		_engine->_scene->currentScriptValue = _engine->_actor->heroBehaviour;
+		engine->_scene->currentScriptValue = engine->_actor->heroBehaviour;
 		break;
 	case kcCHAPTER:
-		_engine->_scene->currentScriptValue = _engine->_gameState->gameChapter;
+		engine->_scene->currentScriptValue = engine->_gameState->gameChapter;
 		break;
 	case kcDISTANCE_3D: {
 		int32 targetActorIdx;
 		ActorStruct *targetActor;
 
 		targetActorIdx = *(scriptPtr++);
-		targetActor = &_engine->_scene->sceneActors[targetActorIdx];
+		targetActor = &engine->_scene->sceneActors[targetActorIdx];
 
 		conditionValueSize = 2;
 
 		if (!targetActor->dynamicFlags.bIsDead) {
 			// Returns int32, so we check for integer overflow
-			int32 distance = _engine->_movements->getDistance3D(actor->X, actor->Y, actor->Z, targetActor->X, targetActor->Y, targetActor->Z);
+			int32 distance = engine->_movements->getDistance3D(actor->X, actor->Y, actor->Z, targetActor->X, targetActor->Y, targetActor->Z);
 			if (ABS(distance) > MAX_TARGET_ACTOR_DISTANCE) {
-				_engine->_scene->currentScriptValue = MAX_TARGET_ACTOR_DISTANCE;
+				engine->_scene->currentScriptValue = MAX_TARGET_ACTOR_DISTANCE;
 			} else {
-				_engine->_scene->currentScriptValue = distance;
+				engine->_scene->currentScriptValue = distance;
 			}
 		} else {
-			_engine->_scene->currentScriptValue = MAX_TARGET_ACTOR_DISTANCE;
+			engine->_scene->currentScriptValue = MAX_TARGET_ACTOR_DISTANCE;
 		}
 	} break;
 	case 23: // unused
@@ -301,36 +307,36 @@ int32 ScriptLife::processLifeConditions(ActorStruct *actor) {
 	case kcUSE_INVENTORY: {
 		int32 item = *(scriptPtr++);
 
-		if (!_engine->_gameState->gameFlags[GAMEFLAG_INVENTORY_DISABLED]) {
-			if (item == _engine->loopInventoryItem) {
-				_engine->_scene->currentScriptValue = 1;
+		if (!engine->_gameState->gameFlags[GAMEFLAG_INVENTORY_DISABLED]) {
+			if (item == engine->loopInventoryItem) {
+				engine->_scene->currentScriptValue = 1;
 			} else {
-				if (_engine->_gameState->inventoryFlags[item] == 1 && _engine->_gameState->gameFlags[item] == 1) {
-					_engine->_scene->currentScriptValue = 1;
+				if (engine->_gameState->inventoryFlags[item] == 1 && engine->_gameState->gameFlags[item] == 1) {
+					engine->_scene->currentScriptValue = 1;
 				} else {
-					_engine->_scene->currentScriptValue = 0;
+					engine->_scene->currentScriptValue = 0;
 				}
 			}
 
-			if (_engine->_scene->currentScriptValue == 1) {
-				_engine->_redraw->addOverlay(koInventoryItem, item, 0, 0, 0, koNormal, 3);
+			if (engine->_scene->currentScriptValue == 1) {
+				engine->_redraw->addOverlay(koInventoryItem, item, 0, 0, 0, koNormal, 3);
 			}
 		} else {
-			_engine->_scene->currentScriptValue = 0;
+			engine->_scene->currentScriptValue = 0;
 		}
 	} break;
 	case kcCHOICE:
 		conditionValueSize = 2;
-		_engine->_scene->currentScriptValue = _engine->_gameState->choiceAnswer;
+		engine->_scene->currentScriptValue = engine->_gameState->choiceAnswer;
 		break;
 	case kcFUEL:
-		_engine->_scene->currentScriptValue = _engine->_gameState->inventoryNumGas;
+		engine->_scene->currentScriptValue = engine->_gameState->inventoryNumGas;
 		break;
 	case kcCARRIED_BY:
-		_engine->_scene->currentScriptValue = actor->standOn;
+		engine->_scene->currentScriptValue = actor->standOn;
 		break;
 	case kcCDROM:
-		_engine->_scene->currentScriptValue = 1;
+		engine->_scene->currentScriptValue = 1;
 		break;
 	default:
 		error("Actor condition opcode %d\n", conditionOpcode);
@@ -344,7 +350,7 @@ int32 ScriptLife::processLifeConditions(ActorStruct *actor) {
 	   -1 - Need implementation
 		0 - Condition false
 		1 - Condition true */
-int32 ScriptLife::processLifeOperators(int32 valueSize) {
+static int32 processLifeOperators(TwinEEngine *engine, int32 valueSize) {
 	int32 operatorCode, conditionValue;
 
 	operatorCode = *(scriptPtr++);
@@ -361,32 +367,32 @@ int32 ScriptLife::processLifeOperators(int32 valueSize) {
 
 	switch (operatorCode) {
 	case kEqualTo:
-		if (_engine->_scene->currentScriptValue == conditionValue) {
+		if (engine->_scene->currentScriptValue == conditionValue) {
 			return 1;
 		}
 		break;
 	case kGreaterThan:
-		if (_engine->_scene->currentScriptValue > conditionValue) {
+		if (engine->_scene->currentScriptValue > conditionValue) {
 			return 1;
 		}
 		break;
 	case kLessThan:
-		if (_engine->_scene->currentScriptValue < conditionValue) {
+		if (engine->_scene->currentScriptValue < conditionValue) {
 			return 1;
 		}
 		break;
 	case kGreaterThanOrEqualTo:
-		if (_engine->_scene->currentScriptValue >= conditionValue) {
+		if (engine->_scene->currentScriptValue >= conditionValue) {
 			return 1;
 		}
 		break;
 	case kLessThanOrEqualTo:
-		if (_engine->_scene->currentScriptValue <= conditionValue) {
+		if (engine->_scene->currentScriptValue <= conditionValue) {
 			return 1;
 		}
 		break;
 	case kNotEqualTo:
-		if (_engine->_scene->currentScriptValue != conditionValue) {
+		if (engine->_scene->currentScriptValue != conditionValue) {
 			return 1;
 		}
 		break;
@@ -401,26 +407,26 @@ int32 ScriptLife::processLifeOperators(int32 valueSize) {
 /** Life script command definitions */
 
 /* For unused opcodes */
-int32 ScriptLife::lEMPTY(int32 actorIdx, ActorStruct *actor) {
+static int32 lEMPTY(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	return 0;
 }
 
 /*0x00*/
-int32 ScriptLife::lEND(int32 actorIdx, ActorStruct *actor) {
+static int32 lEND(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	actor->positionInLifeScript = -1;
 	return 1; // break script
 }
 
 /*0x01*/
-int32 ScriptLife::lNOP(int32 actorIdx, ActorStruct *actor) {
+static int32 lNOP(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	scriptPtr++;
 	return 0;
 }
 
 /*0x02*/
-int32 ScriptLife::lSNIF(int32 actorIdx, ActorStruct *actor) {
-	int32 valueSize = processLifeConditions(actor);
-	if (!processLifeOperators(valueSize)) {
+static int32 lSNIF(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	int32 valueSize = processLifeConditions(engine, actor);
+	if (!processLifeOperators(engine, valueSize)) {
 		*opcodePtr = 13; // SWIF
 	}
 	scriptPtr = actor->lifeScript + *((int16 *)scriptPtr); // condition offset
@@ -428,39 +434,39 @@ int32 ScriptLife::lSNIF(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x03*/
-int32 ScriptLife::lOFFSET(int32 actorIdx, ActorStruct *actor) {
+static int32 lOFFSET(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	scriptPtr = actor->lifeScript + *((int16 *)scriptPtr); // offset
 	return 0;
 }
 
 /*0x04*/
-int32 ScriptLife::lNEVERIF(int32 actorIdx, ActorStruct *actor) {
-	int32 valueSize = processLifeConditions(actor);
-	processLifeOperators(valueSize);
+static int32 lNEVERIF(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	int32 valueSize = processLifeConditions(engine, actor);
+	processLifeOperators(engine, valueSize);
 	scriptPtr = actor->lifeScript + *((int16 *)scriptPtr); // condition offset
 	return 0;
 }
 
 /*0x06*/
-int32 ScriptLife::lNO_IF(int32 actorIdx, ActorStruct *actor) {
+static int32 lNO_IF(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	return 0;
 }
 
 /*0x0A*/
-int32 ScriptLife::lLABEL(int32 actorIdx, ActorStruct *actor) {
+static int32 lLABEL(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	scriptPtr++;
 	return 0;
 }
 
 /*0x0B*/
-int32 ScriptLife::lRETURN(int32 actorIdx, ActorStruct *actor) {
+static int32 lRETURN(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	return 1; // break script
 }
 
 /*0x0C*/
-int32 ScriptLife::lIF(int32 actorIdx, ActorStruct *actor) {
-	int32 valueSize = processLifeConditions(actor);
-	if (!processLifeOperators(valueSize)) {
+static int32 lIF(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	int32 valueSize = processLifeConditions(engine, actor);
+	if (!processLifeOperators(engine, valueSize)) {
 		scriptPtr = actor->lifeScript + *((int16 *)scriptPtr); // condition offset
 	} else {
 		scriptPtr += 2;
@@ -470,9 +476,9 @@ int32 ScriptLife::lIF(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x0D*/
-int32 ScriptLife::lSWIF(int32 actorIdx, ActorStruct *actor) {
-	int32 valueSize = processLifeConditions(actor);
-	if (!processLifeOperators(valueSize)) {
+static int32 lSWIF(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	int32 valueSize = processLifeConditions(engine, actor);
+	if (!processLifeOperators(engine, valueSize)) {
 		scriptPtr = actor->lifeScript + *((int16 *)scriptPtr); // condition offset
 	} else {
 		scriptPtr += 2;
@@ -483,9 +489,9 @@ int32 ScriptLife::lSWIF(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x0E*/
-int32 ScriptLife::lONEIF(int32 actorIdx, ActorStruct *actor) {
-	int32 valueSize = processLifeConditions(actor);
-	if (!processLifeOperators(valueSize)) {
+static int32 lONEIF(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	int32 valueSize = processLifeConditions(engine, actor);
+	if (!processLifeOperators(engine, valueSize)) {
 		scriptPtr = actor->lifeScript + *((int16 *)scriptPtr); // condition offset
 	} else {
 		scriptPtr += 2;
@@ -496,99 +502,99 @@ int32 ScriptLife::lONEIF(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x0F*/
-int32 ScriptLife::lELSE(int32 actorIdx, ActorStruct *actor) {
+static int32 lELSE(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	scriptPtr = actor->lifeScript + *((int16 *)scriptPtr); // offset
 	return 0;
 }
 
 /*0x11*/
-int32 ScriptLife::lBODY(int32 actorIdx, ActorStruct *actor) {
+static int32 lBODY(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 bodyIdx = *(scriptPtr);
-	_engine->_actor->initModelActor(bodyIdx, actorIdx);
+	engine->_actor->initModelActor(bodyIdx, actorIdx);
 	scriptPtr++;
 	return 0;
 }
 
 /*0x12*/
-int32 ScriptLife::lBODY_OBJ(int32 actorIdx, ActorStruct *actor) {
+static int32 lBODY_OBJ(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 otherActorIdx = *(scriptPtr++);
 	int32 otherBodyIdx = *(scriptPtr++);
-	_engine->_actor->initModelActor(otherBodyIdx, otherActorIdx);
+	engine->_actor->initModelActor(otherBodyIdx, otherActorIdx);
 	return 0;
 }
 
 /*0x13*/
-int32 ScriptLife::lANIM(int32 actorIdx, ActorStruct *actor) {
+static int32 lANIM(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 animIdx = *(scriptPtr++);
-	_engine->_animations->initAnim(animIdx, 0, 0, actorIdx);
+	engine->_animations->initAnim(animIdx, 0, 0, actorIdx);
 	return 0;
 }
 
 /*0x14*/
-int32 ScriptLife::lANIM_OBJ(int32 actorIdx, ActorStruct *actor) {
+static int32 lANIM_OBJ(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 otherActorIdx = *(scriptPtr++);
 	int32 otherAnimIdx = *(scriptPtr++);
-	_engine->_animations->initAnim(otherAnimIdx, 0, 0, otherActorIdx);
+	engine->_animations->initAnim(otherAnimIdx, 0, 0, otherActorIdx);
 	return 0;
 }
 
 /*0x15*/
-int32 ScriptLife::lSET_LIFE(int32 actorIdx, ActorStruct *actor) {
+static int32 lSET_LIFE(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	actor->positionInLifeScript = *((int16 *)scriptPtr); // offset
 	scriptPtr += 2;
 	return 0;
 }
 
 /*0x16*/
-int32 ScriptLife::lSET_LIFE_OBJ(int32 actorIdx, ActorStruct *actor) {
+static int32 lSET_LIFE_OBJ(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 otherActorIdx = *(scriptPtr++);
-	_engine->_scene->sceneActors[otherActorIdx].positionInLifeScript = *((int16 *)scriptPtr); // offset
+	engine->_scene->sceneActors[otherActorIdx].positionInLifeScript = *((int16 *)scriptPtr); // offset
 	scriptPtr += 2;
 	return 0;
 }
 
 /*0x17*/
-int32 ScriptLife::lSET_TRACK(int32 actorIdx, ActorStruct *actor) {
+static int32 lSET_TRACK(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	actor->positionInMoveScript = *((int16 *)scriptPtr); // offset
 	scriptPtr += 2;
 	return 0;
 }
 
 /*0x18*/
-int32 ScriptLife::lSET_TRACK_OBJ(int32 actorIdx, ActorStruct *actor) {
+static int32 lSET_TRACK_OBJ(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 otherActorIdx = *(scriptPtr++);
-	_engine->_scene->sceneActors[otherActorIdx].positionInMoveScript = *((int16 *)scriptPtr); // offset
+	engine->_scene->sceneActors[otherActorIdx].positionInMoveScript = *((int16 *)scriptPtr); // offset
 	scriptPtr += 2;
 	return 0;
 }
 
 /*0x19*/
-int32 ScriptLife::lMESSAGE(int32 actorIdx, ActorStruct *actor) {
+static int32 lMESSAGE(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 textIdx = *((int16 *)scriptPtr);
 	scriptPtr += 2;
 
-	_engine->freezeTime();
-	if (showDialogueBubble) {
-		_engine->_redraw->drawBubble(actorIdx);
+	engine->freezeTime();
+	if (engine->_text->showDialogueBubble) {
+		engine->_redraw->drawBubble(actorIdx);
 	}
-	setFontCrossColor(actor->talkColor);
-	_engine->_scene->talkingActor = actorIdx;
-	drawTextFullscreen(textIdx);
-	_engine->unfreezeTime();
-	_engine->_redraw->redrawEngineActions(1);
+	engine->_text->setFontCrossColor(actor->talkColor);
+	engine->_scene->talkingActor = actorIdx;
+	engine->_text->drawTextFullscreen(textIdx);
+	engine->unfreezeTime();
+	engine->_redraw->redrawEngineActions(1);
 
 	return 0;
 }
 
 /*0x1A*/
-int32 ScriptLife::lFALLABLE(int32 actorIdx, ActorStruct *actor) {
+static int32 lFALLABLE(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 flag = *(scriptPtr++);
 	actor->staticFlags.bCanFall = flag & 1;
 	return 0;
 }
 
 /*0x1B*/
-int32 ScriptLife::lSET_DIRMODE(int32 actorIdx, ActorStruct *actor) {
+static int32 lSET_DIRMODE(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 controlMode = *(scriptPtr++);
 
 	actor->controlMode = controlMode;
@@ -600,109 +606,109 @@ int32 ScriptLife::lSET_DIRMODE(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x1C*/
-int32 ScriptLife::lSET_DIRMODE_OBJ(int32 actorIdx, ActorStruct *actor) {
+static int32 lSET_DIRMODE_OBJ(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 otherActorIdx = *(scriptPtr++);
 	int32 controlMode = *(scriptPtr++);
 
-	_engine->_scene->sceneActors[otherActorIdx].controlMode = controlMode;
+	engine->_scene->sceneActors[otherActorIdx].controlMode = controlMode;
 	if (controlMode == kFollow) {
-		_engine->_scene->sceneActors[otherActorIdx].followedActor = *(scriptPtr++);
+		engine->_scene->sceneActors[otherActorIdx].followedActor = *(scriptPtr++);
 	}
 
 	return 0;
 }
 
 /*0x1D*/
-int32 ScriptLife::lCAM_FOLLOW(int32 actorIdx, ActorStruct *actor) {
+static int32 lCAM_FOLLOW(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 followedActorIdx;
 	followedActorIdx = *(scriptPtr++);
 
-	if (_engine->_scene->currentlyFollowedActor != followedActorIdx) {
-		_engine->_grid->newCameraX = _engine->_scene->sceneActors[followedActorIdx].X >> 9;
-		_engine->_grid->newCameraY = _engine->_scene->sceneActors[followedActorIdx].Y >> 8;
-		_engine->_grid->newCameraZ = _engine->_scene->sceneActors[followedActorIdx].Z >> 9;
+	if (engine->_scene->currentlyFollowedActor != followedActorIdx) {
+		engine->_grid->newCameraX = engine->_scene->sceneActors[followedActorIdx].X >> 9;
+		engine->_grid->newCameraY = engine->_scene->sceneActors[followedActorIdx].Y >> 8;
+		engine->_grid->newCameraZ = engine->_scene->sceneActors[followedActorIdx].Z >> 9;
 
-		_engine->_scene->currentlyFollowedActor = followedActorIdx;
-		_engine->_redraw->reqBgRedraw = 1;
+		engine->_scene->currentlyFollowedActor = followedActorIdx;
+		engine->_redraw->reqBgRedraw = 1;
 	}
 
 	return 0;
 }
 
 /*0x1E*/
-int32 ScriptLife::lSET_BEHAVIOUR(int32 actorIdx, ActorStruct *actor) {
+static int32 lSET_BEHAVIOUR(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 behavior = *(scriptPtr++);
 
-	_engine->_animations->initAnim(kStanding, 0, 255, 0);
-	_engine->_actor->setBehaviour(behavior);
+	engine->_animations->initAnim(kStanding, 0, 255, 0);
+	engine->_actor->setBehaviour(behavior);
 
 	return 0;
 }
 
 /*0x1F*/
-int32 ScriptLife::lSET_FLAG_CUBE(int32 actorIdx, ActorStruct *actor) {
+static int32 lSET_FLAG_CUBE(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 flagIdx = *(scriptPtr++);
 	int32 flagValue = *(scriptPtr++);
 
-	_engine->_scene->sceneFlags[flagIdx] = flagValue;
+	engine->_scene->sceneFlags[flagIdx] = flagValue;
 
 	return 0;
 }
 
 /*0x20*/
-int32 ScriptLife::lCOMPORTEMENT(int32 actorIdx, ActorStruct *actor) {
+static int32 lCOMPORTEMENT(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	scriptPtr++;
 	return 0;
 }
 
 /*0x21*/
-int32 ScriptLife::lSET_COMPORTEMENT(int32 actorIdx, ActorStruct *actor) {
+static int32 lSET_COMPORTEMENT(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	actor->positionInLifeScript = *((int16 *)scriptPtr);
 	scriptPtr += 2;
 	return 0;
 }
 
 /*0x22*/
-int32 ScriptLife::lSET_COMPORTEMENT_OBJ(int32 actorIdx, ActorStruct *actor) {
+static int32 lSET_COMPORTEMENT_OBJ(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 otherActorIdx = *(scriptPtr++);
 
-	_engine->_scene->sceneActors[otherActorIdx].positionInLifeScript = *((int16 *)scriptPtr);
+	engine->_scene->sceneActors[otherActorIdx].positionInLifeScript = *((int16 *)scriptPtr);
 	scriptPtr += 2;
 
 	return 0;
 }
 
 /*0x23*/
-int32 ScriptLife::lEND_COMPORTEMENT(int32 actorIdx, ActorStruct *actor) {
+static int32 lEND_COMPORTEMENT(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	return 1; // break
 }
 
 /*0x24*/
-int32 ScriptLife::lSET_FLAG_GAME(int32 actorIdx, ActorStruct *actor) {
+static int32 lSET_FLAG_GAME(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 flagIdx = *(scriptPtr++);
 	int32 flagValue = *(scriptPtr++);
 
-	_engine->_gameState->gameFlags[flagIdx] = flagValue;
+	engine->_gameState->gameFlags[flagIdx] = flagValue;
 
 	return 0;
 }
 
 /*0x25*/
-int32 ScriptLife::lKILL_OBJ(int32 actorIdx, ActorStruct *actor) {
+static int32 lKILL_OBJ(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 otherActorIdx = *(scriptPtr++);
 
-	_engine->_actor->processActorCarrier(otherActorIdx);
-	_engine->_scene->sceneActors[otherActorIdx].dynamicFlags.bIsDead = 1;
-	_engine->_scene->sceneActors[otherActorIdx].entity = -1;
-	_engine->_scene->sceneActors[otherActorIdx].zone = -1;
-	_engine->_scene->sceneActors[otherActorIdx].life = 0;
+	engine->_actor->processActorCarrier(otherActorIdx);
+	engine->_scene->sceneActors[otherActorIdx].dynamicFlags.bIsDead = 1;
+	engine->_scene->sceneActors[otherActorIdx].entity = -1;
+	engine->_scene->sceneActors[otherActorIdx].zone = -1;
+	engine->_scene->sceneActors[otherActorIdx].life = 0;
 
 	return 0;
 }
 
 /*0x26*/
-int32 ScriptLife::lSUICIDE(int32 actorIdx, ActorStruct *actor) {
-	_engine->_actor->processActorCarrier(actorIdx);
+static int32 lSUICIDE(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->_actor->processActorCarrier(actorIdx);
 	actor->dynamicFlags.bIsDead = 1;
 	actor->entity = -1;
 	actor->zone = -1;
@@ -712,111 +718,111 @@ int32 ScriptLife::lSUICIDE(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x27*/
-int32 ScriptLife::lUSE_ONE_LITTLE_KEY(int32 actorIdx, ActorStruct *actor) {
-	_engine->_gameState->inventoryNumKeys--;
+static int32 lUSE_ONE_LITTLE_KEY(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->_gameState->inventoryNumKeys--;
 
-	if (_engine->_gameState->inventoryNumKeys < 0) {
-		_engine->_gameState->inventoryNumKeys = 0;
+	if (engine->_gameState->inventoryNumKeys < 0) {
+		engine->_gameState->inventoryNumKeys = 0;
 	}
 
-	_engine->_redraw->addOverlay(koSprite, SPRITEHQR_KEY, 0, 0, 0, koFollowActor, 1);
+	engine->_redraw->addOverlay(koSprite, SPRITEHQR_KEY, 0, 0, 0, koFollowActor, 1);
 
 	return 0;
 }
 
 /*0x28*/
-int32 ScriptLife::lGIVE_GOLD_PIECES(int32 actorIdx, ActorStruct *actor) {
+static int32 lGIVE_GOLD_PIECES(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int16 kashes, i, hideRange;
-	int16 oldNumKashes = _engine->_gameState->inventoryNumKashes;
+	int16 oldNumKashes = engine->_gameState->inventoryNumKashes;
 
 	hideRange = 0;
 
 	kashes = *((int16 *)scriptPtr);
 	scriptPtr += 2;
 
-	_engine->_gameState->inventoryNumKashes -= kashes;
-	if (_engine->_gameState->inventoryNumKashes < 0) {
-		_engine->_gameState->inventoryNumKashes = 0;
+	engine->_gameState->inventoryNumKashes -= kashes;
+	if (engine->_gameState->inventoryNumKashes < 0) {
+		engine->_gameState->inventoryNumKashes = 0;
 	}
 
-	_engine->_redraw->addOverlay(koSprite, SPRITEHQR_KASHES, 10, 15, 0, koNormal, 3);
+	engine->_redraw->addOverlay(koSprite, SPRITEHQR_KASHES, 10, 15, 0, koNormal, 3);
 
 	for (i = 0; i < OVERLAY_MAX_ENTRIES; i++) {
-		OverlayListStruct *overlay = &_engine->_redraw->overlayList[i];
+		OverlayListStruct *overlay = &engine->_redraw->overlayList[i];
 		if (overlay->info0 != -1 && overlay->type == koNumberRange) {
-			overlay->info0 = _engine->_collision->getAverageValue(overlay->info1, overlay->info0, 100, overlay->lifeTime - _engine->lbaTime - 50);
-			overlay->info1 = _engine->_gameState->inventoryNumKashes;
-			overlay->lifeTime = _engine->lbaTime + 150;
+			overlay->info0 = engine->_collision->getAverageValue(overlay->info1, overlay->info0, 100, overlay->lifeTime - engine->lbaTime - 50);
+			overlay->info1 = engine->_gameState->inventoryNumKashes;
+			overlay->lifeTime = engine->lbaTime + 150;
 			hideRange = 1;
 			break;
 		}
 	}
 
 	if (!hideRange) {
-		_engine->_redraw->addOverlay(koNumberRange, oldNumKashes, 50, 20, _engine->_gameState->inventoryNumKashes, koNormal, 3);
+		engine->_redraw->addOverlay(koNumberRange, oldNumKashes, 50, 20, engine->_gameState->inventoryNumKashes, koNormal, 3);
 	}
 
 	return 0;
 }
 
 /*0x29*/
-int32 ScriptLife::lEND_LIFE(int32 actorIdx, ActorStruct *actor) {
+static int32 lEND_LIFE(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	actor->positionInLifeScript = -1;
 	return 1; // break;
 }
 
 /*0x2A*/
-int32 ScriptLife::lSTOP_L_TRACK(int32 actorIdx, ActorStruct *actor) {
+static int32 lSTOP_L_TRACK(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	actor->pausedTrackPtr = actor->currentLabelPtr;
 	actor->positionInMoveScript = -1;
 	return 0;
 }
 
 /*0x2B*/
-int32 ScriptLife::lRESTORE_L_TRACK(int32 actorIdx, ActorStruct *actor) {
+static int32 lRESTORE_L_TRACK(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	actor->positionInMoveScript = actor->pausedTrackPtr;
 	return 0;
 }
 
 /*0x2C*/
-int32 ScriptLife::lMESSAGE_OBJ(int32 actorIdx, ActorStruct *actor) {
+static int32 lMESSAGE_OBJ(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 otherActorIdx = *(scriptPtr++);
 	int32 textIdx = *((int16 *)scriptPtr);
 	scriptPtr += 2;
 
-	_engine->freezeTime();
-	if (showDialogueBubble) {
-		_engine->_redraw->drawBubble(otherActorIdx);
+	engine->freezeTime();
+	if (engine->_text->showDialogueBubble) {
+		engine->_redraw->drawBubble(otherActorIdx);
 	}
-	setFontCrossColor(_engine->_scene->sceneActors[otherActorIdx].talkColor);
-	_engine->_scene->talkingActor = otherActorIdx;
-	drawTextFullscreen(textIdx);
-	_engine->unfreezeTime();
-	_engine->_redraw->redrawEngineActions(1);
+	engine->_text->setFontCrossColor(engine->_scene->sceneActors[otherActorIdx].talkColor);
+	engine->_scene->talkingActor = otherActorIdx;
+	engine->_text->drawTextFullscreen(textIdx);
+	engine->unfreezeTime();
+	engine->_redraw->redrawEngineActions(1);
 
 	return 0;
 }
 
 /*0x2D*/
-int32 ScriptLife::lINC_CHAPTER(int32 actorIdx, ActorStruct *actor) {
-	_engine->_gameState->gameChapter++;
+static int32 lINC_CHAPTER(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->_gameState->gameChapter++;
 	return 0;
 }
 
 /*0x2E*/
-int32 ScriptLife::lFOUND_OBJECT(int32 actorIdx, ActorStruct *actor) {
+static int32 lFOUND_OBJECT(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 item = *(scriptPtr++);
 
-	_engine->freezeTime();
-	_engine->_gameState->processFoundItem(item);
-	_engine->unfreezeTime();
-	_engine->_redraw->redrawEngineActions(1);
+	engine->freezeTime();
+	engine->_gameState->processFoundItem(item);
+	engine->unfreezeTime();
+	engine->_redraw->redrawEngineActions(1);
 
 	return 0;
 }
 
 /*0x2F*/
-int32 ScriptLife::lSET_DOOR_LEFT(int32 actorIdx, ActorStruct *actor) {
+static int32 lSET_DOOR_LEFT(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 distance = *((int16 *)scriptPtr);
 	scriptPtr += 2;
 
@@ -829,7 +835,7 @@ int32 ScriptLife::lSET_DOOR_LEFT(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x30*/
-int32 ScriptLife::lSET_DOOR_RIGHT(int32 actorIdx, ActorStruct *actor) {
+static int32 lSET_DOOR_RIGHT(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 distance = *((int16 *)scriptPtr);
 	scriptPtr += 2;
 
@@ -842,7 +848,7 @@ int32 ScriptLife::lSET_DOOR_RIGHT(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x31*/
-int32 ScriptLife::lSET_DOOR_UP(int32 actorIdx, ActorStruct *actor) {
+static int32 lSET_DOOR_UP(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 distance = *((int16 *)scriptPtr);
 	scriptPtr += 2;
 
@@ -855,7 +861,7 @@ int32 ScriptLife::lSET_DOOR_UP(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x32*/
-int32 ScriptLife::lSET_DOOR_DOWN(int32 actorIdx, ActorStruct *actor) {
+static int32 lSET_DOOR_DOWN(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 distance = *((int16 *)scriptPtr);
 	scriptPtr += 2;
 
@@ -868,11 +874,11 @@ int32 ScriptLife::lSET_DOOR_DOWN(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x33*/
-int32 ScriptLife::lGIVE_BONUS(int32 actorIdx, ActorStruct *actor) {
+static int32 lGIVE_BONUS(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 flag = *(scriptPtr++);
 
 	if (actor->bonusParameter & 0x1F0) {
-		_engine->_actor->processActorExtraBonus(actorIdx);
+		engine->_actor->processActorExtraBonus(actorIdx);
 	}
 
 	if (flag != 0) {
@@ -883,15 +889,15 @@ int32 ScriptLife::lGIVE_BONUS(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x34*/
-int32 ScriptLife::lCHANGE_CUBE(int32 actorIdx, ActorStruct *actor) {
+static int32 lCHANGE_CUBE(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 sceneIdx = *(scriptPtr++);
-	needChangeScene = sceneIdx;
-	heroPositionType = kScene;
+	engine->_scene->needChangeScene = sceneIdx;
+	engine->_scene->heroPositionType = kScene;
 	return 0;
 }
 
 /*0x35*/
-int32 ScriptLife::lOBJ_COL(int32 actorIdx, ActorStruct *actor) {
+static int32 lOBJ_COL(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 collision = *(scriptPtr++);
 	if (collision != 0) {
 		actor->staticFlags.bComputeCollisionWithObj = 1;
@@ -902,7 +908,7 @@ int32 ScriptLife::lOBJ_COL(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x36*/
-int32 ScriptLife::lBRICK_COL(int32 actorIdx, ActorStruct *actor) {
+static int32 lBRICK_COL(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 collision = *(scriptPtr++);
 
 	actor->staticFlags.bComputeCollisionWithBricks = 0;
@@ -918,9 +924,9 @@ int32 ScriptLife::lBRICK_COL(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x37*/
-int32 ScriptLife::lOR_IF(int32 actorIdx, ActorStruct *actor) {
-	int32 valueSize = processLifeConditions(actor);
-	if (processLifeOperators(valueSize)) {
+static int32 lOR_IF(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	int32 valueSize = processLifeConditions(engine, actor);
+	if (processLifeOperators(engine, valueSize)) {
 		scriptPtr = actor->lifeScript + *((int16 *)scriptPtr); // condition offset
 	} else {
 		scriptPtr += 2;
@@ -930,536 +936,536 @@ int32 ScriptLife::lOR_IF(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x38*/
-int32 ScriptLife::lINVISIBLE(int32 actorIdx, ActorStruct *actor) {
+static int32 lINVISIBLE(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	actor->staticFlags.bIsHidden = *(scriptPtr++);
 	return 0;
 }
 
 /*0x39*/
-int32 ScriptLife::lZOOM(int32 actorIdx, ActorStruct *actor) {
-	zoomScreen = *(scriptPtr++);
+static int32 lZOOM(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->zoomScreen = *(scriptPtr++);
 
-	if (zoomScreen && !drawInGameTransBox && cfgfile.SceZoom) {
-		fadeToBlack(mainPaletteRGBA);
-		initMCGA();
-		setBackPal();
-		lockPalette = 1;
-	} else if (!zoomScreen && drawInGameTransBox) {
-		fadeToBlack(mainPaletteRGBA);
-		initSVGA();
-		setBackPal();
-		lockPalette = 1;
-		_engine->_redraw->reqBgRedraw = 1;
+	if (engine->zoomScreen && !engine->_redraw->drawInGameTransBox && engine->cfgfile.SceZoom) {
+		engine->_screens->fadeToBlack(engine->_screens->mainPaletteRGBA);
+		engine->initMCGA();
+		engine->_screens->setBackPal();
+		engine->_screens->lockPalette = 1;
+	} else if (!engine->zoomScreen && engine->_redraw->drawInGameTransBox) {
+		engine->_screens->fadeToBlack(engine->_screens->mainPaletteRGBA);
+		engine->initSVGA();
+		engine->_screens->setBackPal();
+		engine->_screens->lockPalette = 1;
+		engine->_redraw->reqBgRedraw = 1;
 	}
 
 	return 0;
 }
 
 /*0x3A*/
-int32 ScriptLife::lPOS_POINT(int32 actorIdx, ActorStruct *actor) {
+static int32 lPOS_POINT(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 trackIdx = *(scriptPtr++);
 
-	destX = sceneTracks[trackIdx].X;
-	destY = sceneTracks[trackIdx].Y;
-	destZ = sceneTracks[trackIdx].Z;
+	engine->_renderer->destX = engine->_scene->sceneTracks[trackIdx].X;
+	engine->_renderer->destY = engine->_scene->sceneTracks[trackIdx].Y;
+	engine->_renderer->destZ = engine->_scene->sceneTracks[trackIdx].Z;
 
-	actor->X = destX;
-	actor->Y = destY;
-	actor->Z = destZ;
+	actor->X = engine->_renderer->destX;
+	actor->Y = engine->_renderer->destY;
+	actor->Z = engine->_renderer->destZ;
 
 	return 0;
 }
 
 /*0x3B*/
-int32 ScriptLife::lSET_MAGIC_LEVEL(int32 actorIdx, ActorStruct *actor) {
-	magicLevelIdx = *(scriptPtr++);
-	inventoryMagicPoints = magicLevelIdx * 20;
+static int32 lSET_MAGIC_LEVEL(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->_gameState->magicLevelIdx = *(scriptPtr++);
+	engine->_gameState->inventoryMagicPoints = engine->_gameState->magicLevelIdx * 20;
 	return 0;
 }
 
 /*0x3C*/
-int32 ScriptLife::lSUB_MAGIC_POINT(int32 actorIdx, ActorStruct *actor) {
-	inventoryMagicPoints = *(scriptPtr++);
-	if (inventoryMagicPoints < 0) {
-		inventoryMagicPoints = 0;
+static int32 lSUB_MAGIC_POINT(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->_gameState->inventoryMagicPoints = *(scriptPtr++);
+	if (engine->_gameState->inventoryMagicPoints < 0) {
+		engine->_gameState->inventoryMagicPoints = 0;
 	}
 	return 0;
 }
 
 /*0x3D*/
-int32 ScriptLife::lSET_LIFE_POINT_OBJ(int32 actorIdx, ActorStruct *actor) {
+static int32 lSET_LIFE_POINT_OBJ(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 otherActorIdx = *(scriptPtr++);
-	int32 lifeValue = *(scriptPtr++);
+	static int32 lifeValue = *(scriptPtr++);
 
-	_engine->_scene->sceneActors[otherActorIdx].life = lifeValue;
+	engine->_scene->sceneActors[otherActorIdx].life = lifeValue;
 
 	return 0;
 }
 
 /*0x3E*/
-int32 ScriptLife::lSUB_LIFE_POINT_OBJ(int32 actorIdx, ActorStruct *actor) {
+static int32 lSUB_LIFE_POINT_OBJ(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 otherActorIdx = *(scriptPtr++);
-	int32 lifeValue = *(scriptPtr++);
+	static int32 lifeValue = *(scriptPtr++);
 
-	_engine->_scene->sceneActors[otherActorIdx].life -= lifeValue;
+	engine->_scene->sceneActors[otherActorIdx].life -= lifeValue;
 
-	if (_engine->_scene->sceneActors[otherActorIdx].life < 0) {
-		_engine->_scene->sceneActors[otherActorIdx].life = 0;
+	if (engine->_scene->sceneActors[otherActorIdx].life < 0) {
+		engine->_scene->sceneActors[otherActorIdx].life = 0;
 	}
 
 	return 0;
 }
 
 /*0x3F*/
-int32 ScriptLife::lHIT_OBJ(int32 actorIdx, ActorStruct *actor) {
+static int32 lHIT_OBJ(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 otherActorIdx = *(scriptPtr++);
 	int32 strengthOfHit = *(scriptPtr++);
-	hitActor(actorIdx, otherActorIdx, strengthOfHit, _engine->_scene->sceneActors[otherActorIdx].angle);
+	engine->_actor->hitActor(actorIdx, otherActorIdx, strengthOfHit, engine->_scene->sceneActors[otherActorIdx].angle);
 	return 0;
 }
 
 /*0x40*/
-int32 ScriptLife::lPLAY_FLA(int32 actorIdx, ActorStruct *actor) {
-	int8 *movie = (int8 *)scriptPtr;
+static int32 lPLAY_FLA(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	const char *movie = (const char *)scriptPtr;
 	int32 nameSize = strlen(movie);
 	scriptPtr += nameSize + 1;
 
-	playFlaMovie(movie);
-	setPalette(paletteRGBA);
-	clearScreen();
+	engine->_flaMovies->playFlaMovie(movie);
+	setPalette(engine->_screens->paletteRGBA);
+	engine->_screens->clearScreen();
 	flip();
 
 	return 0;
 }
 
 /*0x41*/
-int32 ScriptLife::lPLAY_MIDI(int32 actorIdx, ActorStruct *actor) {
+static int32 lPLAY_MIDI(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 midiIdx = *(scriptPtr++);
-	playMidiMusic(midiIdx, 0); // TODO: improve this
+	engine->_music->playMidiMusic(midiIdx, 0); // TODO: improve this
 	return 0;
 }
 
 /*0x42*/
-int32 ScriptLife::lINC_CLOVER_BOX(int32 actorIdx, ActorStruct *actor) {
-	if (_engine->_gameState->inventoryNumLeafsBox < 10) {
-		_engine->_gameState->inventoryNumLeafsBox++;
+static int32 lINC_CLOVER_BOX(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	if (engine->_gameState->inventoryNumLeafsBox < 10) {
+		engine->_gameState->inventoryNumLeafsBox++;
 	}
 	return 0;
 }
 
 /*0x43*/
-int32 ScriptLife::lSET_USED_INVENTORY(int32 actorIdx, ActorStruct *actor) {
+static int32 lSET_USED_INVENTORY(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 item = *(scriptPtr++);
 	if (item < 24) {
-		_engine->_gameState->inventoryFlags[item] = 1;
+		engine->_gameState->inventoryFlags[item] = 1;
 	}
 	return 0;
 }
 
 /*0x44*/
-int32 ScriptLife::lADD_CHOICE(int32 actorIdx, ActorStruct *actor) {
+static int32 lADD_CHOICE(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 choiceIdx = *((int16 *)scriptPtr);
 	scriptPtr += 2;
-	gameChoices[numChoices++] = choiceIdx;
+	engine->_gameState->gameChoices[engine->_gameState->numChoices++] = choiceIdx;
 	return 0;
 }
 
 /*0x45*/
-int32 ScriptLife::lASK_CHOICE(int32 actorIdx, ActorStruct *actor) {
+static int32 lASK_CHOICE(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 choiceIdx = *((int16 *)scriptPtr);
 	scriptPtr += 2;
 
-	_engine->freezeTime();
-	if (showDialogueBubble) {
-		_engine->_redraw->drawBubble(actorIdx);
+	engine->freezeTime();
+	if (engine->_text->showDialogueBubble) {
+		engine->_redraw->drawBubble(actorIdx);
 	}
-	setFontCrossColor(actor->talkColor);
-	processGameChoices(choiceIdx);
-	numChoices = 0;
-	_engine->unfreezeTime();
-	_engine->_redraw->redrawEngineActions(1);
+	engine->_text->setFontCrossColor(actor->talkColor);
+	engine->_gameState->processGameChoices(choiceIdx);
+	engine->_gameState->numChoices = 0;
+	engine->unfreezeTime();
+	engine->_redraw->redrawEngineActions(1);
 
 	return 0;
 }
 
 /*0x46*/
-int32 ScriptLife::lBIG_MESSAGE(int32 actorIdx, ActorStruct *actor) {
+static int32 lBIG_MESSAGE(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 textIdx = *((int16 *)scriptPtr);
 	scriptPtr += 2;
 
-	_engine->freezeTime();
-	textClipFull();
-	if (showDialogueBubble) {
-		_engine->_redraw->drawBubble(actorIdx);
+	engine->freezeTime();
+	engine->_text->textClipFull();
+	if (engine->_text->showDialogueBubble) {
+		engine->_redraw->drawBubble(actorIdx);
 	}
-	setFontCrossColor(actor->talkColor);
-	_engine->_scene->talkingActor = actorIdx;
-	drawTextFullscreen(textIdx);
-	textClipSmall();
-	_engine->unfreezeTime();
-	_engine->_redraw->redrawEngineActions(1);
+	engine->_text->setFontCrossColor(actor->talkColor);
+	engine->_scene->talkingActor = actorIdx;
+	engine->_text->drawTextFullscreen(textIdx);
+	engine->_text->textClipSmall();
+	engine->unfreezeTime();
+	engine->_redraw->redrawEngineActions(1);
 
 	return 0;
 }
 
 /*0x47*/
-int32 ScriptLife::lINIT_PINGOUIN(int32 actorIdx, ActorStruct *actor) {
+static int32 lINIT_PINGOUIN(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 pingouinActor = *(scriptPtr++);
-	_engine->_scene->sceneActors[pingouinActor].dynamicFlags.bIsDead = 1;
-	mecaPinguinIdx = pingouinActor;
-	_engine->_scene->sceneActors[pingouinActor].entity = -1;
-	_engine->_scene->sceneActors[pingouinActor].zone = -1;
+	engine->_scene->sceneActors[pingouinActor].dynamicFlags.bIsDead = 1;
+	engine->_scene->mecaPinguinIdx = pingouinActor;
+	engine->_scene->sceneActors[pingouinActor].entity = -1;
+	engine->_scene->sceneActors[pingouinActor].zone = -1;
 	return 0;
 }
 
 /*0x48*/
-int32 ScriptLife::lSET_HOLO_POS(int32 actorIdx, ActorStruct *actor) {
-	int32 location = *(scriptPtr++);
+static int32 lSET_HOLO_POS(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	static int32 location = *(scriptPtr++);
 
-	setHolomapPosition(location);
-	if (_engine->_gameState->gameFlags[GAMEFLAG_HAS_HOLOMAP]) {
-		_engine->_redraw->addOverlay(koInventoryItem, 0, 0, 0, 0, koNormal, 3);
+	engine->_holomap->setHolomapPosition(location);
+	if (engine->_gameState->gameFlags[GAMEFLAG_HAS_HOLOMAP]) {
+		engine->_redraw->addOverlay(koInventoryItem, 0, 0, 0, 0, koNormal, 3);
 	}
 
 	return 0;
 }
 
 /*0x49*/
-int32 ScriptLife::lCLR_HOLO_POS(int32 actorIdx, ActorStruct *actor) {
-	int32 location = *(scriptPtr++);
-	clearHolomapPosition(location);
+static int32 lCLR_HOLO_POS(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	static int32 location = *(scriptPtr++);
+	engine->_holomap->clearHolomapPosition(location);
 	return 0;
 }
 
 /*0x4A*/
-int32 ScriptLife::lADD_FUEL(int32 actorIdx, ActorStruct *actor) {
-	_engine->_gameState->inventoryNumGas += *(scriptPtr++);
-	if (_engine->_gameState->inventoryNumGas > 100) {
-		_engine->_gameState->inventoryNumGas = 100;
+static int32 lADD_FUEL(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->_gameState->inventoryNumGas += *(scriptPtr++);
+	if (engine->_gameState->inventoryNumGas > 100) {
+		engine->_gameState->inventoryNumGas = 100;
 	}
 	return 0;
 }
 
 /*0x4B*/
-int32 ScriptLife::lSUB_FUEL(int32 actorIdx, ActorStruct *actor) {
-	_engine->_gameState->inventoryNumGas -= *(scriptPtr++);
-	if (_engine->_gameState->inventoryNumGas < 0) {
-		_engine->_gameState->inventoryNumGas = 0;
+static int32 lSUB_FUEL(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->_gameState->inventoryNumGas -= *(scriptPtr++);
+	if (engine->_gameState->inventoryNumGas < 0) {
+		engine->_gameState->inventoryNumGas = 0;
 	}
 	return 0;
 }
 
 /*0x4C*/
-int32 ScriptLife::lSET_GRM(int32 actorIdx, ActorStruct *actor) {
-	cellingGridIdx = *(scriptPtr++);
-	initCellingGrid(cellingGridIdx);
+static int32 lSET_GRM(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->_grid->cellingGridIdx = *(scriptPtr++);
+	engine->_grid->initCellingGrid(engine->_grid->cellingGridIdx);
 	return 0;
 }
 
 /*0x4D*/
-int32 ScriptLife::lSAY_MESSAGE(int32 actorIdx, ActorStruct *actor) {
+static int32 lSAY_MESSAGE(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int16 textEntry = *((int16 *)scriptPtr);
 	scriptPtr += 2;
 
-	_engine->_redraw->addOverlay(koText, textEntry, 0, 0, actorIdx, koFollowActor, 2);
+	engine->_redraw->addOverlay(koText, textEntry, 0, 0, actorIdx, koFollowActor, 2);
 
-	_engine->freezeTime();
-	initVoxToPlay(textEntry);
-	_engine->unfreezeTime();
+	engine->freezeTime();
+	engine->_text->initVoxToPlay(textEntry);
+	engine->unfreezeTime();
 
 	return 0;
 }
 
 /*04E*/
-int32 ScriptLife::lSAY_MESSAGE_OBJ(int32 actorIdx, ActorStruct *actor) {
+static int32 lSAY_MESSAGE_OBJ(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 otherActorIdx = *(scriptPtr++);
 	int16 textEntry = *((int16 *)scriptPtr);
 	scriptPtr += 2;
 
-	_engine->_redraw->addOverlay(koText, textEntry, 0, 0, otherActorIdx, koFollowActor, 2);
+	engine->_redraw->addOverlay(koText, textEntry, 0, 0, otherActorIdx, koFollowActor, 2);
 
-	_engine->freezeTime();
-	initVoxToPlay(textEntry);
-	_engine->unfreezeTime();
+	engine->freezeTime();
+	engine->_text->initVoxToPlay(textEntry);
+	engine->unfreezeTime();
 
 	return 0;
 }
 
 /*0x4F*/
-int32 ScriptLife::lFULL_POINT(int32 actorIdx, ActorStruct *actor) {
-	sceneHero->life = 50;
-	inventoryMagicPoints = magicLevelIdx * 20;
+static int32 lFULL_POINT(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->_scene->sceneHero->life = 50;
+	engine->_gameState->inventoryMagicPoints = engine->_gameState->magicLevelIdx * 20;
 	return 0;
 }
 
 /*0x50*/
-int32 ScriptLife::lBETA(int32 actorIdx, ActorStruct *actor) {
+static int32 lBETA(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 newAngle = *((int16 *)scriptPtr);
 	scriptPtr += 2;
 	actor->angle = newAngle;
-	clearRealAngle(actor);
+	engine->_movements->clearRealAngle(actor);
 	return 0;
 }
 
 /*0x51*/
-int32 ScriptLife::lGRM_OFF(int32 actorIdx, ActorStruct *actor) {
-	if (cellingGridIdx != -1) {
-		useCellingGrid = -1;
-		cellingGridIdx = -1;
-		createGridMap();
-		_engine->_redraw->redrawEngineActions(1);
+static int32 lGRM_OFF(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	if (engine->_grid->cellingGridIdx != -1) {
+		engine->_grid->useCellingGrid = -1;
+		engine->_grid->cellingGridIdx = -1;
+		engine->_grid->createGridMap();
+		engine->_redraw->redrawEngineActions(1);
 	}
 
 	return 0;
 }
 
 /*0x52*/
-int32 ScriptLife::lFADE_PAL_RED(int32 actorIdx, ActorStruct *actor) {
-	_engine->freezeTime();
-	fadePalRed(mainPaletteRGBA);
-	useAlternatePalette = 0;
-	_engine->unfreezeTime();
+static int32 lFADE_PAL_RED(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->freezeTime();
+	engine->_screens->fadePalRed(engine->_screens->mainPaletteRGBA);
+	engine->_screens->useAlternatePalette = 0;
+	engine->unfreezeTime();
 	return 0;
 }
 
 /*0x53*/
-int32 ScriptLife::lFADE_ALARM_RED(int32 actorIdx, ActorStruct *actor) {
-	_engine->freezeTime();
-	hqrGetEntry(palette, HQR_RESS_FILE, RESSHQR_ALARMREDPAL);
-	convertPalToRGBA(palette, paletteRGBA);
-	fadePalRed(paletteRGBA);
-	useAlternatePalette = 1;
-	_engine->unfreezeTime();
+static int32 lFADE_ALARM_RED(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->freezeTime();
+	engine->_hqrdepack->hqrGetEntry(engine->_screens->palette, HQR_RESS_FILE, RESSHQR_ALARMREDPAL);
+	engine->_screens->convertPalToRGBA(engine->_screens->palette, engine->_screens->paletteRGBA);
+	engine->_screens->fadePalRed(engine->_screens->paletteRGBA);
+	engine->_screens->useAlternatePalette = 1;
+	engine->unfreezeTime();
 	return 0;
 }
 
 /*0x54*/
-int32 ScriptLife::lFADE_ALARM_PAL(int32 actorIdx, ActorStruct *actor) {
-	_engine->freezeTime();
-	hqrGetEntry(palette, HQR_RESS_FILE, RESSHQR_ALARMREDPAL);
-	convertPalToRGBA(palette, paletteRGBA);
-	adjustCrossPalette(paletteRGBA, mainPaletteRGBA);
-	useAlternatePalette = 0;
-	_engine->unfreezeTime();
+static int32 lFADE_ALARM_PAL(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->freezeTime();
+	engine->_hqrdepack->hqrGetEntry(engine->_screens->palette, HQR_RESS_FILE, RESSHQR_ALARMREDPAL);
+	engine->_screens->convertPalToRGBA(engine->_screens->palette, engine->_screens->paletteRGBA);
+	engine->_screens->adjustCrossPalette(engine->_screens->paletteRGBA, engine->_screens->mainPaletteRGBA);
+	engine->_screens->useAlternatePalette = 0;
+	engine->unfreezeTime();
 	return 0;
 }
 
 /*0x55*/
-int32 ScriptLife::lFADE_RED_PAL(int32 actorIdx, ActorStruct *actor) {
-	_engine->freezeTime();
-	fadeRedPal(mainPaletteRGBA);
-	useAlternatePalette = 0;
-	_engine->unfreezeTime();
+static int32 lFADE_RED_PAL(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->freezeTime();
+	engine->_screens->fadeRedPal(engine->_screens->mainPaletteRGBA);
+	engine->_screens->useAlternatePalette = 0;
+	engine->unfreezeTime();
 	return 0;
 }
 
 /*0x56*/
-int32 ScriptLife::lFADE_RED_ALARM(int32 actorIdx, ActorStruct *actor) {
-	_engine->freezeTime();
-	hqrGetEntry(palette, HQR_RESS_FILE, RESSHQR_ALARMREDPAL);
-	convertPalToRGBA(palette, paletteRGBA);
-	fadeRedPal(paletteRGBA);
-	useAlternatePalette = 1;
-	_engine->unfreezeTime();
+static int32 lFADE_RED_ALARM(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->freezeTime();
+	engine->_hqrdepack->hqrGetEntry(engine->_screens->palette, HQR_RESS_FILE, RESSHQR_ALARMREDPAL);
+	engine->_screens->convertPalToRGBA(engine->_screens->palette, engine->_screens->paletteRGBA);
+	engine->_screens->fadeRedPal(engine->_screens->paletteRGBA);
+	engine->_screens->useAlternatePalette = 1;
+	engine->unfreezeTime();
 	return 0;
 }
 
 /*0x57*/
-int32 ScriptLife::lFADE_PAL_ALARM(int32 actorIdx, ActorStruct *actor) {
-	_engine->freezeTime();
-	hqrGetEntry(palette, HQR_RESS_FILE, RESSHQR_ALARMREDPAL);
-	convertPalToRGBA(palette, paletteRGBA);
-	adjustCrossPalette(mainPaletteRGBA, paletteRGBA);
-	useAlternatePalette = 1;
-	_engine->unfreezeTime();
+static int32 lFADE_PAL_ALARM(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->freezeTime();
+	engine->_hqrdepack->hqrGetEntry(engine->_screens->palette, HQR_RESS_FILE, RESSHQR_ALARMREDPAL);
+	engine->_screens->convertPalToRGBA(engine->_screens->palette, engine->_screens->paletteRGBA);
+	engine->_screens->adjustCrossPalette(engine->_screens->mainPaletteRGBA, engine->_screens->paletteRGBA);
+	engine->_screens->useAlternatePalette = 1;
+	engine->unfreezeTime();
 	return 0;
 }
 
 /*0x58*/
-int32 ScriptLife::lEXPLODE_OBJ(int32 actorIdx, ActorStruct *actor) {
+static int32 lEXPLODE_OBJ(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 otherActorIdx = *(scriptPtr++);
-	ActorStruct *otherActor = &_engine->_scene->sceneActors[otherActorIdx];
+	ActorStruct *otherActor = &engine->_scene->sceneActors[otherActorIdx];
 
-	addExtraExplode(otherActor->X, otherActor->Y, otherActor->Z); // RECHECK this
+	engine->_extra->addExtraExplode(otherActor->X, otherActor->Y, otherActor->Z); // RECHECK this
 
 	return 0;
 }
 
 /*0x59*/
-int32 ScriptLife::lBUBBLE_ON(int32 actorIdx, ActorStruct *actor) {
-	showDialogueBubble = 1;
+static int32 lBUBBLE_ON(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->_text->showDialogueBubble = 1;
 	return 0;
 }
 
 /*0x5A*/
-int32 ScriptLife::lBUBBLE_OFF(int32 actorIdx, ActorStruct *actor) {
-	showDialogueBubble = 1;
+static int32 lBUBBLE_OFF(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->_text->showDialogueBubble = 1;
 	return 0;
 }
 
 /*0x5B*/
-int32 ScriptLife::lASK_CHOICE_OBJ(int32 actorIdx, ActorStruct *actor) {
+static int32 lASK_CHOICE_OBJ(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 otherActorIdx = *(scriptPtr++);
 	int32 choiceIdx = *((int16 *)scriptPtr);
 	scriptPtr += 2;
 
-	_engine->freezeTime();
-	if (showDialogueBubble) {
-		_engine->_redraw->drawBubble(otherActorIdx);
+	engine->freezeTime();
+	if (engine->_text->showDialogueBubble) {
+		engine->_redraw->drawBubble(otherActorIdx);
 	}
-	setFontCrossColor(_engine->_scene->sceneActors[otherActorIdx].talkColor);
-	processGameChoices(choiceIdx);
-	numChoices = 0;
-	_engine->unfreezeTime();
-	_engine->_redraw->redrawEngineActions(1);
+	engine->_text->setFontCrossColor(engine->_scene->sceneActors[otherActorIdx].talkColor);
+	engine->_gameState->processGameChoices(choiceIdx);
+	engine->_gameState->numChoices = 0;
+	engine->unfreezeTime();
+	engine->_redraw->redrawEngineActions(1);
 
 	return 0;
 }
 
 /*0x5C*/
-int32 ScriptLife::lSET_DARK_PAL(int32 actorIdx, ActorStruct *actor) {
-	_engine->freezeTime();
-	hqrGetEntry(palette, HQR_RESS_FILE, RESSHQR_DARKPAL);
-	if (!lockPalette) {
-		convertPalToRGBA(palette, paletteRGBA);
-		setPalette(paletteRGBA);
+static int32 lSET_DARK_PAL(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->freezeTime();
+	engine->_hqrdepack->hqrGetEntry(engine->_screens->palette, HQR_RESS_FILE, RESSHQR_DARKPAL);
+	if (!engine->_screens->lockPalette) {
+		engine->_screens->convertPalToRGBA(engine->_screens->palette, engine->_screens->paletteRGBA);
+		setPalette(engine->_screens->paletteRGBA);
 	}
-	useAlternatePalette = 1;
-	_engine->unfreezeTime();
+	engine->_screens->useAlternatePalette = 1;
+	engine->unfreezeTime();
 	return 0;
 }
 
 /*0x5D*/
-int32 ScriptLife::lSET_NORMAL_PAL(int32 actorIdx, ActorStruct *actor) {
-	useAlternatePalette = 0;
-	if (!lockPalette) {
-		setPalette(mainPaletteRGBA);
+static int32 lSET_NORMAL_PAL(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->_screens->useAlternatePalette = 0;
+	if (!engine->_screens->lockPalette) {
+		setPalette(engine->_screens->mainPaletteRGBA);
 	}
 	return 0;
 }
 
 /*0x5E*/
-int32 ScriptLife::lMESSAGE_SENDELL(int32 actorIdx, ActorStruct *actor) {
+static int32 lMESSAGE_SENDELL(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 tmpFlagDisplayText;
 
-	_engine->freezeTime();
-	fadeToBlack(paletteRGBA);
-	loadImage(25, 1);
-	textClipFull();
-	setFontCrossColor(15);
-	newGameVar4 = 0;
-	tmpFlagDisplayText = cfgfile.FlagDisplayText;
-	cfgfile.FlagDisplayText = 1;
-	drawTextFullscreen(6);
-	newGameVar4 = 1;
-	textClipSmall();
-	fadeToBlack(paletteRGBACustom);
-	clearScreen();
-	setPalette(paletteRGBA);
-	cfgfile.FlagDisplayText = tmpFlagDisplayText;
+	engine->freezeTime();
+	engine->_screens->fadeToBlack(engine->_screens->paletteRGBA);
+	engine->_screens->loadImage(25, 1);
+	engine->_text->textClipFull();
+	engine->_text->setFontCrossColor(15);
+	engine->_text->newGameVar4 = 0;
+	tmpFlagDisplayText = engine->cfgfile.FlagDisplayText;
+	engine->cfgfile.FlagDisplayText = 1;
+	engine->_text->drawTextFullscreen(6);
+	engine->_text->newGameVar4 = 1;
+	engine->_text->textClipSmall();
+	engine->_screens->fadeToBlack(engine->_screens->paletteRGBACustom);
+	engine->_screens->clearScreen();
+	setPalette(engine->_screens->paletteRGBA);
+	engine->cfgfile.FlagDisplayText = tmpFlagDisplayText;
 
 	do {
 		readKeys();
 	} while (skipIntro || skippedKey);
 
-	_engine->unfreezeTime();
+	engine->unfreezeTime();
 
 	return 0;
 }
 
 /*0x5F*/
-int32 ScriptLife::lANIM_SET(int32 actorIdx, ActorStruct *actor) {
+static int32 lANIM_SET(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 animIdx = *(scriptPtr++);
 
 	actor->anim = -1;
 	actor->previousAnimIdx = -1;
-	_engine->_animations->initAnim(animIdx, 0, 0, actorIdx);
+	engine->_animations->initAnim(animIdx, 0, 0, actorIdx);
 
 	return 0;
 }
 
 /*0x60*/
-int32 ScriptLife::lHOLOMAP_TRAJ(int32 actorIdx, ActorStruct *actor) {
+static int32 lHOLOMAP_TRAJ(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	scriptPtr++; // TODO
 	return -1;
 }
 
 /*0x61*/
-int32 ScriptLife::lGAME_OVER(int32 actorIdx, ActorStruct *actor) {
-	sceneHero->dynamicFlags.bAnimEnded = 1;
-	sceneHero->life = 0;
-	_engine->_gameState->inventoryNumLeafs = 0;
+static int32 lGAME_OVER(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->_scene->sceneHero->dynamicFlags.bAnimEnded = 1;
+	engine->_scene->sceneHero->life = 0;
+	engine->_gameState->inventoryNumLeafs = 0;
 	return 1; // break
 }
 
 /*0x62*/
-int32 ScriptLife::lTHE_END(int32 actorIdx, ActorStruct *actor) {
-	quitGame = 1;
-	_engine->_gameState->inventoryNumLeafs = 0;
-	sceneHero->life = 50;
-	inventoryMagicPoints = 80;
-	currentSceneIdx = 113;
-	_engine->_actor->heroBehaviour = previousHeroBehaviour;
-	newHeroX = -1;
-	sceneHero->angle = previousHeroAngle;
-	saveGame();
+static int32 lTHE_END(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->quitGame = 1;
+	engine->_gameState->inventoryNumLeafs = 0;
+	engine->_scene->sceneHero->life = 50;
+	engine->_gameState->inventoryMagicPoints = 80;
+	engine->_scene->currentSceneIdx = 113;
+	engine->_actor->heroBehaviour = engine->_actor->previousHeroBehaviour;
+	engine->_scene->newHeroX = -1;
+	engine->_scene->sceneHero->angle = engine->_actor->previousHeroAngle;
+	engine->_gameState->saveGame();
 	return 1; // break;
 }
 
 /*0x63*/
-int32 ScriptLife::lMIDI_OFF(int32 actorIdx, ActorStruct *actor) {
-	stopMidiMusic();
+static int32 lMIDI_OFF(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->_music->stopMidiMusic();
 	return 0;
 }
 
 /*0x64*/
-int32 ScriptLife::lPLAY_CD_TRACK(int32 actorIdx, ActorStruct *actor) {
+static int32 lPLAY_CD_TRACK(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 track = *(scriptPtr++);
-	playTrackMusic(track);
+	engine->_music->playTrackMusic(track);
 	return 0;
 }
 
 /*0x65*/
-int32 ScriptLife::lPROJ_ISO(int32 actorIdx, ActorStruct *actor) {
-	setOrthoProjection(311, 240, 512);
-	setBaseTranslation(0, 0, 0);
-	setBaseRotation(0, 0, 0);
-	setLightVector(alphaLight, betaLight, 0);
+static int32 lPROJ_ISO(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->_renderer->setOrthoProjection(311, 240, 512);
+	engine->_renderer->setBaseTranslation(0, 0, 0);
+	engine->_renderer->setBaseRotation(0, 0, 0);
+	engine->_renderer->setLightVector(engine->_scene->alphaLight, engine->_scene->betaLight, 0);
 	return 0;
 }
 
 /*0x66*/
-int32 ScriptLife::lPROJ_3D(int32 actorIdx, ActorStruct *actor) {
-	copyScreen(frontVideoBuffer, workVideoBuffer);
+static int32 lPROJ_3D(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->_screens->copyScreen(engine->frontVideoBuffer, engine->workVideoBuffer);
 	flip();
-	changeRoomVar10 = 0;
+	engine->_scene->changeRoomVar10 = 0;
 
-	setCameraPosition(320, 240, 128, 1024, 1024);
-	setCameraAngle(0, 1500, 0, 25, -128, 0, 13000);
-	setLightVector(896, 950, 0);
+	engine->_renderer->setCameraPosition(320, 240, 128, 1024, 1024);
+	engine->_renderer->setCameraAngle(0, 1500, 0, 25, -128, 0, 13000);
+	engine->_renderer->setLightVector(896, 950, 0);
 
-	initTextBank(1);
+	engine->_text->initTextBank(1);
 
 	return 0;
 }
 
 /*0x67*/
-int32 ScriptLife::lTEXT(int32 actorIdx, ActorStruct *actor) {
+static int32 lTEXT(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 textSize, textBoxRight;
 	int32 textIdx = *((int16 *)scriptPtr);
 	scriptPtr += 2;
 
 	if (drawVar1 < 440) {
-		if (cfgfile.Version == USA_VERSION) {
+		if (engine->cfgfile.Version == USA_VERSION) {
 			if (!textIdx) {
 				textIdx = 16;
 			}
 		}
 
-		getMenuText(textIdx, textStr);
-		textSize = textBoxRight = getTextSize(textStr);
-		setFontColor(15);
-		drawText(0, drawVar1, textStr);
+		engine->_text->getMenuText(textIdx, textStr);
+		textSize = textBoxRight = engine->_text->getTextSize(textStr);
+		engine->_text->setFontColor(15);
+		engine->_text->drawText(0, drawVar1, textStr);
 		if (textSize > 639) {
 			textBoxRight = 639;
 		}
@@ -1472,16 +1478,16 @@ int32 ScriptLife::lTEXT(int32 actorIdx, ActorStruct *actor) {
 }
 
 /*0x68*/
-int32 ScriptLife::lCLEAR_TEXT(int32 actorIdx, ActorStruct *actor) {
+static int32 lCLEAR_TEXT(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	drawVar1 = 0;
-	drawSplittedBox(0, 0, 639, 240, 0);
+	engine->_interface->drawSplittedBox(0, 0, 639, 240, 0);
 	copyBlockPhys(0, 0, 639, 240);
 	return 0;
 }
 
 /*0x69*/
-int32 ScriptLife::lBRUTAL_EXIT(int32 actorIdx, ActorStruct *actor) {
-	quitGame = 0;
+static int32 lBRUTAL_EXIT(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
+	engine->quitGame = 0;
 	return 1; // break
 }
 
@@ -1608,8 +1614,8 @@ void ScriptLife::processLifeScript(int32 actorIdx) {
 		opcodePtr = scriptPtr;
 		scriptOpcode = *(scriptPtr++);
 
-		if (scriptOpcode <= 105) {
-			end = function_map[scriptOpcode].function(actorIdx, actor);
+		if (scriptOpcode >= 0 && scriptOpcode < ARRAYSIZE(function_map)) {
+			end = function_map[scriptOpcode].function(_engine, actorIdx, actor);
 		} else {
 			error("Actor %d with wrong offset/opcode - Offset: %d\n", actorIdx, actor->positionInLifeScript);
 		}

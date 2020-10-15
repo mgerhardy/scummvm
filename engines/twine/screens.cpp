@@ -102,25 +102,25 @@ void Screens::convertPalToRGBA(uint8 *palSource, uint8 *palDest) {
 }
 
 /** Fade image in
-	@param palette current palette to fade in */
-void Screens::fadeIn(uint8 *palette) {
+	@param pal current palette to fade in */
+void Screens::fadeIn(uint8 *pal) {
 	if (_engine->cfgfile.CrossFade)
-		crossFade(_engine->frontVideoBuffer, palette);
+		crossFade(_engine->frontVideoBuffer, pal);
 	else
-		fadeToPal(palette);
+		fadeToPal(pal);
 
-	setPalette(palette);
+	setPalette(pal);
 }
 
 /** Fade image out
-	@param palette current palette to fade out */
-void Screens::fadeOut(uint8 *palette) {
+	@param pal current palette to fade out */
+void Screens::fadeOut(uint8 *pal) {
 	/*if(cfgfile.CrossFade)
 		crossFade(frontVideoBuffer, palette);
 	else
 		fadeToBlack(palette);*/
 	if (!_engine->cfgfile.CrossFade)
-		fadeToBlack(palette);
+		fadeToBlack(pal);
 }
 
 /** Calculate a new color component according with an intensity
@@ -139,9 +139,9 @@ int32 Screens::crossDot(int32 modifier, int32 color, int32 param, int32 intensit
 	@param R red component of color
 	@param G green component of color
 	@param B blue component of color
-	@param palette palette to adjust
+	@param pal palette to adjust
 	@param intensity intensity value to adjust */
-void Screens::adjustPalette(uint8 R, uint8 G, uint8 B, uint8 *palette, int32 intensity) {
+void Screens::adjustPalette(uint8 R, uint8 G, uint8 B, uint8 *pal, int32 intensity) {
 	uint8 localPalette[NUMOFCOLORS * 4];
 	uint8 *newR;
 	uint8 *newG;
@@ -160,9 +160,9 @@ void Screens::adjustPalette(uint8 R, uint8 G, uint8 B, uint8 *palette, int32 int
 	newA = &localPalette[3];
 
 	for (i = 0; i < NUMOFCOLORS; i++) {
-		*newR = crossDot(R, palette[counter], 100, local);
-		*newG = crossDot(G, palette[counter + 1], 100, local);
-		*newB = crossDot(B, palette[counter + 2], 100, local);
+		*newR = crossDot(R, pal[counter], 100, local);
+		*newG = crossDot(G, pal[counter + 1], 100, local);
+		*newB = crossDot(B, pal[counter + 2], 100, local);
 		*newA = 0;
 
 		newR += 4;
@@ -221,13 +221,13 @@ void Screens::adjustCrossPalette(uint8 *pal1, uint8 *pal2) {
 }
 
 /** Fade image to black
-	@param palette current palette to fade */
-void Screens::fadeToBlack(uint8 *palette) {
+	@param pal current palette to fade */
+void Screens::fadeToBlack(uint8 *pal) {
 	int32 i = 0;
 
 	if (palReseted == 0) {
 		for (i = 100; i >= 0; i -= 3) {
-			adjustPalette(0, 0, 0, (uint8 *)palette, i);
+			adjustPalette(0, 0, 0, (uint8 *)pal, i);
 			fpsCycles(50);
 		}
 	}
@@ -236,30 +236,30 @@ void Screens::fadeToBlack(uint8 *palette) {
 }
 
 /** Fade image with another palette source
-	@param palette current palette to fade */
-void Screens::fadeToPal(uint8 *palette) {
+	@param pal current palette to fade */
+void Screens::fadeToPal(uint8 *pal) {
 	int32 i = 100;
 
 	for (i = 0; i <= 100; i += 3) {
-		adjustPalette(0, 0, 0, (uint8 *)palette, i);
+		adjustPalette(0, 0, 0, (uint8 *)pal, i);
 		fpsCycles(50);
 	}
 
-	setPalette((uint8 *)palette);
+	setPalette((uint8 *)pal);
 
 	palReseted = 0;
 }
 
 /** Fade black palette to with palette */
 void Screens::blackToWhite() {
-	uint8 palette[NUMOFCOLORS * 4];
+	uint8 pal[NUMOFCOLORS * 4];
 	int32 i;
 
 	i = 256;
 	for (i = 0; i < NUMOFCOLORS; i += 3) {
-		memset(palette, i, 1024);
+		memset(pal, i, 1024);
 
-		setPalette(palette);
+		setPalette(pal);
 	}
 }
 
@@ -274,23 +274,23 @@ void Screens::setBackPal() {
 }
 
 /** Fade palette to red palette
-	@param palette current palette to fade */
-void Screens::fadePalRed(uint8 *palette) {
+	@param pal current palette to fade */
+void Screens::fadePalRed(uint8 *pal) {
 	int32 i = 100;
 
 	for (i = 100; i >= 0; i -= 2) {
-		adjustPalette(0xFF, 0, 0, (uint8 *)palette, i);
+		adjustPalette(0xFF, 0, 0, (uint8 *)pal, i);
 		fpsCycles(50);
 	}
 }
 
 /** Fade red to palette
 	@param palette current palette to fade */
-void Screens::fadeRedPal(uint8 *palette) {
+void Screens::fadeRedPal(uint8 *pal) {
 	int32 i = 0;
 
 	for (i = 0; i <= 100; i += 2) {
-		adjustPalette(0xFF, 0, 0, (uint8 *)palette, i);
+		adjustPalette(0xFF, 0, 0, (uint8 *)pal, i);
 		fpsCycles(50);
 	}
 }

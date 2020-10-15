@@ -100,7 +100,7 @@ void Scene::loadScene() {
 	uint8 *localScene = currentScene;
 
 	// load scene ambience properties
-	currentTextBank = *(localScene++);
+	_engine->_text->currentTextBank = *(localScene++);
 	currentGameOverScene = *(localScene++);
 	localScene += 4;
 
@@ -320,7 +320,7 @@ void Scene::changeScene() {
 	previousSceneIdx = currentSceneIdx;
 	currentSceneIdx = needChangeScene;
 
-	stopSamples();
+	_engine->_sound->stopSamples();
 
 	resetScene();
 	_engine->_actor->loadHeroEntities();
@@ -336,9 +336,9 @@ void Scene::changeScene() {
 	//TODO: treat holomap trajectories
 
 	if (needChangeScene == 116 || needChangeScene == 117)
-		currentTextBank = 10;
+		_engine->_text->currentTextBank = 10;
 
-	initTextBank(currentTextBank + 3);
+	_engine->_text->initTextBank(_engine->_text->currentTextBank + 3);
 	_engine->_grid->initGrid(needChangeScene);
 
 	if (heroPositionType == kZone) {
@@ -419,7 +419,7 @@ void Scene::processEnvironmentSound() {
 					decal = sampleRound[currentAmb];
 					repeat = sampleRepeat[currentAmb];
 
-					playSample(sampleIdx, (0x1000 + _engine->getRandomNumber(decal) - (decal / 2)), repeat, 110, -1, 110, -1);
+					_engine->_sound->playSample(sampleIdx, (0x1000 + _engine->getRandomNumber(decal) - (decal / 2)), repeat, 110, -1, 110, -1);
 					break;
 				}
 			}
@@ -543,9 +543,9 @@ void Scene::processActorZones(int32 actorIdx) {
 			case kText:
 				if (!actorIdx && _engine->_movements->heroAction != 0) {
 					_engine->freezeTime();
-					setFontCrossColor(zone->infoData.DisplayText.textColor);
+					_engine->_text->setFontCrossColor(zone->infoData.DisplayText.textColor);
 					talkingActor = actorIdx;
-					drawTextFullscreen(zone->infoData.DisplayText.textIdx);
+					_engine->_text->drawTextFullscreen(zone->infoData.DisplayText.textIdx);
 					_engine->unfreezeTime();
 					_engine->_redraw->redrawEngineActions(1);
 				}

@@ -71,7 +71,7 @@ void Resources::preloadSamples() {
 	int32 numEntries = _engine->_hqrdepack->hqrNumEntries(HQR_SAMPLES_FILE) - 1;
 
 	for (i = 0; i < numEntries; i++) {
-		samplesSizeTable[i] = _engine->_hqrdepack->hqrGetallocEntry(&samplesTable[i], HQR_SAMPLES_FILE, i);
+		_engine->_sound->samplesSizeTable[i] = _engine->_hqrdepack->hqrGetallocEntry(&_engine->_sound->samplesTable[i], HQR_SAMPLES_FILE, i);
 	}
 }
 
@@ -91,11 +91,11 @@ void Resources::initResources() {
 	initPalettes();
 
 	// load LBA font
-	_engine->_hqrdepack->hqrGetallocEntry(&fontPtr, HQR_RESS_FILE, RESSHQR_LBAFONT);
+	_engine->_hqrdepack->hqrGetallocEntry(&_engine->_text->fontPtr, HQR_RESS_FILE, RESSHQR_LBAFONT);
 
-	setFontParameters(2, 8);
-	setFontColor(14);
-	setTextCrossColor(136, 143, 2);
+	_engine->_text->setFontParameters(2, 8);
+	_engine->_text->setFontColor(14);
+	_engine->_text->setTextCrossColor(136, 143, 2);
 
 	_engine->_hqrdepack->hqrGetallocEntry(&_engine->_scene->spriteShadowPtr, HQR_RESS_FILE, RESSHQR_SPRITESHADOW);
 

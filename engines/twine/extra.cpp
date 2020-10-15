@@ -684,7 +684,7 @@ void Extra::processExtras() {
 				angle = (tmpAngle - extra->angle) & 0x3FF;
 
 				if (angle > 400 && angle < 600) {
-					playSample(97, 0x1000, 1, _engine->_scene->sceneHero->X, _engine->_scene->sceneHero->Y, _engine->_scene->sceneHero->Z, 0);
+					_engine->_sound->playSample(97, 0x1000, 1, _engine->_scene->sceneHero->X, _engine->_scene->sceneHero->Y, _engine->_scene->sceneHero->Z, 0);
 
 					if (extraKey->info1 > 1) {
 						_engine->_renderer->projectPositionOnScreen(extraKey->X - _engine->_grid->cameraX, extraKey->Y - _engine->_grid->cameraY, extraKey->Z - _engine->_grid->cameraZ);
@@ -719,7 +719,7 @@ void Extra::processExtras() {
 					_engine->_movements->setActorAngle(0, extra->destZ, 50, &extra->trackActorMove);
 
 					if (actorIdx == _engine->_collision->checkExtraCollisionWithExtra(extra, _engine->_gameState->magicBallIdx)) {
-						playSample(97, 0x1000, 1, _engine->_scene->sceneHero->X, _engine->_scene->sceneHero->Y, _engine->_scene->sceneHero->Z, 0);
+						_engine->_sound->playSample(97, 0x1000, 1, _engine->_scene->sceneHero->X, _engine->_scene->sceneHero->Y, _engine->_scene->sceneHero->Z, 0);
 
 						if (extraKey->info1 > 1) {
 							_engine->_renderer->projectPositionOnScreen(extraKey->X - _engine->_grid->cameraX, extraKey->Y - _engine->_grid->cameraY, extraKey->Z - _engine->_grid->cameraZ);
@@ -796,7 +796,7 @@ void Extra::processExtras() {
 					// if extra is magic ball
 					if (i == _engine->_gameState->magicBallIdx) {
 						// FIXME: add constant for sample index
-						playSample(86, _engine->getRandomNumber(300) + 3946, 1, extra->X, extra->Y, extra->Z, -1);
+						_engine->_sound->playSample(86, _engine->getRandomNumber(300) + 3946, 1, extra->X, extra->Y, extra->Z, -1);
 
 						// cant bounce with not magic points
 						if (_engine->_gameState->magicBallNumBounce <= 0) {
@@ -871,7 +871,7 @@ void Extra::processExtras() {
 				// if hero touch extra
 				if (_engine->_collision->checkExtraCollisionWithActors(extra, -1) == 0) {
 					// FIXME: add constant for sample index
-					playSample(97, 0x1000, 1, extra->X, extra->Y, extra->Z, -1);
+					_engine->_sound->playSample(97, 0x1000, 1, extra->X, extra->Y, extra->Z, -1);
 
 					if (extra->info1 > 1 && !(_engine->loopPressedKey & 2)) {
 						_engine->_renderer->projectPositionOnScreen(extra->X - _engine->_grid->cameraX, extra->Y - _engine->_grid->cameraY, extra->Z - _engine->_grid->cameraZ);

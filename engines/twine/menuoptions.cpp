@@ -54,31 +54,31 @@ void MenuOptions::newGame() {
 	// intro screen 1 - twinsun
 	_engine->_screens->loadImage(RESSHQR_INTROSCREEN1IMG, 1);
 
-	newGameVar4 = 0;
-	newGameVar5 = 1;
+	_engine->_text->newGameVar4 = 0;
+	_engine->_text->newGameVar5 = 1;
 
-	initTextBank(2);
-	textClipFull();
-	setFontCrossColor(15);
+	_engine->_text->initTextBank(2);
+	_engine->_text->textClipFull();
+	_engine->_text->setFontCrossColor(15);
 
-	drawTextFullscreen(150);
+	_engine->_text->drawTextFullscreen(150);
 	readKeys();
 
 	if (skipIntro != 1) {
 		// intro screen 1 - twinsun
 		_engine->_screens->loadImage(RESSHQR_INTROSCREEN2IMG, 1);
-		drawTextFullscreen(151);
+		_engine->_text->drawTextFullscreen(151);
 		readKeys();
 
 		if (skipIntro != 1) {
 			_engine->_screens->loadImage(RESSHQR_INTROSCREEN3IMG, 1);
-			drawTextFullscreen(152);
+			_engine->_text->drawTextFullscreen(152);
 		}
 	}
 
-	newGameVar5 = 0;
-	textClipSmall();
-	newGameVar4 = 1;
+	_engine->_text->newGameVar5 = 0;
+	_engine->_text->textClipSmall();
+	_engine->_text->newGameVar4 = 1;
 
 	_engine->_screens->fadeToBlack(_engine->_screens->paletteRGBACustom);
 	_engine->_screens->clearScreen();
@@ -149,8 +149,8 @@ void MenuOptions::drawSelectableCharacter(int32 x, int32 y, int32 arg) {
 	_engine->_menu->drawBox(left, top, right, bottom);
 	right2 = right;
 
-	setFontColor(15);
-	drawText(centerX - getTextSize(buffer) / 2, centerY - 18, buffer);
+	_engine->_text->setFontColor(15);
+	_engine->_text->drawText(centerX - _engine->_text->getTextSize(buffer) / 2, centerY - 18, buffer);
 
 	copyBlockPhys(left, top, right2, bottom);
 }
@@ -216,10 +216,10 @@ int32 MenuOptions::enterPlayerName(int32 textIdx) {
 	while (1) {
 		_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 		flip(); //frontVideoBuffer
-		initTextBank(0);
-		getMenuText(textIdx, buffer);
-		setFontColor(15);
-		drawText(320 - (getTextSize(buffer) / 2), 20, buffer);
+		_engine->_text->initTextBank(0);
+		_engine->_text->getMenuText(textIdx, buffer);
+		_engine->_text->setFontColor(15);
+		_engine->_text->drawText(320 - (_engine->_text->getTextSize(buffer) / 2), 20, buffer);
 		copyBlockPhys(0, 0, 639, 99);
 		playerName[0] = enterPlayerNameVar1;
 		drawPlayerName(320, 100, playerName, 1);
@@ -287,9 +287,9 @@ void MenuOptions::continueGameMenu() {
 		if (_engine->_gameState->gameChapter == 0 && _engine->_scene->currentSceneIdx == 0) {
 			newGame();
 		} else {
-			newGameVar5 = 0;
-			textClipSmall();
-			newGameVar4 = 1;
+			_engine->_text->newGameVar5 = 0;
+			_engine->_text->textClipSmall();
+			_engine->_text->newGameVar4 = 1;
 		}
 
 		if (_engine->gameEngineLoop()) {

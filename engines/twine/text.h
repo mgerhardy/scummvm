@@ -31,132 +31,152 @@ namespace TwinE {
 /** White color value */
 #define WHITE_COLOR_0 0
 
-/** Current text bank */
-int32 currentTextBank;
-/** Current dialogue text size */
-int32 currDialTextSize;
-/** Current dialogue text pointer */
-uint8 *currDialTextPtr;
+class TwinEEngine;
+class Text {
+private:
+	TwinEEngine *_engine;
+	void initVoxBank(int32 bankIdx);
+	void drawCharacter(int32 x, int32 y, uint8 character);
+	void drawCharacterShadow(int32 x, int32 y, uint8 character, int32 color);
+	void initProgressiveTextBuffer();
+	void printText8Sub4(int16 a, int16 b, int16 c);
+	void getWordSize(uint8 *arg1, uint8 *arg2);
+	void processTextLine();
+	void printText10Sub();
+	void printText10Sub2();
+	void TEXT_GetLetterSize(uint8 character, int32 *pLetterWidth, int32 *pLetterHeight, uint8 *pFont);
+	void copyText(int8 *src, int8 *dst, int32 size);
 
-/** Font buffer pointer */
-uint8 *fontPtr;
+public:
+	Text(TwinEEngine *engine) : _engine(engine) {}
 
-/** Dialogue text size */
-int32 dialTextSize;
-/** Pixel size between dialogue text */
-int32 dialSpaceBetween;
-/** Pixel size of the space character */
-int32 dialCharSpace;
-/** Dialogue text color */
-int32 dialTextColor;
+	/** Current text bank */
+	int32 currentTextBank;
+	/** Current dialogue text size */
+	int32 currDialTextSize;
+	/** Current dialogue text pointer */
+	uint8 *currDialTextPtr;
 
-/** Dialogue text start color for cross coloring dialogues */
-int32 dialTextStartColor;
-/** Dialogue text stop color for cross coloring dialogues */
-int32 dialTextStopColor;
-/** Dialogue text step size for cross coloring dialogues */
-int32 dialTextStepSize;
-/** Dialogue text buffer size for cross coloring dialogues */
-int32 dialTextBufferSize;
+	/** Font buffer pointer */
+	uint8 *fontPtr;
 
-int32 dialTextBoxLeft;   // dialogueBoxLeft
-int32 dialTextBoxTop;    // dialogueBoxTop
-int32 dialTextBoxRight;  // dialogueBoxRight
-int32 dialTextBoxBottom; // dialogueBoxBottom
+	/** Dialogue text size */
+	int32 dialTextSize;
+	/** Pixel size between dialogue text */
+	int32 dialSpaceBetween;
+	/** Pixel size of the space character */
+	int32 dialCharSpace;
+	/** Dialogue text color */
+	int32 dialTextColor;
 
-int32 dialTextBoxParam1; // dialogueBoxParam1
-int32 dialTextBoxParam2; // dialogueBoxParam2
+	/** Dialogue text start color for cross coloring dialogues */
+	int32 dialTextStartColor;
+	/** Dialogue text stop color for cross coloring dialogues */
+	int32 dialTextStopColor;
+	/** Dialogue text step size for cross coloring dialogues */
+	int32 dialTextStepSize;
+	/** Dialogue text buffer size for cross coloring dialogues */
+	int32 dialTextBufferSize;
 
-// TODO: refactor all this variables and related functions
-int32 printTextVar13;
-uint8 buf1[256];
-uint8 buf2[256];
-uint8 *printText8Ptr1;
-uint8 *printText8Ptr2;
-int32 printText8Var1;
-int32 printText8Var2;
-int32 printText8Var3;
-int32 TEXT_CurrentLetterX;
-int32 printText8Var5;
-int32 printText8Var6;
-int32 TEXT_CurrentLetterY;
-uint8 *printText8Var8;
-int32 newGameVar4;
-int32 newGameVar5;
-int32 hasHiddenVox; // printTextVar5
-int32 voxHiddenIndex;
-int32 printText10Var1;
-int32 addLineBreakX;
-int16 pt8s4[96];
-int32 printText8PrepareBufferVar2;
+	int32 dialTextBoxLeft;   // dialogueBoxLeft
+	int32 dialTextBoxTop;    // dialogueBoxTop
+	int32 dialTextBoxRight;  // dialogueBoxRight
+	int32 dialTextBoxBottom; // dialogueBoxBottom
 
-int32 currDialTextEntry; // ordered entry
-int32 nextDialTextEntry; // ordered entry
-int8 currentVoxBankFile[256];
+	int32 dialTextBoxParam1; // dialogueBoxParam1
+	int32 dialTextBoxParam2; // dialogueBoxParam2
 
-int32 showDialogueBubble;
+	// TODO: refactor all this variables and related functions
+	int32 printTextVar13;
+	uint8 buf1[256];
+	uint8 buf2[256];
+	uint8 *printText8Ptr1;
+	uint8 *printText8Ptr2;
+	int32 printText8Var1;
+	int32 printText8Var2;
+	int32 printText8Var3;
+	int32 TEXT_CurrentLetterX;
+	int32 printText8Var5;
+	int32 printText8Var6;
+	int32 TEXT_CurrentLetterY;
+	uint8 *printText8Var8;
+	int32 newGameVar4;
+	int32 newGameVar5;
+	int32 hasHiddenVox; // printTextVar5
+	int32 voxHiddenIndex;
+	int32 printText10Var1;
+	int32 addLineBreakX;
+	int16 pt8s4[96];
+	int32 printText8PrepareBufferVar2;
 
-/** Initialize dialogue
+	int32 currDialTextEntry; // ordered entry
+	int32 nextDialTextEntry; // ordered entry
+	char currentVoxBankFile[256];
+
+	int32 showDialogueBubble;
+
+	/** Initialize dialogue
 	@param bankIdx Text bank index*/
-void initTextBank(int32 bankIdx);
+	void initTextBank(int32 bankIdx);
 
-/** Display a certain dialogue text in the screen
+	/** Display a certain dialogue text in the screen
 	@param x X coordinate in screen
 	@param y Y coordinate in screen
 	@param dialogue ascii text to display */
-void drawText(int32 x, int32 y, int8 *dialogue);
+	void drawText(int32 x, int32 y, int8 *dialogue);
 
-void drawTextFullscreen(int32 index);
+	void drawTextFullscreen(int32 index);
 
-/** Gets dialogue text width size
+	/** Gets dialogue text width size
 	@param dialogue ascii text to display */
-int32 getTextSize(int8 *dialogue);
+	int32 getTextSize(int8 *dialogue);
 
-void initDialogueBox();
-void initInventoryDialogueBox();
+	void initDialogueBox();
+	void initInventoryDialogueBox();
 
-void initText(int32 index);
-int printText10();
+	void initText(int32 index);
+	int printText10();
 
-void setFont(uint8 *font, int32 spaceBetween, int32 charSpace);
+	void setFont(uint8 *font, int32 spaceBetween, int32 charSpace);
 
-/** Set font type parameters
+	/** Set font type parameters
 	@param spaceBetween number in pixels of space between characters
 	@param charSpace number in pixels of the character space */
-void setFontParameters(int32 spaceBetween, int32 charSpace);
+	void setFontParameters(int32 spaceBetween, int32 charSpace);
 
-/** Set the font cross color
+	/** Set the font cross color
 	@param color color number to choose */
-void setFontCrossColor(int32 color);
+	void setFontCrossColor(int32 color);
 
-/** Set the font color
+	/** Set the font color
 	@param color color number to choose */
-void setFontColor(int32 color);
+	void setFontColor(int32 color);
 
-/** Set font color parameters to precess cross color display
+	/** Set font color parameters to precess cross color display
 	@param stopColor color number to stop
 	@param startColor color number to start
 	@param stepSize step size to change between those colors */
-void setTextCrossColor(int32 stopColor, int32 startColor, int32 stepSize);
+	void setTextCrossColor(int32 stopColor, int32 startColor, int32 stepSize);
 
-/** Get dialogue text into text buffer
+	/** Get dialogue text into text buffer
 	@param index dialogue index */
-int32 getText(int32 index);
+	int32 getText(int32 index);
 
-/** Gets menu dialogue text
+	/** Gets menu dialogue text
 	@param index text index to display
 	@param dialogue dialogue text buffer to display */
-void getMenuText(int32 index, int8 *text);
+	void getMenuText(int32 index, int8 *text);
 
-void textClipFull();
-void textClipSmall();
+	void textClipFull();
+	void textClipSmall();
 
-void drawAskQuestion(int32 index);
+	void drawAskQuestion(int32 index);
 
-int32 playVox(int32 index);
-int32 playVoxSimple(int32 index);
-void stopVox(int32 index);
-int32 initVoxToPlay(int32 index);
+	int32 playVox(int32 index);
+	int32 playVoxSimple(int32 index);
+	void stopVox(int32 index);
+	int32 initVoxToPlay(int32 index);
+};
 
 } // namespace TwinE
 
