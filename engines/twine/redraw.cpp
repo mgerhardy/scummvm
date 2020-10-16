@@ -818,7 +818,7 @@ void Redraw::zoomScreenScale() {
 		//dest += SCREEN_WIDTH;
 	}
 	_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
-	//free(zoomWorkVideoBuffer);
+	free(zoomWorkVideoBuffer);
 }
 
 } // namespace TwinE
