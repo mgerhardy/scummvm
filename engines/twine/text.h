@@ -123,7 +123,7 @@ public:
 	@param x X coordinate in screen
 	@param y Y coordinate in screen
 	@param dialogue ascii text to display */
-	void drawText(int32 x, int32 y, int8 *dialogue);
+	void drawText(int32 x, int32 y, const int8 *dialogue);
 
 	void drawTextFullscreen(int32 index);
 

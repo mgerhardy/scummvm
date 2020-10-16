@@ -22,6 +22,7 @@
 
 #include <math.h>
 
+#include "common/scummsys.h"
 #include "hqrdepack.h"
 #include "interface.h"
 #include "keyboard.h"
@@ -186,7 +187,7 @@ void Text::drawCharacter(int32 x, int32 y, uint8 character) { // drawCharacter
 	uint8 param1;
 	uint8 param2;
 	uint8 *data;
-	uint8 *screen;
+	uint8 *screen2;
 
 	// int temp=0;
 	int32 toNextLine;
@@ -215,7 +216,7 @@ void Text::drawCharacter(int32 x, int32 y, uint8 character) { // drawCharacter
 
 	usedColor = dialTextColor;
 
-	screen = _engine->frontVideoBuffer + _engine->screenLookupTable[y] + x;
+	screen2 = _engine->frontVideoBuffer + _engine->screenLookupTable[y] + x;
 
 	tempX = x;
 	tempY = y;
@@ -226,10 +227,10 @@ void Text::drawCharacter(int32 x, int32 y, uint8 character) { // drawCharacter
 		index = *(data++);
 		do {
 			jump = *(data++);
-			screen += jump;
+			screen2 += jump;
 			tempX += jump;
 			if (--index == 0) {
-				screen += toNextLine;
+				screen2 += toNextLine;
 				tempY++;
 				tempX = x;
 				sizeY--;
@@ -243,12 +244,12 @@ void Text::drawCharacter(int32 x, int32 y, uint8 character) { // drawCharacter
 					if (tempX >= SCREEN_TEXTLIMIT_LEFT && tempX < SCREEN_TEXTLIMIT_RIGHT && tempY >= SCREEN_TEXTLIMIT_TOP && tempY < SCREEN_TEXTLIMIT_BOTTOM)
 						_engine->frontVideoBuffer[SCREEN_WIDTH * tempY + tempX] = usedColor;
 
-					screen++;
+					screen2++;
 					tempX++;
 				}
 
 				if (--index == 0) {
-					screen += toNextLine;
+					screen2 += toNextLine;
 					tempY++;
 					tempX = x;
 
@@ -294,7 +295,7 @@ void Text::drawCharacterShadow(int32 x, int32 y, uint8 character, int32 color) {
 	@param x X coordinate in screen
 	@param y Y coordinate in screen
 	@param dialogue ascii text to display */
-void Text::drawText(int32 x, int32 y, int8 *dialogue) { // Font
+void Text::drawText(int32 x, int32 y, const int8 *dialogue) { // Font
 	uint8 currChar;
 
 	if (fontPtr == 0) // if the font is not defined

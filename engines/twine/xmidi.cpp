@@ -21,6 +21,7 @@
  */
 
 #include "xmidi.h"
+#include "common/util.h"
 #include "twine.h"
 
 #include <stdio.h>
@@ -28,10 +29,6 @@
 #include <string.h>
 
 namespace TwinE {
-
-//#define warning(...) if (cfgfile.Debug) { fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); }
-//#define info(...) if (cfgfile.Debug) { fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); }
-#define ARRAYSIZE(x) ((int)(sizeof(x) / sizeof(x[0])))
 
 /**
  * Provides comprehensive information on the next event in the MIDI stream.
@@ -193,7 +190,7 @@ static void save_event(struct EventInfo *info, uint32 current_time) {
 	uint32 delta = info->length;
 	struct CachedEvent *prev, *next, *temp;
 
-	temp = malloc(sizeof(struct CachedEvent));
+	temp = (struct CachedEvent *)malloc(sizeof(struct CachedEvent));
 	temp->eventInfo = info;
 	temp->time = current_time + delta;
 	temp->next = NULL;
@@ -263,7 +260,7 @@ static int32 read_event_info(uint8 *data, struct EventInfo *info, uint32 current
 			info->length = 0;
 		} else {
 			//info("Found Note On with duration %X. Saving a Note Off for later", info->length);
-			injectedEvent = malloc(sizeof(struct EventInfo));
+			injectedEvent = (struct EventInfo *)malloc(sizeof(struct EventInfo));
 			injectedEvent->event = 0x80 | (info->event & 0x0f);
 			injectedEvent->basic.param1 = info->basic.param1;
 			injectedEvent->basic.param2 = info->basic.param2;
@@ -738,7 +735,7 @@ uint32 convert_to_midi(uint8 *data, uint32 size, uint8 **dest) {
 	}
 
 	//info("Allocating %d bytes of memory", len);
-	d = malloc(len + 14);
+	d = (uint8 *)malloc(len + 14);
 	if (!d) {
 		perror("Could not allocate memory");
 		return 0;

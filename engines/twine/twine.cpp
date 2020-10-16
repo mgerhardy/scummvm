@@ -31,8 +31,8 @@
 #include "animations.h"
 #include "common/debug.h"
 #include "common/error.h"
+#include "common/system.h"
 #include "common/textconsole.h"
-#include "fcaseopen.h"
 #include "flamovies.h"
 #include "gamestate.h"
 #include "grid.h"
@@ -197,7 +197,8 @@ int TwinEEngine::getConfigTypeIndex(int8 *lineBuffer) {
 		*ptr = 0;
 	}
 
-	for (i = 0; i < (sizeof(CFGList) / 22); i++) {
+	const int32 length = sizeof(CFGList) / 22;
+	for (i = 0; i < length; i++) {
 		if (strlen(CFGList[i])) {
 			if (!strcmp(CFGList[i], buffer)) {
 				return i;
@@ -224,7 +225,8 @@ int TwinEEngine::getLanguageTypeIndex(int8 *language) {
 		*ptr = 0;
 	}
 
-	for (i = 0; i < (sizeof(LanguageTypes) / 10); i++) {
+	const int32 length = sizeof(LanguageTypes) / 10;
+	for (i = 0; i < length; i++) {
 		if (strlen(LanguageTypes[i])) {
 			if (!strcmp(LanguageTypes[i], buffer)) {
 				return i;
@@ -774,11 +776,11 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 		if (loopCurrentKey == 0x19) {
 			freezeTime();
 			_text->setFontColor(15);
-			_text->drawText(5, 446, (int8 *)"Pause"); // no key for pause in Text Bank
+			_text->drawText(5, 446, (const int8*)"Pause"); // no key for pause in Text Bank
 			copyBlockPhys(5, 446, 100, 479);
 			do {
 				readKeys();
-				SDL_Delay(10);
+				g_system->delayMillis(10);
 			} while (skipIntro != 0x19 && !pressedKey);
 			unfreezeTime();
 			_redraw->redrawEngineActions(1);
@@ -988,12 +990,12 @@ int32 TwinEEngine::gameEngineLoop() { // mainLoop
 	_movements->setActorAngle(0, -256, 5, &loopMovePtr);
 
 	while (quitGame == -1) {
-		start = SDL_GetTicks();
+		start = g_system->getMillis();
 
-		while (SDL_GetTicks() < start + cfgfile.Fps) {
+		while (g_system->getMillis() < start + cfgfile.Fps) {
 			if (runGameEngine())
 				return 1;
-			SDL_Delay(1);
+			g_system->delayMillis(10);
 		}
 		lbaTime++;
 	}
