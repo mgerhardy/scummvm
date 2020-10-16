@@ -20,10 +20,6 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include <SDL.h>
 #include <SDL_mixer.h>
 
@@ -31,12 +27,12 @@
 #include "common/debug.h"
 #include "common/system.h"
 #include "common/textconsole.h"
-#include "hqrdepack.h"
-#include "music.h"
-#include "resources.h"
-#include "sdlengine.h"
-#include "twine.h"
-#include "xmidi.h"
+#include "twine/hqrdepack.h"
+#include "twine/music.h"
+#include "twine/resources.h"
+#include "twine/sdlengine.h"
+#include "twine/twine.h"
+#include "twine/xmidi.h"
 
 namespace TwinE {
 

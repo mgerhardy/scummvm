@@ -24,7 +24,7 @@
 #define TWINE_GRID_H
 
 #include "common/scummsys.h"
-#include "actor.h"
+#include "twine/actor.h"
 
 namespace TwinE {
 

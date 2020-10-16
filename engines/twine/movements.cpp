@@ -20,20 +20,17 @@
  *
  */
 
-#include <math.h>
-#include <stdio.h>
-
-#include "actor.h"
-#include "animations.h"
-#include "collision.h"
+#include "twine/actor.h"
+#include "twine/animations.h"
+#include "twine/collision.h"
 #include "common/textconsole.h"
-#include "gamestate.h"
-#include "grid.h"
-#include "keyboard.h"
-#include "movements.h"
-#include "renderer.h"
-#include "scene.h"
-#include "twine.h"
+#include "twine/gamestate.h"
+#include "twine/grid.h"
+#include "twine/keyboard.h"
+#include "twine/movements.h"
+#include "twine/renderer.h"
+#include "twine/scene.h"
+#include "twine/twine.h"
 
 namespace TwinE {
 

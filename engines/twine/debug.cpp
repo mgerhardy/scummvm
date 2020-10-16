@@ -20,18 +20,18 @@
  *
  */
 
-#include "debug.h"
+#include "twine/debug.h"
 
 #ifdef GAMEMOD
-#include "debug.grid.h"
-#include "debug.scene.h"
-#include "interface.h"
-#include "menu.h"
-#include "redraw.h"
-#include "scene.h"
-#include "screens.h"
-#include "sdlengine.h"
-#include "text.h"
+#include "twine/debug.grid.h"
+#include "twine/debug.scene.h"
+#include "twine/interface.h"
+#include "twine/menu.h"
+#include "twine/redraw.h"
+#include "twine/scene.h"
+#include "twine/screens.h"
+#include "twine/sdlengine.h"
+#include "twine/text.h"
 
 namespace TwinE {
 

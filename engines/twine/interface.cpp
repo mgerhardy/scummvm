@@ -20,9 +20,9 @@
  *
  */
 
-#include "interface.h"
-#include "sdlengine.h"
-#include "twine.h"
+#include "twine/interface.h"
+#include "twine/sdlengine.h"
+#include "twine/twine.h"
 
 namespace TwinE {
 

@@ -20,13 +20,13 @@
  *
  */
 
-#include "resources.h"
-#include "animations.h"
-#include "scene.h"
-#include "screens.h"
-#include "sdlengine.h"
-#include "sound.h"
-#include "text.h"
+#include "twine/resources.h"
+#include "twine/animations.h"
+#include "twine/scene.h"
+#include "twine/screens.h"
+#include "twine/sdlengine.h"
+#include "twine/sound.h"
+#include "twine/text.h"
 
 namespace TwinE {
 

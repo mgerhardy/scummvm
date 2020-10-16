@@ -20,20 +20,15 @@
  *
  */
 
-#include <assert.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "common/textconsole.h"
-#include "interface.h"
-#include "menu.h"
-#include "movements.h"
-#include "redraw.h"
-#include "renderer.h"
-#include "sdlengine.h"
-#include "shadeangletab.h"
-#include "twine.h"
+#include "twine/interface.h"
+#include "twine/menu.h"
+#include "twine/movements.h"
+#include "twine/redraw.h"
+#include "twine/renderer.h"
+#include "twine/sdlengine.h"
+#include "twine/shadeangletab.h"
+#include "twine/twine.h"
 
 namespace TwinE {
 

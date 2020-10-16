@@ -48,7 +48,7 @@
 #include "engines/advancedDetector.h"
 #include "base/plugins.h"
 
-#include "twine.h"
+#include "twine/twine.h"
 
 class TwinEMetaEngine : public AdvancedMetaEngine {
 public:

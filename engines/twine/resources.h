@@ -24,8 +24,8 @@
 #define TWINE_RESOURCES_H
 
 #include "common/scummsys.h"
-#include "gamestate.h"
-#include "hqrdepack.h"
+#include "twine/gamestate.h"
+#include "twine/hqrdepack.h"
 
 namespace TwinE {
 

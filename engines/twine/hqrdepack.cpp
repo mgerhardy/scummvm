@@ -20,13 +20,9 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "common/system.h"
 #include "common/textconsole.h"
-#include "hqrdepack.h"
+#include "twine/hqrdepack.h"
 
 namespace TwinE {
 

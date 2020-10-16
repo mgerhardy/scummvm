@@ -24,7 +24,7 @@
 #define TWINE_SCREENS_H
 
 #include "common/scummsys.h"
-#include "twine.h"
+#include "twine/twine.h"
 
 namespace TwinE {
 

@@ -22,9 +22,6 @@
 
 #include "common/debug.h"
 #include "common/textconsole.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #if 0
 #include <SDL.h>
@@ -35,13 +32,13 @@
 #endif
 #endif
 
-#include "debug.h"
-#include "keyboard.h"
-#include "music.h"
-#include "redraw.h"
-#include "screens.h"
-#include "sdlengine.h"
-#include "twine.h"
+#include "twine/debug.h"
+#include "twine/keyboard.h"
+#include "twine/music.h"
+#include "twine/redraw.h"
+#include "twine/screens.h"
+#include "twine/sdlengine.h"
+#include "twine/twine.h"
 
 namespace TwinE {
 

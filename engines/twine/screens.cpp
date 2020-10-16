@@ -20,16 +20,12 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "hqrdepack.h"
-#include "music.h"
-#include "resources.h"
-#include "screens.h"
-#include "sdlengine.h"
-#include "twine.h"
+#include "twine/hqrdepack.h"
+#include "twine/music.h"
+#include "twine/resources.h"
+#include "twine/screens.h"
+#include "twine/sdlengine.h"
+#include "twine/twine.h"
 
 namespace TwinE {
 

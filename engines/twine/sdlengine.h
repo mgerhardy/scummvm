@@ -24,7 +24,7 @@
 #define TWINE_SDLENGINE_H
 
 #include "common/scummsys.h"
-#include "debug.h"
+#include "twine/debug.h"
 
 namespace TwinE {
 

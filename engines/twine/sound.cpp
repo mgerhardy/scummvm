@@ -22,15 +22,15 @@
 
 #include <SDL_mixer.h>
 
-#include "collision.h"
-#include "flamovies.h"
-#include "grid.h"
-#include "hqrdepack.h"
-#include "movements.h"
-#include "resources.h"
-#include "sound.h"
-#include "text.h"
-#include "twine.h"
+#include "twine/collision.h"
+#include "twine/flamovies.h"
+#include "twine/grid.h"
+#include "twine/hqrdepack.h"
+#include "twine/movements.h"
+#include "twine/resources.h"
+#include "twine/sound.h"
+#include "twine/text.h"
+#include "twine/twine.h"
 
 namespace TwinE {
 

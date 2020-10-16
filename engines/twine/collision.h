@@ -24,7 +24,7 @@
 #define TWINE_COLLISION_H
 
 #include "common/scummsys.h"
-#include "extra.h"
+#include "twine/extra.h"
 
 namespace TwinE {
 

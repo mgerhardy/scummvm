@@ -20,19 +20,19 @@
  *
  */
 
-#include "menuoptions.h"
-#include "flamovies.h"
-#include "gamestate.h"
-#include "interface.h"
-#include "keyboard.h"
-#include "menu.h"
-#include "music.h"
-#include "resources.h"
-#include "scene.h"
-#include "screens.h"
-#include "sdlengine.h"
-#include "text.h"
-#include "twine.h"
+#include "twine/menuoptions.h"
+#include "twine/flamovies.h"
+#include "twine/gamestate.h"
+#include "twine/interface.h"
+#include "twine/keyboard.h"
+#include "twine/menu.h"
+#include "twine/music.h"
+#include "twine/resources.h"
+#include "twine/scene.h"
+#include "twine/screens.h"
+#include "twine/sdlengine.h"
+#include "twine/text.h"
+#include "twine/twine.h"
 
 namespace TwinE {
 

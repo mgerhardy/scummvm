@@ -23,10 +23,6 @@
 #ifndef TWINE_FILEREADER_H
 #define TWINE_FILEREADER_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "common/file.h"
 #include "common/scummsys.h"
 

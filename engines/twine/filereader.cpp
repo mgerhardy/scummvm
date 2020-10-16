@@ -22,9 +22,8 @@
 
 #define FORBIDDEN_SYMBOL_ALLOW_ALL
 
-#include "filereader.h"
-#include "fcaseopen.h"
-#include <ctype.h>
+#include "twine/filereader.h"
+#include "twine/fcaseopen.h"
 
 namespace TwinE {
 

@@ -20,13 +20,13 @@
  *
  */
 
-#include "debug.scene.h"
-#include "grid.h"
-#include "interface.h"
-#include "redraw.h"
-#include "renderer.h"
-#include "scene.h"
-#include "twine.h"
+#include "twine/debug.scene.h"
+#include "twine/grid.h"
+#include "twine/interface.h"
+#include "twine/redraw.h"
+#include "twine/renderer.h"
+#include "twine/scene.h"
+#include "twine/twine.h"
 
 namespace TwinE {
 

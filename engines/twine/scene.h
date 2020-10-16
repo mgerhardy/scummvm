@@ -23,7 +23,7 @@
 #ifndef TWINE_SCENE_H
 #define TWINE_SCENE_H
 
-#include "actor.h"
+#include "twine/actor.h"
 #include "common/scummsys.h"
 
 namespace TwinE {

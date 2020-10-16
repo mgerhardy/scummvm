@@ -20,29 +20,26 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
-
-#include "actor.h"
-#include "animations.h"
-#include "collision.h"
-#include "flamovies.h"
-#include "gamestate.h"
-#include "grid.h"
-#include "holomap.h"
-#include "interface.h"
-#include "keyboard.h"
-#include "movements.h"
-#include "music.h"
-#include "redraw.h"
-#include "renderer.h"
-#include "resources.h"
-#include "scene.h"
-#include "screens.h"
-#include "script.life.h"
-#include "sdlengine.h"
-#include "sound.h"
-#include "text.h"
+#include "twine/actor.h"
+#include "twine/animations.h"
+#include "twine/collision.h"
+#include "twine/flamovies.h"
+#include "twine/gamestate.h"
+#include "twine/grid.h"
+#include "twine/holomap.h"
+#include "twine/interface.h"
+#include "twine/keyboard.h"
+#include "twine/movements.h"
+#include "twine/music.h"
+#include "twine/redraw.h"
+#include "twine/renderer.h"
+#include "twine/resources.h"
+#include "twine/scene.h"
+#include "twine/screens.h"
+#include "twine/script.life.h"
+#include "twine/sdlengine.h"
+#include "twine/sound.h"
+#include "twine/text.h"
 
 namespace TwinE {
 

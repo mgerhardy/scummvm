@@ -20,9 +20,9 @@
  *
  */
 
-#include "holomap.h"
-#include "gamestate.h"
-#include "twine.h"
+#include "twine/holomap.h"
+#include "twine/gamestate.h"
+#include "twine/twine.h"
 
 namespace TwinE {
 

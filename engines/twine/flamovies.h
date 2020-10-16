@@ -24,7 +24,7 @@
 #define TWINE_FLAMOVIES_H
 
 #include "common/scummsys.h"
-#include "filereader.h"
+#include "twine/filereader.h"
 
 namespace TwinE {
 

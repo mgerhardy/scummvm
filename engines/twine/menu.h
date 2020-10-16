@@ -23,8 +23,8 @@
 #ifndef TWINE_MENU_H
 #define TWINE_MENU_H
 
-#include "actor.h"
-#include "sdlengine.h"
+#include "twine/actor.h"
+#include "twine/sdlengine.h"
 
 namespace TwinE {
 

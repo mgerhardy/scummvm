@@ -20,13 +20,9 @@
  *
  */
 
-#include "xmidi.h"
+#include "twine/xmidi.h"
 #include "common/util.h"
-#include "twine.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "twine/twine.h"
 
 namespace TwinE {
 

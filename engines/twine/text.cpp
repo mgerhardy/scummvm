@@ -20,20 +20,18 @@
  *
  */
 
-#include <math.h>
-
 #include "common/scummsys.h"
-#include "hqrdepack.h"
-#include "interface.h"
-#include "keyboard.h"
-#include "menu.h"
-#include "renderer.h"
-#include "resources.h"
-#include "screens.h"
-#include "sdlengine.h"
-#include "sound.h"
-#include "text.h"
-#include "twine.h"
+#include "twine/hqrdepack.h"
+#include "twine/interface.h"
+#include "twine/keyboard.h"
+#include "twine/menu.h"
+#include "twine/renderer.h"
+#include "twine/resources.h"
+#include "twine/screens.h"
+#include "twine/sdlengine.h"
+#include "twine/sound.h"
+#include "twine/text.h"
+#include "twine/twine.h"
 
 namespace TwinE {
 

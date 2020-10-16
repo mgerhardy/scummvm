@@ -20,21 +20,19 @@
  *
  */
 
-#include <stdio.h>
-
-#include "collision.h"
+#include "twine/collision.h"
 #include "common/util.h"
-#include "extra.h"
-#include "gamestate.h"
-#include "grid.h"
-#include "interface.h"
-#include "movements.h"
-#include "redraw.h"
-#include "renderer.h"
-#include "resources.h"
-#include "scene.h"
-#include "sound.h"
-#include "twine.h"
+#include "twine/extra.h"
+#include "twine/gamestate.h"
+#include "twine/grid.h"
+#include "twine/interface.h"
+#include "twine/movements.h"
+#include "twine/redraw.h"
+#include "twine/renderer.h"
+#include "twine/resources.h"
+#include "twine/scene.h"
+#include "twine/sound.h"
+#include "twine/twine.h"
 
 namespace TwinE {
 

@@ -20,7 +20,7 @@
  *
  */
 
-#include "actor.h"
+#include "twine/actor.h"
 #include "common/scummsys.h"
 
 #ifndef TWINE_EXTRA_H

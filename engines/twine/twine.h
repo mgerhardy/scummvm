@@ -26,7 +26,7 @@
 #include "common/random.h"
 #include "engines/engine.h"
 
-#include "actor.h"
+#include "twine/actor.h"
 
 namespace TwinE {
 

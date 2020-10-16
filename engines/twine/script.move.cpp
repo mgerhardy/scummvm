@@ -20,17 +20,17 @@
  *
  */
 
-#include "script.move.h"
-#include "actor.h"
-#include "animations.h"
+#include "twine/script.move.h"
+#include "twine/actor.h"
+#include "twine/animations.h"
 #include "common/textconsole.h"
 #include "common/util.h"
-#include "movements.h"
-#include "redraw.h"
-#include "renderer.h"
-#include "scene.h"
-#include "sound.h"
-#include "twine.h"
+#include "twine/movements.h"
+#include "twine/redraw.h"
+#include "twine/renderer.h"
+#include "twine/scene.h"
+#include "twine/sound.h"
+#include "twine/twine.h"
 
 namespace TwinE {
 
