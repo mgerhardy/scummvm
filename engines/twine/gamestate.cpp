@@ -206,12 +206,12 @@ void GameState::loadGame() {
 	_engine->_actor->previousHeroAngle = _engine->_scene->sceneHero->angle;
 	frread(&fr, &_engine->_scene->sceneHero->body, 1);
 
-	frread(&fr, &data, 1); // number of holomap locations, always 0x96
+	frread(&fr, &data, 1); // number of holomap locations, always 150
 	frread(&fr, holomapFlags, data);
 
 	frread(&fr, &inventoryNumGas, 1);
 
-	frread(&fr, &data, 1); // number of used inventory items, always 0x1C
+	frread(&fr, &data, 1); // number of used inventory items, always 28
 	frread(&fr, inventoryFlags, data);
 
 	frread(&fr, &inventoryNumLeafs, 1);
@@ -256,13 +256,13 @@ void GameState::saveGame() {
 	frwrite(&fr, &_engine->_scene->sceneHero->angle, 2, 1);
 	frwrite(&fr, &_engine->_scene->sceneHero->body, 1, 1);
 
-	data = 0x96; // number of holomap locations
+	data = 150; // number of holomap locations
 	frwrite(&fr, &data, 1, 1);
 	frwrite(&fr, holomapFlags, 150, 1);
 
 	frwrite(&fr, &inventoryNumGas, 1, 1);
 
-	data = 0x1C; // number of inventory items
+	data = 28; // number of inventory items
 	frwrite(&fr, &data, 1, 1);
 	frwrite(&fr, inventoryFlags, 28, 1);
 

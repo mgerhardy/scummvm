@@ -23,7 +23,6 @@
 #define FORBIDDEN_SYMBOL_ALLOW_ALL
 
 #include "twine/filereader.h"
-#include "twine/fcaseopen.h"
 
 namespace TwinE {
 
@@ -82,7 +81,7 @@ void frseek(FileReader *fr, uint32 seekPosition) {
 }
 
 int32 fropen2(FileReader *fr, const char *filename, const char *mode) {
-	fr->fd = fcaseopen(filename, mode);
+	fr->fd = fopen(filename, mode);
 
 	if (fr->fd) {
 		fr->currSector = 0;
