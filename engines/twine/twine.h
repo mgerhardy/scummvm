@@ -191,17 +191,29 @@ public:
 	int32 isTimeFreezed = 0;
 	int32 saveFreezedTime = 0;
 
+	/** Initialize LBA engine */
 	void initEngine();
 	void initMCGA();
 	void initSVGA();
 
 	int8 *ITOA(int32 number);
+	/** Init configuration file \a lba.cfg */
 	void initConfigurations();
+	/** Initialize all needed stuffs at first time running engine */
 	void initAll();
+	/** Gets configuration type index from lba.cfg config file
+	@param lineBuffer buffer with config line
+	@return config type index */
 	int getLanguageTypeIndex(int8 *language);
+	/** Gets configuration type index from lba.cfg config file
+	@param lineBuffer buffer with config line
+	@return config type index */
 	int getConfigTypeIndex(int8 *lineBuffer);
 	void processActorSamplePosition(int32 actorIdx);
+	/** Game engine main loop
+	@return true if we want to show credit sequence */
 	int32 runGameEngine();
+	/** Allocate video memory, both front and back buffers */
 	void allocVideoMemory();
 	int getRandomNumber(uint max = 0x7FFF);
 	int32 quitGame;
@@ -237,7 +249,9 @@ public:
 	void freezeTime();
 	void unfreezeTime();
 
-	int32 gameEngineLoop();
+	/** Game engine main loop
+	@return true if we want to show credit sequence */
+	bool gameEngineLoop();
 
 	Common::RandomSource _rnd;
 	Common::Language _gameLang;

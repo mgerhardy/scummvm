@@ -21,26 +21,27 @@
  */
 
 #include "twine/twine.h"
-#include "twine/actor.h"
 #include "common/debug.h"
 #include "common/error.h"
 #include "common/system.h"
 #include "common/textconsole.h"
-#include "twine/flamovies.h"
-#include "twine/holomap.h"
-#include "twine/music.h"
+#include "twine/actor.h"
 #include "twine/animations.h"
 #include "twine/collision.h"
 #include "twine/debug_grid.h"
 #include "twine/extra.h"
+#include "twine/filereader.h"
+#include "twine/flamovies.h"
 #include "twine/gamestate.h"
 #include "twine/grid.h"
+#include "twine/holomap.h"
 #include "twine/hqrdepack.h"
 #include "twine/interface.h"
 #include "twine/keyboard.h"
 #include "twine/menu.h"
 #include "twine/menuoptions.h"
 #include "twine/movements.h"
+#include "twine/music.h"
 #include "twine/redraw.h"
 #include "twine/renderer.h"
 #include "twine/resources.h"
@@ -51,7 +52,6 @@
 #include "twine/sdlengine.h"
 #include "twine/sound.h"
 #include "twine/text.h"
-#include "twine/filereader.h"
 
 #ifdef GAMEMOD
 #include "debug.h"
@@ -140,17 +140,15 @@ static char LanguageTypes[][10] = {
     "Italiano",
     "Portugues"};
 
-/** Allocate video memory, both front and back buffers */
 void TwinEEngine::allocVideoMemory() {
-	int32 i, j, k;
-
-	workVideoBuffer = (uint8 *)malloc((SCREEN_WIDTH * SCREEN_HEIGHT) * sizeof(uint8));
-	frontVideoBuffer = frontVideoBufferbis = (uint8 *)malloc(sizeof(uint8) * SCREEN_WIDTH * SCREEN_HEIGHT);
+	const size_t videoBufferSize = (SCREEN_WIDTH * SCREEN_HEIGHT) * sizeof(uint8);
+	workVideoBuffer = (uint8 *)malloc(videoBufferSize);
+	frontVideoBuffer = frontVideoBufferbis = (uint8 *)malloc(videoBufferSize);
 	initScreenBuffer(frontVideoBuffer, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-	j = 0;
-	k = 0;
-	for (i = SCREEN_HEIGHT; i > 0; i--) {
+	int32 j = 0;
+	int32 k = 0;
+	for (int32 i = SCREEN_HEIGHT; i > 0; i--) {
 		screenLookupTable[j] = k;
 		j++;
 		k += SCREEN_WIDTH;
@@ -159,9 +157,6 @@ void TwinEEngine::allocVideoMemory() {
 	// initVideoVar1 = -1;
 }
 
-/** Gets configuration type index from lba.cfg config file
-	@param lineBuffer buffer with config line
-	@return config type index */
 int TwinEEngine::getConfigTypeIndex(int8 *lineBuffer) {
 	int32 i;
 	char buffer[256];
@@ -187,9 +182,6 @@ int TwinEEngine::getConfigTypeIndex(int8 *lineBuffer) {
 	return -1;
 }
 
-/** Gets configuration type index from lba.cfg config file
-	@param lineBuffer buffer with config line
-	@return config type index */
 int TwinEEngine::getLanguageTypeIndex(int8 *language) {
 	int32 i;
 	char buffer[256];
@@ -215,7 +207,6 @@ int TwinEEngine::getLanguageTypeIndex(int8 *language) {
 	return 0; // English
 }
 
-/** Init configuration file \a lba.cfg */
 void TwinEEngine::initConfigurations() {
 	FileReader fr;
 	char buffer[256], tmp[16];
@@ -340,7 +331,6 @@ void TwinEEngine::initConfigurations() {
 		cfgfile.Fps = DEFAULT_FRAMES_PER_SECOND;
 }
 
-/** Initialize LBA engine */
 void TwinEEngine::initEngine() {
 	// getting configuration file
 	initConfigurations();
@@ -394,7 +384,6 @@ void TwinEEngine::initSVGA() {
 	_redraw->drawInGameTransBox = 0;
 }
 
-/** Initialize all needed stuffs at first time running engine */
 void TwinEEngine::initAll() {
 	_grid->blockBuffer = (uint8 *)malloc(64 * 64 * 25 * 2 * sizeof(uint8));
 	_animations->animBuffer1 = _animations->animBuffer2 = (uint8 *)malloc(5000 * sizeof(uint8));
@@ -534,8 +523,6 @@ void TwinEEngine::processActorSamplePosition(int32 actorIdx) {
 	_sound->setSamplePosition(channelIdx, actor->X, actor->Y, actor->Z);
 }
 
-/** Game engine main loop
-	@return true if we want to show credit sequence */
 int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 	int32 a;
 	readKeys();
@@ -754,7 +741,7 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 		if (loopCurrentKey == 0x19) {
 			freezeTime();
 			_text->setFontColor(15);
-			_text->drawText(5, 446, (const int8*)"Pause"); // no key for pause in Text Bank
+			_text->drawText(5, 446, (const int8 *)"Pause"); // no key for pause in Text Bank
 			copyBlockPhys(5, 446, 100, 479);
 			do {
 				readKeys();
@@ -958,9 +945,7 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 	return 0;
 }
 
-/** Game engine main loop
-	@return true if we want to show credit sequence */
-int32 TwinEEngine::gameEngineLoop() { // mainLoop
+bool TwinEEngine::gameEngineLoop() { // mainLoop
 	uint32 start;
 
 	_redraw->reqBgRedraw = 1;
@@ -971,13 +956,14 @@ int32 TwinEEngine::gameEngineLoop() { // mainLoop
 		start = g_system->getMillis();
 
 		while (g_system->getMillis() < start + cfgfile.Fps) {
-			if (runGameEngine())
-				return 1;
+			if (runGameEngine()) {
+				return true;
+			}
 			g_system->delayMillis(10);
 		}
 		lbaTime++;
 	}
-	return 0;
+	return false;
 }
 
 } // namespace TwinE
