@@ -962,6 +962,9 @@ bool TwinEEngine::gameEngineLoop() { // mainLoop
 			g_system->delayMillis(10);
 		}
 		lbaTime++;
+		if (shouldQuit()) {
+			break;
+		}
 	}
 	return false;
 }
