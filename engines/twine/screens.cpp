@@ -214,19 +214,17 @@ void Screens::fadeToPal(uint8 *pal) {
 
 void Screens::blackToWhite() {
 	uint8 pal[NUMOFCOLORS * 4];
-	int32 i;
 
-	i = 256;
-	for (i = 0; i < NUMOFCOLORS; i += 3) {
-		memset(pal, i, 1024);
+	for (int32 i = 0; i < NUMOFCOLORS; i += 3) {
+		memset(pal, i, sizeof(pal));
 
 		setPalette(pal);
 	}
 }
 
 void Screens::setBackPal() {
-	memset(palette, 0, NUMOFCOLORS * 3);
-	memset(paletteRGBA, 0, NUMOFCOLORS * 4);
+	memset(palette, 0, sizeof(palette));
+	memset(paletteRGBA, 0, sizeof(paletteRGBA));
 
 	setPalette(paletteRGBA);
 

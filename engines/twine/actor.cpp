@@ -21,8 +21,9 @@
  */
 
 #include "twine/actor.h"
-#include "twine/animations.h"
+#include "common/system.h"
 #include "common/textconsole.h"
+#include "twine/animations.h"
 #include "twine/extra.h"
 #include "twine/gamestate.h"
 #include "twine/grid.h"
@@ -34,7 +35,6 @@
 #include "twine/screens.h"
 #include "twine/sound.h"
 #include "twine/twine.h"
-#include "common/system.h"
 
 namespace TwinE {
 
@@ -43,8 +43,8 @@ Actor::Actor(TwinEEngine *engine) : _engine(engine) {
 
 void Actor::restartHeroScene() {
 	_engine->_scene->sceneHero->controlMode = 1;
-	memset(&_engine->_scene->sceneHero->dynamicFlags, 0, 2);
-	memset(&_engine->_scene->sceneHero->staticFlags, 0, 2);
+	memset(&_engine->_scene->sceneHero->dynamicFlags, 0, sizeof(_engine->_scene->sceneHero->dynamicFlags));
+	memset(&_engine->_scene->sceneHero->staticFlags, 0, sizeof(_engine->_scene->sceneHero->staticFlags));
 
 	_engine->_scene->sceneHero->staticFlags.bComputeCollisionWithObj = 1;
 	_engine->_scene->sceneHero->staticFlags.bComputeCollisionWithBricks = 1;
@@ -90,8 +90,6 @@ void Actor::loadHeroEntities() {
 }
 
 void Actor::setBehaviour(int32 behaviour) {
-	int32 bodyIdx;
-
 	switch (behaviour) {
 	case kNormal:
 		heroBehaviour = kNormal;
@@ -115,7 +113,7 @@ void Actor::setBehaviour(int32 behaviour) {
 		break;
 	};
 
-	bodyIdx = _engine->_scene->sceneHero->body;
+	const int32 bodyIdx = _engine->_scene->sceneHero->body;
 
 	_engine->_scene->sceneHero->entity = -1;
 	_engine->_scene->sceneHero->body = -1;
@@ -132,7 +130,7 @@ void Actor::initSpriteActor(int32 actorIdx) {
 	ActorStruct *localActor = &_engine->_scene->sceneActors[actorIdx];
 
 	if (localActor->staticFlags.bIsSpriteActor && localActor->sprite != -1 && localActor->entity != localActor->sprite) {
-		int16 *ptr = (int16 *)(_engine->_scene->spriteBoundingBoxPtr + localActor->sprite * 16 + 4);
+		const int16 *ptr = (const int16 *)(_engine->_scene->spriteBoundingBoxPtr + localActor->sprite * 16 + 4);
 
 		localActor->entity = localActor->sprite;
 		localActor->boudingBox.X.bottomLeft = *(ptr++);
@@ -162,8 +160,9 @@ int32 Actor::initBody(int32 bodyIdx, int32 actorIdx) {
 	do {
 		var1 = *(bodyPtr++);
 
-		if (var1 == 0xFF)
+		if (var1 == 0xFF) {
 			return -1;
+		}
 
 		bodyPtr2 = bodyPtr + 1;
 
@@ -196,14 +195,16 @@ int32 Actor::initBody(int32 bodyIdx, int32 actorIdx) {
 				bodyPtr4 = bodyPtr3;
 				bodyPtr3++;
 
-				if (!*bodyPtr4)
+				if (!*bodyPtr4) {
 					return index;
+				}
 
 				bodyPtr4 = bodyPtr3;
 				bodyPtr3++;
 
-				if (*bodyPtr4 != 14)
+				if (*bodyPtr4 != 14) {
 					return index;
+				}
 
 				//				bodyPtr5 = (int16 *) bodyPtr3;
 
@@ -242,8 +243,9 @@ void Actor::initModelActor(int32 bodyIdx, int16 actorIdx) {
 
 	localActor = &_engine->_scene->sceneActors[actorIdx];
 
-	if (localActor->staticFlags.bIsSpriteActor)
+	if (localActor->staticFlags.bIsSpriteActor) {
 		return;
+	}
 
 	if (actorIdx == 0 && heroBehaviour == kProtoPack && localActor->armor != 0 && localActor->armor != 1) { // if hero
 		setBehaviour(kNormal);
@@ -256,8 +258,9 @@ void Actor::initModelActor(int32 bodyIdx, int16 actorIdx) {
 	}
 
 	if (entityIdx != -1) {
-		if (localActor->entity == entityIdx)
+		if (localActor->entity == entityIdx) {
 			return;
+		}
 
 		localActor->entity = entityIdx;
 		localActor->body = bodyIdx;
@@ -396,8 +399,8 @@ void Actor::resetActor(int16 actorIdx) {
 	actor->standOn = -1;
 	actor->zone = -1;
 
-	memset(&actor->staticFlags, 0, 2);
-	memset(&actor->dynamicFlags, 0, 2);
+	memset(&actor->staticFlags, 0, sizeof(StaticFlagsStruct));
+	memset(&actor->dynamicFlags, 0, sizeof(DynamicFlagsStruct));
 
 	actor->life = 50;
 	actor->armor = 1;
@@ -428,8 +431,7 @@ void Actor::hitActor(int32 actorIdx, int32 actorIdxAttacked, int32 strengthOfHit
 
 	if (actor->armor <= strengthOfHit) {
 		if (actor->anim == kBigHit || actor->anim == kHit2) {
-			int32 tmpAnimPos;
-			tmpAnimPos = actor->animPosition;
+			const int32 tmpAnimPos = actor->animPosition;
 			if (actor->animExtra) {
 				_engine->_animations->processAnimActions(actorIdxAttacked);
 			}
@@ -464,50 +466,49 @@ void Actor::hitActor(int32 actorIdx, int32 actorIdxAttacked, int32 strengthOfHit
 }
 
 void Actor::processActorCarrier(int32 actorIdx) { // CheckCarrier
-	int32 a;
 	ActorStruct *actor = &_engine->_scene->sceneActors[actorIdx];
-
-	if (actor->staticFlags.bIsCarrierActor) {
-		for (a = 0; a < _engine->_scene->sceneNumActors; a++) {
-			if (actor->standOn == actorIdx) {
-				actor->standOn = -1;
-			}
+	if (!actor->staticFlags.bIsCarrierActor) {
+		return;
+	}
+	for (int32 a = 0; a < _engine->_scene->sceneNumActors; a++) {
+		if (actor->standOn == actorIdx) {
+			actor->standOn = -1;
 		}
 	}
 }
 
-/** Process actor extra bonus */
 void Actor::processActorExtraBonus(int32 actorIdx) { // GiveExtraBonus
-	int32 a, numBonus;
-	int8 bonusTable[8], currentBonus;
 	ActorStruct *actor = &_engine->_scene->sceneActors[actorIdx];
 
-	numBonus = 0;
+	int32 numBonus = 0;
 
-	for (a = 0; a < 5; a++) {
+	int8 bonusTable[8];
+	for (int32 a = 0; a < 5; a++) {
 		if (actor->bonusParameter & (1 << (a + 4))) {
 			bonusTable[numBonus++] = a;
 		}
 	}
 
-	if (numBonus) {
-		currentBonus = bonusTable[_engine->getRandomNumber(numBonus)];
-		// if bonus is magic an no magic level yet, then give life points
-		if (!_engine->_gameState->magicLevelIdx && currentBonus == 2) {
-			currentBonus = 1;
-		}
-		currentBonus += 3;
+	if (numBonus == 0) {
+		return;
+	}
 
-		if (actor->dynamicFlags.bIsDead) {
-			_engine->_extra->addExtraBonus(actor->X, actor->Y, actor->Z, 0x100, 0, currentBonus, actor->bonusAmount);
-			// FIXME add constant for sample index
-			_engine->_sound->playSample(11, 0x1000, 1, actor->X, actor->Y, actor->Z, actorIdx);
-		} else {
-			int32 angle = _engine->_movements->getAngleAndSetTargetActorDistance(actor->X, actor->Z, _engine->_scene->sceneHero->X, _engine->_scene->sceneHero->Z);
-			_engine->_extra->addExtraBonus(actor->X, actor->Y + actor->boudingBox.Y.topRight, actor->Z, 200, angle, currentBonus, actor->bonusAmount);
-			// FIXME add constant for sample index
-			_engine->_sound->playSample(11, 0x1000, 1, actor->X, actor->Y + actor->boudingBox.Y.topRight, actor->Z, actorIdx);
-		}
+	int8 currentBonus = bonusTable[_engine->getRandomNumber(numBonus)];
+	// if bonus is magic an no magic level yet, then give life points
+	if (!_engine->_gameState->magicLevelIdx && currentBonus == 2) {
+		currentBonus = 1;
+	}
+	currentBonus += 3;
+
+	if (actor->dynamicFlags.bIsDead) {
+		_engine->_extra->addExtraBonus(actor->X, actor->Y, actor->Z, 0x100, 0, currentBonus, actor->bonusAmount);
+		// FIXME add constant for sample index
+		_engine->_sound->playSample(11, 0x1000, 1, actor->X, actor->Y, actor->Z, actorIdx);
+	} else {
+		int32 angle = _engine->_movements->getAngleAndSetTargetActorDistance(actor->X, actor->Z, _engine->_scene->sceneHero->X, _engine->_scene->sceneHero->Z);
+		_engine->_extra->addExtraBonus(actor->X, actor->Y + actor->boudingBox.Y.topRight, actor->Z, 200, angle, currentBonus, actor->bonusAmount);
+		// FIXME add constant for sample index
+		_engine->_sound->playSample(11, 0x1000, 1, actor->X, actor->Y + actor->boudingBox.Y.topRight, actor->Z, actorIdx);
 	}
 }
 
