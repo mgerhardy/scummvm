@@ -163,7 +163,7 @@ int32 Actor::initBody(int32 bodyIdx, int32 actorIdx) {
 		var1 = *(bodyPtr++);
 
 		if (var1 == 0xFF)
-			return (-1);
+			return -1;
 
 		bodyPtr2 = bodyPtr + 1;
 
@@ -197,13 +197,13 @@ int32 Actor::initBody(int32 bodyIdx, int32 actorIdx) {
 				bodyPtr3++;
 
 				if (!*bodyPtr4)
-					return (index);
+					return index;
 
 				bodyPtr4 = bodyPtr3;
 				bodyPtr3++;
 
 				if (*bodyPtr4 != 14)
-					return (index);
+					return index;
 
 				//				bodyPtr5 = (int16 *) bodyPtr3;
 
@@ -221,7 +221,7 @@ int32 Actor::initBody(int32 bodyIdx, int32 actorIdx) {
 				topRightZ = *((uint16 *)bodyPtr3);
 				bodyPtr3 += 2;
 
-				return (index);
+				return index;
 			}
 		}
 
@@ -278,19 +278,16 @@ void Actor::initModelActor(int32 bodyIdx, int16 actorIdx) {
 				result1 = var2 - var1; // take smaller for bound
 				result2 = var4 - var3;
 
-				if (result1 < result2)
-					result = result1;
-				else
-					result = result2;
+				result = MIN(result1, result2);
 
-				result = abs(result);
+				result = ABS(result);
 				result >>= 1;
 			} else {
 				result1 = var2 - var1; // take average for bound
 				result2 = var4 - var3;
 
 				result = result2 + result1;
-				result = abs(result);
+				result = ABS(result);
 				result >>= 2;
 			}
 

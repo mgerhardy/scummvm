@@ -21,6 +21,7 @@
  */
 
 #include "common/textconsole.h"
+#include "common/util.h"
 #include "twine/interface.h"
 #include "twine/menu.h"
 #include "twine/movements.h"
@@ -505,8 +506,8 @@ int Renderer::computePolygons() {
 		up = currentVertexY < oldVertexY;
 		direction = up ? -1 : 1;
 
-		vsize = abs(currentVertexY - oldVertexY);
-		hsize = abs(currentVertexX - oldVertexX);
+		vsize = ABS(currentVertexY - oldVertexY);
+		hsize = ABS(currentVertexX - oldVertexX);
 
 		if (direction * oldVertexX > direction * currentVertexX) { // if we are going up right
 			xpos = currentVertexX;
@@ -1018,7 +1019,7 @@ void Renderer::circleFill(int32 x, int32 y, int32 radius, int8 color) {
 	for (currentLine = -radius; currentLine <= radius; currentLine++) {
 		double width;
 
-		if (abs(currentLine) != radius) {
+		if (ABS(currentLine) != radius) {
 			width = sin(acos((int64)currentLine / (int64)radius));
 		} else {
 			width = 0;
