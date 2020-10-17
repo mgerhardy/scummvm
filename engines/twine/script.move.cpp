@@ -574,8 +574,6 @@ static const ScriptMoveFunction function_map[] = {
     /*0x21*/ MAPFUNC("FACE_HERO", mFACE_HERO),
     /*0x22*/ MAPFUNC("ANGLE_RND", mANGLE_RND)};
 
-/** Process actor move script
-	@param actorIdx Current processed actor index */
 void ScriptMove::processMoveScript(int32 actorIdx) {
 	int32 scriptOpcode;
 	ActorStruct *actor;

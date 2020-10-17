@@ -1596,8 +1596,6 @@ static const ScriptLifeFunction function_map[] = {
     /*0x68*/ MAPFUNC("CLEAR_TEXT", lCLEAR_TEXT),
     /*0x69*/ MAPFUNC("BRUTAL_EXIT", lBRUTAL_EXIT)};
 
-/** Process actor move script
-	@param actorIdx Current processed actor index */
 void ScriptLife::processLifeScript(int32 actorIdx) {
 	int32 end, scriptOpcode;
 	ActorStruct *actor;

@@ -259,9 +259,6 @@ void Menu::plasmaEffectRenderFrame() {
 		*(dest++) = *(src++);
 }
 
-/** Process the plasma effect
-	@param top top height where the effect will be draw in the front buffer
-	@param color plasma effect start color */
 void Menu::processPlasmaEffect(int32 top, int32 color) {
 	uint8 *in;
 	uint8 *out;
@@ -290,11 +287,6 @@ void Menu::processPlasmaEffect(int32 top, int32 color) {
 	}
 }
 
-/** Draw the entire button box
-	@param left start width to draw the button
-	@param top start height to draw the button
-	@param right end width to draw the button
-	@param bottom end height to draw the button */
 void Menu::drawBox(int32 left, int32 top, int32 right, int32 bottom) {
 	_engine->_interface->drawLine(left, top, right, top, 79);         // top line
 	_engine->_interface->drawLine(left, top, left, bottom, 79);       // left line
@@ -302,12 +294,6 @@ void Menu::drawBox(int32 left, int32 top, int32 right, int32 bottom) {
 	_engine->_interface->drawLine(++left, bottom, right, bottom, 73); // bottom line
 }
 
-/** Draws main menu button
-	@param width menu button width
-	@param topheight is the height between the top of the screen and the first button
-	@param id current button identification from menu settings
-	@param value current button key pressed value
-	@param mode flag to know if should draw as a hover button or not */
 void Menu::drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, int32 mode) {
 	int32 right;
 	int32 top;
@@ -410,9 +396,6 @@ void Menu::drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, in
 	copyBlockPhys(left, top, right, bottom);
 }
 
-/** Process the menu button draw
-	@param data menu settings array
-	@param mode flag to know if should draw as a hover button or not */
 void Menu::drawButton(int16 *menuSettings, int32 mode) {
 	int32 buttonNumber;
 	int32 maxButton;
@@ -467,9 +450,6 @@ void Menu::drawButton(int16 *menuSettings, int32 mode) {
 	} while (currentButton < maxButton);
 }
 
-/** Where the main menu options are processed
-	@param menuSettings menu settings array with the information to build the menu options
-	@return pressed menu button identification */
 int32 Menu::processMenu(int16 *menuSettings) {
 	int32 localTime;
 	int32 numEntry;
@@ -617,7 +597,6 @@ int32 Menu::processMenu(int16 *menuSettings) {
 	return currentButton;
 }
 
-/** Used to run the advanced options menu */
 int32 Menu::advoptionsMenu() {
 	int32 ret = 0;
 
@@ -641,7 +620,6 @@ int32 Menu::advoptionsMenu() {
 	return 0;
 }
 
-/** Used to run the save game management menu */
 int32 Menu::savemanageMenu() {
 	int32 ret = 0;
 
@@ -665,7 +643,6 @@ int32 Menu::savemanageMenu() {
 	return 0;
 }
 
-/** Used to run the volume menu */
 int32 Menu::volumeMenu() {
 	int32 ret = 0;
 
@@ -689,7 +666,6 @@ int32 Menu::volumeMenu() {
 	return 0;
 }
 
-/** Used to run the options menu */
 int32 Menu::optionsMenu() {
 	int32 ret = 0;
 
@@ -734,7 +710,6 @@ int32 Menu::optionsMenu() {
 	return 0;
 }
 
-/** Used to run the main menu */
 void Menu::mainMenu() {
 	_engine->_sound->stopSamples();
 
@@ -779,7 +754,6 @@ void Menu::mainMenu() {
 	}
 }
 
-/** Used to process give up menu while playing game */
 int32 Menu::giveupMenu() {
 	//int32 saveLangue=0;
 	int32 menuId;
@@ -952,7 +926,6 @@ void Menu::drawBehaviourMenu(int32 angle) {
 	copyBlockPhys(100, 100, 550, 290);
 }
 
-/** Process hero behaviour menu */
 void Menu::processBehaviourMenu() {
 	int32 tmpLanguageCD;
 	int32 tmpTextBank;
@@ -1042,11 +1015,6 @@ void Menu::processBehaviourMenu() {
 	_engine->cfgfile.LanguageCDId = tmpLanguageCD;
 }
 
-/** Draw the entire button box
-	@param left start width to draw the button
-	@param top start height to draw the button
-	@param right end width to draw the button
-	@param bottom end height to draw the button */
 void Menu::drawMagicItemsBox(int32 left, int32 top, int32 right, int32 bottom, int32 color) { // Rect
 	_engine->_interface->drawLine(left, top, right, top, color);                              // top line
 	_engine->_interface->drawLine(left, top, left, bottom, color);                            // left line
@@ -1094,7 +1062,6 @@ void Menu::drawInventoryItems() {
 	}
 }
 
-/** Process in-game inventory menu */
 void Menu::processInventoryMenu() {
 	int32 di = 1;
 	int32 prevSelectedItem, tmpLanguageCD, bx, tmpAlphaLight, tmpBetaLight;

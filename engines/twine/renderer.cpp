@@ -48,6 +48,9 @@ namespace TwinE {
 
 #define ERROR_OUT_OF_SCREEN 2
 
+// TODO: remove me
+#define PI 3.1415
+
 int32 Renderer::projectPositionOnScreen(int32 cX, int32 cY, int32 cZ) {
 	if (!isUsingOrhoProjection) {
 		cX -= baseRotPosX;
@@ -110,7 +113,6 @@ void Renderer::getBaseRotationPosition(int32 X, int32 Y, int32 Z) {
 	destZ = (baseMatrix[6] * X + baseMatrix[7] * Y + baseMatrix[8] * Z) >> 14;
 }
 
-#define PI 3.1415
 void Renderer::setBaseRotation(int32 X, int32 Y, int32 Z) {
 	int32 matrixElem;
 	double Xradians, Yradians, Zradians;
@@ -171,8 +173,6 @@ void Renderer::setCameraAngle(int32 transPosX, int32 transPosY, int32 transPosZ,
 	baseTransPosY = destY;
 	baseTransPosZ = destZ;
 }
-
-// ------------------------------------------------------------------------------------------------------
 
 void Renderer::applyRotation(int32 *tempMatrix, int32 *currentMatrix) {
 	int32 i;
@@ -442,8 +442,7 @@ void Renderer::setLightVector(int32 angleX, int32 angleY, int32 angleZ) {
 	lightZ = destZ;
 }
 
-// ------------------------------------------------------------------------------------------------------
-
+// TODO: remove me - use scummvm function
 FORCEINLINE int16 clamp(int16 x, int16 a, int16 b) {
 	return x < a ? a : (x > b ? b : x);
 }

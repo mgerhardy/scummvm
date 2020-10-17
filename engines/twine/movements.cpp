@@ -20,26 +20,24 @@
  *
  */
 
+#include "twine/movements.h"
+#include "common/textconsole.h"
 #include "twine/actor.h"
 #include "twine/animations.h"
 #include "twine/collision.h"
-#include "common/textconsole.h"
 #include "twine/gamestate.h"
 #include "twine/grid.h"
 #include "twine/keyboard.h"
-#include "twine/movements.h"
 #include "twine/renderer.h"
 #include "twine/scene.h"
 #include "twine/twine.h"
 
 namespace TwinE {
+// TODO: remove me
+#define PI 3.14159265
 
 Movements::Movements(TwinEEngine *engine) : _engine(engine) {}
 
-/** Get shadow position
-	@param X Shadow X coordinate
-	@param Y Shadow Y coordinate
-	@param Z Shadow Z coordinate */
 void Movements::getShadowPosition(int32 X, int32 Y, int32 Z) {
 	int32 tempX;
 	int32 tempY;
@@ -86,42 +84,24 @@ void Movements::getShadowPosition(int32 X, int32 Y, int32 Z) {
 	_engine->_actor->shadowZ = processActorZ;
 }
 
-/** Set actor safe angle
-	@param startAngle start angle
-	@param endAngle end angle
-	@param stepAngle number of steps
-	@param movePtr Pointer to process movements */
 void Movements::setActorAngleSafe(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveStruct *movePtr) {
 	movePtr->from = startAngle & 0x3FF;
 	movePtr->to = endAngle & 0x3FF;
 	movePtr->numOfStep = stepAngle & 0x3FF;
-	movePtr->timeOfChange =  _engine->lbaTime;
+	movePtr->timeOfChange = _engine->lbaTime;
 }
 
-/** Clear actors safe angle
-	@param actorPtr actor pointer */
 void Movements::clearRealAngle(ActorStruct *actorPtr) {
 	setActorAngleSafe(actorPtr->angle, actorPtr->angle, 0, &actorPtr->move);
 }
 
-/** Set actor safe angle
-	@param startAngle start angle
-	@param endAngle end angle
-	@param stepAngle number of steps
-	@param movePtr Pointer to process movements */
 void Movements::setActorAngle(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveStruct *movePtr) {
 	movePtr->from = startAngle;
 	movePtr->to = endAngle;
 	movePtr->numOfStep = stepAngle;
-	movePtr->timeOfChange =  _engine->lbaTime;
+	movePtr->timeOfChange = _engine->lbaTime;
 }
 
-/** Get actor angle
-	@param x1 Actor 1 X
-	@param z1 Actor 1 Z
-	@param x2 Actor 2 X
-	@param z2 Actor 2 Z */
-#define PI 3.14159265
 int32 Movements::getAngleAndSetTargetActorDistance(int32 x1, int32 z1, int32 x2, int32 z2) {
 	/*
 	//Pythagoras
@@ -189,14 +169,12 @@ int32 Movements::getAngleAndSetTargetActorDistance(int32 x1, int32 z1, int32 x2,
 	return finalAngle & 0x3FF;
 }
 
-/** Get actor real angle
-	@param movePtr Pointer to process movements */
 int32 Movements::getRealAngle(ActorMoveStruct *movePtr) {
 	int32 timePassed;
 	int32 remainingAngle;
 
 	if (movePtr->numOfStep) {
-		timePassed =  _engine->lbaTime - movePtr->timeOfChange;
+		timePassed = _engine->lbaTime - movePtr->timeOfChange;
 
 		if (timePassed >= movePtr->numOfStep) { // rotation is finished
 			movePtr->numOfStep = 0;
@@ -221,61 +199,38 @@ int32 Movements::getRealAngle(ActorMoveStruct *movePtr) {
 	return movePtr->to;
 }
 
-/** Get actor step
-	@param movePtr Pointer to process movements */
 int32 Movements::getRealValue(ActorMoveStruct *movePtr) {
 	int32 tempStep;
 
 	if (!movePtr->numOfStep)
 		return movePtr->to;
 
-	if (!( _engine->lbaTime - movePtr->timeOfChange < movePtr->numOfStep)) {
+	if (!(_engine->lbaTime - movePtr->timeOfChange < movePtr->numOfStep)) {
 		movePtr->numOfStep = 0;
 		return movePtr->to;
 	}
 
 	tempStep = movePtr->to - movePtr->from;
-	tempStep *=  _engine->lbaTime - movePtr->timeOfChange;
+	tempStep *= _engine->lbaTime - movePtr->timeOfChange;
 	tempStep /= movePtr->numOfStep;
 
 	return tempStep + movePtr->from;
 }
 
-/** Rotate actor with a given angle
-	@param X Actor current X coordinate
-	@param Z Actor current Z coordinate
-	@param angle Actor angle to rotate */
 void Movements::rotateActor(int32 X, int32 Z, int32 angle) {
 	const double radians = 2 * PI * angle / 0x400;
 	_engine->_renderer->destX = (int32)(X * cos(radians) + Z * sin(radians));
 	_engine->_renderer->destZ = (int32)(-X * sin(radians) + Z * cos(radians));
 }
 
-/** Get distance value in 2D
-	@param x1 Actor 1 X coordinate
-	@param z1 Actor 1 Z coordinate
-	@param x2 Actor 2 X coordinate
-	@param z2 Actor 2 Z coordinate */
 int32 Movements::getDistance2D(int32 x1, int32 z1, int32 x2, int32 z2) {
 	return (int32)sqrt((int64)((x2 - x1) * (x2 - x1) + (z2 - z1) * (z2 - z1)));
 }
 
-/** Get distance value in 3D
-	@param x1 Actor 1 X coordinate
-	@param y1 Actor 1 Y coordinate
-	@param z1 Actor 1 Z coordinate
-	@param x2 Actor 2 X coordinate
-	@param y2 Actor 2 Y coordinate
-	@param z2 Actor 2 Z coordinate */
 int32 Movements::getDistance3D(int32 x1, int32 y1, int32 z1, int32 x2, int32 y2, int32 z2) {
 	return (int32)sqrt((int64)((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1)));
 }
 
-/** Move actor around the scene
-	@param angleFrom Current actor angle
-	@param angleTo Angle to rotate
-	@param speed Rotate speed
-	@param movePtr Pointer to process movements */
 void Movements::moveActor(int32 angleFrom, int32 angleTo, int32 speed, ActorMoveStruct *movePtr) { // ManualRealAngle
 	int32 numOfStepInt;
 	int16 numOfStep;
@@ -302,7 +257,7 @@ void Movements::moveActor(int32 angleFrom, int32 angleTo, int32 speed, ActorMove
 	numOfStepInt >>= 8;
 
 	movePtr->numOfStep = (int16)numOfStepInt;
-	movePtr->timeOfChange =  _engine->lbaTime;
+	movePtr->timeOfChange = _engine->lbaTime;
 }
 
 void Movements::processActorMovements(int32 actorIdx) {
@@ -515,15 +470,15 @@ void Movements::processActorMovements(int32 actorIdx) {
 			if (!actor->dynamicFlags.bIsRotationByAnim) {
 				if (actor->brickShape & 0x80) {
 					moveActor(actor->angle, (((_engine->getRandomNumber() & 0x100) + (actor->angle - 0x100)) & 0x3FF), actor->speed, &actor->move);
-					actor->info0 = _engine->getRandomNumber(300) +  _engine->lbaTime + 300;
+					actor->info0 = _engine->getRandomNumber(300) + _engine->lbaTime + 300;
 					_engine->_animations->initAnim(0, 0, 255, actorIdx);
 				}
 
 				if (!actor->move.numOfStep) {
 					_engine->_animations->initAnim(1, 0, 255, actorIdx);
-					if ( _engine->lbaTime > actor->info0) {
+					if (_engine->lbaTime > actor->info0) {
 						moveActor(actor->angle, (((_engine->getRandomNumber() & 0x100) + (actor->angle - 0x100)) & 0x3FF), actor->speed, &actor->move);
-						actor->info0 = _engine->getRandomNumber(300) +  _engine->lbaTime + 300;
+						actor->info0 = _engine->getRandomNumber(300) + _engine->lbaTime + 300;
 					}
 				}
 			}

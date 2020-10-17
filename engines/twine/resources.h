@@ -116,8 +116,11 @@ private:
 	TwinEEngine *_engine;
 
 	void preloadInventoryItems();
+	/** Init palettes */
 	void initPalettes();
+	/** Preload all sprites */
 	void preloadSprites();
+	/** Preload all animations */
 	void preloadAnimations();
 	void preloadSamples();
 

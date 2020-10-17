@@ -44,11 +44,6 @@
 
 namespace TwinE {
 
-/** Add a certain region to the current redraw list array
-	@param left start width to redraw the region
-	@param top start height to redraw the region
-	@param right end width to redraw the region
-	@param bottom end height to redraw the region */
 void Redraw::addRedrawCurrentArea(int32 left, int32 top, int32 right, int32 bottom) {
 	int32 area;
 	int32 i = 0;
@@ -105,11 +100,6 @@ void Redraw::addRedrawCurrentArea(int32 left, int32 top, int32 right, int32 bott
 	numOfRedrawBox++;
 }
 
-/** Add a certain region to redraw list array
-	@param left start width to redraw the region
-	@param top start height to redraw the region
-	@param right end width to redraw the region
-	@param bottom end height to redraw the region */
 void Redraw::addRedrawArea(int32 left, int32 top, int32 right, int32 bottom) {
 	if (left < 0)
 		left = 0;
@@ -133,7 +123,6 @@ void Redraw::addRedrawArea(int32 left, int32 top, int32 right, int32 bottom) {
 	addRedrawCurrentArea(left, top, right, bottom);
 }
 
-/** Move next regions to the current redraw list */
 void Redraw::moveNextAreas() {
 	int32 i;
 
@@ -144,9 +133,6 @@ void Redraw::moveNextAreas() {
 	}
 }
 
-/** Flip currentRedrawList regions in the screen
-
-	This only updates small areas in the screen so few CPU processor is used */
 void Redraw::flipRedrawAreas() {
 	int32 i;
 
@@ -161,7 +147,6 @@ void Redraw::flipRedrawAreas() {
 	}
 }
 
-/** Blit/Update all screen regions in the currentRedrawList */
 void Redraw::blitBackgroundAreas() {
 	int32 i;
 	const RedrawStruct *currentArea = currentRedrawList;
@@ -172,9 +157,6 @@ void Redraw::blitBackgroundAreas() {
 	}
 }
 
-/** Sort drawing list struct ordered as the first objects appear in the top left corner of the screen
-	@param list drawing list variable which contains information of the drawing objects
-	@param listSize number of drawing objects in the list */
 void Redraw::sortDrawingList(DrawListStruct *list, int32 listSize) {
 	int32 i;
 	int32 j;
@@ -192,7 +174,6 @@ void Redraw::sortDrawingList(DrawListStruct *list, int32 listSize) {
 	}
 }
 
-/** */
 void Redraw::addOverlay(int16 type, int16 info0, int16 X, int16 Y, int16 info1, int16 posType, int16 lifeTime) {
 	int32 i;
 	for (i = 0; i < OVERLAY_MAX_ENTRIES; i++) {
@@ -210,7 +191,6 @@ void Redraw::addOverlay(int16 type, int16 info0, int16 X, int16 Y, int16 info1, 
 	}
 }
 
-/** */
 void Redraw::updateOverlayTypePosition(int16 X1, int16 Y1, int16 X2, int16 Y2) {
 	int32 i;
 	int16 newX, newY;
@@ -227,8 +207,6 @@ void Redraw::updateOverlayTypePosition(int16 X1, int16 Y1, int16 X2, int16 Y2) {
 	}
 }
 
-/** This is responsible for the entire game screen redraw
-	@param bgRedraw true if we want to redraw background grid, false if we want to update certain screen areas */
 void Redraw::redrawEngineActions(int32 bgRedraw) { // fullRedraw
 	int16 tmp_projPosX;
 	int16 tmp_projPosY;

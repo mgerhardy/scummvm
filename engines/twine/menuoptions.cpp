@@ -256,7 +256,6 @@ int32 MenuOptions::enterPlayerName(int32 textIdx) {
 	return 1;
 }
 
-/** Main menu new game options */
 void MenuOptions::newGameMenu() {
 	//TODO: process players name
 	if (enterPlayerName(MAINMENU_ENTERPLAYERNAME)) {
@@ -278,7 +277,6 @@ void MenuOptions::newGameMenu() {
 	}
 }
 
-/** Main menu continue game options */
 void MenuOptions::continueGameMenu() {
 	//TODO: get list of saved games
 	//if(chooseSave(MAINMENU_CONTINUEGAME))

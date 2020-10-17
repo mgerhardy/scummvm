@@ -20,6 +20,7 @@
  *
  */
 
+#include "twine/text.h"
 #include "common/scummsys.h"
 #include "twine/hqrdepack.h"
 #include "twine/interface.h"
@@ -30,7 +31,6 @@
 #include "twine/screens.h"
 #include "twine/sdlengine.h"
 #include "twine/sound.h"
-#include "twine/text.h"
 #include "twine/twine.h"
 
 namespace TwinE {
@@ -147,8 +147,6 @@ void Text::stopVox(int32 index) {
 	_engine->_sound->stopSample(index);
 }
 
-/** Initialize dialogue
-	@param bankIdx Text bank index*/
 void Text::initTextBank(int32 bankIdx) { // InitDial
 	int32 langIdx;
 	int32 hqrSize;
@@ -175,10 +173,6 @@ void Text::initTextBank(int32 bankIdx) { // InitDial
 	}
 }
 
-/** Draw a certain character in the screen
-	@param x X coordinate in screen
-	@param y Y coordinate in screen
-	@param character ascii character to display */
 void Text::drawCharacter(int32 x, int32 y, uint8 character) { // drawCharacter
 	uint8 sizeX;
 	uint8 sizeY;
@@ -262,11 +256,6 @@ void Text::drawCharacter(int32 x, int32 y, uint8 character) { // drawCharacter
 	} while (1);
 }
 
-/** Draw character with shadow
-	@param x X coordinate in screen
-	@param y Y coordinate in screen
-	@param character ascii character to display
-	@param color character color */
 void Text::drawCharacterShadow(int32 x, int32 y, uint8 character, int32 color) { // drawDoubleLetter
 	int32 left, top, right, bottom;
 
@@ -289,10 +278,6 @@ void Text::drawCharacterShadow(int32 x, int32 y, uint8 character, int32 color) {
 	}
 }
 
-/** Display a certain dialogue text in the screen
-	@param x X coordinate in screen
-	@param y Y coordinate in screen
-	@param dialogue ascii text to display */
 void Text::drawText(int32 x, int32 y, const int8 *dialogue) { // Font
 	uint8 currChar;
 
@@ -318,8 +303,6 @@ void Text::drawText(int32 x, int32 y, const int8 *dialogue) { // Font
 	} while (1);
 }
 
-/** Gets dialogue text width size
-	@param dialogue ascii text to display */
 int32 Text::getTextSize(int8 *dialogue) { // SizeFont
 	uint8 currChar;
 	dialTextSize = 0;
@@ -361,7 +344,7 @@ void Text::initInventoryDialogueBox() { // SecondInitDialWindow
 }
 
 // TODO: refactor this code
-void Text::initText(int32 index) { // initText
+void Text::initText(int32 index) {
 	printTextVar13 = 0;
 
 	if (!getText(index)) {
@@ -516,8 +499,7 @@ void Text::processTextLine() {
 	printText8Ptr2 = buf2;
 }
 
-// draw next page arrow polygon
-void Text::printText10Sub() { // printText10Sub()
+void Text::printText10Sub() {
 	_engine->_renderer->vertexCoordinates[0] = dialTextStopColor;
 	_engine->_renderer->vertexCoordinates[1] = dialTextBoxRight - 3;
 	_engine->_renderer->vertexCoordinates[2] = dialTextBoxBottom - 24;
@@ -538,7 +520,7 @@ void Text::printText10Sub() { // printText10Sub()
 	copyBlockPhys(dialTextBoxRight - 24, dialTextBoxBottom - 24, dialTextBoxRight - 3, dialTextBoxBottom - 3);
 }
 
-void Text::printText10Sub2() { // printText10Sub2()
+void Text::printText10Sub2() {
 	int32 currentLetter;
 	int32 currentIndex;
 	int32 counter;
@@ -576,7 +558,7 @@ void Text::TEXT_GetLetterSize(uint8 character, int32 *pLetterWidth, int32 *pLett
 }
 
 // TODO: refactor this code
-int Text::printText10() {        // printText10()
+int Text::printText10() {
 	int32 charWidth, charHeight; // a, b
 
 	if (printTextVar13 == 0) {
@@ -769,16 +751,11 @@ void Text::setFont(uint8 *font, int32 spaceBetween, int32 charSpace) {
 	dialSpaceBetween = spaceBetween;
 }
 
-/** Set font type parameters
-	@param spaceBetween number in pixels of space between characters
-	@param charSpace number in pixels of the character space */
 void Text::setFontParameters(int32 spaceBetween, int32 charSpace) {
 	dialSpaceBetween = spaceBetween;
 	dialCharSpace = charSpace;
 }
 
-/** Set the font cross color
-	@param color color number to choose */
 void Text::setFontCrossColor(int32 color) { // TestCoulDial
 	dialTextStepSize = -1;
 	dialTextBufferSize = 14;
@@ -786,16 +763,10 @@ void Text::setFontCrossColor(int32 color) { // TestCoulDial
 	dialTextStopColor = (color << 4) + 12;
 }
 
-/** Set the font color
-	@param color color number to choose */
 void Text::setFontColor(int32 color) {
 	dialTextColor = color;
 }
 
-/** Set font color parameters to process cross color display
-	@param stopColor color number to stop
-	@param startColor color number to start
-	@param stepSize step size to change between those colors */
 void Text::setTextCrossColor(int32 stopColor, int32 startColor, int32 stepSize) {
 	dialTextStartColor = startColor;
 	dialTextStopColor = stopColor;
@@ -803,8 +774,6 @@ void Text::setTextCrossColor(int32 stopColor, int32 startColor, int32 stepSize) 
 	dialTextBufferSize = ((startColor - stopColor) + 1) / stepSize;
 }
 
-/** Get dialogue text into text buffer
-	@param index dialogue index */
 int32 Text::getText(int32 index) { // findString
 	int32 currIdx = 0;
 	int32 orderIdx = 0;
@@ -841,23 +810,16 @@ int32 Text::getText(int32 index) { // findString
 	return 1;
 }
 
-/** Copy dialogue text
-	@param src source text buffer
-	@param dst destination text buffer
-	@param size text size */
 void Text::copyText(int8 *src, int8 *dst, int32 size) { // copyStringToString
 	int32 i;
 	for (i = 0; i < size; i++)
 		*(dst++) = *(src++);
 }
 
-/** Gets menu dialogue text
-	@param index text index to display
-	@param dialogue dialogue text buffer to display */
 void Text::getMenuText(int32 index, int8 *text) { // GetMultiText
 	if (index == _engine->_menu->currMenuTextIndex) {
 		if (_engine->_menu->currMenuTextBank == currentTextBank) {
-			strcpy((char*)text, (char*)_engine->_menu->currMenuTextBuffer);
+			strcpy((char *)text, (char *)_engine->_menu->currMenuTextBuffer);
 			return;
 		}
 	}

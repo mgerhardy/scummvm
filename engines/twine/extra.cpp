@@ -127,10 +127,6 @@ int32 Extra::addExtra(int32 actorIdx, int32 X, int32 Y, int32 Z, int32 info0, in
 	return -1;
 }
 
-/** Add extra explosion
-	@param X Explostion X coordinate
-	@param Y Explostion Y coordinate
-	@param Z Explostion Z coordinate */
 int32 Extra::addExtraExplode(int32 X, int32 Y, int32 Z) {
 	int32 i;
 
@@ -152,7 +148,6 @@ int32 Extra::addExtraExplode(int32 X, int32 Y, int32 Z) {
 	return -1;
 }
 
-/** Reset all used extras */
 void Extra::resetExtras() {
 	int32 i;
 
@@ -208,7 +203,8 @@ void Extra::addExtraSpecial(int32 X, int32 Y, int32 Z, int32 type) { // InitSpec
 				extra->actorIdx = 100;
 
 				return;
-			} else if (type == kExplodeCloud) {
+			}
+			if (type == kExplodeCloud) {
 				extra->type = 1;
 
 				extra->X = X;

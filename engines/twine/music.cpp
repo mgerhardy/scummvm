@@ -49,22 +49,16 @@ Mix_Music *current_track;
 /** Auxiliar midi pointer to  */
 uint8 *midiPtr;
 
-/** Music volume
-	@param current volume number */
 void Music::musicVolume(int32 volume) {
 	// div 2 because LBA use 255 range and SDL_mixer use 128 range
 	Mix_VolumeMusic(volume / 2);
 }
 
-/** Fade music in
-	@param loops number of*/
 void Music::musicFadeIn(int32 loops, int32 ms) {
 	Mix_FadeInMusic(current_track, loops, ms);
 	musicVolume(_engine->cfgfile.MusicVolume);
 }
 
-/** Fade music out
-	@param ms number of miliseconds to fade*/
 void Music::musicFadeOut(int32 ms) {
 	while (!Mix_FadeOutMusic(ms) && Mix_PlayingMusic()) {
 		SDL_Delay(100);
@@ -74,28 +68,23 @@ void Music::musicFadeOut(int32 ms) {
 	musicVolume(_engine->cfgfile.MusicVolume);
 }
 
-/** Play CD music
-	@param track track number to play */
 void Music::playTrackMusicCd(int32 track) {
 	if (!_engine->cfgfile.UseCD) {
 		return;
 	}
-	AudioCDManager* cdrom = g_system->getAudioCDManager();
+	AudioCDManager *cdrom = g_system->getAudioCDManager();
 	cdrom->play(track, 1, 0, 0);
 }
 
-/** Stop CD music */
 void Music::stopTrackMusicCd() {
 	if (!_engine->cfgfile.UseCD) {
 		return;
 	}
 
-	AudioCDManager* cdrom = g_system->getAudioCDManager();
+	AudioCDManager *cdrom = g_system->getAudioCDManager();
 	cdrom->stop();
 }
 
-/** Generic play music, according with settings it plays CD or MP3 instead
-	@param track track number to play */
 void Music::playTrackMusic(int32 track) {
 	if (!_engine->cfgfile.Sound) {
 		return;
@@ -109,7 +98,6 @@ void Music::playTrackMusic(int32 track) {
 	playTrackMusicCd(track);
 }
 
-/** Generic stop music according with settings */
 void Music::stopTrackMusic() {
 	if (!_engine->cfgfile.Sound) {
 		return;
@@ -119,8 +107,6 @@ void Music::stopTrackMusic() {
 	stopTrackMusicCd();
 }
 
-/** Play MIDI music
-	@param midiIdx music index under mini_mi_win.hqr*/
 void Music::playMidiMusic(int32 midiIdx, int32 loop) {
 	uint8 *dos_midi_ptr;
 	int32 midiSize;
@@ -168,7 +154,6 @@ void Music::playMidiMusic(int32 midiIdx, int32 loop) {
 		warning("Error while playing music: %d \n", midiIdx);
 }
 
-/** Stop MIDI music */
 void Music::stopMidiMusic() {
 	if (!_engine->cfgfile.Sound) {
 		return;
@@ -182,25 +167,23 @@ void Music::stopMidiMusic() {
 	}
 }
 
-/** Initialize CD-Rom */
 int Music::initCdrom() {
 	if (!_engine->cfgfile.Sound) {
 		return 0;
 	}
-	#if 0 // TODO: mgerhardy
+#if 0 // TODO: mgerhardy
 	AudioCDManager* cdrom = g_system->getAudioCDManager();
 	if (cdrom->numtracks == NUM_CD_TRACKS) {
 		_engine->cdDir = "LBA";
 		_engine->cfgfile.UseCD = 1;
 		return 1;
 	}
-	#endif
+#endif
 	// not found the right CD
 	_engine->cfgfile.UseCD = 0;
 	return 0;
 }
 
-/** Stop MIDI and Track music */
 void Music::stopMusic() {
 	stopTrackMusic();
 	stopMidiMusic();

@@ -30,7 +30,6 @@
 
 namespace TwinE {
 
-/** Init palettes */
 void Resources::initPalettes() {
 	// Init standard palette
 	_engine->_hqrdepack->hqrGetallocEntry(&_engine->_screens->mainPalette, HQR_RESS_FILE, RESSHQR_MAINPAL);
@@ -45,7 +44,6 @@ void Resources::initPalettes() {
 	_engine->_screens->palCustom = 0;
 }
 
-/** Preload all sprites */
 void Resources::preloadSprites() {
 	int32 i;
 	int32 numEntries = _engine->_hqrdepack->hqrNumEntries(HQR_SPRITES_FILE) - 1;
@@ -55,7 +53,6 @@ void Resources::preloadSprites() {
 	}
 }
 
-/** Preload all animations */
 void Resources::preloadAnimations() {
 	int32 i;
 	int32 numEntries = _engine->_hqrdepack->hqrNumEntries(HQR_ANIM_FILE) - 1;
@@ -65,7 +62,6 @@ void Resources::preloadAnimations() {
 	}
 }
 
-/** Preload all animations */
 void Resources::preloadSamples() {
 	int32 i;
 	int32 numEntries = _engine->_hqrdepack->hqrNumEntries(HQR_SAMPLES_FILE) - 1;
@@ -75,7 +71,6 @@ void Resources::preloadSamples() {
 	}
 }
 
-/** Preload all animations */
 void Resources::preloadInventoryItems() {
 	int32 i;
 	int32 numEntries = _engine->_hqrdepack->hqrNumEntries(HQR_INVOBJ_FILE) - 1;
@@ -85,7 +80,6 @@ void Resources::preloadInventoryItems() {
 	}
 }
 
-/** Initialize resource pointers */
 void Resources::initResources() {
 	// Menu and in-game palette
 	initPalettes();

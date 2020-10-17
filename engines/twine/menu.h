@@ -42,17 +42,34 @@ private:
 	int32 inventorySelectedColor;
 	int32 inventorySelectedItem; // currentSelectedObjectInInventory
 
+	/** Draws main menu button
+	@param width menu button width
+	@param topheight is the height between the top of the screen and the first button
+	@param id current button identification from menu settings
+	@param value current button key pressed value
+	@param mode flag to know if should draw as a hover button or not */
 	void drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, int32 mode);
 	void plasmaEffectRenderFrame();
+	/** Process the menu button draw
+	@param data menu settings array
+	@param mode flag to know if should draw as a hover button or not */
 	void drawButton(int16 *menuSettings, int32 mode);
+	/** Used to run the advanced options menu */
 	int32 advoptionsMenu();
+	/** Used to run the volume menu */
 	int32 volumeMenu();
+	/** Used to run the save game management menu */
 	int32 savemanageMenu();
 	void drawInfoMenu(int16 left, int16 top);
 	void drawBehaviour(int16 behaviour, int32 angle, int16 cantDrawBox);
 	void drawInventoryItems();
 	void drawBehaviourMenu(int32 angle);
 	void drawItem(int32 item);
+	/** Draw the entire button box
+	@param left start width to draw the button
+	@param top start height to draw the button
+	@param right end width to draw the button
+	@param bottom end height to draw the button */
 	void drawMagicItemsBox(int32 left, int32 top, int32 right, int32 bottom, int32 color);
 
 public:

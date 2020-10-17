@@ -37,19 +37,10 @@ namespace TwinE {
 /** Samples chunk variable */
 Mix_Chunk *sample;
 
-/** Sample volume
-	@param chan sample channel
-	@param volume sample volume number */
 void Sound::sampleVolume(int32 chan, int32 volume) {
 	Mix_Volume(chan, volume / 2);
 }
 
-/** Play FLA movie samples
-	@param index sample index under flasamp.hqr file
-	@param frequency frequency used to play the sample
-	@param repeat number of times to repeat the sample
-	@param x unknown x variable
-	@param y unknown y variable */
 void Sound::playFlaSample(int32 index, int32 frequency, int32 repeat, int32 x, int32 y) {
 	if (_engine->cfgfile.Sound) {
 		int32 sampSize = 0;
@@ -93,13 +84,6 @@ void Sound::setSamplePosition(int32 chan, int32 x, int32 y, int32 z) {
 	Mix_SetDistance(chan, distance);
 }
 
-/** Play samples
-	@param index sample index under flasamp.hqr file
-	@param frequency frequency used to play the sample
-	@param repeat number of times to repeat the sample
-	@param x unknown x variable
-	@param y unknown y variable
-	@param z unknown z variable */
 void Sound::playSample(int32 index, int32 frequency, int32 repeat, int32 x, int32 y, int32 z, int32 actorIdx) {
 	if (_engine->cfgfile.Sound) {
 		int32 sampSize = 0;
@@ -137,7 +121,6 @@ void Sound::playSample(int32 index, int32 frequency, int32 repeat, int32 x, int3
 	}
 }
 
-/** Resume samples */
 void Sound::resumeSamples() {
 	if (_engine->cfgfile.Sound) {
 		Mix_Resume(-1);
@@ -146,7 +129,6 @@ void Sound::resumeSamples() {
 	}
 }
 
-/** Pause samples */
 void Sound::pauseSamples() {
 	if (_engine->cfgfile.Sound) {
 		Mix_HaltChannel(-1);
@@ -155,7 +137,6 @@ void Sound::pauseSamples() {
 	}
 }
 
-/** Stop samples */
 void Sound::stopSamples() {
 	if (_engine->cfgfile.Sound) {
 		memset(samplesPlaying, -1, sizeof(int32) * NUM_CHANNELS);
@@ -193,7 +174,6 @@ void Sound::removeSampleChannel(int32 c) {
 	samplesPlayingActors[c] = -1;
 }
 
-/** Stop samples */
 void Sound::stopSample(int32 index) {
 	if (_engine->cfgfile.Sound) {
 		int32 stopChannel = getSampleChannel(index);

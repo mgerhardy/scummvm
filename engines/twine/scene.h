@@ -23,8 +23,8 @@
 #ifndef TWINE_SCENE_H
 #define TWINE_SCENE_H
 
-#include "twine/actor.h"
 #include "common/scummsys.h"
+#include "twine/actor.h"
 
 namespace TwinE {
 
@@ -104,10 +104,13 @@ class Scene {
 private:
 	TwinEEngine *_engine;
 
+/** Process zone extra bonus */
 	void processZoneExtraBonus(ZoneStruct *zone);
 	void setActorStaticFlags(int32 actorIdx, uint16 staticFlags);
 	void loadScene();
+	/** Initialize new scene */
 	int32 initScene(int32 index);
+	/** Reset scene */
 	void resetScene();
 
 public:

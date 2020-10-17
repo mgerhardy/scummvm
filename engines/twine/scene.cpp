@@ -276,7 +276,6 @@ void Scene::loadScene() {
 	}
 }
 
-/** Initialize new scene */
 int32 Scene::initScene(int32 index) {
 	// load scene from file
 	_engine->_hqrdepack->hqrGetallocEntry(&currentScene, HQR_SCENE_FILE, index);
@@ -286,7 +285,6 @@ int32 Scene::initScene(int32 index) {
 	return 1;
 }
 
-/** Reset scene */
 void Scene::resetScene() {
 	int32 i;
 
@@ -304,7 +302,6 @@ void Scene::resetScene() {
 	_engine->_screens->useAlternatePalette = 0;
 }
 
-/** Change to another scene */
 void Scene::changeScene() {
 	int32 a;
 
@@ -394,7 +391,6 @@ void Scene::changeScene() {
 	}
 }
 
-/** Process scene environment sound */
 void Scene::processEnvironmentSound() {
 	int16 s, currentAmb, decal, repeat;
 	int16 sampleIdx = -1;
@@ -429,7 +425,6 @@ void Scene::processEnvironmentSound() {
 	}
 }
 
-/** Process zone extra bonus */
 void Scene::processZoneExtraBonus(ZoneStruct *zone) {
 	int32 a, numBonus;
 	int8 bonusTable[8], currentBonus;
@@ -464,8 +459,6 @@ void Scene::processZoneExtraBonus(ZoneStruct *zone) {
 	}
 }
 
-/** Process actor zones
-	@param actorIdx Process actor index */
 void Scene::processActorZones(int32 actorIdx) {
 	int32 currentX, currentY, currentZ, z, tmpCellingGrid;
 	ActorStruct *actor;

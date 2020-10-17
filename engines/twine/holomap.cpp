@@ -28,14 +28,10 @@ namespace TwinE {
 
 Holomap::Holomap(TwinEEngine *engine) : _engine(engine) {}
 
-/** Set Holomap location position
-	@location Scene where position must be set */
 void Holomap::setHolomapPosition(int32 location) {
 	_engine->_gameState->holomapFlags[location] = 0x81;
 }
 
-/** Clear Holomap location position
-	@location Scene where position must be cleared */
 void Holomap::clearHolomapPosition(int32 location) {
 	_engine->_gameState->holomapFlags[location] &= 0x7E;
 	_engine->_gameState->holomapFlags[location] |= 0x40;

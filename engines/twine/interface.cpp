@@ -47,12 +47,6 @@ int32 Interface::checkClipping(int32 x, int32 y) {
 	return code;
 }
 
-/** Draw button line
-	@param startWidth width value where the line starts
-	@param startHeight height value where the line starts
-	@param endWidth width value where the line ends
-	@param endHeight height value where the line ends
-	@param lineColor line color in the current palette */
 void Interface::drawLine(int32 startWidth, int32 startHeight, int32 endWidth, int32 endHeight, int32 lineColor) {
 	int32 temp;
 	int32 flag2;
@@ -160,15 +154,6 @@ void Interface::drawLine(int32 startWidth, int32 startHeight, int32 endWidth, in
 	}
 }
 
-/** Blit button box from working buffer to front buffer
-	@param left start width to draw the button
-	@param top start height to draw the button
-	@param right end width to draw the button
-	@param bottom end height to draw the button
-	@source source screen buffer, in this case working buffer
-	@param leftDest start width to draw the button in destination buffer
-	@param topDest start height to draw the button in destination buffer
-	@dest destination screen buffer, in this case front buffer */
 void Interface::blitBox(int32 left, int32 top, int32 right, int32 bottom, int8 *source, int32 leftDest, int32 topDest, int8 *dest) {
 	int32 width;
 	int32 height;
@@ -201,12 +186,6 @@ void Interface::blitBox(int32 left, int32 top, int32 right, int32 bottom, int8 *
 	}
 }
 
-/** Draws inside buttons transparent area
-	@param left start width to draw the button
-	@param top start height to draw the button
-	@param right end width to draw the button
-	@param bottom end height to draw the button
-	@param colorAdj index to adjust the transparent box color */
 void Interface::drawTransparentBox(int32 left, int32 top, int32 right, int32 bottom, int32 colorAdj) {
 	uint8 *pos;
 	int32 width;

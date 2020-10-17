@@ -20,11 +20,11 @@
  *
  */
 
-#include "twine/actor.h"
 #include "twine/animations.h"
-#include "twine/collision.h"
 #include "common/system.h"
 #include "common/util.h"
+#include "twine/actor.h"
+#include "twine/collision.h"
 #include "twine/gamestate.h"
 #include "twine/grid.h"
 #include "twine/movements.h"
@@ -67,11 +67,6 @@ enum ActionType {
 Animations::Animations(TwinEEngine *engine) : _engine(engine) {
 }
 
-/** Set animation keyframe
-	@param keyframIdx Animation keyframe index
-	@param animPtr Pointer to animation
-	@param bodyPtr Body model poitner
-	@param animTimerDataPtr Animation time data */
 int Animations::setAnimAtKeyframe(int32 keyframeIdx, uint8 *animPtr, uint8 *bodyPtr, AnimTimerDataStruct *animTimerDataPtr) {
 	int16 numOfKeyframeInAnim;
 	int16 numOfBonesInAnim;
@@ -139,19 +134,14 @@ int Animations::setAnimAtKeyframe(int32 keyframeIdx, uint8 *animPtr, uint8 *body
 	return 1;
 }
 
-/** Get total number of keyframes in animation
-	@param animPtr Pointer to animation */
 int32 Animations::getNumKeyframes(uint8 *animPtr) {
 	return (*(int16 *)(animPtr));
 }
 
-/** Get first keyframes in animation
-	@param animPtr Pointer to animation */
 int32 Animations::getStartKeyframe(uint8 *animPtr) {
 	return (*(int16 *)(animPtr + 4));
 }
 
-/** Apply animation step rotation */
 void Animations::applyAnimStepRotation(uint8 **ptr, int32 bp, int32 bx) {
 	int16 *dest;
 	int16 lastAngle;
@@ -187,7 +177,6 @@ void Animations::applyAnimStepRotation(uint8 **ptr, int32 bp, int32 bx) {
 	*(ptr) = *(ptr) + 2;
 }
 
-/** Apply animation step */
 void Animations::applyAnimStep(uint8 **ptr, int32 bp, int32 bx) {
 	int16 *dest;
 	int16 lastAngle;
@@ -214,7 +203,6 @@ void Animations::applyAnimStep(uint8 **ptr, int32 bp, int32 bx) {
 	*(ptr) = *(ptr) + 2;
 }
 
-/** Get animation mode */
 int32 Animations::getAnimMode(uint8 **ptr) {
 	int16 *lptr;
 	int16 opcode;
@@ -231,11 +219,6 @@ int32 Animations::getAnimMode(uint8 **ptr) {
 	return opcode;
 }
 
-/** Set new body animation
-	@param animIdx Animation index
-	@param animPtr Animation pointer
-	@param bodyPtr Body model poitner
-	@param animTimerDataPtr Animation time data */
 int32 Animations::setModelAnimation(int32 animState, uint8 *animPtr, uint8 *bodyPtr, AnimTimerDataStruct *animTimerDataPtr) {
 	int16 animOpcode;
 
@@ -313,66 +296,62 @@ int32 Animations::setModelAnimation(int32 animState, uint8 *animPtr, uint8 *body
 		processLastRotationAngle = *(int16 *)(keyFramePtr + 12);
 
 		return 1;
-	} else {
-		keyFramePtrOld = keyFramePtr;
-
-		lastKeyFramePtr += 8;
-		keyFramePtr += 8;
-
-		processRotationByAnim = *(int16 *)(keyFramePtr);
-		processLastRotationAngle = (*(int16 *)(keyFramePtr + 4) * eax) / keyFrameLength;
-
-		lastKeyFramePtr += 8;
-		keyFramePtr += 8;
-
-		edi += 38;
-
-		if (--numOfPointInAnim) {
-			int16 tmpNumOfPoints = numOfPointInAnim;
-
-			do {
-				animOpcode = getAnimMode(&edi);
-
-				switch (animOpcode) {
-				case 0: { // allow global rotate
-					applyAnimStepRotation(&edi, eax, keyFrameLength);
-					applyAnimStepRotation(&edi, eax, keyFrameLength);
-					applyAnimStepRotation(&edi, eax, keyFrameLength);
-					break;
-				}
-				case 1: { // dissallow global rotate
-					applyAnimStep(&edi, eax, keyFrameLength);
-					applyAnimStep(&edi, eax, keyFrameLength);
-					applyAnimStep(&edi, eax, keyFrameLength);
-					break;
-				}
-				case 2: { // dissallow global rotate + hide
-					applyAnimStep(&edi, eax, keyFrameLength);
-					applyAnimStep(&edi, eax, keyFrameLength);
-					applyAnimStep(&edi, eax, keyFrameLength);
-					break;
-				}
-				default: {
-					// TODO: printf("Unsupported animation rotation mode %d!\n", animOpcode);
-					_engine->_system->fatalError();
-				}
-				}
-
-				edi += 30;
-			} while (--tmpNumOfPoints);
-		}
-
-		currentStepX = (*(int16 *)(keyFramePtrOld + 2) * eax) / keyFrameLength;
-		currentStepY = (*(int16 *)(keyFramePtrOld + 4) * eax) / keyFrameLength;
-		currentStepZ = (*(int16 *)(keyFramePtrOld + 6) * eax) / keyFrameLength;
 	}
+	keyFramePtrOld = keyFramePtr;
+
+	lastKeyFramePtr += 8;
+	keyFramePtr += 8;
+
+	processRotationByAnim = *(int16 *)(keyFramePtr);
+	processLastRotationAngle = (*(int16 *)(keyFramePtr + 4) * eax) / keyFrameLength;
+
+	lastKeyFramePtr += 8;
+	keyFramePtr += 8;
+
+	edi += 38;
+
+	if (--numOfPointInAnim) {
+		int16 tmpNumOfPoints = numOfPointInAnim;
+
+		do {
+			animOpcode = getAnimMode(&edi);
+
+			switch (animOpcode) {
+			case 0: { // allow global rotate
+				applyAnimStepRotation(&edi, eax, keyFrameLength);
+				applyAnimStepRotation(&edi, eax, keyFrameLength);
+				applyAnimStepRotation(&edi, eax, keyFrameLength);
+				break;
+			}
+			case 1: { // dissallow global rotate
+				applyAnimStep(&edi, eax, keyFrameLength);
+				applyAnimStep(&edi, eax, keyFrameLength);
+				applyAnimStep(&edi, eax, keyFrameLength);
+				break;
+			}
+			case 2: { // dissallow global rotate + hide
+				applyAnimStep(&edi, eax, keyFrameLength);
+				applyAnimStep(&edi, eax, keyFrameLength);
+				applyAnimStep(&edi, eax, keyFrameLength);
+				break;
+			}
+			default: {
+				// TODO: printf("Unsupported animation rotation mode %d!\n", animOpcode);
+				_engine->_system->fatalError();
+			}
+			}
+
+			edi += 30;
+		} while (--tmpNumOfPoints);
+	}
+
+	currentStepX = (*(int16 *)(keyFramePtrOld + 2) * eax) / keyFrameLength;
+	currentStepY = (*(int16 *)(keyFramePtrOld + 4) * eax) / keyFrameLength;
+	currentStepZ = (*(int16 *)(keyFramePtrOld + 6) * eax) / keyFrameLength;
 
 	return 0;
 }
 
-/** Get entity anim index (This is taken from File3D entities)
-	@param anim Entity animation index
-	@param actorIdx Actor index */
 int32 Animations::getBodyAnimIndex(int32 animIdx, int32 actorIdx) {
 	int8 type;
 	uint16 realAnimIdx;
@@ -416,10 +395,6 @@ int32 Animations::getBodyAnimIndex(int32 animIdx, int32 actorIdx) {
 	return 0;
 }
 
-/** Stock animation - copy the next keyFrame from a different buffer
-	@param animPtr Animation pointer
-	@param bodyPtr Body model poitner
-	@param animTimerDataPtr Animation time data */
 int32 Animations::stockAnimation(uint8 *animPtr, uint8 *bodyPtr, AnimTimerDataStruct *animTimerDataPtr) {
 	int32 playAnim;
 	uint8 *ptr;
@@ -465,11 +440,6 @@ int32 Animations::stockAnimation(uint8 *animPtr, uint8 *bodyPtr, AnimTimerDataSt
 	return 0;
 }
 
-/** Verify animation at keyframe
-	@param animIdx Animation index
-	@param animPtr Animation pointer
-	@param bodyPtr Body model poitner
-	@param animTimerDataPtr Animation time data */
 int32 Animations::verifyAnimAtKeyframe(int32 animIdx, uint8 *animPtr, uint8 *bodyPtr, AnimTimerDataStruct *animTimerDataPtr) {
 	int16 bodyHeader;
 
@@ -516,28 +486,25 @@ int32 Animations::verifyAnimAtKeyframe(int32 animIdx, uint8 *animPtr, uint8 *bod
 		processLastRotationAngle = *(int16 *)(keyFramePtr + 12);
 
 		return 1;
-	} else {
-		keyFramePtrOld = keyFramePtr;
-
-		lastKeyFramePtr += 8;
-		keyFramePtr += 8;
-
-		processRotationByAnim = *(int16 *)(keyFramePtr);
-		processLastRotationAngle = (*(int16 *)(keyFramePtr + 4) * eax) / keyFrameLength;
-
-		lastKeyFramePtr += 8;
-		keyFramePtr += 8;
-
-		currentStepX = (*(int16 *)(keyFramePtrOld + 2) * eax) / keyFrameLength;
-		currentStepY = (*(int16 *)(keyFramePtrOld + 4) * eax) / keyFrameLength;
-		currentStepZ = (*(int16 *)(keyFramePtrOld + 6) * eax) / keyFrameLength;
 	}
+	keyFramePtrOld = keyFramePtr;
+
+	lastKeyFramePtr += 8;
+	keyFramePtr += 8;
+
+	processRotationByAnim = *(int16 *)(keyFramePtr);
+	processLastRotationAngle = (*(int16 *)(keyFramePtr + 4) * eax) / keyFrameLength;
+
+	lastKeyFramePtr += 8;
+	keyFramePtr += 8;
+
+	currentStepX = (*(int16 *)(keyFramePtrOld + 2) * eax) / keyFrameLength;
+	currentStepY = (*(int16 *)(keyFramePtrOld + 4) * eax) / keyFrameLength;
+	currentStepZ = (*(int16 *)(keyFramePtrOld + 6) * eax) / keyFrameLength;
 
 	return 0;
 }
 
-//--------------------------------
-//helper class
 struct _DataReader {
 	uint8 *ptr;
 };
@@ -553,14 +520,11 @@ int16 readWord(DataReader *data) {
 	data->ptr += 2;
 	return result;
 }
-//--------------------------------
 
 void skipBytes(DataReader *data, int n) {
 	data->ptr += n;
 }
 
-/** Process acotr animation actions
-	@param actorIdx Actor index */
 void Animations::processAnimActions(int32 actorIdx) {
 	int32 index = 0, endAnimEntityIdx, actionType, animPos;
 	ActorStruct *actor;
@@ -806,11 +770,6 @@ void Animations::processAnimActions(int32 actorIdx) {
 	free(data);
 }
 
-/** Initialize animation
-	@param newAnim animation to init
-	@param animType animation type
-	@param animExtra animation actions extra data
-	@param actorIdx actor index */
 int32 Animations::initAnim(int32 newAnim, int16 animType, uint8 animExtra, int32 actorIdx) {
 	ActorStruct *actor;
 	int32 animIndex;
@@ -882,8 +841,6 @@ int32 Animations::initAnim(int32 newAnim, int16 animType, uint8 animExtra, int32
 	return 1;
 }
 
-/** Process main loop actor animations
-	@param actorIdx Actor index */
 void Animations::processActorAnimations(int32 actorIdx) { // DoAnim
 	int16 numKeyframe;
 	uint8 *animPtr;

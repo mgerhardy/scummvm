@@ -28,11 +28,6 @@ namespace TwinE {
 
 HQRDepack::HQRDepack(TwinEEngine *engine) : _engine(engine) {}
 
-/** Decompress entry based in Yaz0r and Zink decompression code
-	@param dst destination pointer where will be the decompressed entry
-	@param src compressed data pointer
-	@decompsize real file size after decompression
-	@mode compression mode used */
 void HQRDepack::hqrDecompressEntry(uint8 *dst, uint8 *src, int32 decompsize, int32 mode) {
 	uint8 b;
 	int32 lenght, d, i;
@@ -60,11 +55,6 @@ void HQRDepack::hqrDecompressEntry(uint8 *dst, uint8 *src, int32 decompsize, int
 	} while (decompsize);
 }
 
-/** Decompress entry based in the original expand lzss lba code
-	@param dst destination pointer where will be the decompressed entry
-	@param src compressed data pointer
-	@decompsize real file size after decompression
-	@mode compression mode used */
 void HQRDepack::hqrDecompressLZEntry(uint8 *dst, uint8 *src, int32 decompsize, int32 mode) {
 	uint16 offset;
 	int32 lenght;
@@ -312,10 +302,6 @@ int32 HQRDepack::hqrGetVoxEntry(uint8 *ptr, const char *filename, int32 index, i
 	return realSize;
 }
 
-/** Get a HQR entry pointer
-	@param filename HQR file name
-	@param index entry index to extract
-	@return entry real size */
 int HQRDepack::hqrVoxEntrySize(const char *filename, int32 index, int32 hiddenIndex) {
 	uint32 headerSize;
 	uint32 offsetToData;
@@ -362,11 +348,6 @@ int HQRDepack::hqrVoxEntrySize(const char *filename, int32 index, int32 hiddenIn
 	return realSize;
 }
 
-/** Get a HQR entry pointer with memory allocation
-	@param ptr pointer to save the entry
-	@param filename HQR file name
-	@param index entry index to extract
-	@return entry real size */
 int32 HQRDepack::hqrGetallocVoxEntry(uint8 **ptr, const char *filename, int32 index, int32 hiddenIndex) {
 	int32 size;
 	size = hqrVoxEntrySize(filename, index, hiddenIndex);

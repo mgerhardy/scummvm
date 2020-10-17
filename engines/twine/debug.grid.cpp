@@ -31,7 +31,6 @@ namespace TwinE {
 
 DebugGrid::DebugGrid(TwinEEngine *engine) : _engine(engine) {}
 
-/** Change scenario camera positions */
 void DebugGrid::changeGridCamera(int16 pKey) {
 	if (useFreeCamera) {
 		// Press up - more X positions
@@ -60,7 +59,6 @@ void DebugGrid::changeGridCamera(int16 pKey) {
 	}
 }
 
-/** Change grid index */
 void DebugGrid::changeGrid(int16 pKey) {
 	if (canChangeScenes) {
 		// Press up - more X positions
@@ -86,7 +84,6 @@ void DebugGrid::changeGrid(int16 pKey) {
 	}
 }
 
-/** Apply and change disappear celling grid */
 void DebugGrid::applyCellingGrid(int16 pKey) {
 	// Increase celling grid index
 	if (pKey == 0x22) {

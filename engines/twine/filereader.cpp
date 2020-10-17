@@ -27,18 +27,12 @@
 
 namespace TwinE {
 
-/** Feed buffer from file
-	@param fr FileReader pointer */
 bool frfeed(FileReader *fr) {
 	const size_t retVal = fread(fr->buffer, BUFFER_SIZE, 1, (FILE *)fr->fd);
 	fr->bufferPos = 0;
 	return retVal > 0;
 }
 
-/** Read file
-	@param fr FileReader pointer
-	@param destPtr content destination pointer
-	@param size size of read characters */
 bool frread(FileReader *fr, void *destPtr, uint32 size) {
 	if (BUFFER_SIZE - fr->bufferPos >= size) {
 		memcpy(destPtr, &fr->buffer[fr->bufferPos], size);
@@ -75,9 +69,6 @@ bool frread(FileReader *fr, void *destPtr, uint32 size) {
 	return true;
 }
 
-/** Seek file
-	@param fr FileReader pointer
-	@param seekPosition position to seek */
 void frseek(FileReader *fr, uint32 seekPosition) {
 	uint32 sectorToSeek;
 
@@ -90,10 +81,6 @@ void frseek(FileReader *fr, uint32 seekPosition) {
 	fr->bufferPos = (seekPosition - (sectorToSeek * 2048));
 }
 
-/** Open file
-	@param fr FileReader pointer
-	@param filename file path
-	@return true if file open and false if error occurred */
 int32 fropen2(FileReader *fr, const char *filename, const char *mode) {
 	fr->fd = fcaseopen(filename, mode);
 
@@ -106,16 +93,10 @@ int32 fropen2(FileReader *fr, const char *filename, const char *mode) {
 	return 0;
 }
 
-/** Write file
-	@param fr FileReader pointer
-	@param destPtr content destination pointer
-	@param size size of read characters */
 void frwrite(FileReader *fr, const void *destPtr, uint32 size, uint32 count) {
 	fwrite(destPtr, size, count, (FILE *)fr->fd);
 }
 
-/** Close file
-	@param fr FileReader pointer */
 void frclose(FileReader *fr) {
 	fclose((FILE *)fr->fd);
 }

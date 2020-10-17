@@ -36,8 +36,22 @@ private:
 
 	FileReader fr;
 
+	/** Get a HQR entry pointer
+	@param filename HQR file name
+	@param index entry index to extract
+	@return entry real size */
 	int hqrVoxEntrySize(const char *filename, int32 index, int32 hiddenIndex);
+	/** Decompress entry based in the original expand lzss lba code
+	@param dst destination pointer where will be the decompressed entry
+	@param src compressed data pointer
+	@decompsize real file size after decompression
+	@mode compression mode used */
 	void hqrDecompressLZEntry(uint8 *dst, uint8 *src, int32 decompsize, int32 mode);
+	/** Decompress entry based in Yaz0r and Zink decompression code
+	@param dst destination pointer where will be the decompressed entry
+	@param src compressed data pointer
+	@decompsize real file size after decompression
+	@mode compression mode used */
 	void hqrDecompressEntry(uint8 *dst, uint8 *src, int32 decompsize, int32 mode);
 
 public:
@@ -69,6 +83,11 @@ public:
 	int32 hqrGetallocEntry(uint8 **ptr, const char *filename, int32 index);
 
 	int32 hqrGetVoxEntry(uint8 *ptr, const char *filename, int32 index, int32 hiddenIndex);
+	/** Get a HQR entry pointer with memory allocation
+	@param ptr pointer to save the entry
+	@param filename HQR file name
+	@param index entry index to extract
+	@return entry real size */
 	int32 hqrGetallocVoxEntry(uint8 **ptr, const char *filename, int32 index, int32 hiddenIndex);
 };
 

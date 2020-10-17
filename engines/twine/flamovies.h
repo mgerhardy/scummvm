@@ -113,6 +113,10 @@ private:
 
 	void drawKeyFrame(uint8 *ptr, int32 width, int32 height);
 	void drawDeltaFrame(uint8 *ptr, int32 width);
+	/** Scale FLA movie 2 times
+
+	According with the settins we can put the original aspect radio stretch
+	to fullscreen or preserve it and use top and button black bars */
 	void scaleFla2x();
 	void processFrame();
 

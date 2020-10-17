@@ -48,7 +48,6 @@ namespace TwinE {
 
 GameState::GameState(TwinEEngine* engine) : _engine(engine) {}
 
-/** Initialize engine 3D projections */
 void GameState::initEngineProjections() { // reinitAll1
 	_engine->_renderer->setOrthoProjection(311, 240, 512);
 	_engine->_renderer->setBaseTranslation(0, 0, 0);
@@ -56,7 +55,6 @@ void GameState::initEngineProjections() { // reinitAll1
 	_engine->_renderer->setLightVector(_engine->_scene->alphaLight, _engine->_scene->betaLight, 0);
 }
 
-/** Initialize variables */
 void GameState::initSceneVars() {
 	int32 i;
 
@@ -122,7 +120,6 @@ void GameState::initHeroVars() { // reinitAll3
 	_engine->_scene->sceneHero->talkColor = 4;
 }
 
-/** Initialize all engine variables */
 void GameState::initEngineVars(int32 save) { // reinitAll
 	_engine->_interface->resetClip();
 

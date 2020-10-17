@@ -36,15 +36,29 @@ class Text {
 private:
 	TwinEEngine *_engine;
 	void initVoxBank(int32 bankIdx);
+	/** Draw a certain character in the screen
+	@param x X coordinate in screen
+	@param y Y coordinate in screen
+	@param character ascii character to display */
 	void drawCharacter(int32 x, int32 y, uint8 character);
+	/** Draw character with shadow
+	@param x X coordinate in screen
+	@param y Y coordinate in screen
+	@param character ascii character to display
+	@param color character color */
 	void drawCharacterShadow(int32 x, int32 y, uint8 character, int32 color);
 	void initProgressiveTextBuffer();
 	void printText8Sub4(int16 a, int16 b, int16 c);
 	void getWordSize(uint8 *arg1, uint8 *arg2);
 	void processTextLine();
+	// draw next page arrow polygon
 	void printText10Sub();
 	void printText10Sub2();
 	void TEXT_GetLetterSize(uint8 character, int32 *pLetterWidth, int32 *pLetterHeight, uint8 *pFont);
+	/** Copy dialogue text
+	@param src source text buffer
+	@param dst destination text buffer
+	@param size text size */
 	void copyText(int8 *src, int8 *dst, int32 size);
 
 public:

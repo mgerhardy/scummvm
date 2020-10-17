@@ -23,8 +23,8 @@
 #ifndef TWINE_ANIMATIONS_H
 #define TWINE_ANIMATIONS_H
 
-#include "twine/actor.h"
 #include "common/scummsys.h"
+#include "twine/actor.h"
 
 namespace TwinE {
 
@@ -66,8 +66,9 @@ private:
 	void applyAnimStepRotation(uint8 **ptr, int32 bp, int32 bx);
 	int32 getAnimMode(uint8 **ptr);
 	void applyAnimStep(uint8 **ptr, int32 bp, int32 bx);
+
 public:
-	Animations(TwinEEngine* engine);
+	Animations(TwinEEngine *engine);
 	/** Table with all loaded animations */
 	uint8 *animTable[NUM_ANIMS];
 	/** Table with all loaded animations sizes */
@@ -98,25 +99,25 @@ public:
 	uint8 *animBuffer2;
 
 	/** Set animation keyframe
-	@param keyframIdx Animation keyframe index
-	@param animPtr Pointer to animation
-	@param bodyPtr Body model poitner
-	@param animTimerDataPtr Animation time data */
+	 * @param keyframIdx Animation keyframe index
+	 * @param animPtr Pointer to animation
+	 * @param bodyPtr Body model poitner
+	 * @param animTimerDataPtr Animation time data */
 	int32 setAnimAtKeyframe(int32 keyframeIdx, uint8 *animPtr, uint8 *bodyPtr, AnimTimerDataStruct *animTimerDataPtr);
 
 	/** Get total number of keyframes in animation
-	@param animPtr Pointer to animation */
+	 * @param animPtr Pointer to animation */
 	int32 getNumKeyframes(uint8 *animPtr);
 
 	/** Get first keyframes in animation
-	@param animPtr Pointer to animation */
+	 * @param animPtr Pointer to animation */
 	int32 getStartKeyframe(uint8 *animPtr);
 
 	/** Set new body animation
-	@param animIdx Animation index
-	@param animPtr Animation pointer
-	@param bodyPtr Body model poitner
-	@param animTimerDataPtr Animation time data */
+	 * @param animIdx Animation index
+	 * @param animPtr Animation pointer
+	 * @param bodyPtr Body model poitner
+	 * @param animTimerDataPtr Animation time data */
 	int32 setModelAnimation(int32 animIdx, uint8 *animPtr, uint8 *bodyPtr, AnimTimerDataStruct *animTimerDataPtr);
 
 	/** Get entity anim index (This is taken from File3D entities)
@@ -153,5 +154,5 @@ public:
 	void processActorAnimations(int32 actorIdx);
 };
 
-}
+} // namespace TwinE
 #endif

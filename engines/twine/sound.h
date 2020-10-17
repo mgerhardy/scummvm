@@ -83,6 +83,7 @@ public:
 	/** Pause samples */
 	void pauseSamples();
 
+	/** Resume samples */
 	void resumeSamples();
 
 	/** Stop samples */

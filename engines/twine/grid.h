@@ -86,15 +86,46 @@ class Grid {
 private:
 	TwinEEngine *_engine;
 
+	/** Draw a specific brick in the grid column according with the block index
+	@param blockIdx block library index
+	@param brickBlockIdx brick index inside the block
+	@param x column x position
+	@param y column y position
+	@param z column z position */
 	void drawColumnGrid(int32 blockIdx, int32 brickBlockIdx, int32 x, int32 y, int32 z);
+	/** Get brick position in the screen
+	@param x column x position in the current camera
+	@param y column y position in the current camera
+	@param z column z position in the current camera */
 	void getBrickPos(int32 x, int32 y, int32 z);
+	/** Create celling grid map from celling grid to block library buffer
+	@param gridPtr celling grid buffer pointer */
 	void createCellingGridMap(uint8 *gridPtr);
+	/** Create grid Y column in block buffer
+	@param gridEntry current grid index
+	@param dest destination block buffer */
 	void createCellingGridColumn(uint8 *gridEntry, uint8 *dest);
+	/** Create grid Y column in block buffer
+	@param gridEntry current grid index
+	@param dest destination block buffer */
 	void createGridColumn(uint8 *gridEntry, uint8 *dest);
+	/** Load grid bricks according with block librarie usage
+	@param gridSize size of the current grid
+	@return true if everything went ok*/
 	int32 loadGridBricks(int32 gridSize);
+	/** Create grid masks to allow display actors over the bricks */
 	void createGridMask();
+	/** Process brick masks to allow actors to display over the bricks
+	@param buffer brick pointer buffer
+	@param ptr brick mask pointer buffer */
 	int processGridMask(uint8 *buffer, uint8 *ptr);
+	/** Copy grid mask to allow actors to display over the bricks
+	@param index current brick index
+	@param x grid X coordinate
+	@param y grid Y coordinate
+	@param buffer work video buffer */
 	void copyGridMask(int32 index, int32 x, int32 y, uint8 *buffer);
+
 public:
 	Grid(TwinEEngine *engine);
 

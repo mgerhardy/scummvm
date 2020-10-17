@@ -83,8 +83,17 @@ private:
 	RedrawStruct nextRedrawList[300];
 
 	int16 overlayRotation = 0;
+	/** Add a certain region to the current redraw list array
+	@param left start width to redraw the region
+	@param top start height to redraw the region
+	@param right end width to redraw the region
+	@param bottom end height to redraw the region */
 	void addRedrawCurrentArea(int32 left, int32 top, int32 right, int32 bottom);
+	/** Move next regions to the current redraw list */
 	void moveNextAreas();
+	/** Sort drawing list struct ordered as the first objects appear in the top left corner of the screen
+	@param list drawing list variable which contains information of the drawing objects
+	@param listSize number of drawing objects in the list */
 	void sortDrawingList(DrawListStruct *list, int32 listSize);
 	void updateOverlayTypePosition(int16 X1, int16 Y1, int16 X2, int16 Y2);
 
@@ -126,8 +135,7 @@ public:
 	void addRedrawArea(int32 left, int32 top, int32 right, int32 bottom);
 
 	/** Flip currentRedrawList regions in the screen
-
-	This only updates small areas in the screen so few CPU processor is used */
+	 * This only updates small areas in the screen so few CPU processor is used */
 	void flipRedrawAreas();
 
 	/** Blit/Update all screen regions in the currentRedrawList */

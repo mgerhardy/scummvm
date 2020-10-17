@@ -41,10 +41,6 @@ namespace TwinE {
 /** FLA movie extension */
 #define FLA_EXT ".fla"
 
-/** FLA movie draw key frame
-	@param ptr FLA frame buffer pointer
-	@param width FLA movie width
-	@param height FLA movie height */
 void FlaMovies::drawKeyFrame(uint8 *ptr, int32 width, int32 height) {
 	int32 a, b;
 	uint8 *destPtr = (uint8 *)flaBuffer;
@@ -78,9 +74,6 @@ void FlaMovies::drawKeyFrame(uint8 *ptr, int32 width, int32 height) {
 	} while (--height);
 }
 
-/** FLA movie draw delta frame
-	@param ptr FLA frame buffer pointer
-	@param width FLA movie width */
 void FlaMovies::drawDeltaFrame(uint8 *ptr, int32 width) {
 	int32 a, b;
 	uint16 skip;
@@ -125,10 +118,6 @@ void FlaMovies::drawDeltaFrame(uint8 *ptr, int32 width) {
 	} while (--height);
 }
 
-/** Scale FLA movie 2 times
-
-	According with the settins we can put the original aspect radio stretch
-	to fullscreen or preserve it and use top and button black bars */
 void FlaMovies::scaleFla2x() {
 	int32 i, j;
 	uint8 *source = (uint8 *)flaBuffer;
@@ -167,7 +156,6 @@ void FlaMovies::scaleFla2x() {
 	}
 }
 
-/** FLA movie process frame */
 void FlaMovies::processFrame() {
 	FLASampleStruct sample;
 	uint32 opcodeBlockSize;
@@ -248,8 +236,6 @@ static void fla_pcxList(const char *flaName) {
 
 FlaMovies::FlaMovies(TwinEEngine *engine) : _engine(engine) {}
 
-/** Play FLA movies
-	@param flaName FLA movie name */
 void FlaMovies::playFlaMovie(const char *flaName) {
 	int32 i;
 	int32 quit = 0;

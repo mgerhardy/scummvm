@@ -41,7 +41,6 @@ namespace TwinE {
 Actor::Actor(TwinEEngine *engine) : _engine(engine) {
 }
 
-/** Restart hero variables while opening new scenes */
 void Actor::restartHeroScene() {
 	_engine->_scene->sceneHero->controlMode = 1;
 	memset(&_engine->_scene->sceneHero->dynamicFlags, 0, 2);
@@ -66,7 +65,6 @@ void Actor::restartHeroScene() {
 	cropBottomScreen = 0;
 }
 
-/** Load hero 3D body and animations */
 void Actor::loadHeroEntities() {
 	_engine->_hqrdepack->hqrGetallocEntry(&heroEntityATHLETIC, HQR_FILE3D_FILE, FILE3DHQR_HEROATHLETIC);
 	_engine->_scene->sceneHero->entityDataPtr = heroEntityATHLETIC;
@@ -91,8 +89,6 @@ void Actor::loadHeroEntities() {
 	_engine->_scene->sceneHero->animExtraPtr = _engine->_animations->currentActorAnimExtraPtr;
 }
 
-/** Set hero behaviour
-	@param behaviour behaviour value to set */
 void Actor::setBehaviour(int32 behaviour) {
 	int32 bodyIdx;
 
@@ -132,8 +128,6 @@ void Actor::setBehaviour(int32 behaviour) {
 	_engine->_animations->initAnim(kStanding, 0, 255, 0);
 }
 
-/** Initialize sprite actor
-	@param actorIdx sprite actor index */
 void Actor::initSpriteActor(int32 actorIdx) {
 	ActorStruct *localActor = &_engine->_scene->sceneActors[actorIdx];
 
@@ -150,9 +144,6 @@ void Actor::initSpriteActor(int32 actorIdx) {
 	}
 }
 
-/** Initialize 3D actor body
-	@param bodyIdx 3D actor body index
-	@param actorIdx 3D actor index */
 int32 Actor::initBody(int32 bodyIdx, int32 actorIdx) {
 	ActorStruct *localActor;
 	uint8 *bodyPtr;
@@ -238,9 +229,6 @@ int32 Actor::initBody(int32 bodyIdx, int32 actorIdx) {
 	} while (1);
 }
 
-/** Initialize 3D actor
-	@param bodyIdx 3D actor body index
-	@param actorIdx 3D actor index */
 void Actor::initModelActor(int32 bodyIdx, int16 actorIdx) {
 	ActorStruct *localActor;
 	int32 entityIdx;
@@ -341,8 +329,6 @@ void Actor::initModelActor(int32 bodyIdx, int16 actorIdx) {
 	localActor->boudingBox.Z.topRight = 0;
 }
 
-/** Initialize actors
-	@param actorIdx actor index to init */
 void Actor::initActor(int16 actorIdx) {
 	ActorStruct *actor = &_engine->_scene->sceneActors[actorIdx];
 
@@ -383,8 +369,6 @@ void Actor::initActor(int16 actorIdx) {
 	actor->positionInLifeScript = 0;
 }
 
-/** Reset actor
-	@param actorIdx actor index to init */
 void Actor::resetActor(int16 actorIdx) {
 	ActorStruct *actor = &_engine->_scene->sceneActors[actorIdx];
 
@@ -436,11 +420,6 @@ void Actor::resetActor(int16 actorIdx) {
 	actor->positionInLifeScript = 0;
 }
 
-/** Process hit actor
-	@param actorIdx actor hitting index
-	@param actorIdxAttacked actor attacked index
-	@param strengthOfHit actor hitting strength of hit
-	@param angle angle of actor hitting */
 void Actor::hitActor(int32 actorIdx, int32 actorIdxAttacked, int32 strengthOfHit, int32 angle) {
 	ActorStruct *actor = &_engine->_scene->sceneActors[actorIdxAttacked];
 
@@ -487,7 +466,6 @@ void Actor::hitActor(int32 actorIdx, int32 actorIdxAttacked, int32 strengthOfHit
 	}
 }
 
-/** Process actor carrier */
 void Actor::processActorCarrier(int32 actorIdx) { // CheckCarrier
 	int32 a;
 	ActorStruct *actor = &_engine->_scene->sceneActors[actorIdx];

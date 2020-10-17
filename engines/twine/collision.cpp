@@ -37,9 +37,6 @@ namespace TwinE {
 Collision::Collision(TwinEEngine *engine) : _engine(engine) {
 }
 
-/** Check if actor 1 is standing in actor2
-	@param actorIdx1 Actor 1 index
-	@param actorIdx2 Actor 2 index */
 int32 Collision::standingOnActor(int32 actorIdx1, int32 actorIdx2) { // CheckZvOnZv
 	int32 x1Left, y1Left, z1Left, x1Right, y1Right, z1Right;
 	int32 x2Left, y2Left, z2Left, x2Right, y2Right, z2Right;
@@ -105,8 +102,6 @@ int32 Collision::getAverageValue(int32 var0, int32 var1, int32 var2, int32 var3)
 	return ((((var1 - var0) * var3) / var2) + var0);
 }
 
-/** Reajust actor position in scene according with brick shape bellow actor
-	@param brickShape Shape of brick bellow the actor */
 void Collision::reajustActorPosition(int32 brickShape) {
 	int32 brkX, brkY, brkZ;
 
@@ -205,8 +200,6 @@ void Collision::reajustActorPosition(int32 brickShape) {
 	}
 }
 
-/** Check collision with actors
-	@param actorIx Current process actor index */
 int32 Collision::checkCollisionWithActors(int32 actorIdx) {
 	int32 a, xLeft, xRight, yLeft, yRight, zLeft, zRight;
 	ActorStruct *actor, *actorTest;
@@ -397,11 +390,6 @@ int32 Collision::checkCollisionWithActors(int32 actorIdx) {
 	return actor->collision;
 }
 
-/** Check Hero collision with bricks
-	@param X Hero X coordinate
-	@param Y Hero Y coordinate
-	@param Z Hero Z coordinate
-	@param damageMask Cause damage mask */
 void Collision::checkHeroCollisionWithBricks(int32 X, int32 Y, int32 Z, int32 damageMask) {
 	int32 brickShape;
 
@@ -436,11 +424,6 @@ void Collision::checkHeroCollisionWithBricks(int32 X, int32 Y, int32 Z, int32 da
 	_engine->_movements->processActorZ = processCollisionZ;
 }
 
-/** Check other actor collision with bricks
-	@param X Actor X coordinate
-	@param Y Actor Y coordinate
-	@param Z Actor Z coordinate
-	@param damageMask Cause damage mask */
 void Collision::checkActorCollisionWithBricks(int32 X, int32 Y, int32 Z, int32 damageMask) {
 	int32 brickShape;
 
@@ -475,7 +458,6 @@ void Collision::checkActorCollisionWithBricks(int32 X, int32 Y, int32 Z, int32 d
 	_engine->_movements->processActorZ = processCollisionZ;
 }
 
-/** Make actor to stop falling */
 void Collision::stopFalling() { // ReceptionObj()
 	int32 fall;
 
@@ -504,9 +486,6 @@ void Collision::stopFalling() { // ReceptionObj()
 	_engine->_movements->processActorPtr->dynamicFlags.bIsFalling = 0;
 }
 
-/** Check extra collision with actors
-	@param extra to process
-	@param actorIdx actor to check collision */
 int32 Collision::checkExtraCollisionWithActors(ExtraListStruct *extra, int32 actorIdx) {
 	int32 a;
 	int32 xLeft, xRight, yLeft, yRight, zLeft, zRight;
@@ -552,7 +531,6 @@ int32 Collision::checkExtraCollisionWithActors(ExtraListStruct *extra, int32 act
 	return -1;
 }
 
-/** Check extra collision with bricks */
 int32 Collision::checkExtraCollisionWithBricks(int32 X, int32 Y, int32 Z, int32 oldX, int32 oldY, int32 oldZ) {
 	int32 averageX, averageY, averageZ;
 
@@ -579,9 +557,6 @@ int32 Collision::checkExtraCollisionWithBricks(int32 X, int32 Y, int32 Z, int32 
 	return 0;
 }
 
-/** Check extra collision with another extra
-	@param extra to process
-	@param extraIdx extra index to check collision */
 int32 Collision::checkExtraCollisionWithExtra(ExtraListStruct *extra, int32 extraIdx) {
 	int32 i;
 	int32 xLeft, xRight, yLeft, yRight, zLeft, zRight;
