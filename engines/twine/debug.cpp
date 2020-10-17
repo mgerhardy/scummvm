@@ -23,8 +23,8 @@
 #include "twine/debug.h"
 
 #ifdef GAMEMOD
-#include "twine/debug.grid.h"
-#include "twine/debug.scene.h"
+#include "twine/debug_grid.h"
+#include "twine/debug_scene.h"
 #include "twine/interface.h"
 #include "twine/menu.h"
 #include "twine/redraw.h"

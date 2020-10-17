@@ -36,7 +36,7 @@
 #include "twine/resources.h"
 #include "twine/scene.h"
 #include "twine/screens.h"
-#include "twine/script.life.h"
+#include "twine/script_life.h"
 #include "twine/sdlengine.h"
 #include "twine/sound.h"
 #include "twine/text.h"

@@ -20,7 +20,7 @@
  *
  */
 
-#include "twine/debug.scene.h"
+#include "twine/debug_scene.h"
 #include "twine/grid.h"
 #include "twine/interface.h"
 #include "twine/redraw.h"

@@ -21,7 +21,7 @@
  */
 
 #include "common/debug.h"
-#include "twine/debug.grid.h"
+#include "twine/debug_grid.h"
 #include "twine/grid.h"
 #include "twine/redraw.h"
 #include "twine/scene.h"

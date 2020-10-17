@@ -20,7 +20,7 @@
  *
  */
 
-#include "twine/script.move.h"
+#include "twine/script_move.h"
 #include "twine/actor.h"
 #include "twine/animations.h"
 #include "common/textconsole.h"

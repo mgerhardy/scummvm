@@ -5,8 +5,8 @@ MODULE_OBJS := \
 	animations.o \
 	collision.o \
 	debug.o \
-	debug.grid.o \
-	debug.scene.o \
+	debug_grid.o \
+	debug_scene.o \
 	detection.o \
 	extra.o \
 	fcaseopen.o \
@@ -28,8 +28,8 @@ MODULE_OBJS := \
 	resources.o \
 	scene.o \
 	screens.o \
-	script.life.o \
-	script.move.o \
+	script_life.o \
+	script_move.o \
 	sdlengine.o \
 	sound.o \
 	text.o \
