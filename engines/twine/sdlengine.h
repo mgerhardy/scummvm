@@ -40,10 +40,6 @@ int sdlInitialize();
 /** Frames per second sdl delay */
 void fpsCycles(int32 fps);
 
-/** Deplay certain seconds till proceed
-	@param time time in seconds to delay */
-void sdldelay(uint32 time);
-
 /** Deplay certain seconds till proceed - Can also Skip this delay
 	@param time time in seconds to delay */
 void delaySkip(uint32 time);

@@ -21,6 +21,7 @@
  */
 
 #include "twine/gamestate.h"
+#include "common/system.h"
 #include "twine/animations.h"
 #include "twine/collision.h"
 #include "common/textconsole.h"
@@ -388,7 +389,7 @@ void GameState::processFoundItem(int32 item) {
 		}
 
 		if (textState == 0 || textState == 2) {
-			sdldelay(15);
+			_engine->_system->delayMillis(15);
 		}
 
 		_engine->_redraw->flipRedrawAreas();
@@ -500,7 +501,7 @@ void GameState::processGameoverAnimation() { // makeGameOver
 			copyBlockPhys(120, 120, 519, 359);
 
 			_engine->lbaTime++;
-			sdldelay(15);
+			_engine->_system->delayMillis(15);
 		}
 
 		_engine->_sound->playSample(37, _engine->getRandomNumber(2000) + 3096, 1, 0x80, 0x80, 0x80, -1);

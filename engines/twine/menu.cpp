@@ -24,6 +24,7 @@
 #include "twine/actor.h"
 #include "twine/animations.h"
 #include "common/scummsys.h"
+#include "common/system.h"
 #include "twine/gamestate.h"
 #include "twine/grid.h"
 #include "twine/hqrdepack.h"
@@ -446,7 +447,7 @@ void Menu::drawButton(int16 *menuSettings, int32 mode) {
 		topHeight += 56; // increase button top height
 
 		// slow down the CPU
-		sdldelay(1);
+		_engine->_system->delayMillis(1);
 	} while (currentButton < maxButton);
 }
 
@@ -1168,7 +1169,7 @@ void Menu::processInventoryMenu() {
 
 		// TRICKY: 3D model rotation delay - only apply when no text is drawing
 		if (bx == 0 || bx == 2) {
-			sdldelay(15);
+			_engine->_system->delayMillis(15);
 		}
 
 		if (_engine->loopPressedKey & 1) {
@@ -1206,7 +1207,7 @@ void Menu::processInventoryMenu() {
 
 	while (_engine->_keyboard.skipIntro != 0 && _engine->_keyboard.skippedKey != 0) {
 		readKeys();
-		sdldelay(1);
+		_engine->_system->delayMillis(1);
 	}
 }
 

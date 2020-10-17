@@ -73,8 +73,6 @@ TTF_Font *font;
 
 #if 0
 
-/** SDL initializer
-	@return SDL init state */
 int sdlInitialize() {
 	uint8 *keyboard;
 	int32 size;
@@ -145,16 +143,8 @@ int sdlInitialize() {
 	return 0;
 }
 
-/** Frames per second sdl delay
-	@param fps frames per second */
 void fpsCycles(int32 fps) {
 	SDL_Delay(1000 / (fps));
-}
-
-/** Deplay certain seconds till proceed
-	@param time time in seconds to delay */
-void sdldelay(uint32 time) {
-	SDL_Delay(time);
 }
 
 /** Deplay certain seconds till proceed - Can skip delay

@@ -22,6 +22,7 @@
 
 #include "twine/text.h"
 #include "common/scummsys.h"
+#include "common/system.h"
 #include "twine/hqrdepack.h"
 #include "twine/interface.h"
 #include "twine/keyboard.h"
@@ -516,7 +517,7 @@ void Text::printText10Sub2() {
 
 	ptr = pt8s4 + currentIndex;
 
-	sdldelay(15);
+	_engine->_system->delayMillis(15);
 
 	counter = printText8Var3;
 	counter2 = dialTextStartColor;
@@ -650,7 +651,7 @@ void Text::drawTextFullscreen(int32 index) { // printTextFullScreen
 						break;
 					}
 					playVox(currDialTextEntry);
-					sdldelay(1);
+					_engine->_system->delayMillis(1);
 				} while (1);
 
 				do {
@@ -659,7 +660,7 @@ void Text::drawTextFullscreen(int32 index) { // printTextFullScreen
 						break;
 					}
 					playVox(currDialTextEntry);
-					sdldelay(1);
+					_engine->_system->delayMillis(1);
 				} while (1);
 			}
 
@@ -671,7 +672,7 @@ void Text::drawTextFullscreen(int32 index) { // printTextFullScreen
 				break;
 			}
 
-			sdldelay(1);
+			_engine->_system->delayMillis(1);
 		} while (!skipText);
 
 		hasHiddenVox = 0;
@@ -696,7 +697,7 @@ void Text::drawTextFullscreen(int32 index) { // printTextFullScreen
 		// wait displaying text
 		do {
 			readKeys();
-			sdldelay(1);
+			_engine->_system->delayMillis(1);
 		} while (_engine->_keyboard.skipIntro || _engine->_keyboard.skippedKey || _engine->_keyboard.pressedKey);
 
 		// RECHECK this later
@@ -711,7 +712,7 @@ void Text::drawTextFullscreen(int32 index) { // printTextFullScreen
 				_engine->_interface->loadClip();
 				return;
 			}
-			sdldelay(1);
+			_engine->_system->delayMillis(1);
 		} while (!_engine->_keyboard.pressedKey);
 	} else { // RECHECK THIS
 		while (playVox(currDialTextEntry) && _engine->_keyboard.skipIntro != 1)
@@ -860,17 +861,17 @@ void Text::drawAskQuestion(int32 index) { // MyDial
 			do {
 				readKeys();
 				playVox(currDialTextEntry);
-				sdldelay(1);
+				_engine->_system->delayMillis(1);
 			} while (_engine->_keyboard.skipIntro || _engine->_keyboard.skippedKey || _engine->_keyboard.pressedKey);
 
 			do {
 				readKeys();
 				playVox(currDialTextEntry);
-				sdldelay(1);
+				_engine->_system->delayMillis(1);
 			} while (!_engine->_keyboard.skipIntro && !_engine->_keyboard.skippedKey && !_engine->_keyboard.pressedKey);
 		}
 
-		sdldelay(1);
+		_engine->_system->delayMillis(1);
 	} while (textStatus);
 
 	if (_engine->cfgfile.LanguageCDId) {
