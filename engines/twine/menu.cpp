@@ -751,7 +751,7 @@ void Menu::mainMenu() {
 			_engine->_screens->loadMenuImage(1);
 		}
 		}
-		fpsCycles(_engine->cfgfile.Fps);
+		_engine->_system->delayMillis(1000 / _engine->cfgfile.Fps);
 	}
 }
 
@@ -779,7 +779,7 @@ int32 Menu::giveupMenu() {
 
 		_engine->_text->initTextBank(_engine->_text->currentTextBank + 3);
 
-		fpsCycles(_engine->cfgfile.Fps);
+		_engine->_system->delayMillis(1000 / _engine->cfgfile.Fps);
 	} while (menuId != kGiveUp && menuId != kContinue);
 
 	if (menuId == kGiveUp) {
@@ -1001,7 +1001,7 @@ void Menu::processBehaviourMenu() {
 
 		drawBehaviour(_engine->_actor->heroBehaviour, -1, 1);
 
-		fpsCycles(50);
+		_engine->_system->delayMillis(1000 / 50);
 		_engine->lbaTime++;
 	}
 

@@ -20,6 +20,7 @@
  *
  */
 
+#include "common/system.h"
 #include "twine/screens.h"
 #include "twine/hqrdepack.h"
 #include "twine/music.h"
@@ -180,7 +181,7 @@ void Screens::adjustCrossPalette(uint8 *pal1, uint8 *pal2) {
 		}
 
 		setPalette(localPalette);
-		fpsCycles(50);
+		_engine->_system->delayMillis(1000 / 50);
 
 		intensity++;
 	} while (intensity <= 100);
@@ -192,7 +193,7 @@ void Screens::fadeToBlack(uint8 *pal) {
 	if (palReseted == 0) {
 		for (i = 100; i >= 0; i -= 3) {
 			adjustPalette(0, 0, 0, (uint8 *)pal, i);
-			fpsCycles(50);
+			_engine->_system->delayMillis(1000 / 50);
 		}
 	}
 
@@ -204,7 +205,7 @@ void Screens::fadeToPal(uint8 *pal) {
 
 	for (i = 0; i <= 100; i += 3) {
 		adjustPalette(0, 0, 0, (uint8 *)pal, i);
-		fpsCycles(50);
+		_engine->_system->delayMillis(1000 / 50);
 	}
 
 	setPalette((uint8 *)pal);
@@ -236,7 +237,7 @@ void Screens::fadePalRed(uint8 *pal) {
 
 	for (i = 100; i >= 0; i -= 2) {
 		adjustPalette(0xFF, 0, 0, (uint8 *)pal, i);
-		fpsCycles(50);
+		_engine->_system->delayMillis(1000 / 50);
 	}
 }
 
@@ -245,7 +246,7 @@ void Screens::fadeRedPal(uint8 *pal) {
 
 	for (i = 0; i <= 100; i += 2) {
 		adjustPalette(0xFF, 0, 0, (uint8 *)pal, i);
-		fpsCycles(50);
+		_engine->_system->delayMillis(1000 / 50);
 	}
 }
 

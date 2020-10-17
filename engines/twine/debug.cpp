@@ -528,7 +528,7 @@ void debugProcessWindow() {
 			if (mouseData.right)
 				quit = 1;
 
-			fpsCycles(25); // rest
+			_engine->_system->delayMillis(1000 / 25); // rest
 
 			count++;
 		} while (!quit);

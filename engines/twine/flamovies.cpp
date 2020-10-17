@@ -20,6 +20,7 @@
  *
  */
 
+#include "common/system.h"
 #include "twine/filereader.h"
 #include "twine/flamovies.h"
 #include "twine/keyboard.h"
@@ -324,7 +325,7 @@ void FlaMovies::playFlaMovie(const char *flaName) {
 
 					currentFrame++;
 
-					fpsCycles(flaHeaderData.speed + 1);
+					_engine->_system->delayMillis(1000 / flaHeaderData.speed + 1);
 
 					readKeys();
 

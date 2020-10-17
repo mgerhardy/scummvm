@@ -143,10 +143,6 @@ int sdlInitialize() {
 	return 0;
 }
 
-void fpsCycles(int32 fps) {
-	SDL_Delay(1000 / (fps));
-}
-
 /** Deplay certain seconds till proceed - Can skip delay
 	@param time time in seconds to delay */
 void delaySkip(uint32 time) {

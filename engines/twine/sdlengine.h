@@ -37,9 +37,6 @@ extern SDL_Surface *screen;
 	@return SDL init state */
 int sdlInitialize();
 
-/** Frames per second sdl delay */
-void fpsCycles(int32 fps);
-
 /** Deplay certain seconds till proceed - Can also Skip this delay
 	@param time time in seconds to delay */
 void delaySkip(uint32 time);
