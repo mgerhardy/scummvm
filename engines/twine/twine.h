@@ -27,6 +27,7 @@
 #include "engines/engine.h"
 
 #include "twine/actor.h"
+#include "twine/keyboard.h"
 
 namespace TwinE {
 
@@ -147,6 +148,7 @@ class Holomap;
 class Sound;
 class Text;
 class DebugGrid;
+struct Keyboard;
 
 class TwinEEngine : public Engine {
 public:
@@ -180,6 +182,7 @@ public:
 	Sound *_sound;
 	Text *_text;
 	DebugGrid *_debugGrid;
+	Keyboard _keyboard;
 
 	/** Configuration file structure
 	 * Contains all the data used in the engine to configurated the game in particulary ways. */

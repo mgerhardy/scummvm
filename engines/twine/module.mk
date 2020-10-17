@@ -17,7 +17,6 @@ MODULE_OBJS := \
 	holomap.o \
 	hqrdepack.o \
 	interface.o \
-	keyboard.o \
 	menu.o \
 	menuoptions.o \
 	metaengine.o \

@@ -394,7 +394,7 @@ void GameState::processFoundItem(int32 item) {
 		_engine->_redraw->flipRedrawAreas();
 
 		readKeys();
-		if (skippedKey) {
+		if (_engine->_keyboard.skippedKey) {
 			if (!textState) {
 				quitItem = 1;
 			}
@@ -409,7 +409,7 @@ void GameState::processFoundItem(int32 item) {
 
 	while (_engine->_text->playVoxSimple(_engine->_text->currDialTextEntry)) {
 		readKeys();
-		if (skipIntro == 1) {
+		if (_engine->_keyboard.skipIntro == 1) {
 			break;
 		}
 		delaySkip(1);
@@ -489,7 +489,7 @@ void GameState::processGameoverAnimation() { // makeGameOver
 		startLbaTime = _engine->lbaTime;
 		_engine->_interface->setClip(120, 120, 519, 359);
 
-		while (skipIntro != 1 && (_engine->lbaTime - startLbaTime) <= 0x1F4) {
+		while (_engine->_keyboard.skipIntro != 1 && (_engine->lbaTime - startLbaTime) <= 0x1F4) {
 			readKeys();
 
 			avg = _engine->_collision->getAverageValue(40000, 3200, 500, _engine->lbaTime - startLbaTime);

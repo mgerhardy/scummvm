@@ -64,13 +64,13 @@ void MenuOptions::newGame() {
 	_engine->_text->drawTextFullscreen(150);
 	readKeys();
 
-	if (skipIntro != 1) {
+	if (_engine->_keyboard.skipIntro != 1) {
 		// intro screen 1 - twinsun
 		_engine->_screens->loadImage(RESSHQR_INTROSCREEN2IMG, 1);
 		_engine->_text->drawTextFullscreen(151);
 		readKeys();
 
-		if (skipIntro != 1) {
+		if (_engine->_keyboard.skipIntro != 1) {
 			_engine->_screens->loadImage(RESSHQR_INTROSCREEN3IMG, 1);
 			_engine->_text->drawTextFullscreen(152);
 		}
@@ -229,23 +229,23 @@ int32 MenuOptions::enterPlayerName(int32 textIdx) {
 			readKeys();
 			do {
 				readKeys();
-			} while (skipIntro);
-		} while (skippedKey);
+			} while (_engine->_keyboard.skipIntro);
+		} while (_engine->_keyboard.skippedKey);
 
 		enterPlayerNameVar2 = 1;
 
 		do {
 			readKeys();
-		} while (pressedKey);
+		} while (_engine->_keyboard.pressedKey);
 
-		while (!skipIntro) {
+		while (!_engine->_keyboard.skipIntro) {
 			readKeys();
 			// TODO
 			drawPlayerName(320, 100, playerName, 1);
 		}
 
 		// FIXME: remove this lines after implementing everything
-		if (skipIntro)
+		if (_engine->_keyboard.skipIntro)
 			break;
 	}
 
@@ -272,8 +272,8 @@ void MenuOptions::newGameMenu() {
 			readKeys();
 			do {
 				readKeys();
-			} while (skippedKey != 0);
-		} while (skipIntro != 0);
+			} while (_engine->_keyboard.skippedKey != 0);
+		} while (_engine->_keyboard.skipIntro != 0);
 	}
 }
 
@@ -300,8 +300,8 @@ void MenuOptions::continueGameMenu() {
 			readKeys();
 			do {
 				readKeys();
-			} while (skippedKey != 0);
-		} while (skipIntro != 0);
+			} while (_engine->_keyboard.skippedKey != 0);
+		} while (_engine->_keyboard.skipIntro != 0);
 	}
 }
 

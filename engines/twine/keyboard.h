@@ -24,28 +24,101 @@
 #define TWINE_KEYBOARD_H
 
 #include "common/scummsys.h"
+#include "common/util.h"
 
 namespace TwinE {
 
 /** Pressed key map - scanCodeTab1 */
-extern uint8 pressedKeyMap[29];
+static const uint8 pressedKeyMap[] = {
+    0x48, // 0
+    0x50,
+    0x4B,
+    0x4D,
+    0x47,
+    0x49,
+    0x51,
+    0x4F, // 7
+
+    0x39, // 8
+    0x1C,
+    0x1D,
+    0x38,
+    0x53,
+    0x2A,
+    0x36, // 14
+
+    0x3B, // 15
+    0x3C,
+    0x3D,
+    0x3E,
+    0x3F,
+    0x40, // LBAKEY_F6
+    0x41,
+    0x42,
+    0x43,
+    0x44,
+    0x57,
+    0x58,
+    0x2A,
+    0x0, // 28
+};
+static_assert(ARRAYSIZE(pressedKeyMap) == 29, "Expected size of key map");
+
 /** Pressed key char map - scanCodeTab2 */
-extern uint16 pressedKeyCharMap[31];
+static const uint16 pressedKeyCharMap[] = {
+    0x0100, // up
+    0x0200, // down
+    0x0400, // left
+    0x0800, // right
+    0x0500, // home
+    0x0900, // pageup
+    0x0A00, // pagedown
+    0x0600, // end
 
-/** Skipped key - key1 */
-int16 skippedKey;
-/** Pressed key - printTextVar12 */
-int16 pressedKey;
-//int printTextVar13;
-/** Skip intro variable */
-int16 skipIntro;
-/** Current key value */
-int16 currentKey;
-/** Auxiliar key value */
-int16 key;
+    0x0101, // space bar
+    0x0201, // enter
+    0x0401, // ctrl
+    0x0801, // alt
+    0x1001, // del
+    0x2001, // left shift
+    0x2001, // right shift
 
-int32 heroPressedKey;
-int32 heroPressedKey2;
+    0x0102, // F1
+    0x0202, // F2
+    0x0402, // F3
+    0x0802, // F4
+    0x1002, // F5
+    0x2002, // F6
+    0x4002, // F7
+    0x8002, // F8
+
+    0x0103, // F9
+    0x0203, // F10
+    0x0403, // ?
+    0x0803, // ?
+    0x00FF, // left shift
+    0x00FF,
+    0x0,
+    0x0,
+};
+static_assert(ARRAYSIZE(pressedKeyCharMap) == 31, "Expected size of key char map");
+
+struct Keyboard {
+	/** Skipped key - key1 */
+	int16 skippedKey;
+	/** Pressed key - printTextVar12 */
+	int16 pressedKey;
+	//int printTextVar13;
+	/** Skip intro variable */
+	int16 skipIntro;
+	/** Current key value */
+	int16 currentKey;
+	/** Auxiliar key value */
+	int16 key;
+
+	int32 heroPressedKey;
+	int32 heroPressedKey2;
+};
 
 } // namespace TwinE
 

@@ -328,7 +328,7 @@ void FlaMovies::playFlaMovie(const char *flaName) {
 
 					readKeys();
 
-					if (skipIntro)
+					if (_engine->_keyboard.skipIntro)
 						break;
 				}
 			} while (!quit);

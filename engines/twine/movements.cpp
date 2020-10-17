@@ -272,15 +272,15 @@ void Movements::processActorMovements(int32 actorIdx) {
 		if (actor->controlMode != 1)
 			return;
 
-		if (key & 4)
+		if (_engine->_keyboard.key & 4)
 			tempAngle = 0x100;
 
-		if (key & 8)
+		if (_engine->_keyboard.key & 8)
 			tempAngle = -0x100;
 
 		moveActor(actor->angle, actor->angle + tempAngle, actor->speed, &actor->move);
 
-		heroPressedKey = key;
+		_engine->_keyboard.heroPressedKey = _engine->_keyboard.key;
 	} else {
 		int16 tempAngle;
 
@@ -298,7 +298,7 @@ void Movements::processActorMovements(int32 actorIdx) {
 				heroAction = 0;
 
 				// If press W for action
-				if (skipIntro == 0x11) {
+				if (_engine->_keyboard.skipIntro == 0x11) {
 					heroAction = 1;
 				}
 
@@ -335,15 +335,15 @@ void Movements::processActorMovements(int32 actorIdx) {
 								}
 							}
 						} else {
-							if (key & 8) {
+							if (_engine->_keyboard.key & 8) {
 								_engine->_animations->initAnim(kRightPunch, 1, 0, actorIdx);
 							}
 
-							if (key & 4) {
+							if (_engine->_keyboard.key & 4) {
 								_engine->_animations->initAnim(kLeftPunch, 1, 0, actorIdx);
 							}
 
-							if (key & 1) {
+							if (_engine->_keyboard.key & 1) {
 								_engine->_animations->initAnim(kKick, 1, 0, actorIdx);
 							}
 						}
@@ -383,11 +383,11 @@ void Movements::processActorMovements(int32 actorIdx) {
 
 			if (!_engine->loopPressedKey || heroAction) {
 
-				if (key & 3) {     // if continue walking
+				if (_engine->_keyboard.key & 3) {     // if continue walking
 					heroMoved = 0; // don't break animation
 				}
 
-				if (key != heroPressedKey || _engine->loopPressedKey != heroPressedKey2) {
+				if (_engine->_keyboard.key != _engine->_keyboard.heroPressedKey || _engine->loopPressedKey != _engine->_keyboard.heroPressedKey2) {
 					if (heroMoved) {
 						_engine->_animations->initAnim(kStanding, 0, 255, actorIdx);
 					}
@@ -395,19 +395,19 @@ void Movements::processActorMovements(int32 actorIdx) {
 
 				heroMoved = 0;
 
-				if (key & 1) { // walk forward
+				if (_engine->_keyboard.key & 1) { // walk forward
 					if (!_engine->_scene->currentActorInZone) {
 						_engine->_animations->initAnim(kForward, 0, 255, actorIdx);
 					}
 					heroMoved = 1;
 				}
 
-				if (key & 2 && !(key & 1)) { // walk backward
+				if (_engine->_keyboard.key & 2 && !(_engine->_keyboard.key & 1)) { // walk backward
 					_engine->_animations->initAnim(kBackward, 0, 255, actorIdx);
 					heroMoved = 1;
 				}
 
-				if (key & 4) { // turn left
+				if (_engine->_keyboard.key & 4) { // turn left
 					heroMoved = 1;
 					if (actor->anim == 0) {
 						_engine->_animations->initAnim(kTurnLeft, 0, 255, actorIdx);
@@ -418,7 +418,7 @@ void Movements::processActorMovements(int32 actorIdx) {
 					}
 				}
 
-				if (key & 8) { // turn right
+				if (_engine->_keyboard.key & 8) { // turn right
 					heroMoved = 1;
 					if (actor->anim == 0) {
 						_engine->_animations->initAnim(kTurnRight, 0, 255, actorIdx);
@@ -432,18 +432,18 @@ void Movements::processActorMovements(int32 actorIdx) {
 
 			tempAngle = 0;
 
-			if (key & 4) {
+			if (_engine->_keyboard.key & 4) {
 				tempAngle = 0x100;
 			}
 
-			if (key & 8) {
+			if (_engine->_keyboard.key & 8) {
 				tempAngle = -0x100;
 			}
 
 			moveActor(actor->angle, actor->angle + tempAngle, actor->speed, &actor->move);
 
-			heroPressedKey = key;
-			heroPressedKey2 = _engine->loopPressedKey;
+			_engine->_keyboard.heroPressedKey = _engine->_keyboard.key;
+			_engine->_keyboard.heroPressedKey2 = _engine->loopPressedKey;
 
 			break;
 		case kFollow: {

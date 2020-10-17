@@ -664,7 +664,7 @@ void Text::drawTextFullscreen(int32 index) { // printTextFullScreen
 			if (printedText == 2) {
 				do {
 					readKeys();
-					if (skipIntro == 0 && skippedKey == 0 && pressedKey == 0) {
+					if (_engine->_keyboard.skipIntro == 0 && _engine->_keyboard.skippedKey == 0 && _engine->_keyboard.pressedKey == 0) {
 						break;
 					}
 					playVox(currDialTextEntry);
@@ -673,7 +673,7 @@ void Text::drawTextFullscreen(int32 index) { // printTextFullScreen
 
 				do {
 					readKeys();
-					if (skipIntro != 0 || skippedKey != 0 || pressedKey != 0) {
+					if (_engine->_keyboard.skipIntro != 0 || _engine->_keyboard.skippedKey != 0 || _engine->_keyboard.pressedKey != 0) {
 						break;
 					}
 					playVox(currDialTextEntry);
@@ -681,7 +681,7 @@ void Text::drawTextFullscreen(int32 index) { // printTextFullScreen
 				} while (1);
 			}
 
-			if (skipIntro == 1) {
+			if (_engine->_keyboard.skipIntro == 1) {
 				skipText = 1;
 			}
 
@@ -715,24 +715,24 @@ void Text::drawTextFullscreen(int32 index) { // printTextFullScreen
 		do {
 			readKeys();
 			sdldelay(1);
-		} while (skipIntro || skippedKey || pressedKey);
+		} while (_engine->_keyboard.skipIntro || _engine->_keyboard.skippedKey || _engine->_keyboard.pressedKey);
 
 		// RECHECK this later
 		// wait key to display next text
 		do {
 			readKeys();
-			if (skipIntro != 0) {
+			if (_engine->_keyboard.skipIntro != 0) {
 				_engine->_interface->loadClip();
 				return;
 			}
-			if (skippedKey != 0) {
+			if (_engine->_keyboard.skippedKey != 0) {
 				_engine->_interface->loadClip();
 				return;
 			}
 			sdldelay(1);
-		} while (!pressedKey);
+		} while (!_engine->_keyboard.pressedKey);
 	} else { // RECHECK THIS
-		while (playVox(currDialTextEntry) && skipIntro != 1)
+		while (playVox(currDialTextEntry) && _engine->_keyboard.skipIntro != 1)
 			;
 		hasHiddenVox = 0;
 		voxHiddenIndex = 0;
@@ -879,13 +879,13 @@ void Text::drawAskQuestion(int32 index) { // MyDial
 				readKeys();
 				playVox(currDialTextEntry);
 				sdldelay(1);
-			} while (skipIntro || skippedKey || pressedKey);
+			} while (_engine->_keyboard.skipIntro || _engine->_keyboard.skippedKey || _engine->_keyboard.pressedKey);
 
 			do {
 				readKeys();
 				playVox(currDialTextEntry);
 				sdldelay(1);
-			} while (!skipIntro && !skippedKey && !pressedKey);
+			} while (!_engine->_keyboard.skipIntro && !_engine->_keyboard.skippedKey && !_engine->_keyboard.pressedKey);
 		}
 
 		sdldelay(1);

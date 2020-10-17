@@ -532,9 +532,9 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 	}
 
 	previousLoopPressedKey = loopPressedKey;
-	key = pressedKey;
-	loopPressedKey = skippedKey;
-	loopCurrentKey = skipIntro;
+	_keyboard.key = _keyboard.pressedKey;
+	loopPressedKey = _keyboard.skippedKey;
+	loopCurrentKey = _keyboard.skipIntro;
 
 #ifdef GAMEMOD
 	processDebug(loopCurrentKey);
@@ -542,18 +542,18 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 
 	if (_menuOptions->canShowCredits != 0) {
 		// TODO: if current music playing != 8, than play_track(8);
-		if (skipIntro != 0) {
+		if (_keyboard.skipIntro != 0) {
 			return 0;
 		}
-		if (pressedKey != 0) {
+		if (_keyboard.pressedKey != 0) {
 			return 0;
 		}
-		if (skippedKey != 0) {
+		if (_keyboard.skippedKey != 0) {
 			return 0;
 		}
 	} else {
 		// Process give up menu - Press ESC
-		if (skipIntro == 1 && _scene->sceneHero->life > 0 && _scene->sceneHero->entity != -1 && !_scene->sceneHero->staticFlags.bIsHidden) {
+		if (_keyboard.skipIntro == 1 && _scene->sceneHero->life > 0 && _scene->sceneHero->entity != -1 && !_scene->sceneHero->staticFlags.bIsHidden) {
 			freezeTime();
 			if (_menu->giveupMenu()) {
 				unfreezeTime();
@@ -564,10 +564,9 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 				cfgfile.Quit = 0;
 				unfreezeTime();
 				return 0;
-			} else {
-				unfreezeTime();
-				_redraw->redrawEngineActions(1);
 			}
+			unfreezeTime();
+			_redraw->redrawEngineActions(1);
 		}
 
 		// Process options menu - Press F6
@@ -746,7 +745,7 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 			do {
 				readKeys();
 				g_system->delayMillis(10);
-			} while (skipIntro != 0x19 && !pressedKey);
+			} while (_keyboard.skipIntro != 0x19 && !_keyboard.pressedKey);
 			unfreezeTime();
 			_redraw->redrawEngineActions(1);
 		}
