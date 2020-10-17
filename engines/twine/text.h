@@ -61,6 +61,23 @@ private:
 	@param size text size */
 	void copyText(int8 *src, int8 *dst, int32 size);
 
+	// RECHECK THIS LATER
+	int32 currentBankIdx = -1; // textVar1
+	uint8 textVar2[256];
+	uint8 textVar3;
+
+	/** Dialogue text pointer */
+	uint8 *dialTextPtr; // bufText
+	/** Dialogue entry order pointer */
+	uint8 *dialOrderPtr; // bufOrder
+	/** Number of dialogues text entries */
+	int16 numDialTextEntries;
+
+	// TODO: refactor this
+	int32 wordSizeChar;
+	int32 wordSizePixel;
+
+	const int16 spaceChar = 0x20;
 public:
 	Text(TwinEEngine *engine) : _engine(engine) {}
 

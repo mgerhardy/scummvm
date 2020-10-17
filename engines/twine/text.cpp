@@ -35,24 +35,6 @@
 
 namespace TwinE {
 
-// RECHECK THIS LATER
-int32 currentBankIdx = -1; // textVar1
-uint8 textVar2[256];
-uint8 textVar3;
-
-/** Dialogue text pointer */
-uint8 *dialTextPtr; // bufText
-/** Dialogue entry order pointer */
-uint8 *dialOrderPtr; // bufOrder
-/** Number of dialogues text entries */
-int16 numDialTextEntries;
-
-// TODO: refactor this
-int32 wordSizeChar;
-int32 wordSizePixel;
-
-int16 spaceChar = 0x20;
-
 /** FLA movie extension */
 #define VOX_EXT ".vox"
 /** Common movie directory */
