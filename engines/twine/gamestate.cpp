@@ -22,6 +22,7 @@
 
 #include "twine/gamestate.h"
 #include "common/system.h"
+#include "common/util.h"
 #include "twine/animations.h"
 #include "twine/collision.h"
 #include "common/textconsole.h"
@@ -92,7 +93,7 @@ void GameState::initSceneVars() {
 	_engine->_scene->sampleRound[2] = 0;
 	_engine->_scene->sampleRound[3] = 0;
 
-	for (i = 0; i < 150; i++) {
+	for (i = 0; i < ARRAYSIZE(holomapFlags); i++) {
 		holomapFlags[i] = 0;
 	}
 

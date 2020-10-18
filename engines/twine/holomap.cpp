@@ -29,10 +29,12 @@ namespace TwinE {
 Holomap::Holomap(TwinEEngine *engine) : _engine(engine) {}
 
 void Holomap::setHolomapPosition(int32 location) {
+	assert(location >= 0 && location <= ARRAYSIZE(_engine->_gameState->holomapFlags));
 	_engine->_gameState->holomapFlags[location] = 0x81;
 }
 
 void Holomap::clearHolomapPosition(int32 location) {
+	assert(location >= 0 && location <= ARRAYSIZE(_engine->_gameState->holomapFlags));
 	_engine->_gameState->holomapFlags[location] &= 0x7E;
 	_engine->_gameState->holomapFlags[location] |= 0x40;
 }
