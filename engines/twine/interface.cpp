@@ -47,6 +47,7 @@ int32 Interface::checkClipping(int32 x, int32 y) {
 	return code;
 }
 
+// TODO: check if Graphics::drawLine() works here
 void Interface::drawLine(int32 startWidth, int32 startHeight, int32 endWidth, int32 endHeight, int32 lineColor) {
 	int32 temp;
 	int32 flag2;

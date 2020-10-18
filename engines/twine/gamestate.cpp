@@ -180,6 +180,7 @@ void GameState::loadGame() {
 
 	namePtr = savePlayerName;
 
+	// TODO: use Common::Serializer here
 	frread(&fr, &data, 1); // save game id
 
 	do {

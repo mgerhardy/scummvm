@@ -275,6 +275,7 @@ void FlaMovies::playFlaMovie(const char *flaName) {
 
 	workVideoBufferCopy = _engine->workVideoBuffer;
 
+	// TODO: use Stream::readUint32LE
 	frread(&frFla, &flaHeaderData.version, 6);
 	frread(&frFla, &flaHeaderData.numOfFrames, 4);
 	frread(&frFla, &flaHeaderData.speed, 1);

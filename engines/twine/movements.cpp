@@ -33,8 +33,6 @@
 #include "twine/twine.h"
 
 namespace TwinE {
-// TODO: remove me
-#define PI 3.14159265
 
 Movements::Movements(TwinEEngine *engine) : _engine(engine) {}
 
@@ -111,9 +109,9 @@ int32 Movements::getAngleAndSetTargetActorDistance(int32 x1, int32 z1, int32 x2,
         return 0;
 
     //given two points, we calculate its arc-tangent in radians
-    //Then we convert from radians (360 degrees == 2*PI) to a 10bit value (360 degrees == 1024) and invert the rotation direction
+    //Then we convert from radians (360 degrees == 2*M_PI) to a 10bit value (360 degrees == 1024) and invert the rotation direction
     //Then we add an offset of 90 degrees (256) and limit it to the 10bit value range.
-    return (256 + ((int32)floor((-1024 * atan2((int64)(z2-z1), (int32)(x2-x1))) / (2*PI)))) % 1024;
+    return (256 + ((int32)floor((-1024 * atan2((int64)(z2-z1), (int32)(x2-x1))) / (2*M_PI)))) % 1024;
 	*/
 
 	int32 newX, newZ, difX, difZ, tmpX, tmpZ, tmpEx, flag, destAngle, startAngle, finalAngle;
@@ -218,7 +216,7 @@ int32 Movements::getRealValue(ActorMoveStruct *movePtr) {
 }
 
 void Movements::rotateActor(int32 X, int32 Z, int32 angle) {
-	const double radians = 2 * PI * angle / 0x400;
+	const double radians = 2 * M_PI * angle / 0x400;
 	_engine->_renderer->destX = (int32)(X * cos(radians) + Z * sin(radians));
 	_engine->_renderer->destZ = (int32)(-X * sin(radians) + Z * cos(radians));
 }

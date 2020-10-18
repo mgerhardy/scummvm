@@ -49,9 +49,6 @@ namespace TwinE {
 
 #define ERROR_OUT_OF_SCREEN 2
 
-// TODO: remove me
-#define PI 3.1415
-
 int32 Renderer::projectPositionOnScreen(int32 cX, int32 cY, int32 cZ) {
 	if (!isUsingOrhoProjection) {
 		cX -= baseRotPosX;
@@ -124,9 +121,9 @@ void Renderer::setBaseRotation(int32 X, int32 Y, int32 Z) {
 	baseMatrixRotationY = Y & 0x3FF;
 	baseMatrixRotationZ = Z & 0x3FF;
 
-	Xradians = (double)((256 - X) % 1024) * 2 * PI / 1024;
-	Yradians = (double)((256 - Y) % 1024) * 2 * PI / 1024;
-	Zradians = (double)((256 - Z) % 1024) * 2 * PI / 1024;
+	Xradians = (double)((256 - X) % 1024) * 2 * M_PI / 1024;
+	Yradians = (double)((256 - Y) % 1024) * 2 * M_PI / 1024;
+	Zradians = (double)((256 - Z) % 1024) * 2 * M_PI / 1024;
 
 	baseMatrix[0] = (int32)(sin(Zradians) * sin(Yradians) * 16384);
 	baseMatrix[1] = (int32)(-cos(Zradians) * 16384);
