@@ -30,7 +30,6 @@
 #include "twine/redraw.h"
 #include "twine/scene.h"
 #include "twine/screens.h"
-#include "twine/sdlengine.h"
 #include "twine/text.h"
 #include "twine/twine.h"
 
@@ -55,14 +54,14 @@ void Debug::debugFillButton(int32 X, int32 Y, int32 width, int32 height, int8 co
 void Debug::debugDrawButton(int32 left, int32 top, int32 right, int32 bottom, const char *text, int32 textLeft, int32 textRight, int32 isActive, int8 color) {
 	debugFillButton(left + 1, top + 1, right - left - 1, bottom - top - 1, color);
 	_engine->_menu->drawBox(left, top, right, bottom);
-	ttfDrawText(textLeft, textRight, text, 0);
-	copyBlockPhys(left, top, right, bottom);
+	_engine->ttfDrawText(textLeft, textRight, text, 0);
+	_engine->copyBlockPhys(left, top, right, bottom);
 }
 
 void Debug::debugDrawWindowBox(int32 left, int32 top, int32 right, int32 bottom, int32 alpha) {
 	_engine->_menu->drawTransparentBox(left, top, right, bottom, alpha);
 	_engine->_menu->drawBox(left, top, right, bottom);
-	//copyBlockPhys(left,top,right,bottom);
+	//_engine->copyBlockPhys(left,top,right,bottom);
 }
 
 void Debug::debugDrawWindowButtons(int32 w) {
@@ -98,11 +97,11 @@ void Debug::debugDrawWindow(int32 w) {
 		int32 l;
 
 		for (l = 0; l < debugWindows[w].numLines; l++) {
-			ttfDrawText(left + 10, top + l * 20 + 5, debugWindows[w].text[l], 0);
+			_engine->ttfDrawText(left + 10, top + l * 20 + 5, debugWindows[w].text[l], 0);
 		}
 	}
 
-	copyBlockPhys(left, top, right, bottom);
+	_engine->copyBlockPhys(left, top, right, bottom);
 
 	debugDrawWindowButtons(w);
 }
@@ -421,7 +420,7 @@ void Debug::debugPlasmaWindow(const char *text, int32 color) {
 	textSize = _engine->_text->getTextSize((const int8 *)text);
 	_engine->_text->drawText((SCREEN_WIDTH / 2) - (textSize / 2), 10, (const int8 *)text);
 	_engine->_menu->drawBox(5, 5, 634, 50);
-	copyBlockPhys(5, 5, 634, 50);
+	_engine->copyBlockPhys(5, 5, 634, 50);
 }
 
 void Debug::debugProcessWindow() {
@@ -443,18 +442,18 @@ void Debug::debugProcessWindow() {
 		debugDrawWindows();
 
 		do {
-			readKeys();
+			_engine->readKeys();
 			if (_engine->shouldQuit()) {
 				quit = 1;
 			}
-			getMousePositions(&mouseData);
+			_engine->getMousePositions(&mouseData);
 
 			if (mouseData.left) {
 				int type = 0;
 				if ((type = debugProcessButton(mouseData.X, mouseData.Y)) != NO_ACTION) { // process menu item
 					if (debugTypeUseMenu(type)) {
 						_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
-						copyBlockPhys(205, 55, 634, 474);
+						_engine->copyBlockPhys(205, 55, 634, 474);
 					}
 
 					debugRefreshButtons(type);

@@ -27,13 +27,6 @@
 
 namespace TwinE {
 
-typedef struct MouseStatusStruct {
-	int32 left;
-	int32 right;
-	int32 X;
-	int32 Y;
-} MouseStatusStruct;
-
 enum ButtonType {
 	NO_ACTION,
 	FREE_CAMERA,

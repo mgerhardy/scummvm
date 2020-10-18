@@ -30,7 +30,6 @@
 #include "twine/renderer.h"
 #include "twine/resources.h"
 #include "twine/screens.h"
-#include "twine/sdlengine.h"
 #include "twine/sound.h"
 #include "twine/twine.h"
 
@@ -257,7 +256,7 @@ void Text::drawCharacterShadow(int32 x, int32 y, uint8 character, int32 color) {
 		right = x + 32;
 		bottom = y + 38;
 
-		copyBlockPhys(left, top, right, bottom);
+		_engine->copyBlockPhys(left, top, right, bottom);
 	}
 }
 
@@ -315,14 +314,14 @@ void Text::initDialogueBox() { // InitDialWindow
 		_engine->_interface->drawTransparentBox(dialTextBoxLeft + 1, dialTextBoxTop + 1, dialTextBoxRight - 1, dialTextBoxBottom - 1, 3);
 	}
 
-	copyBlockPhys(dialTextBoxLeft, dialTextBoxTop, dialTextBoxRight, dialTextBoxBottom);
+	_engine->copyBlockPhys(dialTextBoxLeft, dialTextBoxTop, dialTextBoxRight, dialTextBoxBottom);
 	printText8Var3 = 0;
 	_engine->_interface->blitBox(dialTextBoxLeft, dialTextBoxTop, dialTextBoxRight, dialTextBoxBottom, (int8 *)_engine->frontVideoBuffer, dialTextBoxLeft, dialTextBoxTop, (int8 *)_engine->workVideoBuffer);
 }
 
 void Text::initInventoryDialogueBox() { // SecondInitDialWindow
 	_engine->_interface->blitBox(dialTextBoxLeft, dialTextBoxTop, dialTextBoxRight, dialTextBoxBottom, (int8 *)_engine->workVideoBuffer, dialTextBoxLeft, dialTextBoxTop, (int8 *)_engine->frontVideoBuffer);
-	copyBlockPhys(dialTextBoxLeft, dialTextBoxTop, dialTextBoxRight, dialTextBoxBottom);
+	_engine->copyBlockPhys(dialTextBoxLeft, dialTextBoxTop, dialTextBoxRight, dialTextBoxBottom);
 	printText8Var3 = 0;
 }
 
@@ -500,7 +499,7 @@ void Text::printText10Sub() {
 		_engine->_renderer->renderPolygons(_engine->_renderer->polyRenderType, dialTextStopColor);
 	}
 
-	copyBlockPhys(dialTextBoxRight - 24, dialTextBoxBottom - 24, dialTextBoxRight - 3, dialTextBoxBottom - 3);
+	_engine->copyBlockPhys(dialTextBoxRight - 24, dialTextBoxBottom - 24, dialTextBoxRight - 3, dialTextBoxBottom - 3);
 }
 
 void Text::printText10Sub2() {
@@ -558,7 +557,7 @@ int Text::printText10() {
 		}
 		if (printText8Var6 != 0) {
 			_engine->_interface->blitBox(dialTextBoxLeft, dialTextBoxTop, dialTextBoxRight, dialTextBoxBottom, (int8 *)_engine->workVideoBuffer, dialTextBoxLeft, dialTextBoxTop, (int8 *)_engine->frontVideoBuffer);
-			copyBlockPhys(dialTextBoxLeft, dialTextBoxTop, dialTextBoxRight, dialTextBoxBottom);
+			_engine->copyBlockPhys(dialTextBoxLeft, dialTextBoxTop, dialTextBoxRight, dialTextBoxBottom);
 			printText8Var3 = 0;
 			printText8Var6 = 0;
 			TEXT_CurrentLetterX = dialTextBoxLeft + 8;
@@ -640,13 +639,13 @@ void Text::drawTextFullscreen(int32 index) { // printTextFullScreen
 		initDialogueBox();
 
 		do {
-			readKeys();
+			_engine->readKeys();
 			printedText = printText10();
 			playVox(currDialTextEntry);
 
 			if (printedText == 2) {
 				do {
-					readKeys();
+					_engine->readKeys();
 					if (_engine->shouldQuit()) {
 						break;
 					}
@@ -658,7 +657,7 @@ void Text::drawTextFullscreen(int32 index) { // printTextFullScreen
 				} while (1);
 
 				do {
-					readKeys();
+					_engine->readKeys();
 					if (_engine->shouldQuit()) {
 						break;
 					}
@@ -705,7 +704,7 @@ void Text::drawTextFullscreen(int32 index) { // printTextFullScreen
 		// RECHECK this later
 		// wait displaying text
 		do {
-			readKeys();
+			_engine->readKeys();
 			if (_engine->shouldQuit()) {
 				break;
 			}
@@ -715,7 +714,7 @@ void Text::drawTextFullscreen(int32 index) { // printTextFullScreen
 		// RECHECK this later
 		// wait key to display next text
 		do {
-			readKeys();
+			_engine->readKeys();
 			if (_engine->_keyboard.skipIntro != 0) {
 				_engine->_interface->loadClip();
 				return;
@@ -872,12 +871,12 @@ void Text::drawAskQuestion(int32 index) { // MyDial
 	initDialogueBox();
 
 	do {
-		readKeys();
+		_engine->readKeys();
 		textStatus = printText10();
 
 		if (textStatus == 2) {
 			do {
-				readKeys();
+				_engine->readKeys();
 				if (_engine->shouldQuit()) {
 					break;
 				}
@@ -886,7 +885,7 @@ void Text::drawAskQuestion(int32 index) { // MyDial
 			} while (_engine->_keyboard.skipIntro || _engine->_keyboard.skippedKey || _engine->_keyboard.pressedKey);
 
 			do {
-				readKeys();
+				_engine->readKeys();
 				if (_engine->shouldQuit()) {
 					break;
 				}

@@ -30,7 +30,6 @@
 #include "twine/resources.h"
 #include "twine/scene.h"
 #include "twine/screens.h"
-#include "twine/sdlengine.h"
 #include "twine/text.h"
 #include "twine/twine.h"
 
@@ -62,13 +61,13 @@ void MenuOptions::newGame() {
 	_engine->_text->setFontCrossColor(15);
 
 	_engine->_text->drawTextFullscreen(150);
-	readKeys();
+	_engine->readKeys();
 
 	if (_engine->_keyboard.skipIntro != 1) {
 		// intro screen 1 - twinsun
 		_engine->_screens->loadImage(RESSHQR_INTROSCREEN2IMG, 1);
 		_engine->_text->drawTextFullscreen(151);
-		readKeys();
+		_engine->readKeys();
 
 		if (_engine->_keyboard.skipIntro != 1) {
 			_engine->_screens->loadImage(RESSHQR_INTROSCREEN3IMG, 1);
@@ -82,16 +81,16 @@ void MenuOptions::newGame() {
 
 	_engine->_screens->fadeToBlack(_engine->_screens->paletteRGBACustom);
 	_engine->_screens->clearScreen();
-	flip();
+	_engine->flip();
 
 	_engine->_music->playMidiMusic(1, 0);
 	_engine->_flaMovies->playFlaMovie(FLA_INTROD);
 
 	_engine->_screens->clearScreen();
-	flip();
+	_engine->flip();
 
 	// set main palette back
-	setPalette(_engine->_screens->paletteRGBA);
+	_engine->setPalette(_engine->_screens->paletteRGBA);
 
 	_engine->cfgfile.FlagDisplayText = tmpFlagDisplayText;
 }
@@ -115,13 +114,13 @@ void MenuOptions::showCredits() {
 	_engine->cfgfile.LanguageCDId = tmpLanguageCDIdx;
 
 	_engine->_screens->clearScreen();
-	flip();
+	_engine->flip();
 
 	_engine->_flaMovies->playFlaMovie(FLA_THEEND);
 
 	_engine->_screens->clearScreen();
-	flip();
-	setPalette(_engine->_screens->paletteRGBA);
+	_engine->flip();
+	_engine->setPalette(_engine->_screens->paletteRGBA);
 }
 
 void MenuOptions::drawSelectableCharacter(int32 x, int32 y, int32 arg) {
@@ -152,7 +151,7 @@ void MenuOptions::drawSelectableCharacter(int32 x, int32 y, int32 arg) {
 	_engine->_text->setFontColor(15);
 	_engine->_text->drawText(centerX - _engine->_text->getTextSize(buffer) / 2, centerY - 18, buffer);
 
-	copyBlockPhys(left, top, right2, bottom);
+	_engine->copyBlockPhys(left, top, right2, bottom);
 }
 
 void MenuOptions::drawSelectableCharacters() {
@@ -215,20 +214,20 @@ int32 MenuOptions::enterPlayerName(int32 textIdx) {
 
 	while (1) {
 		_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
-		flip(); //frontVideoBuffer
+		_engine->flip(); //frontVideoBuffer
 		_engine->_text->initTextBank(0);
 		_engine->_text->getMenuText(textIdx, buffer);
 		_engine->_text->setFontColor(15);
 		_engine->_text->drawText(320 - (_engine->_text->getTextSize(buffer) / 2), 20, buffer);
-		copyBlockPhys(0, 0, 639, 99);
+		_engine->copyBlockPhys(0, 0, 639, 99);
 		playerName[0] = enterPlayerNameVar1;
 		drawPlayerName(320, 100, playerName, 1);
 		drawSelectableCharacters();
 
 		do {
-			readKeys();
+			_engine->readKeys();
 			do {
-				readKeys();
+				_engine->readKeys();
 				if (_engine->shouldQuit()) {
 					break;
 				}
@@ -241,14 +240,14 @@ int32 MenuOptions::enterPlayerName(int32 textIdx) {
 		enterPlayerNameVar2 = 1;
 
 		do {
-			readKeys();
+			_engine->readKeys();
 			if (_engine->shouldQuit()) {
 				break;
 			}
 		} while (_engine->_keyboard.pressedKey);
 
 		while (!_engine->_keyboard.skipIntro) {
-			readKeys();
+			_engine->readKeys();
 			if (_engine->shouldQuit()) {
 				break;
 			}
@@ -263,7 +262,7 @@ int32 MenuOptions::enterPlayerName(int32 textIdx) {
 
 	enterPlayerNameVar2 = 0;
 	_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
-	flip(); // frontVideoBuffer
+	_engine->flip(); // frontVideoBuffer
 
 	return 1;
 }
@@ -281,9 +280,9 @@ void MenuOptions::newGameMenu() {
 		_engine->_screens->copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
 		// TODO: recheck this
 		do {
-			readKeys();
+			_engine->readKeys();
 			do {
-				readKeys();
+				_engine->readKeys();
 				if (_engine->shouldQuit()) {
 					break;
 				}
@@ -315,9 +314,9 @@ void MenuOptions::continueGameMenu() {
 		_engine->_screens->copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
 		// TODO: recheck this
 		do {
-			readKeys();
+			_engine->readKeys();
 			do {
-				readKeys();
+				_engine->readKeys();
 				if (_engine->shouldQuit()) {
 					break;
 				}

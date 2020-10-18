@@ -124,6 +124,13 @@ typedef struct ConfigFile {
 	int32 WallCollision;
 } ConfigFile;
 
+typedef struct MouseStatusStruct {
+	int32 left;
+	int32 right;
+	int32 X;
+	int32 Y;
+} MouseStatusStruct;
+
 class Actor;
 class Animations;
 class Collision;
@@ -264,6 +271,57 @@ public:
 	Common::Language _gameLang;
 	uint32 _gameFlags;
 	int _startSlot;
+
+	// TODO: mgerhardy - most stuff below this point must be replaced or reworked
+
+	/** Deplay certain seconds till proceed - Can also Skip this delay
+	@param time time in seconds to delay */
+	void delaySkip(uint32 time);
+
+	/** Set a new palette in the SDL screen buffer
+	@param palette palette to set */
+	void setPalette(uint8 *palette);
+
+	/** Fade screen from black to white */
+	void fadeBlackToWhite();
+
+	/** Blit surface in the screen */
+	void flip();
+
+	/** Blit surface in the screen in a determinate area
+	@param left left position to start copy
+	@param top top position to start copy
+	@param right right position to start copy
+	@param bottom bottom position to start copy */
+	void copyBlockPhys(int32 left, int32 top, int32 right, int32 bottom);
+
+	/** Create SDL screen surface
+	@param buffer screen buffer to blit surface
+	@param width screen width size
+	@param height screen height size */
+	void initScreenBuffer(uint8 *buffer, int32 width, int32 height);
+
+	/** Cross fade feature
+	@param buffer screen buffer
+	@param palette new palette to cross fade*/
+	void crossFade(uint8 *buffer, uint8 *palette);
+
+	/** Switch between window and fullscreen modes */
+	void toggleFullscreen();
+
+	/** Handle keyboard pressed keys */
+	void readKeys();
+
+	/** Display SDL text in screen
+	@param x X coordinate in screen
+	@param y Y coordinate in screen
+	@param string text to display
+	@param center if the text should be centered accoding with the giving positions */
+	void ttfDrawText(int32 x, int32 y, const char *string, int32 center);
+
+	/** Gets SDL mouse positions
+	@param mouseData structure that contains mouse position info */
+	void getMousePositions(MouseStatusStruct *mouseData);
 };
 
 } // namespace TwinE

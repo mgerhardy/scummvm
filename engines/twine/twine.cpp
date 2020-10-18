@@ -52,7 +52,6 @@
 #include "twine/screens.h"
 #include "twine/script_life.h"
 #include "twine/script_move.h"
-#include "twine/sdlengine.h"
 #include "twine/sound.h"
 #include "twine/text.h"
 
@@ -768,7 +767,7 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 	_scene->processEnvironmentSound();
 
 	// Reset HitBy state
-	for (a = 0; a < _scene->sceneNumActors; a++) {
+	for (int32 a = 0; a < _scene->sceneNumActors; a++) {
 		_scene->sceneActors[a].hitBy = -1;
 	}
 
@@ -972,6 +971,573 @@ bool TwinEEngine::gameEngineLoop() { // mainLoop
 		}
 	}
 	return false;
+}
+
+/** Original audio frequency */
+#define ORIGINAL_GAME_FREQUENCY 11025
+/** High quality audio frequency */
+#define HIGH_QUALITY_FREQUENCY 44100
+
+#if 0
+/** Main SDL screen surface buffer */
+SDL_Surface *screen = NULL;
+/** Auxiliar SDL screen surface buffer */
+SDL_Surface *screenBuffer = NULL;
+/** SDL screen color */
+SDL_Color screenColors[256];
+/** Auxiliar surface table  */
+SDL_Surface *surfaceTable[16];
+
+TTF_Font *font;
+#endif
+
+#if 0
+int TwinEEngine::sdlInitialize() {
+	uint8 *keyboard;
+	int32 size;
+	int32 i;
+	int32 freq;
+
+	Uint32 rmask, gmask, bmask;
+
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+	rmask = 0xff000000;
+	gmask = 0x00ff0000;
+	bmask = 0x0000ff00;
+#else
+	rmask = 0x000000ff;
+	gmask = 0x0000ff00;
+	bmask = 0x00ff0000;
+#endif
+
+	if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
+		error("Couldn't initialize SDL: %s\n", SDL_GetError());
+	}
+
+	// Verify if we want to use high quality sounds
+	if (cfgfile.Sound > 1)
+		freq = HIGH_QUALITY_FREQUENCY;
+	else
+		freq = ORIGINAL_GAME_FREQUENCY;
+
+	if (Mix_OpenAudio(freq, AUDIO_S16, 2, 256) < 0) {
+		error("Mix_OpenAudio: %s\n", Mix_GetError());
+	}
+
+	Mix_AllocateChannels(32);
+
+	SDL_WM_SetCaption("Little Big Adventure: TwinEngine", "twin-e");
+	SDL_PumpEvents();
+
+	keyboard = SDL_GetKeyState(&size);
+
+	keyboard[SDLK_RETURN] = 0;
+
+	screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32, SDL_SWSURFACE);
+
+	if (screen == NULL) {
+		error("Couldn't set 640x480x8 video mode: %s\n\n", SDL_GetError());
+	}
+
+	for (i = 0; i < 16; i++) {
+		surfaceTable[i] = SDL_CreateRGBSurface(SDL_SWSURFACE, SCREEN_WIDTH, SCREEN_HEIGHT, 32, rmask, gmask, bmask, 0);
+	}
+
+	return 0;
+}
+#endif
+
+/** Deplay certain seconds till proceed - Can skip delay
+	@param time time in seconds to delay */
+void TwinEEngine::delaySkip(uint32 time) {
+#if 0
+	uint32 startTicks = _engine->_system->getMillis();
+	uint32 stopTicks = 0;
+	_engine->_keyboard.skipIntro = 0;
+	do {
+		readKeys();
+		if (_engine->_keyboard.skipIntro == 1) {
+			break;
+		}
+		if (_engine->shouldQuit()) {
+			break;
+		}
+		stopTicks = _engine->_system->getMillis() - startTicks;
+		_engine->_system->delayMillis(1);
+		//lbaTime++;
+	} while (stopTicks <= time);
+#endif
+}
+
+/** Set a new palette in the SDL screen buffer
+	@param palette palette to set */
+void TwinEEngine::setPalette(uint8 *palette) {
+#if 0
+	SDL_Color *screenColorsTemp = (SDL_Color *)palette;
+
+	SDL_SetColors(screenBuffer, screenColorsTemp, 0, 256);
+	SDL_BlitSurface(screenBuffer, NULL, screen, NULL);
+	SDL_UpdateRect(screen, 0, 0, 0, 0);
+#endif
+}
+
+/** Fade screen from black to white */
+void TwinEEngine::fadeBlackToWhite() {
+#if 0
+	int32 i;
+
+	SDL_Color colorPtr[256];
+
+	SDL_UpdateRect(screen, 0, 0, 0, 0);
+
+	for (i = 0; i < 256; i += 3) {
+		memset(colorPtr, i, sizeof(colorPtr));
+		SDL_SetPalette(screen, SDL_PHYSPAL, colorPtr, 0, 256);
+	}
+#endif
+}
+
+/** Blit surface in the screen */
+void TwinEEngine::flip() {
+#if 0
+	SDL_BlitSurface(screenBuffer, NULL, screen, NULL);
+	SDL_UpdateRect(screen, 0, 0, 0, 0);
+#endif
+}
+
+/** Blit surface in the screen in a determinate area
+	@param left left position to start copy
+	@param top top position to start copy
+	@param right right position to start copy
+	@param bottom bottom position to start copy */
+void TwinEEngine::copyBlockPhys(int32 left, int32 top, int32 right, int32 bottom) {
+#if 0
+	SDL_Rect rectangle;
+
+	rectangle.x = left;
+	rectangle.y = top;
+	rectangle.w = right - left + 1;
+	rectangle.h = bottom - top + 1;
+
+	SDL_BlitSurface(screenBuffer, &rectangle, screen, &rectangle);
+	SDL_UpdateRect(screen, left, top, right - left + 1, bottom - top + 1);
+#endif
+}
+
+/** Create SDL screen surface
+	@param buffer screen buffer to blit surface
+	@param width screen width size
+	@param height screen height size */
+void TwinEEngine::initScreenBuffer(uint8 *buffer, int32 width, int32 height) {
+#if 0
+	screenBuffer = SDL_CreateRGBSurfaceFrom(buffer, width, height, 8, SCREEN_WIDTH, 0, 0, 0, 0);
+#endif
+}
+#if 0
+
+/** Cross fade feature
+	@param buffer screen buffer
+	@param palette new palette to cross fade */
+void TwinEEngine::crossFade(uint8 *buffer, uint8 *palette) {
+	int32 i;
+	SDL_Surface *backupSurface;
+	SDL_Surface *newSurface;
+	SDL_Surface *tempSurface;
+	Uint32 rmask, gmask, bmask;
+	//	Uint32 amask;
+
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+	rmask = 0xff000000;
+	gmask = 0x00ff0000;
+	bmask = 0x0000ff00;
+#else
+	rmask = 0x000000ff;
+	gmask = 0x0000ff00;
+	bmask = 0x00ff0000;
+#endif
+
+	backupSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, SCREEN_WIDTH, SCREEN_HEIGHT, 32, rmask, gmask, bmask, 0);
+	newSurface = SDL_CreateRGBSurface(SDL_SWSURFACE | SDL_SRCALPHA, SCREEN_WIDTH, SCREEN_HEIGHT, 32, rmask, gmask, bmask, 0);
+
+	tempSurface = SDL_CreateRGBSurfaceFrom(buffer, SCREEN_WIDTH, SCREEN_HEIGHT, 8, SCREEN_WIDTH, 0, 0, 0, 0);
+	SDL_SetColors(tempSurface, (SDL_Color *)palette, 0, 256);
+
+	SDL_BlitSurface(screen, NULL, backupSurface, NULL);
+	SDL_BlitSurface(tempSurface, NULL, newSurface, NULL);
+
+	for (i = 0; i < 8; i++) {
+		SDL_BlitSurface(backupSurface, NULL, surfaceTable[i], NULL);
+		SDL_SetAlpha(newSurface, SDL_SRCALPHA | SDL_RLEACCEL, i * 32);
+		SDL_BlitSurface(newSurface, NULL, surfaceTable[i], NULL);
+		SDL_BlitSurface(surfaceTable[i], NULL, screen, NULL);
+		SDL_UpdateRect(screen, 0, 0, 0, 0);
+		delaySkip(50);
+	}
+
+	SDL_BlitSurface(newSurface, NULL, screen, NULL);
+	SDL_UpdateRect(screen, 0, 0, 0, 0);
+
+	SDL_FreeSurface(backupSurface);
+	SDL_FreeSurface(newSurface);
+	SDL_FreeSurface(tempSurface);
+}
+#endif
+
+/** Switch between window and fullscreen modes */
+void TwinEEngine::toggleFullscreen() {
+#if 0
+	_engine->cfgfile.FullScreen = 1 - _engine->cfgfile.FullScreen;
+	SDL_FreeSurface(screen);
+
+	_engine->_redraw->reqBgRedraw = 1;
+
+	if (_engine->cfgfile.FullScreen) {
+		screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32, SDL_SWSURFACE);
+		copyScreen(workVideoBuffer, frontVideoBuffer);
+		SDL_ShowCursor(1);
+	} else {
+		screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32, SDL_SWSURFACE | SDL_FULLSCREEN);
+		copyScreen(workVideoBuffer, frontVideoBuffer);
+	}
+#endif
+}
+
+/** Pressed key map - scanCodeTab1 */
+static const uint8 pressedKeyMap[] = {
+    0x48, // 0
+    0x50,
+    0x4B,
+    0x4D,
+    0x47,
+    0x49,
+    0x51,
+    0x4F, // 7
+
+    0x39, // 8
+    0x1C,
+    0x1D,
+    0x38,
+    0x53,
+    0x2A,
+    0x36, // 14
+
+    0x3B, // 15
+    0x3C,
+    0x3D,
+    0x3E,
+    0x3F,
+    0x40, // LBAKEY_F6
+    0x41,
+    0x42,
+    0x43,
+    0x44,
+    0x57,
+    0x58,
+    0x2A,
+    0x0, // 28
+};
+static_assert(ARRAYSIZE(pressedKeyMap) == 29, "Expected size of key map");
+
+/** Pressed key char map - scanCodeTab2 */
+static const uint16 pressedKeyCharMap[] = {
+    0x0100, // up
+    0x0200, // down
+    0x0400, // left
+    0x0800, // right
+    0x0500, // home
+    0x0900, // pageup
+    0x0A00, // pagedown
+    0x0600, // end
+
+    0x0101, // space bar
+    0x0201, // enter
+    0x0401, // ctrl
+    0x0801, // alt
+    0x1001, // del
+    0x2001, // left shift
+    0x2001, // right shift
+
+    0x0102, // F1
+    0x0202, // F2
+    0x0402, // F3
+    0x0802, // F4
+    0x1002, // F5
+    0x2002, // F6
+    0x4002, // F7
+    0x8002, // F8
+
+    0x0103, // F9
+    0x0203, // F10
+    0x0403, // ?
+    0x0803, // ?
+    0x00FF, // left shift
+    0x00FF,
+    0x0,
+    0x0,
+};
+static_assert(ARRAYSIZE(pressedKeyCharMap) == 31, "Expected size of key char map");
+
+/** Handle keyboard pressed keys */
+void TwinEEngine::readKeys() {
+	if (shouldQuit()) {
+		_keyboard.skipIntro = 1;
+		_keyboard.skippedKey = 1;
+		return;
+	}
+#if 0
+	SDL_Event event;
+	int32 localKey;
+	int32 i, j, size;
+	int32 find = 0;
+	uint8 *keyboard;
+
+	localKey = 0;
+	_engine->_keyboard.skippedKey = 0;
+	_engine->_keyboard.skipIntro = 0;
+
+	SDL_PumpEvents();
+
+	keyboard = SDL_GetKeyState(&size);
+
+	while (SDL_PollEvent(&event)) {
+		switch (event.type) {
+		case SDL_QUIT:
+			sdlClose();
+			break;
+		case SDL_MOUSEBUTTONDOWN:
+			switch (event.button.button) {
+			case SDL_BUTTON_RIGHT:
+				_engine->rightMouse = 1;
+				break;
+			case SDL_BUTTON_LEFT:
+				_engine->leftMouse = 1;
+				break;
+			}
+			break;
+		case SDL_KEYUP:
+			_engine->_keyboard.pressedKey = 0;
+			break;
+		case SDL_KEYDOWN:
+			switch (event.key.keysym.sym) {
+			case SDLK_ESCAPE:
+				localKey = 0x1;
+				break;
+			case SDLK_SPACE:
+				localKey = 0x39;
+				break;
+			case SDLK_RETURN:
+			case SDLK_KP_ENTER:
+				localKey = 0x1C;
+				break;
+			case SDLK_LSHIFT:
+			case SDLK_RSHIFT:
+				localKey = 0x36;
+				break;
+			case SDLK_LALT:
+			case SDLK_RALT:
+				localKey = 0x38;
+				break;
+			case SDLK_LCTRL:
+			case SDLK_RCTRL:
+				localKey = 0x1D;
+				break;
+			case SDLK_PAGEUP:
+				localKey = 0x49;
+				break;
+			case SDLK_p: // pause
+				localKey = Keys::Pause;
+				break;
+			case SDLK_h: // holomap
+				localKey = 0x23;
+				break;
+			case SDLK_j:
+				localKey = 0x24;
+				break;
+			case SDLK_w: // Especial key to do the action
+				localKey = 0x11;
+				break;
+			case SDLK_F1:
+				localKey = 0x3B;
+				break;
+			case SDLK_F2:
+				localKey = 0x3C;
+				break;
+			case SDLK_F3:
+				localKey = 0x3D;
+				break;
+			case SDLK_F4:
+				localKey = 0x3E;
+				break;
+			case SDLK_F6:
+				localKey = 0x40;
+				break;
+			case SDLK_F12:
+				toggleFullscreen();
+				break;
+			default:
+				break;
+			}
+			if (_engine->cfgFile.Debug) {
+				switch (event.key.keysym.sym) {
+				case SDLK_r: // next room
+					localKey = Keys::NextRoom;
+					break;
+				case SDLK_f: // previous room
+					localKey = Keys::PreviousRoom;
+					break;
+				case SDLK_t: // apply celling grid
+					localKey = Keys::ApplyCellingGrid;
+					break;
+				case SDLK_g: // increase celling grid index
+					localKey = Keys::IncreaseCellingGridIndex;
+					break;
+				case SDLK_b: // decrease celling grid index
+					localKey = Keys::DecreaseCellingGridIndex;
+					break;
+				default:
+					break;
+				}
+			}
+			break;
+		}
+	}
+
+	for (j = 0; j < size; j++) {
+		if (keyboard[j]) {
+			switch (j) {
+			case SDLK_RETURN:
+			case SDLK_KP_ENTER:
+				localKey = 0x1C;
+				break;
+			case SDLK_SPACE:
+				localKey = 0x39;
+				break;
+			case SDLK_UP:
+			case SDLK_KP8:
+				localKey = 0x48;
+				break;
+			case SDLK_DOWN:
+			case SDLK_KP2:
+				localKey = 0x50;
+				break;
+			case SDLK_LEFT:
+			case SDLK_KP4:
+				localKey = 0x4B;
+				break;
+			case SDLK_RIGHT:
+			case SDLK_KP6:
+				localKey = 0x4D;
+				break;
+			case SDLK_LCTRL:
+			case SDLK_RCTRL:
+				localKey = 0x1D;
+				break;
+			/*case SDLK_LSHIFT:
+			case SDLK_RSHIFT:
+				localKey = 0x36;
+				break;*/
+			case SDLK_LALT:
+			case SDLK_RALT:
+				localKey = 0x38;
+				break;
+			case SDLK_F1:
+				localKey = 0x3B;
+				break;
+			case SDLK_F2:
+				localKey = 0x3C;
+				break;
+			case SDLK_F3:
+				localKey = 0x3D;
+				break;
+			case SDLK_F4:
+				localKey = 0x3E;
+				break;
+			default:
+				break;
+			}
+			if (_engine->cfgFile.Debug) {
+				switch (keyboard[j]) {
+				// change grid camera
+				case SDLK_s:
+					localKey = 0x1F;
+					break;
+				case SDLK_x:
+					localKey = 0x2D;
+					break;
+				case SDLK_z:
+					localKey = 0x2C;
+					break;
+				case SDLK_c:
+					localKey = 0x2E;
+					break;
+				}
+			}
+		}
+
+		bool found = false;
+		for (i = 0; i < 28; i++) {
+			if (_engine->_keyboard.pressedKeyMap[i] == localKey) {
+				find = i;
+				found = true;
+				break;
+			}
+		}
+
+		if (found) {
+			int16 temp = pressedKeyCharMap[find];
+			uint8 temp2 = temp & 0x00FF;
+
+			if (temp2 == 0) {
+				// pressed valid keys
+				if (!(localKey & 0x80)) {
+					_engine->_keyboard.pressedKey |= (temp & 0xFF00) >> 8;
+				} else {
+					_engine->_keyboard.pressedKey &= -((temp & 0xFF00) >> 8);
+				}
+			}
+			// pressed inactive keys
+			else {
+				_engine->_keyboard.skippedKey |= (temp & 0xFF00) >> 8;
+			}
+		}
+
+		//if (!found) {
+		_engine->_keyboard.skipIntro = localKey;
+		//}
+	}
+#endif
+}
+
+void TwinEEngine::ttfDrawText(int32 x, int32 y, const char *string, int32 center) {
+#if 0 // TODO
+	SDL_Color white = {0xFF, 0xFF, 0xFF, 0};
+	SDL_Color *forecol = &white;
+	SDL_Rect rectangle;
+	SDL_Surface *text = TTF_RenderText_Solid(font, string, *forecol);
+
+	if (center) {
+		rectangle.x = x - (text->w / 2);
+	} else {
+		rectangle.x = x;
+	}
+	rectangle.y = y - 2;
+	rectangle.w = text->w;
+	rectangle.h = text->h;
+
+	SDL_BlitSurface(text, NULL, screenBuffer, &rectangle);
+	SDL_FreeSurface(text);
+#endif
+}
+
+void TwinEEngine::getMousePositions(MouseStatusStruct *mouseData) {
+#if 0 // TODO:
+	SDL_GetMouseState(&mouseData->X, &mouseData->Y);
+	mouseData->left = _engine->leftMouse;
+	mouseData->right = _engine->rightMouse;
+
+	_engine->leftMouse = 0;
+	_engine->rightMouse = 0;
+#endif
 }
 
 } // namespace TwinE

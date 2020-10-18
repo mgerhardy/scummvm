@@ -30,7 +30,6 @@
 #include "twine/hqrdepack.h"
 #include "twine/music.h"
 #include "twine/resources.h"
-#include "twine/sdlengine.h"
 #include "twine/twine.h"
 #include "twine/xmidi.h"
 

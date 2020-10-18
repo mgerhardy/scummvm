@@ -37,7 +37,6 @@
 #include "twine/scene.h"
 #include "twine/screens.h"
 #include "twine/script_life.h"
-#include "twine/sdlengine.h"
 #include "twine/sound.h"
 #include "twine/text.h"
 
@@ -1028,9 +1027,9 @@ static int32 lPLAY_FLA(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) 
 	scriptPtr += nameSize + 1;
 
 	engine->_flaMovies->playFlaMovie(movie);
-	setPalette(engine->_screens->paletteRGBA);
+	engine->setPalette(engine->_screens->paletteRGBA);
 	engine->_screens->clearScreen();
-	flip();
+	engine->flip();
 
 	return 0;
 }
@@ -1325,7 +1324,7 @@ static int32 lSET_DARK_PAL(TwinEEngine *engine, int32 actorIdx, ActorStruct *act
 	engine->_hqrdepack->hqrGetEntry(engine->_screens->palette, HQR_RESS_FILE, RESSHQR_DARKPAL);
 	if (!engine->_screens->lockPalette) {
 		engine->_screens->convertPalToRGBA(engine->_screens->palette, engine->_screens->paletteRGBA);
-		setPalette(engine->_screens->paletteRGBA);
+		engine->setPalette(engine->_screens->paletteRGBA);
 	}
 	engine->_screens->useAlternatePalette = 1;
 	engine->unfreezeTime();
@@ -1336,7 +1335,7 @@ static int32 lSET_DARK_PAL(TwinEEngine *engine, int32 actorIdx, ActorStruct *act
 static int32 lSET_NORMAL_PAL(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	engine->_screens->useAlternatePalette = 0;
 	if (!engine->_screens->lockPalette) {
-		setPalette(engine->_screens->mainPaletteRGBA);
+		engine->setPalette(engine->_screens->mainPaletteRGBA);
 	}
 	return 0;
 }
@@ -1358,11 +1357,11 @@ static int32 lMESSAGE_SENDELL(TwinEEngine *engine, int32 actorIdx, ActorStruct *
 	engine->_text->textClipSmall();
 	engine->_screens->fadeToBlack(engine->_screens->paletteRGBACustom);
 	engine->_screens->clearScreen();
-	setPalette(engine->_screens->paletteRGBA);
+	engine->setPalette(engine->_screens->paletteRGBA);
 	engine->cfgfile.FlagDisplayText = tmpFlagDisplayText;
 
 	do {
-		readKeys();
+		engine->readKeys();
 	} while (engine->_keyboard.skipIntro || engine->_keyboard.skippedKey);
 
 	engine->unfreezeTime();
@@ -1434,7 +1433,7 @@ static int32 lPROJ_ISO(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) 
 /*0x66*/
 static int32 lPROJ_3D(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	engine->_screens->copyScreen(engine->frontVideoBuffer, engine->workVideoBuffer);
-	flip();
+	engine->flip();
 	engine->_scene->changeRoomVar10 = 0;
 
 	engine->_renderer->setCameraPosition(320, 240, 128, 1024, 1024);
@@ -1468,7 +1467,7 @@ static int32 lTEXT(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 		}
 
 		drawVar1 += 40;
-		copyBlockPhys(0, drawVar1, textBoxRight, drawVar1);
+		engine->copyBlockPhys(0, drawVar1, textBoxRight, drawVar1);
 	}
 
 	return 0;
@@ -1478,7 +1477,7 @@ static int32 lTEXT(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 static int32 lCLEAR_TEXT(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	drawVar1 = 0;
 	engine->_interface->drawSplittedBox(0, 0, 639, 240, 0);
-	copyBlockPhys(0, 0, 639, 240);
+	engine->copyBlockPhys(0, 0, 639, 240);
 	return 0;
 }
 

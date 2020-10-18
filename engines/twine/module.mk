@@ -28,7 +28,6 @@ MODULE_OBJS := \
 	screens.o \
 	script_life.o \
 	script_move.o \
-	sdlengine.o \
 	sound.o \
 	text.o \
 	twine.o \

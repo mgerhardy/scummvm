@@ -25,7 +25,6 @@
 #include "twine/hqrdepack.h"
 #include "twine/music.h"
 #include "twine/resources.h"
-#include "twine/sdlengine.h"
 #include "twine/twine.h"
 
 namespace TwinE {
@@ -34,7 +33,7 @@ void Screens::adelineLogo() {
 	_engine->_music->playMidiMusic(31, 0);
 
 	loadImage(RESSHQR_ADELINEIMG, 1);
-	delaySkip(7000);
+	_engine->delaySkip(7000);
 	fadeOut(paletteRGBACustom);
 	palCustom = 1;
 }
@@ -45,7 +44,7 @@ void Screens::loadMenuImage(int16 fade_in) {
 	if (fade_in) {
 		fadeToPal(paletteRGBA);
 	} else {
-		setPalette(paletteRGBA);
+		_engine->setPalette(paletteRGBA);
 	}
 
 	palCustom = 0;
@@ -63,7 +62,7 @@ void Screens::loadImage(int32 index, int16 fade_in) {
 	if (fade_in) {
 		fadeToPal(paletteRGBACustom);
 	} else {
-		setPalette(paletteRGBACustom);
+		_engine->setPalette(paletteRGBACustom);
 	}
 
 	palCustom = 1;
@@ -71,7 +70,7 @@ void Screens::loadImage(int32 index, int16 fade_in) {
 
 void Screens::loadImageDelay(int32 index, int32 time) {
 	loadImage(index, 1);
-	delaySkip(1000 * time);
+	_engine->delaySkip(1000 * time);
 	fadeOut(paletteRGBACustom);
 }
 
@@ -89,11 +88,11 @@ void Screens::convertPalToRGBA(uint8 *palSource, uint8 *palDest) {
 
 void Screens::fadeIn(uint8 *pal) {
 	if (_engine->cfgfile.CrossFade)
-		crossFade(_engine->frontVideoBuffer, pal);
+		_engine->crossFade(_engine->frontVideoBuffer, pal);
 	else
 		fadeToPal(pal);
 
-	setPalette(pal);
+	_engine->setPalette(pal);
 }
 
 void Screens::fadeOut(uint8 *pal) {
@@ -143,7 +142,7 @@ void Screens::adjustPalette(uint8 R, uint8 G, uint8 B, uint8 *pal, int32 intensi
 		counter += 4;
 	}
 
-	setPalette(localPalette);
+	_engine->setPalette(localPalette);
 }
 
 void Screens::adjustCrossPalette(uint8 *pal1, uint8 *pal2) {
@@ -180,7 +179,7 @@ void Screens::adjustCrossPalette(uint8 *pal1, uint8 *pal2) {
 			counter += 4;
 		}
 
-		setPalette(localPalette);
+		_engine->setPalette(localPalette);
 		_engine->_system->delayMillis(1000 / 50);
 
 		intensity++;
@@ -208,7 +207,7 @@ void Screens::fadeToPal(uint8 *pal) {
 		_engine->_system->delayMillis(1000 / 50);
 	}
 
-	setPalette((uint8 *)pal);
+	_engine->setPalette((uint8 *)pal);
 
 	palReseted = 0;
 }
@@ -219,7 +218,7 @@ void Screens::blackToWhite() {
 	for (int32 i = 0; i < NUMOFCOLORS; i += 3) {
 		memset(pal, i, sizeof(pal));
 
-		setPalette(pal);
+		_engine->setPalette(pal);
 	}
 }
 
@@ -227,7 +226,7 @@ void Screens::setBackPal() {
 	memset(palette, 0, sizeof(palette));
 	memset(paletteRGBA, 0, sizeof(paletteRGBA));
 
-	setPalette(paletteRGBA);
+	_engine->setPalette(paletteRGBA);
 
 	palReseted = 1;
 }

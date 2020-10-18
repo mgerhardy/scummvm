@@ -30,7 +30,6 @@
 #include "twine/resources.h"
 #include "twine/scene.h"
 #include "twine/screens.h"
-#include "twine/sdlengine.h"
 #include "twine/twine.h"
 
 namespace TwinE {

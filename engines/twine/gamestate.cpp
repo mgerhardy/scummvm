@@ -307,7 +307,7 @@ void GameState::processFoundItem(int32 item) {
 	itemZ = (_engine->_scene->sceneHero->z + 0x100) >> 9;
 
 	_engine->_grid->drawOverModelActor(itemX, itemY, itemZ);
-	flip();
+	_engine->flip();
 
 	_engine->_renderer->projectPositionOnScreen(_engine->_scene->sceneHero->x - itemCameraX, _engine->_scene->sceneHero->y - itemCameraY, _engine->_scene->sceneHero->z - itemCameraZ);
 	_engine->_renderer->projPosY -= 150;
@@ -395,10 +395,7 @@ void GameState::processFoundItem(int32 item) {
 
 		_engine->_redraw->flipRedrawAreas();
 
-		readKeys();
-		if (_engine->shouldQuit()) {
-			quitItem = 1;
-		}
+		_engine->readKeys();
 		if (_engine->_keyboard.skippedKey) {
 			if (!textState) {
 				quitItem = 1;
@@ -413,14 +410,11 @@ void GameState::processFoundItem(int32 item) {
 	}
 
 	while (_engine->_text->playVoxSimple(_engine->_text->currDialTextEntry)) {
-		readKeys();
-		if (_engine->shouldQuit()) {
-			break;
-		}
+		_engine->readKeys();
 		if (_engine->_keyboard.skipIntro == 1) {
 			break;
 		}
-		delaySkip(1);
+		_engine->delaySkip(1);
 	}
 
 	initEngineProjections();
@@ -485,7 +479,7 @@ void GameState::processGameoverAnimation() { // makeGameOver
 	_engine->_scene->sceneHero->staticFlags.bIsHidden = 0;
 
 	// TODO: drawInGameTransBox
-	setPalette(_engine->_screens->paletteRGBA);
+	_engine->setPalette(_engine->_screens->paletteRGBA);
 	_engine->_screens->copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
 	uint8 *gameOverPtr = (uint8 *)malloc(_engine->_hqrdepack->hqrEntrySize(HQR_RESS_FILE, RESSHQR_GAMEOVERMDL));
 	_engine->_hqrdepack->hqrGetEntry(gameOverPtr, HQR_RESS_FILE, RESSHQR_GAMEOVERMDL);
@@ -501,17 +495,14 @@ void GameState::processGameoverAnimation() { // makeGameOver
 		_engine->_interface->setClip(120, 120, 519, 359);
 
 		while (_engine->_keyboard.skipIntro != 1 && (_engine->lbaTime - startLbaTime) <= 0x1F4) {
-			readKeys();
-			if (_engine->shouldQuit()) {
-				break;
-			}
+			_engine->readKeys();
 
 			avg = _engine->_collision->getAverageValue(40000, 3200, 500, _engine->lbaTime - startLbaTime);
 			cdot = _engine->_screens->crossDot(1, 1024, 100, (_engine->lbaTime - startLbaTime) % 0x64);
 			_engine->_interface->blitBox(120, 120, 519, 359, (int8 *)_engine->workVideoBuffer, 120, 120, (int8 *)_engine->frontVideoBuffer);
 			_engine->_renderer->setCameraAngle(0, 0, 0, 0, -cdot, 0, avg);
 			_engine->_renderer->renderIsoModel(0, 0, 0, 0, 0, 0, gameOverPtr);
-			copyBlockPhys(120, 120, 519, 359);
+			_engine->copyBlockPhys(120, 120, 519, 359);
 
 			_engine->lbaTime++;
 			_engine->_system->delayMillis(15);
@@ -521,14 +512,14 @@ void GameState::processGameoverAnimation() { // makeGameOver
 		_engine->_interface->blitBox(120, 120, 519, 359, (int8 *)_engine->workVideoBuffer, 120, 120, (int8 *)_engine->frontVideoBuffer);
 		_engine->_renderer->setCameraAngle(0, 0, 0, 0, 0, 0, 3200);
 		_engine->_renderer->renderIsoModel(0, 0, 0, 0, 0, 0, gameOverPtr);
-		copyBlockPhys(120, 120, 519, 359);
+		_engine->copyBlockPhys(120, 120, 519, 359);
 
-		delaySkip(2000);
+		_engine->delaySkip(2000);
 
 		_engine->_interface->resetClip();
 		free(gameOverPtr);
 		_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
-		flip();
+		_engine->flip();
 		initEngineProjections();
 
 		_engine->lbaTime = tmpLbaTime;

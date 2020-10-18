@@ -27,7 +27,6 @@
 #include "twine/keyboard.h"
 #include "twine/music.h"
 #include "twine/screens.h"
-#include "twine/sdlengine.h"
 #include "twine/sound.h"
 #include "twine/twine.h"
 
@@ -310,12 +309,12 @@ void FlaMovies::playFlaMovie(const char *flaName) {
 				if (!currentFrame) // fade in the first frame
 					_engine->_screens->fadeIn(_engine->_screens->paletteRGBACustom);
 				else
-					setPalette(_engine->_screens->paletteRGBACustom);
+					_engine->setPalette(_engine->_screens->paletteRGBACustom);
 			}
 
 			// TRICKY: fade in tricky
 			if (fadeOutFrames >= 2) {
-				flip();
+				_engine->flip();
 				_engine->_screens->convertPalToRGBA(_engine->_screens->palette, _engine->_screens->paletteRGBACustom);
 				_engine->_screens->fadeToPal(_engine->_screens->paletteRGBACustom);
 				_fadeOut = -1;
@@ -326,7 +325,7 @@ void FlaMovies::playFlaMovie(const char *flaName) {
 
 			_engine->_system->delayMillis(1000 / flaHeaderData.speed + 1);
 
-			readKeys();
+			_engine->readKeys();
 
 			if (_engine->shouldQuit()) {
 				break;
@@ -339,7 +338,7 @@ void FlaMovies::playFlaMovie(const char *flaName) {
 	}
 
 	if (_engine->cfgfile.CrossFade) {
-		crossFade(_engine->frontVideoBuffer, _engine->_screens->paletteRGBACustom);
+		_engine->crossFade(_engine->frontVideoBuffer, _engine->_screens->paletteRGBACustom);
 	} else {
 		_engine->_screens->fadeToBlack(_engine->_screens->paletteRGBACustom);
 	}

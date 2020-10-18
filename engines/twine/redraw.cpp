@@ -34,7 +34,6 @@
 #include "twine/resources.h"
 #include "twine/scene.h"
 #include "twine/screens.h"
-#include "twine/sdlengine.h"
 #include "twine/sound.h"
 #include "twine/text.h"
 #include "twine/debug_scene.h"
@@ -134,7 +133,7 @@ void Redraw::flipRedrawAreas() {
 	int32 i;
 
 	for (i = 0; i < numOfRedrawBox; i++) { // redraw areas on screen
-		copyBlockPhys(currentRedrawList[i].left, currentRedrawList[i].top, currentRedrawList[i].right, currentRedrawList[i].bottom);
+		_engine->copyBlockPhys(currentRedrawList[i].left, currentRedrawList[i].top, currentRedrawList[i].right, currentRedrawList[i].bottom);
 	}
 
 	numOfRedrawBox = 0;
@@ -231,7 +230,7 @@ void Redraw::redrawEngineActions(int32 bgRedraw) { // fullRedraw
 
 		if (_engine->_scene->needChangeScene != -1 && _engine->_scene->needChangeScene != -2) {
 			_engine->_screens->fadeIn(_engine->_screens->paletteRGBA);
-			setPalette(_engine->_screens->paletteRGBA);
+			_engine->setPalette(_engine->_screens->paletteRGBA);
 		}
 	} else {
 		blitBackgroundAreas();
@@ -714,12 +713,12 @@ void Redraw::redrawEngineActions(int32 bgRedraw) { // fullRedraw
 	// make celling grid fade
 	// need to be here to fade after drawing all actors in scene
 	if (_engine->_scene->needChangeScene == -2) {
-		crossFade(_engine->frontVideoBuffer, _engine->_screens->paletteRGBA);
+		_engine->crossFade(_engine->frontVideoBuffer, _engine->_screens->paletteRGBA);
 		_engine->_scene->needChangeScene = -1;
 	}
 
 	if (bgRedraw) {
-		flip();
+		_engine->flip();
 		moveNextAreas();
 		_engine->unfreezeTime();
 	} else {
@@ -770,7 +769,7 @@ void Redraw::drawBubble(int32 actorIdx) {
 
 	_engine->_grid->drawSprite(0, renderLeft, renderTop, spritePtr);
 	if (_engine->_interface->textWindowLeft <= _engine->_interface->textWindowRight && _engine->_interface->textWindowTop <= _engine->_interface->textWindowBottom) {
-		copyBlockPhys(renderLeft, renderTop, renderRight, renderBottom);
+		_engine->copyBlockPhys(renderLeft, renderTop, renderRight, renderBottom);
 	}
 
 	_engine->_interface->resetClip();

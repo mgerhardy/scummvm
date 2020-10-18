@@ -24,7 +24,6 @@
 #define TWINE_MENU_H
 
 #include "twine/actor.h"
-#include "twine/sdlengine.h"
 
 namespace TwinE {
 

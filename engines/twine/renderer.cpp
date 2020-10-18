@@ -27,7 +27,6 @@
 #include "twine/movements.h"
 #include "twine/redraw.h"
 #include "twine/renderer.h"
-#include "twine/sdlengine.h"
 #include "twine/shadeangletab.h"
 #include "twine/twine.h"
 

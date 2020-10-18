@@ -21,7 +21,6 @@
  */
 
 #include "twine/interface.h"
-#include "twine/sdlengine.h"
 #include "twine/twine.h"
 
 namespace TwinE {

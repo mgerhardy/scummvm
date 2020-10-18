@@ -24,7 +24,6 @@
 #include "twine/animations.h"
 #include "twine/scene.h"
 #include "twine/screens.h"
-#include "twine/sdlengine.h"
 #include "twine/sound.h"
 #include "twine/text.h"
 
@@ -38,7 +37,7 @@ void Resources::initPalettes() {
 	memcpy(_engine->_screens->palette, _engine->_screens->mainPalette, NUMOFCOLORS * 3);
 
 	_engine->_screens->convertPalToRGBA(_engine->_screens->palette, _engine->_screens->paletteRGBA);
-	setPalette(_engine->_screens->paletteRGBA);
+	_engine->setPalette(_engine->_screens->paletteRGBA);
 
 	// We use it now
 	_engine->_screens->palCustom = 0;

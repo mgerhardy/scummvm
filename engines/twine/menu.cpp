@@ -38,7 +38,6 @@
 #include "twine/resources.h"
 #include "twine/scene.h"
 #include "twine/screens.h"
-#include "twine/sdlengine.h"
 #include "twine/sound.h"
 #include "twine/text.h"
 #include "twine/twine.h"
@@ -394,7 +393,7 @@ void Menu::drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, in
 
 	// TODO: make volume buttons
 
-	copyBlockPhys(left, top, right, bottom);
+	_engine->copyBlockPhys(left, top, right, bottom);
 }
 
 void Menu::drawButton(int16 *menuSettings, int32 mode) {
@@ -470,7 +469,7 @@ int32 Menu::processMenu(int16 *menuSettings) {
 	localTime = _engine->lbaTime;
 	maxButton = numEntry - 1;
 
-	readKeys();
+	_engine->readKeys();
 
 	do {
 		// if its on main menu
@@ -574,10 +573,7 @@ int32 Menu::processMenu(int16 *menuSettings) {
 
 			drawButton(localData, 0); // current button
 			do {
-				readKeys();
-				if (_engine->shouldQuit()) {
-					break;
-				}
+				_engine->readKeys();
 				drawButton(localData, 1);
 			} while (_engine->_keyboard.pressedKey == 0 && _engine->_keyboard.skippedKey == 0 && _engine->_keyboard.skipIntro == 0);
 			buttonNeedRedraw = 0;
@@ -588,10 +584,7 @@ int32 Menu::processMenu(int16 *menuSettings) {
 
 			buttonNeedRedraw = 0;
 			drawButton(localData, 1);
-			readKeys();
-			if (_engine->shouldQuit()) {
-				break;
-			}
+			_engine->readKeys();
 			// WARNING: this is here to prevent a fade bug while quit the menu
 			_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 		}
@@ -599,7 +592,7 @@ int32 Menu::processMenu(int16 *menuSettings) {
 
 	currentButton = *(localData + 5 + currentButton * 2); // get current browsed button
 
-	readKeys();
+	_engine->readKeys();
 
 	return currentButton;
 }
@@ -622,7 +615,7 @@ int32 Menu::advoptionsMenu() {
 	} while (ret != 1);
 
 	_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
-	flip();
+	_engine->flip();
 
 	return 0;
 }
@@ -645,7 +638,7 @@ int32 Menu::savemanageMenu() {
 	} while (ret != 1);
 
 	_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
-	flip();
+	_engine->flip();
 
 	return 0;
 }
@@ -668,7 +661,7 @@ int32 Menu::volumeMenu() {
 	} while (ret != 1);
 
 	_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
-	flip();
+	_engine->flip();
 
 	return 0;
 }
@@ -690,19 +683,19 @@ int32 Menu::optionsMenu() {
 		}
 		case kVolume: {
 			_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
-			flip();
+			_engine->flip();
 			volumeMenu();
 			break;
 		}
 		case kSaveManage: {
 			_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
-			flip();
+			_engine->flip();
 			savemanageMenu();
 			break;
 		}
 		case kAdvanced: {
 			_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
-			flip();
+			_engine->flip();
 			advoptionsMenu();
 			break;
 		}
@@ -712,7 +705,7 @@ int32 Menu::optionsMenu() {
 	} while (ret != 1);
 
 	_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
-	flip();
+	_engine->flip();
 
 	return 0;
 }
@@ -744,7 +737,7 @@ void Menu::mainMenu() {
 		}
 		case kOptions: {
 			_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
-			flip();
+			_engine->flip();
 			OptionsMenuSettings[5] = kReturnMenu;
 			optionsMenu();
 			break;
@@ -853,7 +846,7 @@ void Menu::drawInfoMenu(int16 left, int16 top) {
 		_engine->_grid->drawSprite(0, _engine->_screens->crossDot(left + 25, left + 325, 10, i) + 2, top + 60, _engine->_actor->spriteTable[SPRITEHQR_CLOVERLEAF]);
 	}
 
-	copyBlockPhys(left, top, left + 450, top + 135);
+	_engine->copyBlockPhys(left, top, left + 450, top + 135);
 }
 
 void Menu::drawBehaviour(int16 behaviour, int32 angle, int16 cantDrawBox) {
@@ -906,8 +899,8 @@ void Menu::drawBehaviour(int16 behaviour, int32 angle, int16 cantDrawBox) {
 
 	_engine->_renderer->renderBehaviourModel(boxLeft, boxTop, boxRight, boxBottom, -600, angle, behaviourEntity);
 
-	copyBlockPhys(boxLeft, boxTop, boxRight, boxBottom);
-	copyBlockPhys(110, 239, 540, 279);
+	_engine->copyBlockPhys(boxLeft, boxTop, boxRight, boxBottom);
+	_engine->copyBlockPhys(110, 239, 540, 279);
 
 	_engine->_interface->loadClip();
 }
@@ -930,7 +923,7 @@ void Menu::drawBehaviourMenu(int32 angle) {
 
 	drawInfoMenu(100, 300);
 
-	copyBlockPhys(100, 100, 550, 290);
+	_engine->copyBlockPhys(100, 100, 550, 290);
 }
 
 void Menu::processBehaviourMenu() {
@@ -969,15 +962,12 @@ void Menu::processBehaviourMenu() {
 
 	_engine->_animations->setAnimAtKeyframe(behaviourAnimState[_engine->_actor->heroBehaviour], _engine->_animations->animTable[_engine->_actor->heroAnimIdx[_engine->_actor->heroBehaviour]], behaviourEntity, &behaviourAnimData[_engine->_actor->heroBehaviour]);
 
-	readKeys();
+	_engine->readKeys();
 
 	tmpTime = _engine->lbaTime;
 
 	while (_engine->_keyboard.skippedKey & 4 || (_engine->_keyboard.skipIntro >= 59 && _engine->_keyboard.skipIntro <= 62)) {
-		readKeys();
-		if (_engine->shouldQuit()) {
-			break;
-		}
+		_engine->readKeys();
 		_engine->_keyboard.key = _engine->_keyboard.pressedKey;
 
 		if (_engine->_keyboard.key & 8) {
@@ -1003,7 +993,7 @@ void Menu::processBehaviourMenu() {
 			_engine->_animations->setAnimAtKeyframe(behaviourAnimState[_engine->_actor->heroBehaviour], _engine->_animations->animTable[_engine->_actor->heroAnimIdx[_engine->_actor->heroBehaviour]], behaviourEntity, &behaviourAnimData[_engine->_actor->heroBehaviour]);
 
 			while (_engine->_keyboard.pressedKey) {
-				readKeys();
+				_engine->readKeys();
 				if (_engine->shouldQuit()) {
 					break;
 				}
@@ -1059,7 +1049,7 @@ void Menu::drawItem(int32 item) {
 	}
 
 	drawBox(left, top, right, bottom);
-	copyBlockPhys(left, top, right, bottom);
+	_engine->copyBlockPhys(left, top, right, bottom);
 }
 
 void Menu::drawInventoryItems() {
@@ -1068,7 +1058,7 @@ void Menu::drawInventoryItems() {
 	drawTransparentBox(17, 10, 622, 320, 4);
 	drawBox(17, 10, 622, 320);
 	drawMagicItemsBox(110, 18, 188, 311, 75);
-	copyBlockPhys(17, 10, 622, 320);
+	_engine->copyBlockPhys(17, 10, 622, 320);
 
 	for (item = 0; item < NUM_INVENTORY_ITEMS; item++) {
 		drawItem(item);
@@ -1105,10 +1095,7 @@ void Menu::processInventoryMenu() {
 	_engine->_text->initDialogueBox();
 
 	while (_engine->_keyboard.skipIntro != 1) {
-		readKeys();
-		if (_engine->shouldQuit()) {
-			break;
-		}
+		_engine->readKeys();
 		prevSelectedItem = inventorySelectedItem;
 
 		if (!di) {
@@ -1221,10 +1208,7 @@ void Menu::processInventoryMenu() {
 	_engine->_text->initTextBank(_engine->_text->currentTextBank + 3);
 
 	while (_engine->_keyboard.skipIntro != 0 && _engine->_keyboard.skippedKey != 0) {
-		readKeys();
-		if (_engine->shouldQuit()) {
-			break;
-		}
+		_engine->readKeys();
 		_engine->_system->delayMillis(1);
 		// TODO: check if g_system->updateScreen() is needed here
 	}
