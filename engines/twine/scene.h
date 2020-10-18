@@ -162,6 +162,7 @@ public:
 
 	// ACTORS
 	int32 sceneNumActors;
+	// the first actor is the own hero
 	ActorStruct sceneActors[NUM_MAX_ACTORS];
 	ActorStruct *sceneHero;
 

@@ -530,7 +530,6 @@ void TwinEEngine::processActorSamplePosition(int32 actorIdx) {
 }
 
 int32 TwinEEngine::runGameEngine() { // mainLoopInteration
-	int32 a;
 	readKeys();
 
 	if (_scene->needChangeScene > -1) {
@@ -775,7 +774,7 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 
 	_extra->processExtras();
 
-	for (a = 0; a < _scene->sceneNumActors; a++) {
+	for (int32 a = 0; a < _scene->sceneNumActors; a++) {
 		ActorStruct *actor = &_scene->sceneActors[a];
 
 		if (!actor->dynamicFlags.bIsDead) {
