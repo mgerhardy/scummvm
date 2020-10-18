@@ -1051,19 +1051,19 @@ int TwinEEngine::sdlInitialize() {
 	@param time time in seconds to delay */
 void TwinEEngine::delaySkip(uint32 time) {
 #if 0
-	uint32 startTicks = _engine->_system->getMillis();
+	uint32 startTicks = _system->getMillis();
 	uint32 stopTicks = 0;
-	_engine->_keyboard.skipIntro = 0;
+	_keyboard.skipIntro = 0;
 	do {
 		readKeys();
-		if (_engine->_keyboard.skipIntro == 1) {
+		if (_keyboard.skipIntro == 1) {
 			break;
 		}
-		if (_engine->shouldQuit()) {
+		if (shouldQuit()) {
 			break;
 		}
-		stopTicks = _engine->_system->getMillis() - startTicks;
-		_engine->_system->delayMillis(1);
+		stopTicks = _system->getMillis() - startTicks;
+		_system->delayMillis(1);
 		//lbaTime++;
 	} while (stopTicks <= time);
 #endif
@@ -1097,19 +1097,14 @@ void TwinEEngine::fadeBlackToWhite() {
 #endif
 }
 
-/** Blit surface in the screen */
 void TwinEEngine::flip() {
+	g_system->updateScreen();
 #if 0
 	SDL_BlitSurface(screenBuffer, NULL, screen, NULL);
 	SDL_UpdateRect(screen, 0, 0, 0, 0);
 #endif
 }
 
-/** Blit surface in the screen in a determinate area
-	@param left left position to start copy
-	@param top top position to start copy
-	@param right right position to start copy
-	@param bottom bottom position to start copy */
 void TwinEEngine::copyBlockPhys(int32 left, int32 top, int32 right, int32 bottom) {
 #if 0
 	SDL_Rect rectangle;
@@ -1124,10 +1119,6 @@ void TwinEEngine::copyBlockPhys(int32 left, int32 top, int32 right, int32 bottom
 #endif
 }
 
-/** Create SDL screen surface
-	@param buffer screen buffer to blit surface
-	@param width screen width size
-	@param height screen height size */
 void TwinEEngine::initScreenBuffer(uint8 *buffer, int32 width, int32 height) {
 #if 0
 	screenBuffer = SDL_CreateRGBSurfaceFrom(buffer, width, height, 8, SCREEN_WIDTH, 0, 0, 0, 0);
@@ -1135,9 +1126,6 @@ void TwinEEngine::initScreenBuffer(uint8 *buffer, int32 width, int32 height) {
 }
 #if 0
 
-/** Cross fade feature
-	@param buffer screen buffer
-	@param palette new palette to cross fade */
 void TwinEEngine::crossFade(uint8 *buffer, uint8 *palette) {
 	int32 i;
 	SDL_Surface *backupSurface;
@@ -1183,15 +1171,14 @@ void TwinEEngine::crossFade(uint8 *buffer, uint8 *palette) {
 }
 #endif
 
-/** Switch between window and fullscreen modes */
 void TwinEEngine::toggleFullscreen() {
 #if 0
-	_engine->cfgfile.FullScreen = 1 - _engine->cfgfile.FullScreen;
+	cfgfile.FullScreen = 1 - cfgfile.FullScreen;
 	SDL_FreeSurface(screen);
 
-	_engine->_redraw->reqBgRedraw = 1;
+	_redraw->reqBgRedraw = 1;
 
-	if (_engine->cfgfile.FullScreen) {
+	if (cfgfile.FullScreen) {
 		screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32, SDL_SWSURFACE);
 		copyScreen(workVideoBuffer, frontVideoBuffer);
 		SDL_ShowCursor(1);
@@ -1284,21 +1271,17 @@ void TwinEEngine::readKeys() {
 		_keyboard.skippedKey = 1;
 		return;
 	}
+	_keyboard.skippedKey = 0;
+	_keyboard.skipIntro = 0;
+	int32 localKey = 0;
+
 #if 0
 	SDL_Event event;
-	int32 localKey;
-	int32 i, j, size;
-	int32 find = 0;
-	uint8 *keyboard;
-
-	localKey = 0;
-	_engine->_keyboard.skippedKey = 0;
-	_engine->_keyboard.skipIntro = 0;
 
 	SDL_PumpEvents();
+#endif
 
-	keyboard = SDL_GetKeyState(&size);
-
+#if 0
 	while (SDL_PollEvent(&event)) {
 		switch (event.type) {
 		case SDL_QUIT:
@@ -1307,15 +1290,15 @@ void TwinEEngine::readKeys() {
 		case SDL_MOUSEBUTTONDOWN:
 			switch (event.button.button) {
 			case SDL_BUTTON_RIGHT:
-				_engine->rightMouse = 1;
+				rightMouse = 1;
 				break;
 			case SDL_BUTTON_LEFT:
-				_engine->leftMouse = 1;
+				leftMouse = 1;
 				break;
 			}
 			break;
 		case SDL_KEYUP:
-			_engine->_keyboard.pressedKey = 0;
+			_keyboard.pressedKey = 0;
 			break;
 		case SDL_KEYDOWN:
 			switch (event.key.keysym.sym) {
@@ -1377,7 +1360,7 @@ void TwinEEngine::readKeys() {
 			default:
 				break;
 			}
-			if (_engine->cfgFile.Debug) {
+			if (cfgFile.Debug) {
 				switch (event.key.keysym.sym) {
 				case SDLK_r: // next room
 					localKey = Keys::NextRoom;
@@ -1401,8 +1384,11 @@ void TwinEEngine::readKeys() {
 			break;
 		}
 	}
-
-	for (j = 0; j < size; j++) {
+#endif
+#if 0
+	int32 size;
+	uint8 *keyboard = SDL_GetKeyState(&size);
+	for (int32 j = 0; j < size; j++) {
 		if (keyboard[j]) {
 			switch (j) {
 			case SDLK_RETURN:
@@ -1455,7 +1441,7 @@ void TwinEEngine::readKeys() {
 			default:
 				break;
 			}
-			if (_engine->cfgFile.Debug) {
+			if (cfgFile.Debug) {
 				switch (keyboard[j]) {
 				// change grid camera
 				case SDLK_s:
@@ -1476,7 +1462,7 @@ void TwinEEngine::readKeys() {
 
 		bool found = false;
 		for (i = 0; i < 28; i++) {
-			if (_engine->_keyboard.pressedKeyMap[i] == localKey) {
+			if (_keyboard.pressedKeyMap[i] == localKey) {
 				find = i;
 				found = true;
 				break;
@@ -1490,19 +1476,19 @@ void TwinEEngine::readKeys() {
 			if (temp2 == 0) {
 				// pressed valid keys
 				if (!(localKey & 0x80)) {
-					_engine->_keyboard.pressedKey |= (temp & 0xFF00) >> 8;
+					_keyboard.pressedKey |= (temp & 0xFF00) >> 8;
 				} else {
-					_engine->_keyboard.pressedKey &= -((temp & 0xFF00) >> 8);
+					_keyboard.pressedKey &= -((temp & 0xFF00) >> 8);
 				}
 			}
 			// pressed inactive keys
 			else {
-				_engine->_keyboard.skippedKey |= (temp & 0xFF00) >> 8;
+				_keyboard.skippedKey |= (temp & 0xFF00) >> 8;
 			}
 		}
 
 		//if (!found) {
-		_engine->_keyboard.skipIntro = localKey;
+		_keyboard.skipIntro = localKey;
 		//}
 	}
 #endif
@@ -1532,12 +1518,12 @@ void TwinEEngine::ttfDrawText(int32 x, int32 y, const char *string, int32 center
 void TwinEEngine::getMousePositions(MouseStatusStruct *mouseData) {
 #if 0 // TODO:
 	SDL_GetMouseState(&mouseData->X, &mouseData->Y);
-	mouseData->left = _engine->leftMouse;
-	mouseData->right = _engine->rightMouse;
-
-	_engine->leftMouse = 0;
-	_engine->rightMouse = 0;
+	mouseData->left = leftMouse;
+	mouseData->right = rightMouse;
 #endif
+
+	leftMouse = 0;
+	rightMouse = 0;
 }
 
 } // namespace TwinE
