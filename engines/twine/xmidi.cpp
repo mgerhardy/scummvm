@@ -604,7 +604,7 @@ static int32 read_XMIDI_header(uint8 *data, uint32 size, struct XMIDI_info *info
 			//warning("XMIDI doesn't have XDIR");
 			pos += 4;
 			info->num_tracks = 1;
-		} else if (memcmp(pos, "XDIR", 4)) {
+		} else if (memcmp(pos, "XDIR", 4) != 0) {
 			// Not an XMIDI that we recognize
 			//warning("Expected 'XDIR' but found '%c%c%c%c'", pos[0], pos[1], pos[2], pos[3]);
 			return 0;
@@ -656,7 +656,7 @@ static int32 read_XMIDI_header(uint8 *data, uint32 size, struct XMIDI_info *info
 			// Goto the right place
 			pos = start + ((len + 1) & ~1);
 
-			if (memcmp(pos, "CAT ", 4)) {
+			if (memcmp(pos, "CAT ", 4) != 0) {
 				// Not an XMID
 				//warning("Expected 'CAT ' but found '%c%c%c%c'", pos[0], pos[1], pos[2], pos[3]);
 				return 0;
@@ -666,7 +666,7 @@ static int32 read_XMIDI_header(uint8 *data, uint32 size, struct XMIDI_info *info
 			// Now read length of this track
 			len = read4high(&pos);
 
-			if (memcmp(pos, "XMID", 4)) {
+			if (memcmp(pos, "XMID", 4) != 0) {
 				// Not an XMID
 				//warning("Expected 'XMID' but found '%c%c%c%c'", pos[0], pos[1], pos[2], pos[3]);
 				return 0;
