@@ -336,8 +336,7 @@ int32 Animations::setModelAnimation(int32 animState, uint8 *animPtr, uint8 *body
 				break;
 			}
 			default: {
-				// TODO: printf("Unsupported animation rotation mode %d!\n", animOpcode);
-				_engine->_system->fatalError();
+				error("Unsupported animation rotation mode %d!\n", animOpcode);
 			}
 			}
 

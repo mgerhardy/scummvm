@@ -177,8 +177,7 @@ int32 Actor::initBody(int32 bodyIdx, int32 actorIdx) {
 					_engine->_hqrdepack->hqrGetallocEntry(&bodyTable[currentPositionInBodyPtrTab], HQR_BODY_FILE, flag & 0xFFFF);
 
 					if (!bodyTable[currentPositionInBodyPtrTab]) {
-						// TODO: printf("HQR ERROR: Loading body entities");
-						_engine->_system->fatalError();
+						error("HQR ERROR: Loading body entities");
 					}
 					_engine->_renderer->prepareIsoModel(bodyTable[currentPositionInBodyPtrTab]);
 					*((uint16 *)bodyPtr3) = currentPositionInBodyPtrTab + 0x8000;
