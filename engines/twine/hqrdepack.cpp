@@ -93,11 +93,6 @@ void HQRDepack::hqrDecompressLZEntry(uint8 *dst, uint8 *src, int32 decompsize, i
 	}
 }
 
-/** Get a HQR entry pointer
-	@param ptr pointer to save the entry
-	@param filename HQR file name
-	@param index entry index to extract
-	@return entry real size*/
 int32 HQRDepack::hqrGetEntry(uint8 *ptr, const char *filename, int32 index) {
 	uint32 headerSize;
 	uint32 offsetToData;
@@ -154,10 +149,6 @@ int32 HQRDepack::hqrGetEntry(uint8 *ptr, const char *filename, int32 index) {
 	return realSize;
 }
 
-/** Get a HQR entry pointer
-	@param filename HQR file name
-	@param index entry index to extract
-	@return entry real size */
 int HQRDepack::hqrEntrySize(const char *filename, int32 index) {
 	uint32 headerSize;
 	uint32 offsetToData;
@@ -190,9 +181,6 @@ int HQRDepack::hqrEntrySize(const char *filename, int32 index) {
 	return realSize;
 }
 
-/** Get a HQR total number of entries
-	@param filename HQR file name
-	@return total number of entries */
 int HQRDepack::hqrNumEntries(const char *filename) {
 	uint32 headerSize;
 
@@ -209,11 +197,6 @@ int HQRDepack::hqrNumEntries(const char *filename) {
 	return headerSize / 4;
 }
 
-/** Get a HQR entry pointer with memory allocation
-	@param ptr pointer to save the entry
-	@param filename HQR file name
-	@param index entry index to extract
-	@return entry real size */
 int32 HQRDepack::hqrGetallocEntry(uint8 **ptr, const char *filename, int32 index) {
 	int32 size;
 	size = hqrEntrySize(filename, index);
@@ -228,11 +211,7 @@ int32 HQRDepack::hqrGetallocEntry(uint8 **ptr, const char *filename, int32 index
 	return size;
 }
 
-/** Get a HQR entry pointer
-	@param ptr pointer to save the entry
-	@param filename HQR file name
-	@param index entry index to extract
-	@return entry real size*/
+
 int32 HQRDepack::hqrGetVoxEntry(uint8 *ptr, const char *filename, int32 index, int32 hiddenIndex) {
 	uint32 headerSize;
 	uint32 offsetToData;
