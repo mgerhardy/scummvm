@@ -139,11 +139,11 @@ static int32 processLifeConditions(TwinEEngine *engine, ActorStruct *actor) {
 		conditionValueSize = 2;
 		otherActor = &engine->_scene->sceneActors[actorIdx];
 		if (!otherActor->dynamicFlags.bIsDead) {
-			if (ABS(actor->Y - otherActor->Y) >= 1500) {
+			if (ABS(actor->y - otherActor->y) >= 1500) {
 				engine->_scene->currentScriptValue = MAX_TARGET_ACTOR_DISTANCE;
 			} else {
 				// Returns int32, so we check for integer overflow
-				int32 distance = engine->_movements->getDistance2D(actor->X, actor->Z, otherActor->X, otherActor->Z);
+				int32 distance = engine->_movements->getDistance2D(actor->x, actor->z, otherActor->x, otherActor->z);
 				if (ABS(distance) > MAX_TARGET_ACTOR_DISTANCE) {
 					engine->_scene->currentScriptValue = MAX_TARGET_ACTOR_DISTANCE;
 				} else {
@@ -198,8 +198,8 @@ static int32 processLifeConditions(TwinEEngine *engine, ActorStruct *actor) {
 		conditionValueSize = 2;
 
 		if (!targetActor->dynamicFlags.bIsDead) {
-			if (ABS(targetActor->Y - actor->Y) < 1500) {
-				newAngle = engine->_movements->getAngleAndSetTargetActorDistance(actor->X, actor->Z, targetActor->X, targetActor->Z);
+			if (ABS(targetActor->y - actor->y) < 1500) {
+				newAngle = engine->_movements->getAngleAndSetTargetActorDistance(actor->x, actor->z, targetActor->x, targetActor->z);
 				if (ABS(engine->_movements->targetActorDistance) > MAX_TARGET_ACTOR_DISTANCE) {
 					engine->_movements->targetActorDistance = MAX_TARGET_ACTOR_DISTANCE;
 				}
@@ -288,7 +288,7 @@ static int32 processLifeConditions(TwinEEngine *engine, ActorStruct *actor) {
 
 		if (!targetActor->dynamicFlags.bIsDead) {
 			// Returns int32, so we check for integer overflow
-			int32 distance = engine->_movements->getDistance3D(actor->X, actor->Y, actor->Z, targetActor->X, targetActor->Y, targetActor->Z);
+			int32 distance = engine->_movements->getDistance3D(actor->x, actor->y, actor->z, targetActor->x, targetActor->y, targetActor->z);
 			if (ABS(distance) > MAX_TARGET_ACTOR_DISTANCE) {
 				engine->_scene->currentScriptValue = MAX_TARGET_ACTOR_DISTANCE;
 			} else {
@@ -621,9 +621,9 @@ static int32 lCAM_FOLLOW(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor
 	followedActorIdx = *(scriptPtr++);
 
 	if (engine->_scene->currentlyFollowedActor != followedActorIdx) {
-		engine->_grid->newCameraX = engine->_scene->sceneActors[followedActorIdx].X >> 9;
-		engine->_grid->newCameraY = engine->_scene->sceneActors[followedActorIdx].Y >> 8;
-		engine->_grid->newCameraZ = engine->_scene->sceneActors[followedActorIdx].Z >> 9;
+		engine->_grid->newCameraX = engine->_scene->sceneActors[followedActorIdx].x >> 9;
+		engine->_grid->newCameraY = engine->_scene->sceneActors[followedActorIdx].y >> 8;
+		engine->_grid->newCameraZ = engine->_scene->sceneActors[followedActorIdx].z >> 9;
 
 		engine->_scene->currentlyFollowedActor = followedActorIdx;
 		engine->_redraw->reqBgRedraw = 1;
@@ -824,7 +824,7 @@ static int32 lSET_DOOR_LEFT(TwinEEngine *engine, int32 actorIdx, ActorStruct *ac
 	scriptPtr += 2;
 
 	actor->angle = 0x300;
-	actor->X = actor->lastX - distance;
+	actor->x = actor->lastX - distance;
 	actor->dynamicFlags.bIsSpriteMoving = 0;
 	actor->speed = 0;
 
@@ -837,7 +837,7 @@ static int32 lSET_DOOR_RIGHT(TwinEEngine *engine, int32 actorIdx, ActorStruct *a
 	scriptPtr += 2;
 
 	actor->angle = 0x100;
-	actor->X = actor->lastX + distance;
+	actor->x = actor->lastX + distance;
 	actor->dynamicFlags.bIsSpriteMoving = 0;
 	actor->speed = 0;
 
@@ -850,7 +850,7 @@ static int32 lSET_DOOR_UP(TwinEEngine *engine, int32 actorIdx, ActorStruct *acto
 	scriptPtr += 2;
 
 	actor->angle = 0x200;
-	actor->Z = actor->lastZ - distance;
+	actor->z = actor->lastZ - distance;
 	actor->dynamicFlags.bIsSpriteMoving = 0;
 	actor->speed = 0;
 
@@ -863,7 +863,7 @@ static int32 lSET_DOOR_DOWN(TwinEEngine *engine, int32 actorIdx, ActorStruct *ac
 	scriptPtr += 2;
 
 	actor->angle = 0;
-	actor->Z = actor->lastZ + distance;
+	actor->z = actor->lastZ + distance;
 	actor->dynamicFlags.bIsSpriteMoving = 0;
 	actor->speed = 0;
 
@@ -962,13 +962,13 @@ static int32 lZOOM(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 static int32 lPOS_POINT(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 trackIdx = *(scriptPtr++);
 
-	engine->_renderer->destX = engine->_scene->sceneTracks[trackIdx].X;
-	engine->_renderer->destY = engine->_scene->sceneTracks[trackIdx].Y;
-	engine->_renderer->destZ = engine->_scene->sceneTracks[trackIdx].Z;
+	engine->_renderer->destX = engine->_scene->sceneTracks[trackIdx].x;
+	engine->_renderer->destY = engine->_scene->sceneTracks[trackIdx].y;
+	engine->_renderer->destZ = engine->_scene->sceneTracks[trackIdx].z;
 
-	actor->X = engine->_renderer->destX;
-	actor->Y = engine->_renderer->destY;
-	actor->Z = engine->_renderer->destZ;
+	actor->x = engine->_renderer->destX;
+	actor->y = engine->_renderer->destY;
+	actor->z = engine->_renderer->destZ;
 
 	return 0;
 }
@@ -1283,7 +1283,7 @@ static int32 lEXPLODE_OBJ(TwinEEngine *engine, int32 actorIdx, ActorStruct *acto
 	int32 otherActorIdx = *(scriptPtr++);
 	ActorStruct *otherActor = &engine->_scene->sceneActors[otherActorIdx];
 
-	engine->_extra->addExtraExplode(otherActor->X, otherActor->Y, otherActor->Z); // RECHECK this
+	engine->_extra->addExtraExplode(otherActor->x, otherActor->y, otherActor->z); // RECHECK this
 
 	return 0;
 }

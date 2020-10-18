@@ -445,7 +445,7 @@ void Movements::processActorMovements(int32 actorIdx) {
 
 			break;
 		case kFollow: {
-			int32 newAngle = getAngleAndSetTargetActorDistance(actor->X, actor->Z, _engine->_scene->sceneActors[actor->followedActor].X, _engine->_scene->sceneActors[actor->followedActor].Z);
+			int32 newAngle = getAngleAndSetTargetActorDistance(actor->x, actor->z, _engine->_scene->sceneActors[actor->followedActor].x, _engine->_scene->sceneActors[actor->followedActor].z);
 			if (actor->staticFlags.bIsSpriteActor) {
 				actor->angle = newAngle;
 			} else {
@@ -461,8 +461,8 @@ void Movements::processActorMovements(int32 actorIdx) {
 		case kTrackAttack: // unused
 			break;
 		case kSameXZ:
-			actor->X = _engine->_scene->sceneActors[actor->followedActor].X;
-			actor->Z = _engine->_scene->sceneActors[actor->followedActor].Z;
+			actor->x = _engine->_scene->sceneActors[actor->followedActor].x;
+			actor->z = _engine->_scene->sceneActors[actor->followedActor].z;
 			break;
 		case kRandom: {
 			if (!actor->dynamicFlags.bIsRotationByAnim) {

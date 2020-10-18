@@ -57,9 +57,9 @@ typedef struct ZVPoint {
 
 /** Actors zone volumique box structure */
 typedef struct ZVBox {
-	ZVPoint X;
-	ZVPoint Y;
-	ZVPoint Z;
+	ZVPoint x;
+	ZVPoint y;
+	ZVPoint z;
 } ZVBox;
 
 /** Actors animation timer structure */
@@ -122,9 +122,9 @@ typedef struct ActorStruct {
 	int32 sprite; // field_8
 	uint8 *entityDataPtr;
 
-	int32 X;
-	int32 Y;
-	int32 Z;
+	int32 x;
+	int32 y;
+	int32 z;
 	int32 strengthOfHit; // field_66
 	int32 hitBy;
 	int32 bonusParameter; // field_10

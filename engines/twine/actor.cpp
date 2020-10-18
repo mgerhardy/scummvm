@@ -133,12 +133,12 @@ void Actor::initSpriteActor(int32 actorIdx) {
 		const int16 *ptr = (const int16 *)(_engine->_scene->spriteBoundingBoxPtr + localActor->sprite * 16 + 4);
 
 		localActor->entity = localActor->sprite;
-		localActor->boudingBox.X.bottomLeft = *(ptr++);
-		localActor->boudingBox.X.topRight = *(ptr++);
-		localActor->boudingBox.Y.bottomLeft = *(ptr++);
-		localActor->boudingBox.Y.topRight = *(ptr++);
-		localActor->boudingBox.Z.bottomLeft = *(ptr++);
-		localActor->boudingBox.Z.topRight = *(ptr++);
+		localActor->boudingBox.x.bottomLeft = *(ptr++);
+		localActor->boudingBox.x.topRight = *(ptr++);
+		localActor->boudingBox.y.bottomLeft = *(ptr++);
+		localActor->boudingBox.y.topRight = *(ptr++);
+		localActor->boudingBox.z.bottomLeft = *(ptr++);
+		localActor->boudingBox.z.topRight = *(ptr++);
 	}
 }
 
@@ -271,8 +271,8 @@ void Actor::initModelActor(int32 bodyIdx, int16 actorIdx) {
 
 			var1 = *((int16 *)ptr++);
 			var2 = *((int16 *)ptr++);
-			localActor->boudingBox.Y.bottomLeft = *((int16 *)ptr++);
-			localActor->boudingBox.Y.topRight = *((int16 *)ptr++);
+			localActor->boudingBox.y.bottomLeft = *((int16 *)ptr++);
+			localActor->boudingBox.y.topRight = *((int16 *)ptr++);
 			var3 = *((int16 *)ptr++);
 			var4 = *((int16 *)ptr++);
 
@@ -293,17 +293,17 @@ void Actor::initModelActor(int32 bodyIdx, int16 actorIdx) {
 				result >>= 2;
 			}
 
-			localActor->boudingBox.X.bottomLeft = -result;
-			localActor->boudingBox.X.topRight = result;
-			localActor->boudingBox.Z.bottomLeft = -result;
-			localActor->boudingBox.Z.topRight = result;
+			localActor->boudingBox.x.bottomLeft = -result;
+			localActor->boudingBox.x.topRight = result;
+			localActor->boudingBox.z.bottomLeft = -result;
+			localActor->boudingBox.z.topRight = result;
 		} else {
-			localActor->boudingBox.X.bottomLeft = bottomLeftX;
-			localActor->boudingBox.X.topRight = topRightX;
-			localActor->boudingBox.Y.bottomLeft = bottomLeftY;
-			localActor->boudingBox.Y.topRight = topRightY;
-			localActor->boudingBox.Z.bottomLeft = bottomLeftZ;
-			localActor->boudingBox.Z.topRight = topRightZ;
+			localActor->boudingBox.x.bottomLeft = bottomLeftX;
+			localActor->boudingBox.x.topRight = topRightX;
+			localActor->boudingBox.y.bottomLeft = bottomLeftY;
+			localActor->boudingBox.y.topRight = topRightY;
+			localActor->boudingBox.z.bottomLeft = bottomLeftZ;
+			localActor->boudingBox.z.topRight = topRightZ;
 		}
 
 		if (currentIndex == -1)
@@ -320,12 +320,12 @@ void Actor::initModelActor(int32 bodyIdx, int16 actorIdx) {
 	localActor->body = -1;
 	localActor->entity = -1;
 
-	localActor->boudingBox.X.bottomLeft = 0;
-	localActor->boudingBox.X.topRight = 0;
-	localActor->boudingBox.Y.bottomLeft = 0;
-	localActor->boudingBox.Y.topRight = 0;
-	localActor->boudingBox.Z.bottomLeft = 0;
-	localActor->boudingBox.Z.topRight = 0;
+	localActor->boudingBox.x.bottomLeft = 0;
+	localActor->boudingBox.x.topRight = 0;
+	localActor->boudingBox.y.bottomLeft = 0;
+	localActor->boudingBox.y.topRight = 0;
+	localActor->boudingBox.z.bottomLeft = 0;
+	localActor->boudingBox.z.topRight = 0;
 }
 
 void Actor::initActor(int16 actorIdx) {
@@ -343,9 +343,9 @@ void Actor::initActor(int16 actorIdx) {
 		_engine->_movements->setActorAngleSafe(0, 0, 0, &actor->move);
 
 		if (actor->staticFlags.bUsesClipping) {
-			actor->lastX = actor->X;
-			actor->lastY = actor->Y;
-			actor->lastZ = actor->Z;
+			actor->lastX = actor->x;
+			actor->lastY = actor->y;
+			actor->lastZ = actor->z;
 		}
 
 	} else {
@@ -373,16 +373,16 @@ void Actor::resetActor(int16 actorIdx) {
 
 	actor->body = 0;
 	actor->anim = 0;
-	actor->X = 0;
-	actor->Y = -1;
-	actor->Z = 0;
+	actor->x = 0;
+	actor->y = -1;
+	actor->z = 0;
 
-	actor->boudingBox.X.bottomLeft = 0;
-	actor->boudingBox.X.topRight = 0;
-	actor->boudingBox.Y.bottomLeft = 0;
-	actor->boudingBox.Y.topRight = 0;
-	actor->boudingBox.Z.bottomLeft = 0;
-	actor->boudingBox.Z.topRight = 0;
+	actor->boudingBox.x.bottomLeft = 0;
+	actor->boudingBox.x.topRight = 0;
+	actor->boudingBox.y.bottomLeft = 0;
+	actor->boudingBox.y.topRight = 0;
+	actor->boudingBox.z.bottomLeft = 0;
+	actor->boudingBox.z.topRight = 0;
 
 	actor->angle = 0;
 	actor->speed = 40;
@@ -448,7 +448,7 @@ void Actor::hitActor(int32 actorIdx, int32 actorIdxAttacked, int32 strengthOfHit
 			}
 		}
 
-		_engine->_extra->addExtraSpecial(actor->X, actor->Y + 1000, actor->Z, kHitStars);
+		_engine->_extra->addExtraSpecial(actor->x, actor->y + 1000, actor->z, kHitStars);
 
 		if (!actorIdxAttacked) {
 			_engine->_movements->heroMoved = 1;
@@ -500,14 +500,14 @@ void Actor::processActorExtraBonus(int32 actorIdx) { // GiveExtraBonus
 	currentBonus += 3;
 
 	if (actor->dynamicFlags.bIsDead) {
-		_engine->_extra->addExtraBonus(actor->X, actor->Y, actor->Z, 0x100, 0, currentBonus, actor->bonusAmount);
+		_engine->_extra->addExtraBonus(actor->x, actor->y, actor->z, 0x100, 0, currentBonus, actor->bonusAmount);
 		// FIXME add constant for sample index
-		_engine->_sound->playSample(11, 0x1000, 1, actor->X, actor->Y, actor->Z, actorIdx);
+		_engine->_sound->playSample(11, 0x1000, 1, actor->x, actor->y, actor->z, actorIdx);
 	} else {
-		int32 angle = _engine->_movements->getAngleAndSetTargetActorDistance(actor->X, actor->Z, _engine->_scene->sceneHero->X, _engine->_scene->sceneHero->Z);
-		_engine->_extra->addExtraBonus(actor->X, actor->Y + actor->boudingBox.Y.topRight, actor->Z, 200, angle, currentBonus, actor->bonusAmount);
+		int32 angle = _engine->_movements->getAngleAndSetTargetActorDistance(actor->x, actor->z, _engine->_scene->sceneHero->x, _engine->_scene->sceneHero->z);
+		_engine->_extra->addExtraBonus(actor->x, actor->y + actor->boudingBox.y.topRight, actor->z, 200, angle, currentBonus, actor->bonusAmount);
 		// FIXME add constant for sample index
-		_engine->_sound->playSample(11, 0x1000, 1, actor->X, actor->Y + actor->boudingBox.Y.topRight, actor->Z, actorIdx);
+		_engine->_sound->playSample(11, 0x1000, 1, actor->x, actor->y + actor->boudingBox.y.topRight, actor->z, actorIdx);
 	}
 }
 

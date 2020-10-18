@@ -52,20 +52,20 @@ public:
 	/** Hero Action */
 	int16 heroAction; // action
 
-	/** Process actor X coordinate */
+	/** Process actor.x coordinate */
 	int16 processActorX;
-	/** Process actor Y coordinate */
+	/** Process actor.y coordinate */
 	int16 processActorY;
-	/** Process actor Z coordinate */
+	/** Process actor.z coordinate */
 	int16 processActorZ;
 
 	ActorStruct *processActorPtr; // processActorVar1
 
-	/** Previous process actor X coordinate */
+	/** Previous process actor.x coordinate */
 	int16 previousActorX; // processActorVar2
-	/** Previous process actor Y coordinate */
+	/** Previous process actor.y coordinate */
 	int16 previousActorY; // processActorVar3
-	/** Previous process actor Z coordinate */
+	/** Previous process actor.z coordinate */
 	int16 previousActorZ; // processActorVar4
 
 	int32 targetActorDistance; // DoTrackVar1

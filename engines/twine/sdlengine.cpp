@@ -518,7 +518,7 @@ void readKeys() {
 	@param Y Y coordinate in screen
 	@param string text to display
 	@param center if the text should be centered accoding with the giving positions */
-void ttfDrawText(int32 X, int32 Y, int8 *string, int32 center) {
+void ttfDrawText(int32 X, int32 Y, const char *string, int32 center) {
 	SDL_Color white = {0xFF, 0xFF, 0xFF, 0};
 	SDL_Color *forecol = &white;
 	SDL_Rect rectangle;

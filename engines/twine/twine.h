@@ -149,6 +149,8 @@ class Sound;
 class Text;
 class DebugGrid;
 struct Keyboard;
+class Debug;
+class DebugScene;
 
 class TwinEEngine : public Engine {
 public:
@@ -183,6 +185,8 @@ public:
 	Text *_text;
 	DebugGrid *_debugGrid;
 	Keyboard _keyboard;
+	Debug *_debug;
+	DebugScene *_debugScene;
 
 	/** Configuration file structure
 	 * Contains all the data used in the engine to configurated the game in particulary ways. */

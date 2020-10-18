@@ -32,9 +32,9 @@ namespace TwinE {
 
 typedef struct ExtraListStruct {
 	int16 info0; // field_0
-	int16 X;
-	int16 Y;
-	int16 Z;
+	int16 x;
+	int16 y;
+	int16 z;
 
 	int16 lastX; // field_8
 	int16 lastY; // field_A

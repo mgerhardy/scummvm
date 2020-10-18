@@ -34,7 +34,89 @@ typedef struct MouseStatusStruct {
 	int32 Y;
 } MouseStatusStruct;
 
-void processDebug(int16 pKey);
+enum ButtonType {
+	NO_ACTION,
+	FREE_CAMERA,
+	CHANGE_SCENE,
+	SHOW_CELLING_GRID,
+	SHOW_ZONES,
+	SHOW_ZONE_CUBE,
+	SHOW_ZONE_CAMERA,
+	SHOW_ZONE_SCENARIC,
+	SHOW_ZONE_CELLINGGRID,
+	SHOW_ZONE_OBJECT,
+	SHOW_ZONE_TEXT,
+	SHOW_ZONE_LADDER
+};
+
+enum WindowType {
+	NO_MENU,
+	FREE_CAMERA_INFO_MENU,
+	CHANGE_SCENE_INFO_MENU,
+	ZONES_MENU
+};
+
+typedef struct DebugButtonStruct {
+	int32 left;
+	int32 top;
+	int32 right;
+	int32 bottom;
+	const char *text;
+	int32 textLeft;
+	int32 textTop;
+	int32 isActive;
+	int32 color;
+	int32 activeColor;
+	int32 submenu;
+	int32 type;
+} DebugButtonStruct;
+
+typedef struct DebugWindowStruct {
+	int32 left;
+	int32 top;
+	int32 right;
+	int32 bottom;
+	int32 alpha;
+	int32 isActive;
+	int32 numLines;
+	const char *text[20];
+	int32 numButtons;
+	DebugButtonStruct debugButtons[50];
+} DebugWindowStruct;
+
+class TwinEEngine;
+
+class Debug {
+private:
+	TwinEEngine *_engine;
+
+	DebugWindowStruct debugWindows[10];
+	int32 numDebugWindows = 0;
+	void debugFillButton(int32 X, int32 Y, int32 width, int32 height, int8 color);
+	void debugDrawButton(int32 left, int32 top, int32 right, int32 bottom, const char *text, int32 textLeft, int32 textRight, int32 isActive, int8 color);
+	void debugDrawWindowBox(int32 left, int32 top, int32 right, int32 bottom, int32 alpha);
+	void debugDrawWindowButtons(int32 w);
+	void debugDrawWindow(int32 w);
+	int32 debugTypeUseMenu(int32 type);
+	void debugResetButtonsState();
+	void debugRefreshButtons(int32 type);
+	void debugDrawWindows();
+	void debugResetButton(int32 type);
+	void debugRedrawScreen();
+	int32 debugGetActionsState(int32 type);
+	void debugSetActions(int32 type);
+	void debugAddButton(int32 window, int32 left, int32 top, int32 right, int32 bottom, const char *text, int32 textLeft, int32 textTop, int32 isActive, int32 color, int32 activeColor, int32 submenu, int32 type);
+	void debugAddWindowText(int32 window, const char *text);
+	void debugAddWindow(int32 left, int32 top, int32 right, int32 bottom, int32 alpha, int32 isActive);
+	void debugLeftMenu();
+	int32 debugProcessButton(int32 X, int32 Y);
+	void debugPlasmaWindow(const char *text, int32 color);
+	void debugProcessWindow();
+
+public:
+	Debug(TwinEEngine *engine) : _engine(engine) {}
+	void processDebug(int16 pKey);
+};
 
 } // namespace TwinE
 

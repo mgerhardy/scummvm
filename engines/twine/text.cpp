@@ -286,7 +286,7 @@ void Text::drawText(int32 x, int32 y, const int8 *dialogue) { // Font
 	} while (1);
 }
 
-int32 Text::getTextSize(int8 *dialogue) { // SizeFont
+int32 Text::getTextSize(const int8 *dialogue) { // SizeFont
 	uint8 currChar;
 	dialTextSize = 0;
 

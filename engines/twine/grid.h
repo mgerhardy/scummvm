@@ -181,15 +181,15 @@ public:
 	int16 cellingGridIdx; // currentGrid2
 
 	/** Draw 3D actor over bricks
-	@param X actor X coordinate
-	@param Y actor Y coordinate
-	@param Z actor Z coordinate */
+	@param X actor.x coordinate
+	@param Y actor.y coordinate
+	@param Z actor.z coordinate */
 	void drawOverModelActor(int32 X, int32 Y, int32 Z);
 
 	/** Draw sprite actor over bricks
-	@param X actor X coordinate
-	@param Y actor Y coordinate
-	@param Z actor Z coordinate */
+	@param X actor.x coordinate
+	@param Y actor.y coordinate
+	@param Z actor.z coordinate */
 	void drawOverSpriteActor(int32 X, int32 Y, int32 Z);
 
 	/** Get sprite width and height sizes

@@ -29,6 +29,7 @@
 #include "twine/animations.h"
 #include "twine/collision.h"
 #include "twine/debug_grid.h"
+#include "twine/debug_scene.h"
 #include "twine/extra.h"
 #include "twine/filereader.h"
 #include "twine/flamovies.h"
@@ -460,6 +461,8 @@ TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flag
 	_sound = new Sound(this);
 	_text = new Text(this);
 	_debugGrid = new DebugGrid(this);
+	_debug = new Debug(this);
+	_debugScene = new DebugScene(this);
 }
 
 TwinEEngine::~TwinEEngine() {
@@ -486,6 +489,9 @@ TwinEEngine::~TwinEEngine() {
 	delete _holomap;
 	delete _sound;
 	delete _text;
+	delete _debugGrid;
+	delete _debug;
+	delete _debugScene;
 }
 
 bool TwinEEngine::hasFeature(EngineFeature f) const {
@@ -521,7 +527,7 @@ void TwinEEngine::processActorSamplePosition(int32 actorIdx) {
 	int32 channelIdx;
 	ActorStruct *actor = &_scene->sceneActors[actorIdx];
 	channelIdx = _sound->getActorChannel(actorIdx);
-	_sound->setSamplePosition(channelIdx, actor->X, actor->Y, actor->Z);
+	_sound->setSamplePosition(channelIdx, actor->x, actor->y, actor->z);
 }
 
 int32 TwinEEngine::runGameEngine() { // mainLoopInteration
@@ -652,9 +658,9 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 			case kiPinguin: {
 				ActorStruct *pinguin = &_scene->sceneActors[_scene->mecaPinguinIdx];
 
-				pinguin->X = _renderer->destX + _scene->sceneHero->X;
-				pinguin->Y = _scene->sceneHero->Y;
-				pinguin->Z = _renderer->destZ + _scene->sceneHero->Z;
+				pinguin->x = _renderer->destX + _scene->sceneHero->x;
+				pinguin->y = _scene->sceneHero->y;
+				pinguin->z = _renderer->destZ + _scene->sceneHero->z;
 				pinguin->angle = _scene->sceneHero->angle;
 
 				_movements->rotateActor(0, 800, pinguin->angle);
@@ -729,9 +735,9 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 
 		// Press Enter to Recenter Screen
 		if ((loopPressedKey & 2) && !disableScreenRecenter) {
-			_grid->newCameraX = _scene->sceneActors[_scene->currentlyFollowedActor].X >> 9;
-			_grid->newCameraY = _scene->sceneActors[_scene->currentlyFollowedActor].Y >> 8;
-			_grid->newCameraZ = _scene->sceneActors[_scene->currentlyFollowedActor].Z >> 9;
+			_grid->newCameraX = _scene->sceneActors[_scene->currentlyFollowedActor].x >> 9;
+			_grid->newCameraY = _scene->sceneActors[_scene->currentlyFollowedActor].y >> 8;
+			_grid->newCameraZ = _scene->sceneActors[_scene->currentlyFollowedActor].z >> 9;
 			_redraw->reqBgRedraw = 1;
 		}
 
@@ -778,10 +784,10 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 					_animations->initAnim(kLandDeath, 4, 0, 0);
 					actor->controlMode = 0;
 				} else {
-					_sound->playSample(37, getRandomNumber(2000) + 3096, 1, actor->X, actor->Y, actor->Z, a);
+					_sound->playSample(37, getRandomNumber(2000) + 3096, 1, actor->x, actor->y, actor->z, a);
 
 					if (a == _scene->mecaPinguinIdx) {
-						_extra->addExtraExplode(actor->X, actor->Y, actor->Z);
+						_extra->addExtraExplode(actor->x, actor->y, actor->z);
 					}
 				}
 
@@ -792,9 +798,9 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 
 			_movements->processActorMovements(a);
 
-			actor->collisionX = actor->X;
-			actor->collisionY = actor->Y;
-			actor->collisionZ = actor->Z;
+			actor->collisionX = actor->x;
+			actor->collisionY = actor->y;
+			actor->collisionZ = actor->z;
 
 			if (actor->positionInMoveScript != -1) {
 				_scriptMove->processMoveScript(a);
@@ -818,14 +824,14 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 
 			if (actor->staticFlags.bCanDrown) {
 				int32 brickSound;
-				brickSound = _grid->getBrickSoundType(actor->X, actor->Y - 1, actor->Z);
+				brickSound = _grid->getBrickSoundType(actor->x, actor->y - 1, actor->z);
 				actor->brickSound = brickSound;
 
 				if ((brickSound & 0xF0) == 0xF0) {
 					if ((brickSound & 0xF) == 1) {
 						if (a) { // all other actors
 							int32 rnd = getRandomNumber(2000) + 3096;
-							_sound->playSample(0x25, rnd, 1, actor->X, actor->Y, actor->Z, a);
+							_sound->playSample(0x25, rnd, 1, actor->x, actor->y, actor->z, a);
 							if (actor->bonusParameter & 0x1F0) {
 								if (!(actor->bonusParameter & 1)) {
 									_actor->processActorExtraBonus(a);
@@ -836,10 +842,10 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 							if (_actor->heroBehaviour != 4 || (brickSound & 0x0F) != actor->anim) {
 								if (!_actor->cropBottomScreen) {
 									_animations->initAnim(kDrawn, 4, 0, 0);
-									_renderer->projectPositionOnScreen(actor->X - _grid->cameraX, actor->Y - _grid->cameraY, actor->Z - _grid->cameraZ);
+									_renderer->projectPositionOnScreen(actor->x - _grid->cameraX, actor->y - _grid->cameraY, actor->z - _grid->cameraZ);
 									_actor->cropBottomScreen = _renderer->projPosY;
 								}
-								_renderer->projectPositionOnScreen(actor->X - _grid->cameraX, actor->Y - _grid->cameraY, actor->Z - _grid->cameraZ);
+								_renderer->projectPositionOnScreen(actor->x - _grid->cameraX, actor->y - _grid->cameraY, actor->z - _grid->cameraZ);
 								actor->controlMode = 0;
 								actor->life = -1;
 								_actor->cropBottomScreen = _renderer->projPosY;
@@ -854,16 +860,16 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 				if (!a) { // if its Hero
 					if (actor->dynamicFlags.bAnimEnded) {
 						if (_gameState->inventoryNumLeafs > 0) { // use clover leaf automaticaly
-							_scene->sceneHero->X = _scene->newHeroX;
-							_scene->sceneHero->Y = _scene->newHeroY;
-							_scene->sceneHero->Z = _scene->newHeroZ;
+							_scene->sceneHero->x = _scene->newHeroX;
+							_scene->sceneHero->y = _scene->newHeroY;
+							_scene->sceneHero->z = _scene->newHeroZ;
 
 							_scene->needChangeScene = _scene->currentSceneIdx;
 							_gameState->inventoryMagicPoints = _gameState->magicLevelIdx * 20;
 
-							_grid->newCameraX = (_scene->sceneHero->X >> 9);
-							_grid->newCameraY = (_scene->sceneHero->Y >> 8);
-							_grid->newCameraZ = (_scene->sceneHero->Z >> 9);
+							_grid->newCameraX = (_scene->sceneHero->x >> 9);
+							_grid->newCameraY = (_scene->sceneHero->y >> 8);
+							_grid->newCameraZ = (_scene->sceneHero->z >> 9);
 
 							_scene->heroPositionType = kReborn;
 
@@ -910,13 +916,13 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 	// recenter screen automatically
 	if (!disableScreenRecenter && !_debugGrid->useFreeCamera) {
 		ActorStruct *actor = &_scene->sceneActors[_scene->currentlyFollowedActor];
-		_renderer->projectPositionOnScreen(actor->X - (_grid->newCameraX << 9),
-		                                   actor->Y - (_grid->newCameraY << 8),
-		                                   actor->Z - (_grid->newCameraZ << 9));
+		_renderer->projectPositionOnScreen(actor->x - (_grid->newCameraX << 9),
+		                                   actor->y - (_grid->newCameraY << 8),
+		                                   actor->z - (_grid->newCameraZ << 9));
 		if (_renderer->projPosX < 80 || _renderer->projPosX > 539 || _renderer->projPosY < 80 || _renderer->projPosY > 429) {
-			_grid->newCameraX = ((actor->X + 0x100) >> 9) + (((actor->X + 0x100) >> 9) - _grid->newCameraX) / 2;
-			_grid->newCameraY = actor->Y >> 8;
-			_grid->newCameraZ = ((actor->Z + 0x100) >> 9) + (((actor->Z + 0x100) >> 9) - _grid->newCameraZ) / 2;
+			_grid->newCameraX = ((actor->x + 0x100) >> 9) + (((actor->x + 0x100) >> 9) - _grid->newCameraX) / 2;
+			_grid->newCameraY = actor->y >> 8;
+			_grid->newCameraZ = ((actor->z + 0x100) >> 9) + (((actor->z + 0x100) >> 9) - _grid->newCameraZ) / 2;
 
 			if (_grid->newCameraX >= 64) {
 				_grid->newCameraX = 63;

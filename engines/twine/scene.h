@@ -47,9 +47,9 @@ enum ScenePositionType {
 // ZONES
 
 typedef struct ScenePoint {
-	int16 X;
-	int16 Y;
-	int16 Z;
+	int16 x;
+	int16 y;
+	int16 z;
 } ScenePoint;
 
 typedef struct ZoneStruct {
@@ -59,15 +59,15 @@ typedef struct ZoneStruct {
 	union {
 		struct {
 			int16 newSceneIdx;
-			int16 X;
-			int16 Y;
-			int16 Z;
+			int16 x;
+			int16 y;
+			int16 z;
 		} ChangeScene;
 		struct {
 			int16 dummy;
-			int16 X;
-			int16 Y;
-			int16 Z;
+			int16 x;
+			int16 y;
+			int16 z;
 		} CameraView;
 		struct {
 			int16 zoneIdx;

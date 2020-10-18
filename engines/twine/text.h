@@ -160,7 +160,7 @@ public:
 
 	/** Gets dialogue text width size
 	@param dialogue ascii text to display */
-	int32 getTextSize(int8 *dialogue);
+	int32 getTextSize(const int8 *dialogue);
 
 	void initDialogueBox();
 	void initInventoryDialogueBox();

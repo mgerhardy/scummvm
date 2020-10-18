@@ -281,9 +281,9 @@ void GameState::processFoundItem(int32 item) {
 	uint8 *currentAnim;
 	AnimTimerDataStruct tmpAnimTimer;
 
-	_engine->_grid->newCameraX = (_engine->_scene->sceneHero->X + 0x100) >> 9;
-	_engine->_grid->newCameraY = (_engine->_scene->sceneHero->Y + 0x100) >> 8;
-	_engine->_grid->newCameraZ = (_engine->_scene->sceneHero->Z + 0x100) >> 9;
+	_engine->_grid->newCameraX = (_engine->_scene->sceneHero->x + 0x100) >> 9;
+	_engine->_grid->newCameraY = (_engine->_scene->sceneHero->y + 0x100) >> 8;
+	_engine->_grid->newCameraZ = (_engine->_scene->sceneHero->z + 0x100) >> 9;
 
 	// Hide hero in scene
 	_engine->_scene->sceneHero->staticFlags.bIsHidden = 1;
@@ -296,20 +296,20 @@ void GameState::processFoundItem(int32 item) {
 	itemCameraY = _engine->_grid->newCameraY << 8;
 	itemCameraZ = _engine->_grid->newCameraZ << 9;
 
-	_engine->_renderer->renderIsoModel(_engine->_scene->sceneHero->X - itemCameraX, _engine->_scene->sceneHero->Y - itemCameraY, _engine->_scene->sceneHero->Z - itemCameraZ, 0, 0x80, 0, _engine->_actor->bodyTable[_engine->_scene->sceneHero->entity]);
+	_engine->_renderer->renderIsoModel(_engine->_scene->sceneHero->x - itemCameraX, _engine->_scene->sceneHero->y - itemCameraY, _engine->_scene->sceneHero->z - itemCameraZ, 0, 0x80, 0, _engine->_actor->bodyTable[_engine->_scene->sceneHero->entity]);
 	_engine->_interface->setClip(_engine->_redraw->renderLeft, _engine->_redraw->renderTop, _engine->_redraw->renderRight, _engine->_redraw->renderBottom);
 
-	itemX = (_engine->_scene->sceneHero->X + 0x100) >> 9;
-	itemY = _engine->_scene->sceneHero->Y >> 8;
+	itemX = (_engine->_scene->sceneHero->x + 0x100) >> 9;
+	itemY = _engine->_scene->sceneHero->y >> 8;
 	if (_engine->_scene->sceneHero->brickShape & 0x7F) {
 		itemY++;
 	}
-	itemZ = (_engine->_scene->sceneHero->Z + 0x100) >> 9;
+	itemZ = (_engine->_scene->sceneHero->z + 0x100) >> 9;
 
 	_engine->_grid->drawOverModelActor(itemX, itemY, itemZ);
 	flip();
 
-	_engine->_renderer->projectPositionOnScreen(_engine->_scene->sceneHero->X - itemCameraX, _engine->_scene->sceneHero->Y - itemCameraY, _engine->_scene->sceneHero->Z - itemCameraZ);
+	_engine->_renderer->projectPositionOnScreen(_engine->_scene->sceneHero->x - itemCameraX, _engine->_scene->sceneHero->y - itemCameraY, _engine->_scene->sceneHero->z - itemCameraZ);
 	_engine->_renderer->projPosY -= 150;
 
 	boxTopLeftX = _engine->_renderer->projPosX - 65;
@@ -379,7 +379,7 @@ void GameState::processFoundItem(int32 item) {
 			}
 		}
 
-		_engine->_renderer->renderIsoModel(_engine->_scene->sceneHero->X - itemCameraX, _engine->_scene->sceneHero->Y - itemCameraY, _engine->_scene->sceneHero->Z - itemCameraZ, 0, 0x80, 0, _engine->_actor->bodyTable[_engine->_scene->sceneHero->entity]);
+		_engine->_renderer->renderIsoModel(_engine->_scene->sceneHero->x - itemCameraX, _engine->_scene->sceneHero->y - itemCameraY, _engine->_scene->sceneHero->z - itemCameraZ, 0, 0x80, 0, _engine->_actor->bodyTable[_engine->_scene->sceneHero->entity]);
 		_engine->_interface->setClip(_engine->_redraw->renderLeft, _engine->_redraw->renderTop, _engine->_redraw->renderRight, _engine->_redraw->renderBottom);
 		_engine->_grid->drawOverModelActor(itemX, itemY, itemZ);
 		_engine->_redraw->addRedrawArea(_engine->_redraw->renderLeft, _engine->_redraw->renderTop, _engine->_redraw->renderRight, _engine->_redraw->renderBottom);
