@@ -207,6 +207,7 @@ int TwinEEngine::getLanguageTypeIndex(int8 *language) {
 	return 0; // English
 }
 
+// TODO: use ConfMan
 void TwinEEngine::initConfigurations() {
 	FileReader fr;
 	char buffer[256], tmp[16];

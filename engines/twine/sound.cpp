@@ -34,6 +34,8 @@
 
 namespace TwinE {
 
+// TODO: move to Audio::Mixer
+
 /** Samples chunk variable */
 Mix_Chunk *sample;
 
