@@ -96,7 +96,6 @@ public:
 	/** Inventory used flags */
 	uint8 inventoryFlags[NUM_INVENTORY_ITEMS];
 
-	/** Inventory used flags */
 	uint8 holomapFlags[150]; // GV14
 
 	int8 savePlayerName[30]; // playerName

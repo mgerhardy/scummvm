@@ -258,15 +258,15 @@ void GameState::saveGame() {
 	frwrite(&fr, &_engine->_scene->sceneHero->angle, 2, 1);
 	frwrite(&fr, &_engine->_scene->sceneHero->body, 1, 1);
 
-	data = 150; // number of holomap locations
+	data = ARRAYSIZE(holomapFlags); // number of holomap locations
 	frwrite(&fr, &data, 1, 1);
-	frwrite(&fr, holomapFlags, 150, 1);
+	frwrite(&fr, holomapFlags, ARRAYSIZE(holomapFlags), 1);
 
 	frwrite(&fr, &inventoryNumGas, 1, 1);
 
-	data = 28; // number of inventory items
+	data = ARRAYSIZE(inventoryFlags); // number of inventory items
 	frwrite(&fr, &data, 1, 1);
-	frwrite(&fr, inventoryFlags, 28, 1);
+	frwrite(&fr, inventoryFlags, ARRAYSIZE(inventoryFlags), 1);
 
 	frwrite(&fr, &inventoryNumLeafs, 1, 1);
 	frwrite(&fr, &usingSabre, 1, 1);
