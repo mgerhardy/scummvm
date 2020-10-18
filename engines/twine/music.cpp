@@ -23,6 +23,7 @@
 #include <SDL.h>
 #include <SDL_mixer.h>
 
+#include "audio/midiparser.h"
 #include "backends/audiocd/audiocd.h"
 #include "common/debug.h"
 #include "common/system.h"

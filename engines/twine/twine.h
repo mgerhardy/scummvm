@@ -26,6 +26,8 @@
 #include "common/random.h"
 #include "engines/engine.h"
 
+#include "graphics/pixelformat.h"
+#include "graphics/surface.h"
 #include "twine/actor.h"
 #include "twine/keyboard.h"
 
@@ -242,6 +244,13 @@ public:
 	uint8 *frontVideoBuffer;
 	/** Auxiliar game video buffer */
 	uint8 *frontVideoBufferbis;
+
+	/** Main screen surface buffer */
+	Graphics::Surface *screen = NULL;
+	/** Auxiliar screen surface buffer */
+	Graphics::Surface *screenBuffer = NULL;
+	/** Auxiliar surface table  */
+	Graphics::Surface *surfaceTable[16];
 
 	/** temporary screen table */
 	int32 screenLookupTable[2000];

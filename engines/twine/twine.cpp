@@ -25,6 +25,7 @@
 #include "common/error.h"
 #include "common/system.h"
 #include "common/textconsole.h"
+#include "engines/util.h"
 #include "gui/debugger.h"
 #include "twine/actor.h"
 #include "twine/animations.h"
@@ -498,6 +499,29 @@ bool TwinEEngine::hasFeature(EngineFeature f) const {
 
 Common::Error TwinEEngine::run() {
 	syncSoundSettings();
+	initGraphics(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+#if 0
+	int32 i;
+	int32 freq;
+
+	// Verify if we want to use high quality sounds
+	if (cfgfile.Sound > 1)
+		freq = HIGH_QUALITY_FREQUENCY;
+	else
+		freq = ORIGINAL_GAME_FREQUENCY;
+
+	screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32, SDL_SWSURFACE);
+
+	if (screen == NULL) {
+		error("Couldn't set 640x480x8 video mode: %s\n\n", SDL_GetError());
+	}
+
+	for (i = 0; i < 16; i++) {
+		surfaceTable[i] = SDL_CreateRGBSurface(SDL_SWSURFACE, SCREEN_WIDTH, SCREEN_HEIGHT, 32, rmask, gmask, bmask, 0);
+	}
+#endif
+
 	initAll();
 	initEngine();
 	_music->stopTrackMusic();
@@ -979,72 +1003,10 @@ bool TwinEEngine::gameEngineLoop() { // mainLoop
 #define HIGH_QUALITY_FREQUENCY 44100
 
 #if 0
-/** Main SDL screen surface buffer */
-SDL_Surface *screen = NULL;
-/** Auxiliar SDL screen surface buffer */
-SDL_Surface *screenBuffer = NULL;
 /** SDL screen color */
 SDL_Color screenColors[256];
-/** Auxiliar surface table  */
-SDL_Surface *surfaceTable[16];
 
 TTF_Font *font;
-#endif
-
-#if 0
-int TwinEEngine::sdlInitialize() {
-	uint8 *keyboard;
-	int32 size;
-	int32 i;
-	int32 freq;
-
-	Uint32 rmask, gmask, bmask;
-
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-	rmask = 0xff000000;
-	gmask = 0x00ff0000;
-	bmask = 0x0000ff00;
-#else
-	rmask = 0x000000ff;
-	gmask = 0x0000ff00;
-	bmask = 0x00ff0000;
-#endif
-
-	if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
-		error("Couldn't initialize SDL: %s\n", SDL_GetError());
-	}
-
-	// Verify if we want to use high quality sounds
-	if (cfgfile.Sound > 1)
-		freq = HIGH_QUALITY_FREQUENCY;
-	else
-		freq = ORIGINAL_GAME_FREQUENCY;
-
-	if (Mix_OpenAudio(freq, AUDIO_S16, 2, 256) < 0) {
-		error("Mix_OpenAudio: %s\n", Mix_GetError());
-	}
-
-	Mix_AllocateChannels(32);
-
-	SDL_WM_SetCaption("Little Big Adventure: TwinEngine", "twin-e");
-	SDL_PumpEvents();
-
-	keyboard = SDL_GetKeyState(&size);
-
-	keyboard[SDLK_RETURN] = 0;
-
-	screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32, SDL_SWSURFACE);
-
-	if (screen == NULL) {
-		error("Couldn't set 640x480x8 video mode: %s\n\n", SDL_GetError());
-	}
-
-	for (i = 0; i < 16; i++) {
-		surfaceTable[i] = SDL_CreateRGBSurface(SDL_SWSURFACE, SCREEN_WIDTH, SCREEN_HEIGHT, 32, rmask, gmask, bmask, 0);
-	}
-
-	return 0;
-}
 #endif
 
 /** Deplay certain seconds till proceed - Can skip delay
