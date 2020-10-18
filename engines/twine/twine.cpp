@@ -388,7 +388,6 @@ void TwinEEngine::initSVGA() {
 void TwinEEngine::initAll() {
 	_grid->blockBuffer = (uint8 *)malloc(64 * 64 * 25 * 2 * sizeof(uint8));
 	_animations->animBuffer1 = _animations->animBuffer2 = (uint8 *)malloc(5000 * sizeof(uint8));
-	memset(_sound->samplesPlaying, -1, sizeof(int32) * NUM_CHANNELS);
 	memset(_menu->itemAngle, 256, sizeof(_menu->itemAngle)); // reset inventory items angles
 
 	_redraw->bubbleSpriteIndex = SPRITEHQR_DIAG_BUBBLE_LEFT;

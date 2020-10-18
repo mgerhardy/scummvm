@@ -42,19 +42,19 @@ private:
 	int32 channelIdx = -1;
 	int32 isChannelPlaying(int32 channel);
 
-public:
-	Sound(TwinEEngine *engine) : _engine(engine) {}
-
-	/** Table with all loaded samples */
-	uint8 *samplesTable[NUM_SAMPLES];
-	/** Table with all loaded samples sizes */
-	uint32 samplesSizeTable[NUM_SAMPLES];
-
 	/** Samples playing at the same time */
 	int32 samplesPlaying[NUM_CHANNELS];
 
 	/** Samples playing at a actors position */
 	int32 samplesPlayingActors[NUM_CHANNELS];
+
+public:
+	Sound(TwinEEngine *engine);
+
+	/** Table with all loaded samples */
+	uint8 *samplesTable[NUM_SAMPLES];
+	/** Table with all loaded samples sizes */
+	uint32 samplesSizeTable[NUM_SAMPLES];
 
 	/**
 	 * Sample volume

@@ -33,8 +33,12 @@
 
 namespace TwinE {
 
+Sound::Sound(TwinEEngine *engine) : _engine(engine) {
+	memset(samplesPlaying, -1, sizeof(int32) * NUM_CHANNELS);
+}
+
 void Sound::sampleVolume(int32 chan, int32 volume) {
-	_engine->_system->getMixer()->setChannelVolume(samplesPlaying[chan], volume / 2);
+	//_engine->_system->getMixer()->setChannelVolume(samplesPlaying[chan], volume / 2);
 }
 
 void Sound::playFlaSample(int32 index, int32 frequency, int32 repeat, int32 x, int32 y) {
@@ -126,7 +130,6 @@ void Sound::resumeSamples() {
 		return;
 	}
 	_engine->_system->getMixer()->pauseAll(false);
-
 }
 
 void Sound::pauseSamples() {
