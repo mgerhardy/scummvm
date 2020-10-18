@@ -37,10 +37,7 @@
 #include "twine/sdlengine.h"
 #include "twine/sound.h"
 #include "twine/text.h"
-
-#ifdef GAMEMOD
 #include "twine/debug_scene.h"
-#endif
 
 namespace TwinE {
 
@@ -548,9 +545,9 @@ void Redraw::redrawEngineActions(int32 bgRedraw) { // fullRedraw
 		} while (pos < drawListPos);
 	}
 
-#ifdef GAMEMOD
-	displayZones(skipIntro);
-#endif
+	if (_engine->cfgfile.Debug) {
+		_engine->_debugScene->displayZones(_engine->_keyboard.skipIntro);
+	}
 
 	for (i = 0; i < OVERLAY_MAX_ENTRIES; i++) {
 		OverlayListStruct *overlay = &overlayList[i];

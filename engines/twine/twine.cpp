@@ -25,9 +25,11 @@
 #include "common/error.h"
 #include "common/system.h"
 #include "common/textconsole.h"
+#include "gui/debugger.h"
 #include "twine/actor.h"
 #include "twine/animations.h"
 #include "twine/collision.h"
+#include "twine/debug.h"
 #include "twine/debug_grid.h"
 #include "twine/debug_scene.h"
 #include "twine/extra.h"
@@ -53,10 +55,6 @@
 #include "twine/sdlengine.h"
 #include "twine/sound.h"
 #include "twine/text.h"
-
-#ifdef GAMEMOD
-#include "twine/debug.h"
-#endif
 
 namespace TwinE {
 
@@ -437,6 +435,7 @@ int8 *TwinEEngine::ITOA(int32 number) {
 
 TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flags)
     : Engine(system), _gameLang(language), _gameFlags(flags), _rnd("twine") {
+	setDebugger(new GUI::Debugger());
 	_actor = new Actor(this);
 	_animations = new Animations(this);
 	_collision = new Collision(this);
@@ -543,9 +542,7 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 	loopPressedKey = _keyboard.skippedKey;
 	loopCurrentKey = _keyboard.skipIntro;
 
-#ifdef GAMEMOD
-	processDebug(loopCurrentKey);
-#endif
+	_debug->processDebug(loopCurrentKey);
 
 	if (_menuOptions->canShowCredits != 0) {
 		// TODO: if current music playing != 8, than play_track(8);

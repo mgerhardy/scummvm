@@ -1000,9 +1000,7 @@ void Renderer::renderPolygons(int32 renderType, int32 color) {
 		break;
 	}
 	default: {
-#ifdef GAMEMOD
-		printf("RENDER WARNING: Unsuported render type %d\n", renderType);
-#endif
+		warning("RENDER WARNING: Unsuported render type %d", renderType);
 		break;
 	}
 	};

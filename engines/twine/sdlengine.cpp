@@ -27,9 +27,6 @@
 #include <SDL.h>
 #include <SDL_mixer.h>
 #include <SDL_thread.h>
-#ifdef GAMEMOD
-#include <SDL_ttf.h>
-#endif
 #endif
 
 #include "twine/debug.h"
@@ -61,9 +58,7 @@ SDL_Color screenColors[256];
 /** Auxiliar surface table  */
 SDL_Surface *surfaceTable[16];
 
-#ifdef GAMEMOD
 TTF_Font *font;
-#endif
 #endif
 
 #if 0
@@ -88,22 +83,6 @@ int sdlInitialize() {
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
 		error("Couldn't initialize SDL: %s\n", SDL_GetError());
 	}
-
-#ifdef GAMEMOD
-	if (TTF_Init() < 0) {
-		fprintf(stderr, "Couldn't initialize TTF: %s\n", SDL_GetError());
-		exit(1);
-	}
-
-	font = TTF_OpenFont("FreeMono.ttf", 12);
-
-	if (font == NULL) {
-		fprintf(stderr, "Couldn't load %d pt font from %s: %s\n", 12, "FreeMono.ttf", SDL_GetError());
-		exit(2);
-	}
-
-	TTF_SetFontStyle(font, 0);
-#endif
 
 	// Verify if we want to use high quality sounds
 	if (cfgfile.Sound > 1)
@@ -386,25 +365,29 @@ void readKeys() {
 			case SDLK_F12:
 				toggleFullscreen();
 				break;
-#ifdef GAMEMOD
-			case SDLK_r: // next room
-				localKey = 0x13;
-				break;
-			case SDLK_f: // previous room
-				localKey = 0x21;
-				break;
-			case SDLK_t: // apply celling grid
-				localKey = 0x14;
-				break;
-			case SDLK_g: // increase celling grid index
-				localKey = 0x22;
-				break;
-			case SDLK_b: // decrease celling grid index
-				localKey = 0x30;
-				break;
-#endif
 			default:
 				break;
+			}
+			if (_engine->cfgFile.Debug) {
+				switch (event.key.keysym.sym) {
+				case SDLK_r: // next room
+					localKey = 0x13;
+					break;
+				case SDLK_f: // previous room
+					localKey = 0x21;
+					break;
+				case SDLK_t: // apply celling grid
+					localKey = 0x14;
+					break;
+				case SDLK_g: // increase celling grid index
+					localKey = 0x22;
+					break;
+				case SDLK_b: // decrease celling grid index
+					localKey = 0x30;
+					break;
+				default:
+					break;
+				}
 			}
 			break;
 		}
@@ -460,26 +443,30 @@ void readKeys() {
 			case SDLK_F4:
 				localKey = 0x3E;
 				break;
-#ifdef GAMEMOD
+			default:
+				break;
+			}
+			if (_engine->cfgFile.Debug) {
+				switch (keyboard[j]) {
 				// change grid camera
-			case SDLK_s:
-				localKey = 0x1F;
-				break;
-			case SDLK_x:
-				localKey = 0x2D;
-				break;
-			case SDLK_z:
-				localKey = 0x2C;
-				break;
-			case SDLK_c:
-				localKey = 0x2E;
-				break;
-#endif
+				case SDLK_s:
+					localKey = 0x1F;
+					break;
+				case SDLK_x:
+					localKey = 0x2D;
+					break;
+				case SDLK_z:
+					localKey = 0x2C;
+					break;
+				case SDLK_c:
+					localKey = 0x2E;
+					break;
+				}
 			}
 		}
 
 		for (i = 0; i < 28; i++) {
-			if (pressedKeyMap[i] == localKey) {
+			if (_engine->_keyboard.pressedKeyMap[i] == localKey) {
 				find = i;
 				found = 1;
 				break;
@@ -493,64 +480,54 @@ void readKeys() {
 			if (temp2 == 0) {
 				// pressed valid keys
 				if (!(localKey & 0x80)) {
-					pressedKey |= (temp & 0xFF00) >> 8;
+					_engine->_keyboard.pressedKey |= (temp & 0xFF00) >> 8;
 				} else {
-					pressedKey &= -((temp & 0xFF00) >> 8);
+					_engine->_keyboard.pressedKey &= -((temp & 0xFF00) >> 8);
 				}
 			}
 			// pressed inactive keys
 			else {
-				skippedKey |= (temp & 0xFF00) >> 8;
+				_engine->_keyboard.skippedKey |= (temp & 0xFF00) >> 8;
 			}
 		}
 
 		//if (found==0) {
-		skipIntro = localKey;
+		_engine->_keyboard.skipIntro = localKey;
 		//}
 	}
 }
 #endif
 
-#ifdef GAMEMOD
-
-/** Display SDL text in screen
-	@param X X coordinate in screen
-	@param Y Y coordinate in screen
-	@param string text to display
-	@param center if the text should be centered accoding with the giving positions */
-void ttfDrawText(int32 X, int32 Y, const char *string, int32 center) {
+void ttfDrawText(int32 x, int32 y, const char *string, int32 center) {
+#if 0 // TODO
 	SDL_Color white = {0xFF, 0xFF, 0xFF, 0};
 	SDL_Color *forecol = &white;
 	SDL_Rect rectangle;
+	SDL_Surface *text = TTF_RenderText_Solid(font, string, *forecol);
 
-	SDL_Surface *text;
-
-	text = TTF_RenderText_Solid(font, string, *forecol);
-
-	if (center)
-		rectangle.x = X - (text->w / 2);
-	else
-		rectangle.x = X;
-	rectangle.y = Y - 2;
+	if (center) {
+		rectangle.x = x - (text->w / 2);
+	} else {
+		rectangle.x = x;
+	}
+	rectangle.y = y - 2;
 	rectangle.w = text->w;
 	rectangle.h = text->h;
 
 	SDL_BlitSurface(text, NULL, screenBuffer, &rectangle);
 	SDL_FreeSurface(text);
-}
-
-/** Gets SDL mouse positions
-	@param mouseData structure that contains mouse position info */
-void getMousePositions(MouseStatusStruct *mouseData) {
-	SDL_GetMouseState(&mouseData->X, &mouseData->Y);
-
-	mouseData->left = leftMouse;
-	mouseData->right = rightMouse;
-
-	leftMouse = 0;
-	rightMouse = 0;
-}
-
 #endif
+}
+
+void getMousePositions(MouseStatusStruct *mouseData) {
+#if 0 // TODO:
+	SDL_GetMouseState(&mouseData->X, &mouseData->Y);
+	mouseData->left = _engine->leftMouse;
+	mouseData->right = _engine->rightMouse;
+
+	_engine->leftMouse = 0;
+	_engine->rightMouse = 0;
+#endif
+}
 
 } // namespace TwinE

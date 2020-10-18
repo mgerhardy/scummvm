@@ -22,8 +22,6 @@
 
 #include "twine/debug.h"
 
-#define GAMEMOD
-#ifdef GAMEMOD
 #include "common/system.h"
 #include "twine/debug_grid.h"
 #include "twine/debug_scene.h"
@@ -492,6 +490,9 @@ void Debug::debugProcessWindow() {
 }
 
 void Debug::processDebug(int16 pKey) {
+	if (!_engine->cfgfile.Debug) {
+		return;
+	}
 	debugProcessWindow();
 
 	_engine->_debugGrid->changeGrid(pKey);
@@ -502,5 +503,3 @@ void Debug::processDebug(int16 pKey) {
 }
 
 } // namespace TwinE
-
-#endif
