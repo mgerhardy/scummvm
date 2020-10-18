@@ -66,13 +66,7 @@ TTF_Font *font;
 #endif
 #endif
 
-/** SDL exit callback */
-//static void atexit_callback(void) {
-//	sdlClose();
-//}
-
 #if 0
-
 int sdlInitialize() {
 	uint8 *keyboard;
 	int32 size;
@@ -142,22 +136,27 @@ int sdlInitialize() {
 
 	return 0;
 }
+#endif
+#if 0
 
 /** Deplay certain seconds till proceed - Can skip delay
 	@param time time in seconds to delay */
 void delaySkip(uint32 time) {
-	uint32 startTicks = SDL_GetTicks();
+	uint32 startTicks = _engine->_system->getMillis();
 	uint32 stopTicks = 0;
-	skipIntro = 0;
+	_engine->_keyboard.skipIntro = 0;
 	do {
 		readKeys();
-		if (skipIntro == 1)
+		if (_engine->_keyboard.skipIntro == 1) {
 			break;
-		stopTicks = SDL_GetTicks() - startTicks;
-		SDL_Delay(1);
+		}
+		stopTicks = _engine->_system->getMillis() - startTicks;
+		_engine->_system->delayMillis(1);
 		//lbaTime++;
 	} while (stopTicks <= time);
 }
+#endif
+#if 0
 
 /** Set a new palette in the SDL screen buffer
 	@param palette palette to set */
@@ -168,6 +167,8 @@ void setPalette(uint8 *palette) {
 	SDL_BlitSurface(screenBuffer, NULL, screen, NULL);
 	SDL_UpdateRect(screen, 0, 0, 0, 0);
 }
+#endif
+#if 0
 
 /** Fade screen from black to white */
 void fadeBlackToWhite() {
@@ -178,16 +179,20 @@ void fadeBlackToWhite() {
 	SDL_UpdateRect(screen, 0, 0, 0, 0);
 
 	for (i = 0; i < 256; i += 3) {
-		memset(colorPtr, i, 1024);
+		memset(colorPtr, i, sizeof(colorPtr));
 		SDL_SetPalette(screen, SDL_PHYSPAL, colorPtr, 0, 256);
 	}
 }
+#endif
+#if 0
 
 /** Blit surface in the screen */
 void flip() {
 	SDL_BlitSurface(screenBuffer, NULL, screen, NULL);
 	SDL_UpdateRect(screen, 0, 0, 0, 0);
 }
+#endif
+#if 0
 
 /** Blit surface in the screen in a determinate area
 	@param left left position to start copy
@@ -205,6 +210,8 @@ void copyBlockPhys(int32 left, int32 top, int32 right, int32 bottom) {
 	SDL_BlitSurface(screenBuffer, &rectangle, screen, &rectangle);
 	SDL_UpdateRect(screen, left, top, right - left + 1, bottom - top + 1);
 }
+#endif
+#if 0
 
 /** Create SDL screen surface
 	@param buffer screen buffer to blit surface
@@ -213,6 +220,8 @@ void copyBlockPhys(int32 left, int32 top, int32 right, int32 bottom) {
 void initScreenBuffer(uint8 *buffer, int32 width, int32 height) {
 	screenBuffer = SDL_CreateRGBSurfaceFrom(buffer, width, height, 8, SCREEN_WIDTH, 0, 0, 0, 0);
 }
+#endif
+#if 0
 
 /** Cross fade feature
 	@param buffer screen buffer
@@ -260,30 +269,29 @@ void crossFade(uint8 *buffer, uint8 *palette) {
 	SDL_FreeSurface(newSurface);
 	SDL_FreeSurface(tempSurface);
 }
+#endif
 
+#if 0
 /** Switch between window and fullscreen modes */
 void toggleFullscreen() {
-	cfgfile.FullScreen = 1 - cfgfile.FullScreen;
+	_engine->cfgfile.FullScreen = 1 - _engine->cfgfile.FullScreen;
 	SDL_FreeSurface(screen);
 
-	reqBgRedraw = 1;
+	_engine->_redraw->reqBgRedraw = 1;
 
-	if (cfgfile.FullScreen) {
+	if (_engine->cfgfile.FullScreen) {
 		screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32, SDL_SWSURFACE);
 		copyScreen(workVideoBuffer, frontVideoBuffer);
 		SDL_ShowCursor(1);
 	} else {
 		screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32, SDL_SWSURFACE | SDL_FULLSCREEN);
 		copyScreen(workVideoBuffer, frontVideoBuffer);
-
-#ifdef _DEBUG
-		SDL_ShowCursor(1);
-#else
-		SDL_ShowCursor(0);
-#endif
 	}
 }
 
+#endif
+
+#if 0
 /** Handle keyboard pressed keys */
 void readKeys() {
 	SDL_Event event;
@@ -296,8 +304,8 @@ void readKeys() {
 	uint8 *keyboard;
 
 	localKey = 0;
-	skippedKey = 0;
-	skipIntro = 0;
+	_engine->_keyboard.skippedKey = 0;
+	_engine->_keyboard.skipIntro = 0;
 
 	SDL_PumpEvents();
 
@@ -501,6 +509,7 @@ void readKeys() {
 		//}
 	}
 }
+#endif
 
 #ifdef GAMEMOD
 
@@ -541,8 +550,6 @@ void getMousePositions(MouseStatusStruct *mouseData) {
 	leftMouse = 0;
 	rightMouse = 0;
 }
-
-#endif
 
 #endif
 
