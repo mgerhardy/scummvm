@@ -36,16 +36,20 @@ class Text {
 private:
 	TwinEEngine *_engine;
 	void initVoxBank(int32 bankIdx);
-	/** Draw a certain character in the screen
-	@param x X coordinate in screen
-	@param y Y coordinate in screen
-	@param character ascii character to display */
+	/**
+	 * Draw a certain character in the screen
+	 * @param x X coordinate in screen
+	 * @param y Y coordinate in screen
+	 * @param character ascii character to display
+	 * */
 	void drawCharacter(int32 x, int32 y, uint8 character);
-	/** Draw character with shadow
-	@param x X coordinate in screen
-	@param y Y coordinate in screen
-	@param character ascii character to display
-	@param color character color */
+	/**
+	 * Draw character with shadow
+	 * @param x X coordinate in screen
+	 * @param y Y coordinate in screen
+	 * @param character ascii character to display
+	 * @param color character color
+	 * */
 	void drawCharacterShadow(int32 x, int32 y, uint8 character, int32 color);
 	void initProgressiveTextBuffer();
 	void printText8Sub4(int16 a, int16 b, int16 c);
