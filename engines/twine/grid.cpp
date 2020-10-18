@@ -45,54 +45,34 @@ namespace TwinE {
 Grid::Grid(TwinEEngine *engine) : _engine(engine) {}
 
 void Grid::copyGridMask(int32 index, int32 x, int32 y, uint8 *buffer) {
-	uint8 *ptr;
-	int32 top;
-	int32 bottom;
-	int32 left;
-	int32 right;
-	uint8 *outPtr;
-	uint8 *inPtr;
-	int32 offset;
-	int32 vc3;
+	uint8 *ptr = brickMaskTable[index];
 
-	int32 temp;
-	int32 j;
-
-	int32 absX;
-	int32 absY;
-
-	int32 vSize;
-
-	ptr = brickMaskTable[index];
-
-	left = x + *(ptr + 2);
-	top = y + *(ptr + 3);
-	right = *ptr + left - 1;
-	bottom = *(ptr + 1) + top - 1;
+	int32 left = x + *(ptr + 2);
+	int32 top = y + *(ptr + 3);
+	int32 right = *ptr + left - 1;
+	int32 bottom = *(ptr + 1) + top - 1;
 
 	if (left > _engine->_interface->textWindowRight || right < _engine->_interface->textWindowLeft || bottom < _engine->_interface->textWindowTop || top > _engine->_interface->textWindowBottom)
 		return;
 
 	ptr += 4;
 
-	absX = left;
-	absY = top;
+	int32 absX = left;
+	int32 absY = top;
 
-	vSize = (bottom - top) + 1;
+	int32 vSize = (bottom - top) + 1;
 
 	if (vSize <= 0)
 		return;
 
-	offset = -((right - left) - SCREEN_WIDTH) - 1;
+	int32 offset = -((right - left) - SCREEN_WIDTH) - 1;
 
 	right++;
 	bottom++;
 
 	// if line on top aren't in the blitting area...
 	if (absY < _engine->_interface->textWindowTop) {
-		int numOfLineToRemove;
-
-		numOfLineToRemove = _engine->_interface->textWindowTop - absY;
+		int numOfLineToRemove = _engine->_interface->textWindowTop - absY;
 
 		vSize -= numOfLineToRemove;
 		if (vSize <= 0)
@@ -115,14 +95,14 @@ void Grid::copyGridMask(int32 index, int32 x, int32 y, uint8 *buffer) {
 			return;
 	}
 
-	outPtr = _engine->frontVideoBuffer + _engine->screenLookupTable[absY] + left;
-	inPtr = buffer + _engine->screenLookupTable[absY] + left;
+	uint8 *outPtr = _engine->frontVideoBuffer + _engine->screenLookupTable[absY] + left;
+	uint8 *inPtr = buffer + _engine->screenLookupTable[absY] + left;
 
 	do {
-		vc3 = *(ptr++);
+		int32 vc3 = *(ptr++);
 
 		do {
-			temp = *(ptr++); // skip size
+			int32 temp = *(ptr++); // skip size
 			outPtr += temp;
 			inPtr += temp;
 
@@ -134,7 +114,7 @@ void Grid::copyGridMask(int32 index, int32 x, int32 y, uint8 *buffer) {
 
 			temp = *(ptr++); // copy size
 
-			for (j = 0; j < temp; j++) {
+			for (int32 j = 0; j < temp; j++) {
 				if (absX >= _engine->_interface->textWindowLeft && absX <= _engine->_interface->textWindowRight)
 					*outPtr = *inPtr;
 
@@ -152,18 +132,12 @@ void Grid::copyGridMask(int32 index, int32 x, int32 y, uint8 *buffer) {
 }
 
 void Grid::drawOverModelActor(int32 X, int32 Y, int32 Z) {
-	int32 CopyBlockPhysLeft;
-	int32 CopyBlockPhysRight;
-	int32 i;
-	int32 j;
-	BrickEntry *currBrickEntry;
+	const int32 copyBlockPhysLeft = ((_engine->_interface->textWindowLeft + 24) / 24) - 1;
+	const int32 copyBlockPhysRight = ((_engine->_interface->textWindowRight + 24) / 24);
 
-	CopyBlockPhysLeft = ((_engine->_interface->textWindowLeft + 24) / 24) - 1;
-	CopyBlockPhysRight = ((_engine->_interface->textWindowRight + 24) / 24);
-
-	for (j = CopyBlockPhysLeft; j <= CopyBlockPhysRight; j++) {
-		for (i = 0; i < brickInfoBuffer[j]; i++) {
-			currBrickEntry = &bricksDataBuffer[j][i];
+	for (int32 j = copyBlockPhysLeft; j <= copyBlockPhysRight; j++) {
+		for (int32 i = 0; i < brickInfoBuffer[j]; i++) {
+			BrickEntry *currBrickEntry = &bricksDataBuffer[j][i];
 
 			if (currBrickEntry->posY + 38 > _engine->_interface->textWindowTop && currBrickEntry->posY <= _engine->_interface->textWindowBottom && currBrickEntry->y >= Y) {
 				if (currBrickEntry->x + currBrickEntry->z > Z + X) {
@@ -175,16 +149,16 @@ void Grid::drawOverModelActor(int32 X, int32 Y, int32 Z) {
 }
 
 void Grid::drawOverSpriteActor(int32 X, int32 Y, int32 Z) {
-	int32 CopyBlockPhysLeft;
-	int32 CopyBlockPhysRight;
+	int32 copyBlockPhysLeft;
+	int32 copyBlockPhysRight;
 	int32 i;
 	int32 j;
 	BrickEntry *currBrickEntry;
 
-	CopyBlockPhysLeft = ((_engine->_interface->textWindowLeft + 24) / 24) - 1;
-	CopyBlockPhysRight = (_engine->_interface->textWindowRight + 24) / 24;
+	copyBlockPhysLeft = ((_engine->_interface->textWindowLeft + 24) / 24) - 1;
+	copyBlockPhysRight = (_engine->_interface->textWindowRight + 24) / 24;
 
-	for (j = CopyBlockPhysLeft; j <= CopyBlockPhysRight; j++) {
+	for (j = copyBlockPhysLeft; j <= copyBlockPhysRight; j++) {
 		for (i = 0; i < brickInfoBuffer[j]; i++) {
 			currBrickEntry = &bricksDataBuffer[j][i];
 
@@ -203,32 +177,26 @@ void Grid::drawOverSpriteActor(int32 X, int32 Y, int32 Z) {
 
 int Grid::processGridMask(uint8 *buffer, uint8 *ptr) {
 	uint32 *ptrSave = (uint32 *)ptr;
-	uint8 *ptr2;
-	uint8 *esi;
-	uint8 *edi;
-	uint8 iteration, numOfBlock, ah, bl, al, bh;
-	int32 ebx;
-
-	ebx = *((uint32 *)buffer); // brick flag
+	int32 ebx = *((uint32 *)buffer); // brick flag
 	buffer += 4;
 	*((uint32 *)ptr) = ebx;
 	ptr += 4;
 
-	bh = (ebx & 0x0000FF00) >> 8;
+	uint8 bh = (ebx & 0x0000FF00) >> 8;
 
-	esi = (uint8 *)buffer;
-	edi = (uint8 *)ptr;
+	uint8 *esi = (uint8 *)buffer;
+	uint8 *edi = (uint8 *)ptr;
 
-	iteration = 0;
+	uint8 iteration = 0;
 
 	do {
-		numOfBlock = 0;
-		ah = 0;
-		ptr2 = edi;
+		uint8 numOfBlock = 0;
+		uint8 ah = 0;
+		uint8 *ptr2 = edi;
 
 		edi++;
 
-		bl = *(esi++);
+		uint8 bl = *(esi++);
 
 		if (*(esi)&0xC0) { // the first time isn't skip. the skip size is 0 in that case
 			*edi++ = 0;
@@ -236,7 +204,7 @@ int Grid::processGridMask(uint8 *buffer, uint8 *ptr) {
 		}
 
 		do {
-			al = *esi++;
+			uint8 al = *esi++;
 			iteration = al;
 			iteration &= 0x3F;
 			iteration++;
@@ -272,15 +240,14 @@ int Grid::processGridMask(uint8 *buffer, uint8 *ptr) {
 }
 
 void Grid::createGridMask() {
-	int32 b;
-
-	for (b = 0; b < NUM_BRICKS; b++) {
-		if (brickUsageTable[b]) {
-			if (brickMaskTable[b])
-				free(brickMaskTable[b]);
-			brickMaskTable[b] = (uint8 *)malloc(brickSizeTable[b]);
-			processGridMask(brickTable[b], brickMaskTable[b]);
+	for (int32 b = 0; b < NUM_BRICKS; b++) {
+		if (!brickUsageTable[b]) {
+			continue;
 		}
+		if (brickMaskTable[b])
+			free(brickMaskTable[b]);
+		brickMaskTable[b] = (uint8 *)malloc(brickSizeTable[b]);
+		processGridMask(brickTable[b], brickMaskTable[b]);
 	}
 }
 
@@ -294,9 +261,6 @@ void Grid::getSpriteSize(int32 offset, int32 *width, int32 *height, uint8 *sprit
 int32 Grid::loadGridBricks(int32 gridSize) {
 	uint32 firstBrick = 60000;
 	uint32 lastBrick = 0;
-	uint8 *ptrToBllBits;
-	uint32 i;
-	uint32 j;
 	uint32 currentBllEntryIdx = 0;
 
 	memset(brickTable, 0, sizeof(brickTable));
@@ -304,10 +268,10 @@ int32 Grid::loadGridBricks(int32 gridSize) {
 	memset(brickUsageTable, 0, sizeof(brickUsageTable));
 
 	// get block librarie usage bits
-	ptrToBllBits = currentGrid + (gridSize - 32);
+	uint8 *ptrToBllBits = currentGrid + (gridSize - 32);
 
 	// for all bits under the 32bytes (256bits)
-	for (i = 1; i < 256; i++) {
+	for (uint32 i = 1; i < 256; i++) {
 		uint8 currentBitByte = *(ptrToBllBits + (i / 8));
 		uint8 currentBitMask = 1 << (7 - (i & 7));
 
@@ -323,7 +287,7 @@ int32 Grid::loadGridBricks(int32 gridSize) {
 
 			uint8 *bllDataPtr = currentBllPtr + 5;
 
-			for (j = 0; j < bllSize; j++) {
+			for (uint32 j = 0; j < bllSize; j++) {
 				uint32 brickIdx = *((int16 *)(bllDataPtr));
 
 				if (brickIdx) {
@@ -343,7 +307,7 @@ int32 Grid::loadGridBricks(int32 gridSize) {
 		currentBllEntryIdx += 4;
 	}
 
-	for (i = firstBrick; i <= lastBrick; i++) {
+	for (uint32 i = firstBrick; i <= lastBrick; i++) {
 		if (brickUsageTable[i]) {
 			brickSizeTable[i] = _engine->_hqrdepack->hqrGetallocEntry(&brickTable[i], HQR_LBA_BRK_FILE, i);
 		}
@@ -353,33 +317,24 @@ int32 Grid::loadGridBricks(int32 gridSize) {
 }
 
 void Grid::createGridColumn(uint8 *gridEntry, uint8 *dest) {
-	int32 blockCount;
-	int32 brickCount;
-	int32 flag;
-	int32 gridIdx;
-	int32 i;
-	uint16 *gridBuffer;
-	uint16 *blockByffer;
-
-	brickCount = *(gridEntry++);
+	int32 brickCount = *(gridEntry++);
 
 	do {
-		flag = *(gridEntry++);
+		int32 flag = *(gridEntry++);
+		int32 blockCount = (flag & 0x3F) + 1;
 
-		blockCount = (flag & 0x3F) + 1;
-
-		gridBuffer = (uint16 *)gridEntry;
-		blockByffer = (uint16 *)dest;
+		uint16 *gridBuffer = (uint16 *)gridEntry;
+		uint16 *blockByffer = (uint16 *)dest;
 
 		if (!(flag & 0xC0)) {
-			for (i = 0; i < blockCount; i++)
+			for (int32 i = 0; i < blockCount; i++)
 				*(blockByffer++) = 0;
 		} else if (flag & 0x40) {
-			for (i = 0; i < blockCount; i++)
+			for (int32 i = 0; i < blockCount; i++)
 				*(blockByffer++) = *(gridBuffer++);
 		} else {
-			gridIdx = *(gridBuffer++);
-			for (i = 0; i < blockCount; i++)
+			int32 gridIdx = *(gridBuffer++);
+			for (int32 i = 0; i < blockCount; i++)
 				*(blockByffer++) = gridIdx;
 		}
 
@@ -390,33 +345,25 @@ void Grid::createGridColumn(uint8 *gridEntry, uint8 *dest) {
 }
 
 void Grid::createCellingGridColumn(uint8 *gridEntry, uint8 *dest) {
-	int32 blockCount;
-	int32 brickCount;
-	int32 flag;
-	int32 gridIdx;
-	int32 i;
-	uint16 *gridBuffer;
-	uint16 *blockByffer;
-
-	brickCount = *(gridEntry++);
+	int32 brickCount = *(gridEntry++);
 
 	do {
-		flag = *(gridEntry++);
+		int32 flag = *(gridEntry++);
 
-		blockCount = (flag & 0x3F) + 1;
+		int32 blockCount = (flag & 0x3F) + 1;
 
-		gridBuffer = (uint16 *)gridEntry;
-		blockByffer = (uint16 *)dest;
+		uint16 *gridBuffer = (uint16 *)gridEntry;
+		uint16 *blockByffer = (uint16 *)dest;
 
 		if (!(flag & 0xC0)) {
-			for (i = 0; i < blockCount; i++)
+			for (int32 i = 0; i < blockCount; i++)
 				blockByffer++;
 		} else if (flag & 0x40) {
-			for (i = 0; i < blockCount; i++)
+			for (int32 i = 0; i < blockCount; i++)
 				*(blockByffer++) = *(gridBuffer++);
 		} else {
-			gridIdx = *(gridBuffer++);
-			for (i = 0; i < blockCount; i++)
+			int32 gridIdx = *(gridBuffer++);
+			for (int32 i = 0; i < blockCount; i++)
 				*(blockByffer++) = gridIdx;
 		}
 
@@ -428,15 +375,12 @@ void Grid::createCellingGridColumn(uint8 *gridEntry, uint8 *dest) {
 
 void Grid::createGridMap() {
 	int32 currOffset = 0;
-	int32 blockOffset;
-	int32 gridIdx;
-	int32 x, z;
 
-	for (z = 0; z < GRID_SIZE_Z; z++) {
-		blockOffset = currOffset;
-		gridIdx = z << 6;
+	for (int32 z = 0; z < GRID_SIZE_Z; z++) {
+		int32 blockOffset = currOffset;
+		int32 gridIdx = z << 6;
 
-		for (x = 0; x < GRID_SIZE_X; x++) {
+		for (int32 x = 0; x < GRID_SIZE_X; x++) {
 			int32 gridOffset = *((uint16 *)(currentGrid + 2 * (x + gridIdx)));
 			createGridColumn(currentGrid + gridOffset, blockBuffer + blockOffset);
 			blockOffset += 50;
