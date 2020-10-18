@@ -280,9 +280,6 @@ void readKeys() {
 	int32 localKey;
 	int32 i, j, size;
 	int32 find = 0;
-	int16 temp;
-	uint8 temp2;
-	int8 found = 0;
 	uint8 *keyboard;
 
 	localKey = 0;
@@ -301,15 +298,15 @@ void readKeys() {
 		case SDL_MOUSEBUTTONDOWN:
 			switch (event.button.button) {
 			case SDL_BUTTON_RIGHT:
-				rightMouse = 1;
+				_engine->rightMouse = 1;
 				break;
 			case SDL_BUTTON_LEFT:
-				leftMouse = 1;
+				_engine->leftMouse = 1;
 				break;
 			}
 			break;
 		case SDL_KEYUP:
-			pressedKey = 0;
+			_engine->_keyboard.pressedKey = 0;
 			break;
 		case SDL_KEYDOWN:
 			switch (event.key.keysym.sym) {
@@ -339,7 +336,7 @@ void readKeys() {
 				localKey = 0x49;
 				break;
 			case SDLK_p: // pause
-				localKey = 0x19;
+				localKey = Keys::Pause;
 				break;
 			case SDLK_h: // holomap
 				localKey = 0x23;
@@ -374,19 +371,19 @@ void readKeys() {
 			if (_engine->cfgFile.Debug) {
 				switch (event.key.keysym.sym) {
 				case SDLK_r: // next room
-					localKey = 0x13;
+					localKey = Keys::NextRoom;
 					break;
 				case SDLK_f: // previous room
-					localKey = 0x21;
+					localKey = Keys::PreviousRoom;
 					break;
 				case SDLK_t: // apply celling grid
-					localKey = 0x14;
+					localKey = Keys::ApplyCellingGrid;
 					break;
 				case SDLK_g: // increase celling grid index
-					localKey = 0x22;
+					localKey = Keys::IncreaseCellingGridIndex;
 					break;
 				case SDLK_b: // decrease celling grid index
-					localKey = 0x30;
+					localKey = Keys::DecreaseCellingGridIndex;
 					break;
 				default:
 					break;
@@ -468,17 +465,18 @@ void readKeys() {
 			}
 		}
 
+		bool found = false;
 		for (i = 0; i < 28; i++) {
 			if (_engine->_keyboard.pressedKeyMap[i] == localKey) {
 				find = i;
-				found = 1;
+				found = true;
 				break;
 			}
 		}
 
-		if (found != 0) {
-			temp = pressedKeyCharMap[find];
-			temp2 = temp & 0x00FF;
+		if (found) {
+			int16 temp = pressedKeyCharMap[find];
+			uint8 temp2 = temp & 0x00FF;
 
 			if (temp2 == 0) {
 				// pressed valid keys
@@ -494,7 +492,7 @@ void readKeys() {
 			}
 		}
 
-		//if (found==0) {
+		//if (!found) {
 		_engine->_keyboard.skipIntro = localKey;
 		//}
 	}

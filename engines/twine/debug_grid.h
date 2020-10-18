@@ -37,11 +37,7 @@ public:
 	DebugGrid(TwinEEngine *engine);
 
 	int32 useFreeCamera = 0;
-#ifdef _DEBUG
-	int32 canChangeScenes = 1;
-#else
-	int32 canChangeScenes = 0;
-#endif
+	int32 canChangeScenes;
 
 	/** Change scenario camera positions */
 	void changeGridCamera(int16 pKey);

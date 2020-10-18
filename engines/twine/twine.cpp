@@ -740,7 +740,7 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 		// TODO: draw holomap
 
 		// Process Pause - Press P
-		if (loopCurrentKey == 0x19) {
+		if (loopCurrentKey == Keys::Pause) {
 			freezeTime();
 			_text->setFontColor(15);
 			_text->drawText(5, 446, (const int8 *)"Pause"); // no key for pause in Text Bank

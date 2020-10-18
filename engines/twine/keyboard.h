@@ -103,6 +103,23 @@ static const uint16 pressedKeyCharMap[] = {
 };
 static_assert(ARRAYSIZE(pressedKeyCharMap) == 31, "Expected size of key char map");
 
+namespace Keys {
+
+enum _Keys {
+	Pause = 0x19,
+	NextRoom = 0x13,
+	PreviousRoom = 0x21,
+	ApplyCellingGrid = 0x14,
+	IncreaseCellingGridIndex = 0x22,
+	DecreaseCellingGridIndex = 0x30,
+	DebugGridCameraPressUp = 0x2E,
+	DebugGridCameraPressDown = 0x2C,
+	DebugGridCameraPressLeft = 0x1F,
+	DebugGridCameraPressRight = 0x2D
+};
+
+}
+
 struct Keyboard {
 	/** Skipped key - key1 */
 	int16 skippedKey;
