@@ -55,29 +55,35 @@ public:
 	/** Samples playing at a actors position */
 	int32 samplesPlayingActors[NUM_CHANNELS];
 
-	/** Sample volume
-	@param channel sample channel
-	@param volume sample volume number */
+	/**
+	 * Sample volume
+	 * @param channel sample channel
+	 * @param volume sample volume number
+	 */
 	void sampleVolume(int32 channel, int32 volume);
 
-	/** Play FLA movie samples
-	@param index sample index under flasamp.hqr file
-	@param frequency frequency used to play the sample
-	@param repeat number of times to repeat the sample
-	@param x unknown x variable
-	@param y unknown y variable */
+	/**
+	 * Play FLA movie samples
+	 * @param index sample index under flasamp.hqr file
+	 * @param frequency frequency used to play the sample
+	 * @param repeat number of times to repeat the sample
+	 * @param x unknown x variable
+	 * @param y unknown y variable
+	 */
 	void playFlaSample(int32 index, int32 frequency, int32 repeat, int32 x, int32 y);
 
 	/** Update sample position in channel */
 	void setSamplePosition(int32 channelIdx, int32 x, int32 y, int32 z);
 
-	/** Play samples
-	@param index sample index under flasamp.hqr file
-	@param frequency frequency used to play the sample
-	@param repeat number of times to repeat the sample
-	@param x unknown x variable
-	@param y unknown y variable
-	@param z unknown z variable */
+	/**
+	 * Play samples
+	 * @param index sample index under flasamp.hqr file
+	 * @param frequency frequency used to play the sample
+	 * @param repeat number of times to repeat the sample
+	 * @param x unknown x variable
+	 * @param y unknown y variable
+	 * @param z unknown z variable
+	 */
 	void playSample(int32 index, int32 frequency, int32 repeat, int32 x, int32 y, int32 z, int32 actorIdx);
 
 	/** Pause samples */

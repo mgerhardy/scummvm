@@ -20,15 +20,13 @@
  *
  */
 
-#include <SDL_mixer.h>
-
+#include "twine/sound.h"
 #include "twine/collision.h"
 #include "twine/flamovies.h"
 #include "twine/grid.h"
 #include "twine/hqrdepack.h"
 #include "twine/movements.h"
 #include "twine/resources.h"
-#include "twine/sound.h"
 #include "twine/text.h"
 #include "twine/twine.h"
 
@@ -36,43 +34,49 @@ namespace TwinE {
 
 // TODO: move to Audio::Mixer
 
+#if 0 // TODO
 /** Samples chunk variable */
 Mix_Chunk *sample;
+#endif
 
 void Sound::sampleVolume(int32 chan, int32 volume) {
+#if 0 // TODO
 	Mix_Volume(chan, volume / 2);
+#endif
 }
 
 void Sound::playFlaSample(int32 index, int32 frequency, int32 repeat, int32 x, int32 y) {
-	if (_engine->cfgfile.Sound) {
-		int32 sampSize = 0;
-		char sampfile[256];
-		SDL_RWops *rw;
-		uint8 *sampPtr;
-
-		sprintf(sampfile, FLA_DIR "%s", HQR_FLASAMP_FILE);
-
-		sampSize = _engine->_hqrdepack->hqrGetallocEntry(&sampPtr, sampfile, index);
-
-		// Fix incorrect sample files first byte
-		if (*sampPtr != 'C')
-			*sampPtr = 'C';
-
-		rw = SDL_RWFromMem(sampPtr, sampSize);
-		sample = Mix_LoadWAV_RW(rw, 1);
-
-		channelIdx = getFreeSampleChannelIndex();
-		if (channelIdx != -1) {
-			samplesPlaying[channelIdx] = index;
-		}
-
-		sampleVolume(channelIdx, _engine->cfgfile.WaveVolume);
-
-		if (Mix_PlayChannel(channelIdx, sample, repeat - 1) == -1)
-			error("Error while playing VOC: Sample %d \n", index);
-
-		free(sampPtr);
+	if (!_engine->cfgfile.Sound) {
+		return;
 	}
+
+	char sampfile[256];
+
+	sprintf(sampfile, FLA_DIR "%s", HQR_FLASAMP_FILE);
+
+	uint8 *sampPtr;
+	int32 sampSize = _engine->_hqrdepack->hqrGetallocEntry(&sampPtr, sampfile, index);
+
+	// Fix incorrect sample files first byte
+	if (*sampPtr != 'C') {
+		*sampPtr = 'C';
+	}
+
+	channelIdx = getFreeSampleChannelIndex();
+	if (channelIdx != -1) {
+		samplesPlaying[channelIdx] = index;
+	}
+
+	sampleVolume(channelIdx, _engine->cfgfile.WaveVolume);
+
+#if 0 // TODO
+	SDL_RWops *rw = SDL_RWFromMem(sampPtr, sampSize);
+	sample = Mix_LoadWAV_RW(rw, 1);
+	if (Mix_PlayChannel(channelIdx, sample, repeat - 1) == -1)
+		error("Error while playing VOC: Sample %d", index);
+#endif
+
+	free(sampPtr);
 }
 
 void Sound::setSamplePosition(int32 chan, int32 x, int32 y, int32 z) {
@@ -83,72 +87,77 @@ void Sound::setSamplePosition(int32 chan, int32 x, int32 y, int32 z) {
 		distance = 255;
 	}
 
+#if 0 // TODO
 	Mix_SetDistance(chan, distance);
+#endif
 }
 
 void Sound::playSample(int32 index, int32 frequency, int32 repeat, int32 x, int32 y, int32 z, int32 actorIdx) {
-	if (_engine->cfgfile.Sound) {
-		int32 sampSize = 0;
-		SDL_RWops *rw;
-		uint8 *sampPtr;
+	if (!_engine->cfgfile.Sound) {
+		return;
+	}
+	uint8 *sampPtr;
+	int32 sampSize = _engine->_hqrdepack->hqrGetallocEntry(&sampPtr, HQR_SAMPLES_FILE, index);
 
-		sampSize = _engine->_hqrdepack->hqrGetallocEntry(&sampPtr, HQR_SAMPLES_FILE, index);
+	// Fix incorrect sample files first byte
+	if (*sampPtr != 'C') {
+		*sampPtr = 'C';
+	}
 
-		// Fix incorrect sample files first byte
-		if (*sampPtr != 'C')
-			*sampPtr = 'C';
+	channelIdx = getFreeSampleChannelIndex();
 
-		rw = SDL_RWFromMem(sampPtr, sampSize);
-		sample = Mix_LoadWAV_RW(rw, 1);
+	// only play if we have a free channel, otherwise we won't be able to control the sample
+	if (channelIdx != -1) {
+		samplesPlaying[channelIdx] = index;
+		sampleVolume(channelIdx, _engine->cfgfile.WaveVolume);
 
-		channelIdx = getFreeSampleChannelIndex();
+		if (actorIdx != -1) {
+			setSamplePosition(channelIdx, x, y, z);
 
-		// only play if we have a free channel, otherwise we won't be able to control the sample
-		if (channelIdx != -1) {
-			samplesPlaying[channelIdx] = index;
-			sampleVolume(channelIdx, _engine->cfgfile.WaveVolume);
-
-			if (actorIdx != -1) {
-				setSamplePosition(channelIdx, x, y, z);
-
-				// save the actor index for the channel so we can check the position
-				samplesPlayingActors[channelIdx] = actorIdx;
-			}
-
-			if (Mix_PlayChannel(channelIdx, sample, repeat - 1) == -1)
-				error("Error while playing VOC: Sample %d \n", index);
+			// save the actor index for the channel so we can check the position
+			samplesPlayingActors[channelIdx] = actorIdx;
 		}
 
-		free(sampPtr);
+#if 0 // TODO
+		SDL_RWops *rw = SDL_RWFromMem(sampPtr, sampSize);
+		sample = Mix_LoadWAV_RW(rw, 1);
+		if (Mix_PlayChannel(channelIdx, sample, repeat - 1) == -1)
+			error("Error while playing VOC: Sample %d \n", index);
+#endif
 	}
+
+	free(sampPtr);
 }
 
 void Sound::resumeSamples() {
-	if (_engine->cfgfile.Sound) {
-		Mix_Resume(-1);
-		/*if (cfgfile.Debug)
-			printf("Resume VOC samples\n");*/
+	if (!_engine->cfgfile.Sound) {
+		return;
 	}
+#if 0 // TODO
+		Mix_Resume(-1);
+#endif
 }
 
 void Sound::pauseSamples() {
-	if (_engine->cfgfile.Sound) {
-		Mix_HaltChannel(-1);
-		/*if (cfgfile.Debug)
-			printf("Pause VOC samples\n");*/
+	if (!_engine->cfgfile.Sound) {
+		return;
 	}
+#if 0 // TODO
+	Mix_HaltChannel(-1);
+#endif
 }
 
 void Sound::stopSamples() {
-	if (_engine->cfgfile.Sound) {
-		memset(samplesPlaying, -1, sizeof(int32) * NUM_CHANNELS);
-		Mix_HaltChannel(-1);
-		//clean up
-		Mix_FreeChunk(sample);
-		sample = NULL; //make sure we free it
-		               /*if (cfgfile.Debug)
-			printf("Stop VOC samples\n");*/
+	if (!_engine->cfgfile.Sound) {
+		return;
 	}
+	memset(samplesPlaying, -1, sizeof(int32) * NUM_CHANNELS);
+#if 0 // TODO
+	Mix_HaltChannel(-1);
+	//clean up
+	Mix_FreeChunk(sample);
+	sample = NULL; //make sure we free it
+#endif
 }
 
 int32 Sound::getActorChannel(int32 index) {
@@ -177,27 +186,29 @@ void Sound::removeSampleChannel(int32 c) {
 }
 
 void Sound::stopSample(int32 index) {
-	if (_engine->cfgfile.Sound) {
-		int32 stopChannel = getSampleChannel(index);
-		if (stopChannel != -1) {
-			removeSampleChannel(stopChannel);
-			Mix_HaltChannel(stopChannel);
-			//clean up
-			Mix_FreeChunk(sample);
-			sample = NULL; //make sure we free it
-			               /*if (cfgfile.Debug)
-				printf("Stop VOC samples\n");*/
-		}
+	if (!_engine->cfgfile.Sound) {
+		return;
+	}
+	int32 stopChannel = getSampleChannel(index);
+	if (stopChannel != -1) {
+		removeSampleChannel(stopChannel);
+#if 0 // TODO
+		Mix_HaltChannel(stopChannel);
+		//clean up
+		Mix_FreeChunk(sample);
+		sample = NULL; //make sure we free it
+#endif
 	}
 }
 
 int32 Sound::isChannelPlaying(int32 chan) {
 	if (chan != -1) {
+#if 0 // TODO
 		if (Mix_Playing(chan)) {
 			return 1;
-		} else {
-			removeSampleChannel(chan);
 		}
+#endif
+		removeSampleChannel(chan);
 	}
 	return 0;
 }
@@ -224,37 +235,38 @@ int32 Sound::getFreeSampleChannelIndex() {
 }
 
 void Sound::playVoxSample(int32 index) {
-	if (_engine->cfgfile.Sound) {
-		int32 sampSize = 0;
-		SDL_RWops *rw;
-		uint8 *sampPtr = 0;
-
-		sampSize = _engine->_hqrdepack->hqrGetallocVoxEntry(&sampPtr, _engine->_text->currentVoxBankFile, index, _engine->_text->voxHiddenIndex);
-
-		// Fix incorrect sample files first byte
-		if (*sampPtr != 'C') {
-			_engine->_text->hasHiddenVox = *sampPtr;
-			_engine->_text->voxHiddenIndex++;
-			*sampPtr = 'C';
-		}
-
-		rw = SDL_RWFromMem(sampPtr, sampSize);
-		sample = Mix_LoadWAV_RW(rw, 1);
-
-		channelIdx = getFreeSampleChannelIndex();
-
-		// only play if we have a free channel, otherwise we won't be able to control the sample
-		if (channelIdx != -1) {
-			samplesPlaying[channelIdx] = index;
-
-			sampleVolume(channelIdx, _engine->cfgfile.VoiceVolume - 1);
-
-			if (Mix_PlayChannel(channelIdx, sample, 0) == -1)
-				error("Error while playing VOC: Sample %d \n", index);
-		}
-
-		free(sampPtr);
+	if (!_engine->cfgfile.Sound) {
+		return;
 	}
+	int32 sampSize = 0;
+	uint8 *sampPtr = 0;
+
+	sampSize = _engine->_hqrdepack->hqrGetallocVoxEntry(&sampPtr, _engine->_text->currentVoxBankFile, index, _engine->_text->voxHiddenIndex);
+
+	// Fix incorrect sample files first byte
+	if (*sampPtr != 'C') {
+		_engine->_text->hasHiddenVox = *sampPtr;
+		_engine->_text->voxHiddenIndex++;
+		*sampPtr = 'C';
+	}
+
+	channelIdx = getFreeSampleChannelIndex();
+
+	// only play if we have a free channel, otherwise we won't be able to control the sample
+	if (channelIdx != -1) {
+		samplesPlaying[channelIdx] = index;
+
+		sampleVolume(channelIdx, _engine->cfgfile.VoiceVolume - 1);
+
+#if 0 // TODO
+		SDL_RWops *rw = SDL_RWFromMem(sampPtr, sampSize);
+		sample = Mix_LoadWAV_RW(rw, 1);
+		if (Mix_PlayChannel(channelIdx, sample, 0) == -1)
+			error("Error while playing VOC: Sample %d \n", index);
+#endif
+	}
+
+	free(sampPtr);
 }
 
 } // namespace TwinE
