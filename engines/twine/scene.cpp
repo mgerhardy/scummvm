@@ -182,7 +182,7 @@ void Scene::loadScene() {
 		}
 
 		sceneActors[i].body = *(localScene++);
-		sceneActors[i].anim = *(localScene++);
+		sceneActors[i].anim = (AnimationTypes)*(localScene++);
 		sceneActors[i].sprite = *((uint16 *)localScene);
 		localScene += 2;
 		sceneActors[i].x = *((uint16 *)localScene);

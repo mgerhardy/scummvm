@@ -469,11 +469,11 @@ void Movements::processActorMovements(int32 actorIdx) {
 				if (actor->brickShape & 0x80) {
 					moveActor(actor->angle, (((_engine->getRandomNumber() & 0x100) + (actor->angle - 0x100)) & 0x3FF), actor->speed, &actor->move);
 					actor->info0 = _engine->getRandomNumber(300) + _engine->lbaTime + 300;
-					_engine->_animations->initAnim(0, 0, 255, actorIdx);
+					_engine->_animations->initAnim(kStanding, 0, 255, actorIdx);
 				}
 
 				if (!actor->move.numOfStep) {
-					_engine->_animations->initAnim(1, 0, 255, actorIdx);
+					_engine->_animations->initAnim(kForward, 0, 255, actorIdx);
 					if (_engine->lbaTime > actor->info0) {
 						moveActor(actor->angle, (((_engine->getRandomNumber() & 0x100) + (actor->angle - 0x100)) & 0x3FF), actor->speed, &actor->move);
 						actor->info0 = _engine->getRandomNumber(300) + _engine->lbaTime + 300;

@@ -769,7 +769,7 @@ void Animations::processAnimActions(int32 actorIdx) {
 	free(data);
 }
 
-int32 Animations::initAnim(int32 newAnim, int16 animType, uint8 animExtra, int32 actorIdx) {
+int32 Animations::initAnim(AnimationTypes newAnim, int16 animType, uint8 animExtra, int32 actorIdx) {
 	ActorStruct *actor;
 	int32 animIndex;
 
@@ -785,7 +785,7 @@ int32 Animations::initAnim(int32 newAnim, int16 animType, uint8 animExtra, int32
 		return 1;
 
 	if (animExtra == 255 && actor->animType != 2)
-		animExtra = actor->anim;
+		animExtra = (uint8)actor->anim;
 
 	animIndex = getBodyAnimIndex(newAnim, actorIdx);
 
@@ -999,12 +999,12 @@ void Animations::processActorAnimations(int32 actorIdx) { // DoAnim
 					if (actor->animType == 0) {
 						actor->animPosition = getStartKeyframe(animPtr);
 					} else {
-						actor->anim = actor->animExtra;
+						actor->anim = (AnimationTypes)actor->animExtra;
 						actor->previousAnimIdx = getBodyAnimIndex(actor->anim, actorIdx);
 
 						if (actor->previousAnimIdx == -1) {
 							actor->previousAnimIdx = getBodyAnimIndex(0, actorIdx);
-							actor->anim = 0;
+							actor->anim = kStanding;
 						}
 
 						actor->animExtraPtr = currentActorAnimExtraPtr;

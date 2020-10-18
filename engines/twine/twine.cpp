@@ -634,7 +634,7 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 						_actor->setBehaviour(kNormal);
 					}
 					_actor->initModelActor(GAMEFLAG_HAS_SABRE, 0);
-					_animations->initAnim(24, 1, 0, 0);
+					_animations->initAnim(kSabreUnknown, 1, 0, 0);
 
 					_gameState->usingSabre = 1;
 				}

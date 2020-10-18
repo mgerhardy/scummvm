@@ -72,7 +72,7 @@ static int32 mBODY(TwinEEngine* engine, int32 actorIdx, ActorStruct *actor) {
 
 /*0x03*/
 static int32 mANIM(TwinEEngine* engine, int32 actorIdx, ActorStruct *actor) {
-	int32 animIdx = *(scriptPtr++);
+	AnimationTypes animIdx = (AnimationTypes)*(scriptPtr++);
 	if (engine->_animations->initAnim(animIdx, 0, 0, actorIdx)) {
 		actor->positionInMoveScript++;
 	} else {

@@ -120,7 +120,7 @@ void Actor::setBehaviour(int32 behaviour) {
 
 	initModelActor(bodyIdx, 0);
 
-	_engine->_scene->sceneHero->anim = -1;
+	_engine->_scene->sceneHero->anim = kAnimNone;
 	_engine->_scene->sceneHero->animType = 0;
 
 	_engine->_animations->initAnim(kStanding, 0, 255, 0);
@@ -143,35 +143,25 @@ void Actor::initSpriteActor(int32 actorIdx) {
 }
 
 int32 Actor::initBody(int32 bodyIdx, int32 actorIdx) {
-	ActorStruct *localActor;
-	uint8 *bodyPtr;
-	uint8 var1;
-	uint8 var2;
-	uint8 *bodyPtr2;
-	uint8 *bodyPtr3;
-	uint8 *bodyPtr4;
-	//	int16 *bodyPtr5;
-	int16 flag;
-	int32 index;
-
-	localActor = &_engine->_scene->sceneActors[actorIdx];
-	bodyPtr = localActor->entityDataPtr;
+	ActorStruct *localActor = &_engine->_scene->sceneActors[actorIdx];
+	uint8 *bodyPtr = localActor->entityDataPtr;
 
 	do {
-		var1 = *(bodyPtr++);
+		uint8 var1 = *(bodyPtr++);
 
 		if (var1 == 0xFF) {
 			return -1;
 		}
 
-		bodyPtr2 = bodyPtr + 1;
+		uint8 *bodyPtr2 = bodyPtr + 1;
 
 		if (var1 == 1) {
-			var2 = *(bodyPtr);
+			uint8 var2 = *(bodyPtr);
 
 			if (var2 == bodyIdx) {
-				bodyPtr3 = bodyPtr2 + 1;
-				flag = *((uint16 *)bodyPtr3);
+				int32 index;
+				uint8 *bodyPtr3 = bodyPtr2 + 1;
+				int16 flag = *((uint16 *)bodyPtr3);
 
 				if (!(flag & 0x8000)) {
 					_engine->_hqrdepack->hqrGetallocEntry(&bodyTable[currentPositionInBodyPtrTab], HQR_BODY_FILE, flag & 0xFFFF);
@@ -191,7 +181,7 @@ int32 Actor::initBody(int32 bodyIdx, int32 actorIdx) {
 				bodyPtr3 += 2;
 				bottomLeftX = -32000;
 
-				bodyPtr4 = bodyPtr3;
+				uint8 *bodyPtr4 = bodyPtr3;
 				bodyPtr3++;
 
 				if (!*bodyPtr4) {
@@ -205,7 +195,7 @@ int32 Actor::initBody(int32 bodyIdx, int32 actorIdx) {
 					return index;
 				}
 
-				//				bodyPtr5 = (int16 *) bodyPtr3;
+				// bodyPtr5 = (int16 *) bodyPtr3;
 
 				bottomLeftX = *((uint16 *)bodyPtr3);
 				bodyPtr3 += 2;
@@ -230,18 +220,7 @@ int32 Actor::initBody(int32 bodyIdx, int32 actorIdx) {
 }
 
 void Actor::initModelActor(int32 bodyIdx, int16 actorIdx) {
-	ActorStruct *localActor;
-	int32 entityIdx;
-	int currentIndex;
-	uint16 *ptr;
-	int16 var1, var2, var3, var4;
-
-	int32 result, result1, result2;
-
-	result = 0;
-
-	localActor = &_engine->_scene->sceneActors[actorIdx];
-
+	ActorStruct *localActor = &_engine->_scene->sceneActors[actorIdx];
 	if (localActor->staticFlags.bIsSpriteActor) {
 		return;
 	}
@@ -250,6 +229,7 @@ void Actor::initModelActor(int32 bodyIdx, int16 actorIdx) {
 		setBehaviour(kNormal);
 	}
 
+	int32 entityIdx;
 	if (bodyIdx != -1) {
 		entityIdx = initBody(bodyIdx, actorIdx);
 	} else {
@@ -263,30 +243,31 @@ void Actor::initModelActor(int32 bodyIdx, int16 actorIdx) {
 
 		localActor->entity = entityIdx;
 		localActor->body = bodyIdx;
-		currentIndex = localActor->entity;
+		int currentIndex = localActor->entity;
 
 		if (bottomLeftX == -32000) {
-			ptr = (uint16 *)bodyTable[localActor->entity];
+			uint16 *ptr = (uint16 *)bodyTable[localActor->entity];
 			ptr++;
 
-			var1 = *((int16 *)ptr++);
-			var2 = *((int16 *)ptr++);
+			int16 var1 = *((int16 *)ptr++);
+			int16 var2 = *((int16 *)ptr++);
 			localActor->boudingBox.y.bottomLeft = *((int16 *)ptr++);
 			localActor->boudingBox.y.topRight = *((int16 *)ptr++);
-			var3 = *((int16 *)ptr++);
-			var4 = *((int16 *)ptr++);
+			int16 var3 = *((int16 *)ptr++);
+			int16 var4 = *((int16 *)ptr++);
 
+			int32 result = 0;
 			if (localActor->staticFlags.bUseMiniZv) {
-				result1 = var2 - var1; // take smaller for bound
-				result2 = var4 - var3;
+				int32 result1 = var2 - var1; // take smaller for bound
+				int32 result2 = var4 - var3;
 
 				result = MIN(result1, result2);
 
 				result = ABS(result);
 				result >>= 1;
 			} else {
-				result1 = var2 - var1; // take average for bound
-				result2 = var4 - var3;
+				int32 result1 = var2 - var1; // take average for bound
+				int32 result2 = var4 - var3;
 
 				result = result2 + result1;
 				result = ABS(result);
@@ -347,7 +328,6 @@ void Actor::initActor(int16 actorIdx) {
 			actor->lastY = actor->y;
 			actor->lastZ = actor->z;
 		}
-
 	} else {
 		actor->entity = -1;
 
@@ -372,7 +352,7 @@ void Actor::resetActor(int16 actorIdx) {
 	ActorStruct *actor = &_engine->_scene->sceneActors[actorIdx];
 
 	actor->body = 0;
-	actor->anim = 0;
+	actor->anim = kStanding;
 	actor->x = 0;
 	actor->y = -1;
 	actor->z = 0;

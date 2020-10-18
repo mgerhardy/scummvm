@@ -521,7 +521,7 @@ static int32 lBODY_OBJ(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) 
 
 /*0x13*/
 static int32 lANIM(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
-	int32 animIdx = *(scriptPtr++);
+	AnimationTypes animIdx = (AnimationTypes)*(scriptPtr++);
 	engine->_animations->initAnim(animIdx, 0, 0, actorIdx);
 	return 0;
 }
@@ -529,7 +529,7 @@ static int32 lANIM(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 /*0x14*/
 static int32 lANIM_OBJ(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	int32 otherActorIdx = *(scriptPtr++);
-	int32 otherAnimIdx = *(scriptPtr++);
+	AnimationTypes otherAnimIdx = (AnimationTypes)*(scriptPtr++);
 	engine->_animations->initAnim(otherAnimIdx, 0, 0, otherActorIdx);
 	return 0;
 }
@@ -1371,9 +1371,9 @@ static int32 lMESSAGE_SENDELL(TwinEEngine *engine, int32 actorIdx, ActorStruct *
 
 /*0x5F*/
 static int32 lANIM_SET(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
-	int32 animIdx = *(scriptPtr++);
+	AnimationTypes animIdx = (AnimationTypes)*(scriptPtr++);
 
-	actor->anim = -1;
+	actor->anim = kAnimNone;
 	actor->previousAnimIdx = -1;
 	engine->_animations->initAnim(animIdx, 0, 0, actorIdx);
 
