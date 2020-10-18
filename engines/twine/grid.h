@@ -218,7 +218,7 @@ public:
 	@param posY sprite Y position to draw
 	@param ptr sprite buffer pointer to draw
 	@param isSprite allows to identify if the sprite to display is brick or a single sprite */
-	void drawBrickSprite(int32 index, int32 posX, int32 posY, uint8 *spritePtr, int32 isSprite);
+	void drawBrickSprite(int32 index, int32 posX, int32 posY, uint8 *spritePtr, bool isSprite);
 
 	/** Get block library
 	@param index block library index

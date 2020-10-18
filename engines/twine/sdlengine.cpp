@@ -129,6 +129,9 @@ void delaySkip(uint32 time) {
 		if (_engine->_keyboard.skipIntro == 1) {
 			break;
 		}
+		if (_engine->shouldQuit()) {
+			break;
+		}
 		stopTicks = _engine->_system->getMillis() - startTicks;
 		_engine->_system->delayMillis(1);
 		//lbaTime++;

@@ -20,16 +20,16 @@
  *
  */
 
+#include "twine/flamovies.h"
 #include "common/system.h"
 #include "twine/filereader.h"
-#include "twine/flamovies.h"
+#include "twine/grid.h"
 #include "twine/keyboard.h"
 #include "twine/music.h"
 #include "twine/screens.h"
 #include "twine/sdlengine.h"
 #include "twine/sound.h"
 #include "twine/twine.h"
-#include "twine/grid.h"
 
 namespace TwinE {
 
@@ -239,7 +239,6 @@ FlaMovies::FlaMovies(TwinEEngine *engine) : _engine(engine) {}
 
 void FlaMovies::playFlaMovie(const char *flaName) {
 	int32 i;
-	int32 quit = 0;
 	int32 currentFrame;
 	int16 tmpValue;
 	int8 fileNamePath[256];
@@ -297,44 +296,46 @@ void FlaMovies::playFlaMovie(const char *flaName) {
 	if (!strcmp((const char *)flaHeaderData.version, "V1.3")) {
 		currentFrame = 0;
 
-		if (!quit) {
-			do {
-				if (currentFrame == flaHeaderData.numOfFrames)
-					quit = 1;
-				else {
-					processFrame();
-					scaleFla2x();
-					_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
+		do {
+			if (currentFrame == flaHeaderData.numOfFrames) {
+				break;
+			}
+			processFrame();
+			scaleFla2x();
+			_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 
-					// Only blit to screen if isn't a fade
-					if (_fadeOut == -1) {
-						_engine->_screens->convertPalToRGBA(_engine->_screens->palette, _engine->_screens->paletteRGBACustom);
-						if (!currentFrame) // fade in the first frame
-							_engine->_screens->fadeIn(_engine->_screens->paletteRGBACustom);
-						else
-							setPalette(_engine->_screens->paletteRGBACustom);
-					}
+			// Only blit to screen if isn't a fade
+			if (_fadeOut == -1) {
+				_engine->_screens->convertPalToRGBA(_engine->_screens->palette, _engine->_screens->paletteRGBACustom);
+				if (!currentFrame) // fade in the first frame
+					_engine->_screens->fadeIn(_engine->_screens->paletteRGBACustom);
+				else
+					setPalette(_engine->_screens->paletteRGBACustom);
+			}
 
-					// TRICKY: fade in tricky
-					if (fadeOutFrames >= 2) {
-						flip();
-						_engine->_screens->convertPalToRGBA(_engine->_screens->palette, _engine->_screens->paletteRGBACustom);
-						_engine->_screens->fadeToPal(_engine->_screens->paletteRGBACustom);
-						_fadeOut = -1;
-						fadeOutFrames = 0;
-					}
+			// TRICKY: fade in tricky
+			if (fadeOutFrames >= 2) {
+				flip();
+				_engine->_screens->convertPalToRGBA(_engine->_screens->palette, _engine->_screens->paletteRGBACustom);
+				_engine->_screens->fadeToPal(_engine->_screens->paletteRGBACustom);
+				_fadeOut = -1;
+				fadeOutFrames = 0;
+			}
 
-					currentFrame++;
+			currentFrame++;
 
-					_engine->_system->delayMillis(1000 / flaHeaderData.speed + 1);
+			_engine->_system->delayMillis(1000 / flaHeaderData.speed + 1);
 
-					readKeys();
+			readKeys();
 
-					if (_engine->_keyboard.skipIntro)
-						break;
-				}
-			} while (!quit);
-		}
+			if (_engine->shouldQuit()) {
+				break;
+			}
+
+			if (_engine->_keyboard.skipIntro) {
+				break;
+			}
+		} while (true);
 	}
 
 	if (_engine->cfgfile.CrossFade) {

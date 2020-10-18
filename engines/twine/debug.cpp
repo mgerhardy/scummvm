@@ -418,8 +418,8 @@ void Debug::debugPlasmaWindow(const char *text, int32 color) {
 	if (!(_engine->getRandomNumber() % 5)) {
 		_engine->_menu->plasmaEffectPtr[_engine->getRandomNumber() % 320 * 10 + 6400] = 255;
 	}
-	textSize = _engine->_text->getTextSize((const int8*)text);
-	_engine->_text->drawText((SCREEN_WIDTH / 2) - (textSize / 2), 10, (const int8*)text);
+	textSize = _engine->_text->getTextSize((const int8 *)text);
+	_engine->_text->drawText((SCREEN_WIDTH / 2) - (textSize / 2), 10, (const int8 *)text);
 	_engine->_menu->drawBox(5, 5, 634, 50);
 	copyBlockPhys(5, 5, 634, 50);
 }
@@ -444,6 +444,9 @@ void Debug::debugProcessWindow() {
 
 		do {
 			readKeys();
+			if (_engine->shouldQuit()) {
+				quit = 1;
+			}
 			getMousePositions(&mouseData);
 
 			if (mouseData.left) {
@@ -474,10 +477,6 @@ void Debug::debugProcessWindow() {
 
 			// quit
 			if (mouseData.right) {
-				quit = 1;
-			}
-
-			if (_engine->shouldQuit()) {
 				quit = 1;
 			}
 

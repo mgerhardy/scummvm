@@ -647,6 +647,9 @@ void Text::drawTextFullscreen(int32 index) { // printTextFullScreen
 			if (printedText == 2) {
 				do {
 					readKeys();
+					if (_engine->shouldQuit()) {
+						break;
+					}
 					if (_engine->_keyboard.skipIntro == 0 && _engine->_keyboard.skippedKey == 0 && _engine->_keyboard.pressedKey == 0) {
 						break;
 					}
@@ -656,6 +659,9 @@ void Text::drawTextFullscreen(int32 index) { // printTextFullScreen
 
 				do {
 					readKeys();
+					if (_engine->shouldQuit()) {
+						break;
+					}
 					if (_engine->_keyboard.skipIntro != 0 || _engine->_keyboard.skippedKey != 0 || _engine->_keyboard.pressedKey != 0) {
 						break;
 					}
@@ -672,6 +678,9 @@ void Text::drawTextFullscreen(int32 index) { // printTextFullScreen
 				break;
 			}
 
+			if (_engine->shouldQuit()) {
+				skipText = 1;
+			}
 			_engine->_system->delayMillis(1);
 		} while (!skipText);
 
@@ -697,6 +706,9 @@ void Text::drawTextFullscreen(int32 index) { // printTextFullScreen
 		// wait displaying text
 		do {
 			readKeys();
+			if (_engine->shouldQuit()) {
+				break;
+			}
 			_engine->_system->delayMillis(1);
 		} while (_engine->_keyboard.skipIntro || _engine->_keyboard.skippedKey || _engine->_keyboard.pressedKey);
 
@@ -712,11 +724,17 @@ void Text::drawTextFullscreen(int32 index) { // printTextFullScreen
 				_engine->_interface->loadClip();
 				return;
 			}
+			if (_engine->shouldQuit()) {
+				break;
+			}
 			_engine->_system->delayMillis(1);
 		} while (!_engine->_keyboard.pressedKey);
 	} else { // RECHECK THIS
-		while (playVox(currDialTextEntry) && _engine->_keyboard.skipIntro != 1)
-			;
+		while (playVox(currDialTextEntry) && _engine->_keyboard.skipIntro != 1) {
+			if (_engine->shouldQuit()) {
+				break;
+			}
+		}
 		hasHiddenVox = 0;
 		voxHiddenIndex = 0;
 	}
@@ -860,12 +878,18 @@ void Text::drawAskQuestion(int32 index) { // MyDial
 		if (textStatus == 2) {
 			do {
 				readKeys();
+				if (_engine->shouldQuit()) {
+					break;
+				}
 				playVox(currDialTextEntry);
 				_engine->_system->delayMillis(1);
 			} while (_engine->_keyboard.skipIntro || _engine->_keyboard.skippedKey || _engine->_keyboard.pressedKey);
 
 			do {
 				readKeys();
+				if (_engine->shouldQuit()) {
+					break;
+				}
 				playVox(currDialTextEntry);
 				_engine->_system->delayMillis(1);
 			} while (!_engine->_keyboard.skipIntro && !_engine->_keyboard.skippedKey && !_engine->_keyboard.pressedKey);
@@ -875,8 +899,11 @@ void Text::drawAskQuestion(int32 index) { // MyDial
 	} while (textStatus);
 
 	if (_engine->cfgfile.LanguageCDId) {
-		while (playVoxSimple(currDialTextEntry))
-			;
+		while (playVoxSimple(currDialTextEntry)) {
+			if (_engine->shouldQuit()) {
+				break;
+			}
+		}
 
 		hasHiddenVox = 0;
 		voxHiddenIndex = 0;

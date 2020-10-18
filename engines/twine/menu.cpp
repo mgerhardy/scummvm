@@ -21,10 +21,10 @@
  */
 
 #include "twine/menu.h"
-#include "twine/actor.h"
-#include "twine/animations.h"
 #include "common/scummsys.h"
 #include "common/system.h"
+#include "twine/actor.h"
+#include "twine/animations.h"
 #include "twine/gamestate.h"
 #include "twine/grid.h"
 #include "twine/hqrdepack.h"
@@ -458,7 +458,6 @@ int32 Menu::processMenu(int16 *menuSettings) {
 	int32 maxButton;
 	int16 *localData = menuSettings;
 	int16 currentButton;
-	int16 id;
 	int32 musicChanged;
 	int32 buttonReleased = 1;
 
@@ -476,12 +475,13 @@ int32 Menu::processMenu(int16 *menuSettings) {
 	do {
 		// if its on main menu
 		if (localData == MainMenuSettings) {
-			if (_engine->lbaTime - localTime <= 11650) {
-				if (_engine->_keyboard.skipIntro == 46)
-					if (_engine->_keyboard.skippedKey != 32)
-						return kBackground;
-			} else {
+			if (_engine->lbaTime - localTime > 11650) {
 				return kBackground;
+			}
+			if (_engine->_keyboard.skipIntro == 46) {
+				if (_engine->_keyboard.skippedKey != 32) {
+					return kBackground;
+				}
 			}
 		}
 
@@ -510,8 +510,8 @@ int32 Menu::processMenu(int16 *menuSettings) {
 				buttonReleased = 0;
 			}
 
-			if (*(localData + 8) <= 5) {                   // if its a volume button
-				id = *(localData + currentButton * 2 + 4); // get button parameters from settings array
+			if (*(localData + 8) <= 5) {                         // if its a volume button
+				int16 id = *(localData + currentButton * 2 + 4); // get button parameters from settings array
 
 				switch (id) {
 				case kMusicVolume: {
@@ -575,6 +575,9 @@ int32 Menu::processMenu(int16 *menuSettings) {
 			drawButton(localData, 0); // current button
 			do {
 				readKeys();
+				if (_engine->shouldQuit()) {
+					break;
+				}
 				drawButton(localData, 1);
 			} while (_engine->_keyboard.pressedKey == 0 && _engine->_keyboard.skippedKey == 0 && _engine->_keyboard.skipIntro == 0);
 			buttonNeedRedraw = 0;
@@ -586,6 +589,9 @@ int32 Menu::processMenu(int16 *menuSettings) {
 			buttonNeedRedraw = 0;
 			drawButton(localData, 1);
 			readKeys();
+			if (_engine->shouldQuit()) {
+				break;
+			}
 			// WARNING: this is here to prevent a fade bug while quit the menu
 			_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 		}
@@ -969,6 +975,9 @@ void Menu::processBehaviourMenu() {
 
 	while (_engine->_keyboard.skippedKey & 4 || (_engine->_keyboard.skipIntro >= 59 && _engine->_keyboard.skipIntro <= 62)) {
 		readKeys();
+		if (_engine->shouldQuit()) {
+			break;
+		}
 		_engine->_keyboard.key = _engine->_keyboard.pressedKey;
 
 		if (_engine->_keyboard.key & 8) {
@@ -995,6 +1004,9 @@ void Menu::processBehaviourMenu() {
 
 			while (_engine->_keyboard.pressedKey) {
 				readKeys();
+				if (_engine->shouldQuit()) {
+					break;
+				}
 				drawBehaviour(_engine->_actor->heroBehaviour, -1, 1);
 			}
 		}
@@ -1094,6 +1106,9 @@ void Menu::processInventoryMenu() {
 
 	while (_engine->_keyboard.skipIntro != 1) {
 		readKeys();
+		if (_engine->shouldQuit()) {
+			break;
+		}
 		prevSelectedItem = inventorySelectedItem;
 
 		if (!di) {
@@ -1207,6 +1222,9 @@ void Menu::processInventoryMenu() {
 
 	while (_engine->_keyboard.skipIntro != 0 && _engine->_keyboard.skippedKey != 0) {
 		readKeys();
+		if (_engine->shouldQuit()) {
+			break;
+		}
 		_engine->_system->delayMillis(1);
 		// TODO: check if g_system->updateScreen() is needed here
 	}

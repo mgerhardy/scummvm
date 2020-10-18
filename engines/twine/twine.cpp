@@ -748,6 +748,9 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 			copyBlockPhys(5, 446, 100, 479);
 			do {
 				readKeys();
+				if (shouldQuit()) {
+					break;
+				}
 				g_system->delayMillis(10);
 			} while (_keyboard.skipIntro != 0x19 && !_keyboard.pressedKey);
 			unfreezeTime();

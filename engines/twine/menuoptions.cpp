@@ -229,17 +229,29 @@ int32 MenuOptions::enterPlayerName(int32 textIdx) {
 			readKeys();
 			do {
 				readKeys();
+				if (_engine->shouldQuit()) {
+					break;
+				}
 			} while (_engine->_keyboard.skipIntro);
+			if (_engine->shouldQuit()) {
+				break;
+			}
 		} while (_engine->_keyboard.skippedKey);
 
 		enterPlayerNameVar2 = 1;
 
 		do {
 			readKeys();
+			if (_engine->shouldQuit()) {
+				break;
+			}
 		} while (_engine->_keyboard.pressedKey);
 
 		while (!_engine->_keyboard.skipIntro) {
 			readKeys();
+			if (_engine->shouldQuit()) {
+				break;
+			}
 			// TODO
 			drawPlayerName(320, 100, playerName, 1);
 		}
@@ -272,7 +284,13 @@ void MenuOptions::newGameMenu() {
 			readKeys();
 			do {
 				readKeys();
+				if (_engine->shouldQuit()) {
+					break;
+				}
 			} while (_engine->_keyboard.skippedKey != 0);
+			if (_engine->shouldQuit()) {
+				break;
+			}
 		} while (_engine->_keyboard.skipIntro != 0);
 	}
 }
@@ -300,7 +318,13 @@ void MenuOptions::continueGameMenu() {
 			readKeys();
 			do {
 				readKeys();
+				if (_engine->shouldQuit()) {
+					break;
+				}
 			} while (_engine->_keyboard.skippedKey != 0);
+			if (_engine->shouldQuit()) {
+				break;
+			}
 		} while (_engine->_keyboard.skipIntro != 0);
 	}
 }

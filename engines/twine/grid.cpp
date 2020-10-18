@@ -446,45 +446,30 @@ int32 Grid::initCellingGrid(int32 index) {
 }
 
 void Grid::drawBrick(int32 index, int32 posX, int32 posY) {
-	drawBrickSprite(index, posX, posY, brickTable[index], 0);
+	drawBrickSprite(index, posX, posY, brickTable[index], false);
 }
 
 void Grid::drawSprite(int32 index, int32 posX, int32 posY, uint8 *ptr) {
-	drawBrickSprite(index, posX, posY, ptr, 1);
+	drawBrickSprite(index, posX, posY, ptr, true);
 }
 
 // WARNING: Rewrite this function to have better performance
-void Grid::drawBrickSprite(int32 index, int32 posX, int32 posY, uint8 *ptr, int32 isSprite) {
+void Grid::drawBrickSprite(int32 index, int32 posX, int32 posY, uint8 *ptr, bool isSprite) {
 	//unsigned char *ptr;
-	int32 top;
-	int32 bottom;
-	int32 left;
-	int32 right;
 	uint8 *outPtr;
-	int32 offset;
-	int32 c1;
-	int32 c2;
-	int32 vc3;
 
-	int32 temp;
-	int32 iteration;
-	int32 i;
-
-	int32 x;
-	int32 y;
-
-	if (isSprite == 1)
+	if (isSprite)
 		ptr = ptr + *((uint32 *)(ptr + index * 4));
 
-	left = posX + *(ptr + 2);
-	top = posY + *(ptr + 3);
-	right = *ptr + left - 1;
-	bottom = *(ptr + 1) + top - 1;
+	int32 left = posX + *(ptr + 2);
+	int32 top = posY + *(ptr + 3);
+	int32 right = *ptr + left - 1;
+	int32 bottom = *(ptr + 1) + top - 1;
 
 	ptr += 4;
 
-	x = left;
-	y = top;
+	int32 x = left;
+	int32 y = top;
 
 	//if (left >= textWindowLeft-2 && top >= textWindowTop-2 && right <= textWindowRight-2 && bottom <= textWindowBottom-2) // crop
 	{
@@ -493,18 +478,18 @@ void Grid::drawBrickSprite(int32 index, int32 posX, int32 posY, uint8 *ptr, int3
 
 		outPtr = _engine->frontVideoBuffer + _engine->screenLookupTable[top] + left;
 
-		offset = -((right - left) - SCREEN_WIDTH);
+		int32 offset = -((right - left) - SCREEN_WIDTH);
 
-		for (c1 = 0; c1 < bottom - top; c1++) {
-			vc3 = *(ptr++);
-			for (c2 = 0; c2 < vc3; c2++) {
-				temp = *(ptr++);
-				iteration = temp & 0x3F;
+		for (int32 c1 = 0; c1 < bottom - top; c1++) {
+			int32 vc3 = *(ptr++);
+			for (int32 c2 = 0; c2 < vc3; c2++) {
+				int32 temp = *(ptr++);
+				int32 iteration = temp & 0x3F;
 				if (temp & 0xC0) {
 					iteration++;
 					if (!(temp & 0x40)) {
 						temp = *(ptr++);
-						for (i = 0; i < iteration; i++) {
+						for (int32 i = 0; i < iteration; i++) {
 							if (x >= _engine->_interface->textWindowLeft && x < _engine->_interface->textWindowRight && y >= _engine->_interface->textWindowTop && y < _engine->_interface->textWindowBottom)
 								_engine->frontVideoBuffer[y * SCREEN_WIDTH + x] = temp;
 
@@ -512,7 +497,7 @@ void Grid::drawBrickSprite(int32 index, int32 posX, int32 posY, uint8 *ptr, int3
 							outPtr++;
 						}
 					} else {
-						for (i = 0; i < iteration; i++) {
+						for (int32 i = 0; i < iteration; i++) {
 							if (x >= _engine->_interface->textWindowLeft && x < _engine->_interface->textWindowRight && y >= _engine->_interface->textWindowTop && y < _engine->_interface->textWindowBottom)
 								_engine->frontVideoBuffer[y * SCREEN_WIDTH + x] = *ptr;
 
@@ -596,8 +581,6 @@ void Grid::drawColumnGrid(int32 blockIdx, int32 brickBlockIdx, int32 x, int32 y,
 }
 
 void Grid::redrawGrid() {
-	int32 i, x, y, z;
-	uint8 blockIdx;
 	blockMap *map = (blockMap *)blockBuffer;
 
 	cameraX = newCameraX << 9;
@@ -609,17 +592,17 @@ void Grid::redrawGrid() {
 	_engine->_renderer->projPosXScreen = _engine->_renderer->projPosX;
 	_engine->_renderer->projPosYScreen = _engine->_renderer->projPosY;
 
-	for (i = 0; i < 28; i++) {
+	for (int32 i = 0; i < 28; i++) {
 		brickInfoBuffer[i] = 0;
 	}
 
 	if (_engine->_scene->changeRoomVar10 == 0)
 		return;
 
-	for (z = 0; z < GRID_SIZE_Z; z++) {
-		for (x = 0; x < GRID_SIZE_X; x++) {
-			for (y = 0; y < GRID_SIZE_Y; y++) {
-				blockIdx = (*map)[z][x][y].blockIdx;
+	for (int32 z = 0; z < GRID_SIZE_Z; z++) {
+		for (int32 x = 0; x < GRID_SIZE_X; x++) {
+			for (int32 y = 0; y < GRID_SIZE_Y; y++) {
+				const uint8 blockIdx = (*map)[z][x][y].blockIdx;
 				if (blockIdx) {
 					drawColumnGrid(blockIdx - 1, (*map)[z][x][y].brickBlockIdx, x, y, z);
 				}
@@ -666,9 +649,8 @@ int32 Grid::getBrickShape(int32 x, int32 y, int32 z) { // WorldColBrick
 		blockPtr = blockPtr + tmpBrickIdx * 4;
 
 		return *blockPtr;
-	} else {
-		return *(blockBufferPtr + 1);
 	}
+	return *(blockBufferPtr + 1);
 }
 
 int32 Grid::getBrickShapeFull(int32 x, int32 y, int32 z, int32 y2) {
@@ -698,15 +680,12 @@ int32 Grid::getBrickShapeFull(int32 x, int32 y, int32 z, int32 y2) {
 	blockIdx = *blockBufferPtr;
 
 	if (blockIdx) {
-		uint8 *blockPtr;
-		uint8 tmpBrickIdx;
-
-		blockPtr = currentBll;
+		uint8 *blockPtr = currentBll;
 
 		blockPtr += *(uint32 *)(blockPtr + blockIdx * 4 - 4);
 		blockPtr += 3;
 
-		tmpBrickIdx = *(blockBufferPtr + 1);
+		uint8 tmpBrickIdx = *(blockBufferPtr + 1);
 		blockPtr = blockPtr + tmpBrickIdx * 4;
 
 		brickShape = *blockPtr;
