@@ -20,9 +20,6 @@
  *
  */
 
-#include <SDL.h>
-#include <SDL_mixer.h>
-
 #include "audio/midiparser.h"
 #include "backends/audiocd/audiocd.h"
 #include "common/debug.h"
@@ -43,28 +40,36 @@ namespace TwinE {
 /** Number of miliseconds to fade music */
 #define FADE_MS 500
 
+#if 0 // TODO
 /** SDL_Mixer track variable interface */
 Mix_Music *current_track;
 
 /** Auxiliar midi pointer to  */
 uint8 *midiPtr;
+#endif
 
 void Music::musicVolume(int32 volume) {
+#if 0 // TODO
 	// div 2 because LBA use 255 range and SDL_mixer use 128 range
 	Mix_VolumeMusic(volume / 2);
+#endif
 }
 
 void Music::musicFadeIn(int32 loops, int32 ms) {
+#if 0 // TODO
 	Mix_FadeInMusic(current_track, loops, ms);
+#endif
 	musicVolume(_engine->cfgfile.MusicVolume);
 }
 
 void Music::musicFadeOut(int32 ms) {
+#if 0 // TODO
 	while (!Mix_FadeOutMusic(ms) && Mix_PlayingMusic()) {
 		SDL_Delay(100);
 	}
 	Mix_HaltMusic();
 	Mix_RewindMusic();
+#endif
 	musicVolume(_engine->cfgfile.MusicVolume);
 }
 
@@ -108,6 +113,7 @@ void Music::stopTrackMusic() {
 }
 
 void Music::playMidiMusic(int32 midiIdx, int32 loop) {
+#if 0 // TODO
 	uint8 *dos_midi_ptr;
 	int32 midiSize;
 	char filename[256];
@@ -152,6 +158,7 @@ void Music::playMidiMusic(int32 midiIdx, int32 loop) {
 
 	if (Mix_PlayMusic(current_track, loop) == -1)
 		warning("Error while playing music: %d \n", midiIdx);
+#endif
 }
 
 void Music::stopMidiMusic() {
@@ -159,12 +166,14 @@ void Music::stopMidiMusic() {
 		return;
 	}
 
+#if 0 // TODO
 	if (current_track != NULL) {
 		Mix_FreeMusic(current_track);
 		current_track = NULL;
 		if (midiPtr != NULL)
 			free(midiPtr);
 	}
+#endif
 }
 
 int Music::initCdrom() {
