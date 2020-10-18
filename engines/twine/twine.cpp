@@ -54,7 +54,7 @@
 #include "twine/text.h"
 
 #ifdef GAMEMOD
-#include "debug.h"
+#include "twine/debug.h"
 #endif
 
 namespace TwinE {

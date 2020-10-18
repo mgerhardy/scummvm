@@ -39,7 +39,7 @@
 #include "twine/text.h"
 
 #ifdef GAMEMOD
-#include "debug.scene.h"
+#include "twine/debug_scene.h"
 #endif
 
 namespace TwinE {
