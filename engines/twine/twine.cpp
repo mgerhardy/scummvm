@@ -23,6 +23,7 @@
 #include "twine/twine.h"
 #include "common/debug.h"
 #include "common/error.h"
+#include "common/events.h"
 #include "common/system.h"
 #include "common/textconsole.h"
 #include "engines/util.h"
@@ -1238,9 +1239,13 @@ void TwinEEngine::readKeys() {
 	int32 localKey = 0;
 
 #if 0
-	SDL_Event event;
+	Common::Event event;
 
-	SDL_PumpEvents();
+	while (g_system->getEventManager()->pollEvent(event)) {
+		switch (event.type) {
+		}
+	}
+
 #endif
 
 #if 0

@@ -23,6 +23,7 @@
 #ifndef TWINE_SOUND_H
 #define TWINE_SOUND_H
 
+#include "audio/mixer.h"
 #include "common/scummsys.h"
 
 namespace TwinE {

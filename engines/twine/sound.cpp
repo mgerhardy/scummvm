@@ -21,6 +21,7 @@
  */
 
 #include "twine/sound.h"
+#include "common/system.h"
 #include "twine/collision.h"
 #include "twine/flamovies.h"
 #include "twine/grid.h"
@@ -32,17 +33,8 @@
 
 namespace TwinE {
 
-// TODO: move to Audio::Mixer
-
-#if 0 // TODO
-/** Samples chunk variable */
-Mix_Chunk *sample;
-#endif
-
 void Sound::sampleVolume(int32 chan, int32 volume) {
-#if 0 // TODO
-	Mix_Volume(chan, volume / 2);
-#endif
+	_engine->_system->getMixer()->setChannelVolume(samplesPlaying[chan], volume / 2);
 }
 
 void Sound::playFlaSample(int32 index, int32 frequency, int32 repeat, int32 x, int32 y) {
@@ -133,18 +125,15 @@ void Sound::resumeSamples() {
 	if (!_engine->cfgfile.Sound) {
 		return;
 	}
-#if 0 // TODO
-		Mix_Resume(-1);
-#endif
+	_engine->_system->getMixer()->pauseAll(false);
+
 }
 
 void Sound::pauseSamples() {
 	if (!_engine->cfgfile.Sound) {
 		return;
 	}
-#if 0 // TODO
-	Mix_HaltChannel(-1);
-#endif
+	_engine->_system->getMixer()->pauseAll(true);
 }
 
 void Sound::stopSamples() {
