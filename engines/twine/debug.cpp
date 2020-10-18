@@ -496,8 +496,6 @@ void Debug::processDebug(int16 pKey) {
 
 	_engine->_debugGrid->changeGrid(pKey);
 	_engine->_debugGrid->changeGridCamera(pKey);
-	if (_engine->_scene->needChangeScene == 0)
-		;
 	_engine->_debugGrid->applyCellingGrid(pKey);
 }
 
