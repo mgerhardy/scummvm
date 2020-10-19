@@ -93,6 +93,8 @@ class FlaMovies {
 private:
 	TwinEEngine *_engine;
 
+	Common::File file;
+
 	/** Auxiliar FLA fade out variable */
 	int32 _fadeOut;
 	/** Auxiliar FLA fade out variable to count frames between the fade */

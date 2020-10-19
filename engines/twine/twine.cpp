@@ -21,6 +21,7 @@
  */
 
 #include "twine/twine.h"
+#include "common/config-manager.h"
 #include "common/debug.h"
 #include "common/error.h"
 #include "common/events.h"
@@ -71,74 +72,7 @@ enum InventoryItems {
 };
 
 /** Engine current version */
-const char *ENGINE_VERSION = "0.2.0";
-
-/** Engine configuration filename */
-const char *CONFIG_FILENAME = "lba.cfg";
-
-/** Engine install setup filename
-
-	This file contains informations about the game version.
-	This is only used for original games. For mod games project you can
-	used \a lba.cfg file \b Version tag. If this tag is set for original game
-	it will be used instead of \a setup.lst file. */
-const char *SETUP_FILENAME = "setup.lst";
-
-/** Configuration types at \a lba.cfg file
-
-	Fill this with all needed configurations at \a lba.cfg file.
-	This engine version allows new type of configurations.
-	Check new config lines at \a lba.cfg file after the first game execution */
-static char CFGList[][22] = {
-    "Language:",
-    "LanguageCD:",
-    "FlagDisplayText:",
-    "FlagKeepVoice:",
-    "SvgaDriver:",
-    "MidiDriver:",
-    "MidiExec:",
-    "MidiBase:",
-    "MidiType:",
-    "MidiIRQ:",
-    "MidiDMA:", // 10
-    "WaveDriver:",
-    "WaveExec:",
-    "WaveBase:",
-    "WaveIRQ:",
-    "WaveDMA:",
-    "WaveRate:",
-    "MixerDriver:",
-    "MixerBase:",
-    "WaveVolume:",
-    "VoiceVolume:", // 20
-    "MusicVolume:",
-    "CDVolume:",
-    "LineVolume:",
-    "MasterVolume:",
-    "Version:",
-    "FullScreen:",
-    "UseCD:",
-    "Sound:",
-    "Movie:",
-    "CrossFade:", // 30
-    "Fps:",
-    "Debug:",
-    "UseAutoSaving:",
-    "CombatAuto:",
-    "Shadow:",
-    "SceZoom:",
-    "FillDetails:",
-    "InterfaceStyle",
-    "WallCollision" // 39
-};
-
-static char LanguageTypes[][10] = {
-    "English",
-    "Francais",
-    "Deutsch",
-    "Espanol",
-    "Italiano",
-    "Portugues"};
+static const char *ENGINE_VERSION = "0.2.0";
 
 void TwinEEngine::allocVideoMemory() {
 	const size_t videoBufferSize = (SCREEN_WIDTH * SCREEN_HEIGHT) * sizeof(uint8);
@@ -157,12 +91,12 @@ void TwinEEngine::allocVideoMemory() {
 	// initVideoVar1 = -1;
 }
 
-int TwinEEngine::getConfigTypeIndex(int8 *lineBuffer) {
+static int getLanguageTypeIndex(const char *language) {
 	int32 i;
 	char buffer[256];
 	char *ptr;
 
-	strcpy(buffer, (char *)lineBuffer);
+	strcpy(buffer, language);
 
 	ptr = strchr(buffer, ' ');
 
@@ -170,31 +104,13 @@ int TwinEEngine::getConfigTypeIndex(int8 *lineBuffer) {
 		*ptr = 0;
 	}
 
-	const int32 length = sizeof(CFGList) / 22;
-	for (i = 0; i < length; i++) {
-		if (strlen(CFGList[i])) {
-			if (!strcmp(CFGList[i], buffer)) {
-				return i;
-			}
-		}
-	}
-
-	return -1;
-}
-
-int TwinEEngine::getLanguageTypeIndex(int8 *language) {
-	int32 i;
-	char buffer[256];
-	char *ptr;
-
-	strcpy(buffer, (char *)language);
-
-	ptr = strchr(buffer, ' ');
-
-	if (ptr) {
-		*ptr = 0;
-	}
-
+	static const char LanguageTypes[][10] = {
+	    "English",
+	    "Francais",
+	    "Deutsch",
+	    "Espanol",
+	    "Italiano",
+	    "Portugues"};
 	const int32 length = sizeof(LanguageTypes) / 10;
 	for (i = 0; i < length; i++) {
 		if (strlen(LanguageTypes[i])) {
@@ -207,129 +123,54 @@ int TwinEEngine::getLanguageTypeIndex(int8 *language) {
 	return 0; // English
 }
 
-// TODO: use ConfMan
+#define ConfGetOrDefault(key, defaultVal) (ConfMan.hasKey(key) ? ConfMan.get(key) : Common::String(defaultVal))
+#define ConfGetIntOrDefault(key, defaultVal) (ConfMan.hasKey(key) ? atoi(ConfMan.get(key).c_str()) : (defaultVal))
+
 void TwinEEngine::initConfigurations() {
-	FileReader fr;
-	char buffer[256], tmp[16];
-	int32 cfgtype = -1;
+	// TODO: use existing entries for some of the settings - like volume and so on.
 
-	if (fropen2(&fr, CONFIG_FILENAME, "rb") != 0) {
-		error("Error: Can't find config file %s\n", CONFIG_FILENAME);
-	}
+	// TODO: use Language abstraction
+	cfgfile.Language = ConfGetOrDefault("Language", "English");
+	cfgfile.LanguageId = getLanguageTypeIndex(cfgfile.Language.c_str());
+	cfgfile.LanguageCD = ConfGetOrDefault("LanguageCD", "English");
+	cfgfile.LanguageCDId = getLanguageTypeIndex(cfgfile.LanguageCD.c_str()) + 1;
 
-	frfeed(&fr);
-
-	// make sure it quit when it reaches the end of file
-	while (frread(&fr, buffer, 256)) {
-		*strchr((char *)buffer, 0x0D0A) = 0;
-		cfgtype = getConfigTypeIndex((int8 *)buffer);
-		if (cfgtype != -1) {
-			switch (cfgtype) {
-			case 0:
-				sscanf((const char *)buffer, "Language: %s", cfgfile.Language);
-				cfgfile.LanguageId = getLanguageTypeIndex(cfgfile.Language);
-				break;
-			case 1:
-				sscanf((const char *)buffer, "LanguageCD: %s", cfgfile.LanguageCD);
-				cfgfile.LanguageCDId = getLanguageTypeIndex(cfgfile.Language) + 1;
-				break;
-			case 2:
-				sscanf((const char *)buffer, "FlagDisplayText: %s", cfgfile.FlagDisplayTextStr);
-				if (!strcmp((char *)cfgfile.FlagDisplayTextStr, "ON")) {
-					cfgfile.FlagDisplayText = 1;
-				} else {
-					cfgfile.FlagDisplayText = 0;
-				}
-				break;
-			case 3:
-				sscanf((const char *)buffer, "FlagKeepVoice: %s", cfgfile.FlagKeepVoiceStr);
-				break;
-			case 8:
-				sscanf((const char *)buffer, "MidiType: %s", tmp);
-				if (strcmp((char *)tmp, "auto") == 0) {
-#if 0 // TODO: mgerhardy - scummvm port to filesystem
-					fd_test = fcaseopen(HQR_MIDI_MI_WIN_FILE, "rb");
-					if (fd_test) {
-						fclose(fd_test);
-						cfgfile.MidiType = 1;
-					} else
-#endif
-					cfgfile.MidiType = 0;
-				} else if (strcmp((char *)tmp, "midi") == 0)
-					cfgfile.MidiType = 1;
-				else
-					cfgfile.MidiType = 0;
-				break;
-			case 19:
-				sscanf((const char *)buffer, "WaveVolume: %d", &cfgfile.WaveVolume);
-				cfgfile.VoiceVolume = cfgfile.WaveVolume;
-				break;
-			case 20:
-				sscanf((const char *)buffer, "VoiceVolume: %d", &cfgfile.VoiceVolume);
-				break;
-			case 21:
-				sscanf((const char *)buffer, "MusicVolume: %d", &cfgfile.MusicVolume);
-				break;
-			case 22:
-				sscanf((const char *)buffer, "CDVolume: %d", &cfgfile.CDVolume);
-				break;
-			case 23:
-				sscanf((const char *)buffer, "LineVolume: %d", &cfgfile.LineVolume);
-				break;
-			case 24:
-				sscanf((const char *)buffer, "MasterVolume: %d", &cfgfile.MasterVolume);
-				break;
-			case 25:
-				sscanf((const char *)buffer, "Version: %d", &cfgfile.Version);
-				break;
-			case 26:
-				sscanf((const char *)buffer, "FullScreen: %d", &cfgfile.FullScreen);
-				break;
-			case 27:
-				sscanf((const char *)buffer, "UseCD: %d", &cfgfile.UseCD);
-				break;
-			case 28:
-				sscanf((const char *)buffer, "Sound: %d", &cfgfile.Sound);
-				break;
-			case 29:
-				sscanf((const char *)buffer, "Movie: %d", &cfgfile.Movie);
-				break;
-			case 30:
-				sscanf((const char *)buffer, "CrossFade: %d", &cfgfile.CrossFade);
-				break;
-			case 31:
-				sscanf((const char *)buffer, "Fps: %d", &cfgfile.Fps);
-				break;
-			case 32:
-				sscanf((const char *)buffer, "Debug: %d", &cfgfile.Debug);
-				break;
-			case 33:
-				sscanf((const char *)buffer, "UseAutoSaving: %d", &cfgfile.UseAutoSaving);
-				break;
-			case 34:
-				sscanf((const char *)buffer, "CombatAuto: %d", &cfgfile.AutoAgressive);
-				break;
-			case 35:
-				sscanf((const char *)buffer, "Shadow: %d", &cfgfile.ShadowMode);
-				break;
-			case 36:
-				sscanf((const char *)buffer, "SceZoom: %d", &cfgfile.SceZoom);
-				break;
-			case 37:
-				sscanf((const char *)buffer, "FillDetails: %d", &cfgfile.FillDetails);
-				break;
-			case 38:
-				sscanf((const char *)buffer, "InterfaceStyle: %d", &cfgfile.InterfaceStyle);
-				break;
-			case 39:
-				sscanf((const char *)buffer, "WallCollision: %d", &cfgfile.WallCollision);
-				break;
-			}
+	cfgfile.FlagDisplayText = ConfGetOrDefault("FlagDisplayText", "ON") == "ON";
+	cfgfile.FlagKeepVoice = ConfGetOrDefault("FlagKeepVoice", "ON") == "ON";
+	const Common::String midiType = ConfGetOrDefault("MidiType", "auto");
+	if (midiType == "auto") {
+		Common::File midiHqr;
+		if (midiHqr.exists(HQR_MIDI_MI_WIN_FILE)) {
+			cfgfile.MidiType = 1;
+		} else {
+			cfgfile.MidiType = 0;
 		}
+	} else if (midiType == "midi") {
+		cfgfile.MidiType = 1;
+	} else {
+		cfgfile.MidiType = 0;
 	}
-
-	if (!cfgfile.Fps)
-		cfgfile.Fps = DEFAULT_FRAMES_PER_SECOND;
+	cfgfile.VoiceVolume = cfgfile.WaveVolume = ConfGetIntOrDefault("WaveVolume", 255);
+	cfgfile.VoiceVolume = ConfGetIntOrDefault("VoiceVolume", cfgfile.VoiceVolume);
+	cfgfile.MusicVolume = ConfGetIntOrDefault("MusicVolume", 255);
+	cfgfile.CDVolume = ConfGetIntOrDefault("CDVolume", 255);
+	cfgfile.LineVolume = ConfGetIntOrDefault("LineVolume", 255);
+	cfgfile.MasterVolume = ConfGetIntOrDefault("MasterVolume", 255);
+	cfgfile.Version = ConfGetIntOrDefault("Version", 0);
+	cfgfile.FullScreen = ConfGetIntOrDefault("FullScreen", 1) == 1;
+	cfgfile.UseCD = ConfGetIntOrDefault("UseCD", 0);
+	cfgfile.Sound = ConfGetIntOrDefault("Sound", 0);
+	cfgfile.Movie = ConfGetIntOrDefault("Movie", 0);
+	cfgfile.CrossFade = ConfGetIntOrDefault("CrossFade", 0);
+	cfgfile.Fps = ConfGetIntOrDefault("Fps", DEFAULT_FRAMES_PER_SECOND);
+	cfgfile.Debug = ConfGetIntOrDefault("Debug", 0);
+	cfgfile.UseAutoSaving = ConfGetIntOrDefault("UseAutoSaving", 0);
+	cfgfile.AutoAgressive = ConfGetIntOrDefault("CombatAuto", 0);
+	cfgfile.ShadowMode = ConfGetIntOrDefault("Shadow", 0);
+	cfgfile.SceZoom = ConfGetIntOrDefault("SceZoom", 0);
+	cfgfile.FillDetails = ConfGetIntOrDefault("FillDetails", 0);
+	cfgfile.InterfaceStyle = ConfGetIntOrDefault("InterfaceStyle", 0);
+	cfgfile.WallCollision = ConfGetIntOrDefault("WallCollision", 0);
 }
 
 void TwinEEngine::initEngine() {
@@ -1135,18 +976,19 @@ void TwinEEngine::crossFade(uint8 *buffer, uint8 *palette) {
 
 void TwinEEngine::toggleFullscreen() {
 #if 0
-	cfgfile.FullScreen = 1 - cfgfile.FullScreen;
 	SDL_FreeSurface(screen);
 
 	_redraw->reqBgRedraw = 1;
 
 	if (cfgfile.FullScreen) {
+		cfgfile.FullScreen = false;
+		screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32, SDL_SWSURFACE | SDL_FULLSCREEN);
+		copyScreen(workVideoBuffer, frontVideoBuffer);
+	} else {
+		cfgfile.FullScreen = true;
 		screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32, SDL_SWSURFACE);
 		copyScreen(workVideoBuffer, frontVideoBuffer);
 		SDL_ShowCursor(1);
-	} else {
-		screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32, SDL_SWSURFACE | SDL_FULLSCREEN);
-		copyScreen(workVideoBuffer, frontVideoBuffer);
 	}
 #endif
 }

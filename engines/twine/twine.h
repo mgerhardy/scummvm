@@ -63,9 +63,9 @@ namespace TwinE {
 	All the settings with (*) means they are new and only exist in this engine. */
 typedef struct ConfigFile {
 	/** Language name */
-	int8 Language[10];
+	Common::String Language;
 	/** Language CD name */
-	int8 LanguageCD[10];
+	Common::String LanguageCD;
 	/** Language Identification according with Language setting. */
 	int32 LanguageId;
 	/** Language Identification according with Language setting. */
@@ -73,11 +73,9 @@ typedef struct ConfigFile {
 	/** Enable/Disable game dialogues */
 	int8 FlagDisplayTextStr[3];
 	/** Enable/Disable game dialogues */
-	int32 FlagDisplayText;
+	bool FlagDisplayText;
 	/** Save voice files on hard disk */
-	int8 FlagKeepVoiceStr[3];
-	/** Save voice files on hard disk */
-	int32 FlagKeepVoice;
+	bool FlagKeepVoice;
 	/** Type of music file to be used */
 	int8 MidiType;
 	/** Wave volume */
@@ -95,7 +93,7 @@ typedef struct ConfigFile {
 	/** *Game version */
 	int32 Version;
 	/** To allow fullscreen or window mode. */
-	int32 FullScreen;
+	bool FullScreen;
 	/** If you want to use the LBA CD or not */
 	int32 UseCD;
 	/** Allow various sound types */
@@ -217,14 +215,6 @@ public:
 	void initConfigurations();
 	/** Initialize all needed stuffs at first time running engine */
 	void initAll();
-	/** Gets configuration type index from lba.cfg config file
-	@param lineBuffer buffer with config line
-	@return config type index */
-	int getLanguageTypeIndex(int8 *language);
-	/** Gets configuration type index from lba.cfg config file
-	@param lineBuffer buffer with config line
-	@return config type index */
-	int getConfigTypeIndex(int8 *lineBuffer);
 	void processActorSamplePosition(int32 actorIdx);
 	/** Game engine main loop
 	@return true if we want to show credit sequence */
