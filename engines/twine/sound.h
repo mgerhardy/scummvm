@@ -37,12 +37,14 @@ class Sound {
 private:
 	TwinEEngine *_engine;
 
+	/** Get the channel where the sample is playing */
+	int32 getSampleChannel(int32 index);
+
 	int32 channel;
 	int32 channelIdx = -1;
-	int32 isChannelPlaying(int32 channel);
 
 	/** Samples playing at the same time */
-	int32 samplesPlaying[NUM_CHANNELS];
+	Audio::SoundHandle samplesPlaying[NUM_CHANNELS];
 
 	/** Samples playing at a actors position */
 	int32 samplesPlayingActors[NUM_CHANNELS];
@@ -50,6 +52,7 @@ private:
 public:
 	Sound(TwinEEngine *engine);
 
+	bool isChannelPlaying(int32 channel);
 	/** Table with all loaded samples */
 	uint8 *samplesTable[NUM_SAMPLES];
 	/** Table with all loaded samples sizes */
@@ -97,9 +100,6 @@ public:
 
 	/** Get the channel where the actor sample is playing */
 	int32 getActorChannel(int32 index);
-
-	/** Get the channel where the sample is playing */
-	int32 getSampleChannel(int32 index);
 
 	/** Stops a specific sample */
 	void stopSample(int32 index);

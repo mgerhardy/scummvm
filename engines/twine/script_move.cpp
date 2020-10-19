@@ -444,7 +444,7 @@ static int32 mSAMPLE_RND(TwinEEngine* engine, int32 actorIdx, ActorStruct *actor
 /*0x1C*/
 static int32 mSAMPLE_ALWAYS(TwinEEngine* engine, int32 actorIdx, ActorStruct *actor) {
 	int32 sampleIdx = *((int16 *)scriptPtr);
-	if (engine->_sound->getSampleChannel(sampleIdx) == -1) { // if its not playing
+	if (!engine->_sound->isSamplePlaying(sampleIdx)) { // if its not playing
 		engine->_sound->playSample(sampleIdx, 0x1000, -1, actor->x, actor->y, actor->z, actorIdx);
 	}
 	actor->positionInMoveScript += 2;

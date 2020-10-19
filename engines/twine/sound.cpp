@@ -21,7 +21,12 @@
  */
 
 #include "twine/sound.h"
+#include "audio/audiostream.h"
+#include "audio/decoders/wave.h"
+#include "common/memstream.h"
 #include "common/system.h"
+#include "common/types.h"
+#include "common/util.h"
 #include "twine/collision.h"
 #include "twine/flamovies.h"
 #include "twine/grid.h"
@@ -34,11 +39,13 @@
 namespace TwinE {
 
 Sound::Sound(TwinEEngine *engine) : _engine(engine) {
-	memset(samplesPlaying, -1, sizeof(int32) * NUM_CHANNELS);
 }
 
 void Sound::sampleVolume(int32 chan, int32 volume) {
-	//_engine->_system->getMixer()->setChannelVolume(samplesPlaying[chan], volume / 2);
+	if (chan < 0 || chan > ARRAYSIZE(samplesPlaying)) {
+		error("Given channel index is out of bounds: %i", chan);
+	}
+	_engine->_system->getMixer()->setChannelVolume(samplesPlaying[chan], volume / 2);
 }
 
 void Sound::playFlaSample(int32 index, int32 frequency, int32 repeat, int32 x, int32 y) {
@@ -61,18 +68,10 @@ void Sound::playFlaSample(int32 index, int32 frequency, int32 repeat, int32 x, i
 		*sampPtr = 'C';
 	}
 
-	samplesPlaying[channelIdx] = index;
-
-	sampleVolume(channelIdx, _engine->cfgfile.WaveVolume);
-
-#if 0 // TODO
-	SDL_RWops *rw = SDL_RWFromMem(sampPtr, sampSize);
-	sample = Mix_LoadWAV_RW(rw, 1);
-	if (Mix_PlayChannel(channelIdx, sample, repeat - 1) == -1)
-		error("Error while playing VOC: Sample %d", index);
-#endif
-
-	free(sampPtr);
+	Common::MemoryReadStream stream(sampPtr, sampSize, DisposeAfterUse::YES);
+	Audio::SeekableAudioStream *audioStream = Audio::makeWAVStream(&stream, DisposeAfterUse::NO);
+	// TODO: mgerhardy repeat flag
+	_engine->_system->getMixer()->playStream(Audio::Mixer::kPlainSoundType, &samplesPlaying[channelIdx], audioStream, index, _engine->cfgfile.WaveVolume);
 }
 
 void Sound::setSamplePosition(int32 chan, int32 x, int32 y, int32 z) {
@@ -104,10 +103,6 @@ void Sound::playSample(int32 index, int32 frequency, int32 repeat, int32 x, int3
 		*sampPtr = 'C';
 	}
 
-	// only play if we have a free channel, otherwise we won't be able to control the sample
-	samplesPlaying[channelIdx] = index;
-	sampleVolume(channelIdx, _engine->cfgfile.WaveVolume);
-
 	if (actorIdx != -1) {
 		setSamplePosition(channelIdx, x, y, z);
 
@@ -115,14 +110,10 @@ void Sound::playSample(int32 index, int32 frequency, int32 repeat, int32 x, int3
 		samplesPlayingActors[channelIdx] = actorIdx;
 	}
 
-#if 0 // TODO
-	SDL_RWops *rw = SDL_RWFromMem(sampPtr, sampSize);
-	sample = Mix_LoadWAV_RW(rw, 1);
-	if (Mix_PlayChannel(channelIdx, sample, repeat - 1) == -1)
-		error("Error while playing VOC: Sample %d \n", index);
-#endif
-
-	free(sampPtr);
+	Common::MemoryReadStream stream(sampPtr, sampSize, DisposeAfterUse::YES);
+	Audio::SeekableAudioStream *audioStream = Audio::makeWAVStream(&stream, DisposeAfterUse::NO);
+	// TODO: mgerhardy repeat flag
+	_engine->_system->getMixer()->playStream(Audio::Mixer::kPlainSoundType, &samplesPlaying[channelIdx], audioStream, index, _engine->cfgfile.WaveVolume);
 }
 
 void Sound::resumeSamples() {
@@ -143,18 +134,13 @@ void Sound::stopSamples() {
 	if (!_engine->cfgfile.Sound) {
 		return;
 	}
-	memset(samplesPlaying, -1, sizeof(int32) * NUM_CHANNELS);
-#if 0 // TODO
-	Mix_HaltChannel(-1);
-	//clean up
-	Mix_FreeChunk(sample);
-	sample = NULL; //make sure we free it
-#endif
+
+	_engine->_system->getMixer()->stopAll();
+	memset(samplesPlayingActors, -1, sizeof(samplesPlayingActors));
 }
 
 int32 Sound::getActorChannel(int32 index) {
-	int32 c = 0;
-	for (c = 0; c < NUM_CHANNELS; c++) {
+	for (int32 c = 0; c < NUM_CHANNELS; c++) {
 		if (samplesPlayingActors[c] == index) {
 			return c;
 		}
@@ -163,9 +149,8 @@ int32 Sound::getActorChannel(int32 index) {
 }
 
 int32 Sound::getSampleChannel(int32 index) {
-	int32 c = 0;
-	for (c = 0; c < NUM_CHANNELS; c++) {
-		if (samplesPlaying[c] == index) {
+	for (int32 c = 0; c < NUM_CHANNELS; c++) {
+		if (_engine->_system->getMixer()->getSoundID(samplesPlaying[c]) == index) {
 			return c;
 		}
 	}
@@ -173,7 +158,6 @@ int32 Sound::getSampleChannel(int32 index) {
 }
 
 void Sound::removeSampleChannel(int32 c) {
-	samplesPlaying[c] = -1;
 	samplesPlayingActors[c] = -1;
 }
 
@@ -183,26 +167,19 @@ void Sound::stopSample(int32 index) {
 	}
 	int32 stopChannel = getSampleChannel(index);
 	if (stopChannel != -1) {
+		_engine->_system->getMixer()->stopID(index);
 		removeSampleChannel(stopChannel);
-#if 0 // TODO
-		Mix_HaltChannel(stopChannel);
-		//clean up
-		Mix_FreeChunk(sample);
-		sample = NULL; //make sure we free it
-#endif
 	}
 }
 
-int32 Sound::isChannelPlaying(int32 chan) {
-	if (chan != -1) {
-#if 0 // TODO
-		if (Mix_Playing(chan)) {
-			return 1;
+bool Sound::isChannelPlaying(int32 chan) {
+	if (chan >= 0 && chan < ARRAYSIZE(samplesPlaying)) {
+		if (_engine->_system->getMixer()->isSoundHandleActive(samplesPlaying[chan])) {
+			return true;
 		}
-#endif
 		removeSampleChannel(chan);
 	}
-	return 0;
+	return false;
 }
 
 int32 Sound::isSamplePlaying(int32 index) {
@@ -213,14 +190,8 @@ int32 Sound::isSamplePlaying(int32 index) {
 int32 Sound::getFreeSampleChannelIndex() {
 	int i = 0;
 	for (i = 0; i < NUM_CHANNELS; i++) {
-		if (samplesPlaying[i] == -1) {
+		if (!_engine->_system->getMixer()->isSoundHandleActive(samplesPlaying[i])) {
 			return i;
-		}
-	}
-	//FIXME if didn't find any, lets free what is not in use
-	for (i = 0; i < NUM_CHANNELS; i++) {
-		if (samplesPlaying[i] != -1) {
-			isChannelPlaying(i);
 		}
 	}
 	return -1;
@@ -230,10 +201,14 @@ void Sound::playVoxSample(int32 index) {
 	if (!_engine->cfgfile.Sound) {
 		return;
 	}
-	int32 sampSize = 0;
-	uint8 *sampPtr = 0;
 
-	sampSize = _engine->_hqrdepack->hqrGetallocVoxEntry(&sampPtr, _engine->_text->currentVoxBankFile, index, _engine->_text->voxHiddenIndex);
+	channelIdx = getFreeSampleChannelIndex();
+	if (channelIdx != -1) {
+		return;
+	}
+
+	uint8 *sampPtr = nullptr;
+	int32 sampSize = _engine->_hqrdepack->hqrGetallocVoxEntry(&sampPtr, _engine->_text->currentVoxBankFile, index, _engine->_text->voxHiddenIndex);
 
 	// Fix incorrect sample files first byte
 	if (*sampPtr != 'C') {
@@ -242,23 +217,10 @@ void Sound::playVoxSample(int32 index) {
 		*sampPtr = 'C';
 	}
 
-	channelIdx = getFreeSampleChannelIndex();
+	Common::MemoryReadStream stream(sampPtr, sampSize, DisposeAfterUse::YES);
+	Audio::SeekableAudioStream *audioStream = Audio::makeWAVStream(&stream, DisposeAfterUse::NO);
+	_engine->_system->getMixer()->playStream(Audio::Mixer::kPlainSoundType, &samplesPlaying[channelIdx], audioStream, index, _engine->cfgfile.WaveVolume);
 
-	// only play if we have a free channel, otherwise we won't be able to control the sample
-	if (channelIdx != -1) {
-		samplesPlaying[channelIdx] = index;
-
-		sampleVolume(channelIdx, _engine->cfgfile.VoiceVolume - 1);
-
-#if 0 // TODO
-		SDL_RWops *rw = SDL_RWFromMem(sampPtr, sampSize);
-		sample = Mix_LoadWAV_RW(rw, 1);
-		if (Mix_PlayChannel(channelIdx, sample, 0) == -1)
-			error("Error while playing VOC: Sample %d \n", index);
-#endif
-	}
-
-	free(sampPtr);
 }
 
 } // namespace TwinE
