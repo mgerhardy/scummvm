@@ -38,7 +38,7 @@ private:
 	 * @param x X coordinate in screen
 	 * @param y Y coordinate in screen
 	 * @param character ascii character to display
-	 * */
+	 */
 	void drawCharacter(int32 x, int32 y, uint8 character);
 	/**
 	 * Draw character with shadow
@@ -46,20 +46,26 @@ private:
 	 * @param y Y coordinate in screen
 	 * @param character ascii character to display
 	 * @param color character color
-	 * */
+	 */
 	void drawCharacterShadow(int32 x, int32 y, uint8 character, int32 color);
 	void initProgressiveTextBuffer();
 	void printText8Sub4(int16 a, int16 b, int16 c);
-	void getWordSize(const char *arg1, char *arg2);
+	struct WordSize {
+		int32 inChar;
+		int32 inPixel;
+	};
+	WordSize getWordSize(const char *arg1, char *arg2);
 	void processTextLine();
 	// draw next page arrow polygon
 	void printText10Sub();
 	void printText10Sub2();
 	void TEXT_GetLetterSize(uint8 character, int32 *pLetterWidth, int32 *pLetterHeight, uint8 *pFont);
-	/** Copy dialogue text
-	@param src source text buffer
-	@param dst destination text buffer
-	@param size text size */
+	/**
+	 * Copy dialogue text
+	 * @param src source text buffer
+	 * @param dst destination text buffer
+	 * @param size text size
+	 */
 	void copyText(const char *src, char *dst, int32 size);
 
 	// RECHECK THIS LATER
@@ -74,11 +80,26 @@ private:
 	/** Number of dialogues text entries */
 	int16 numDialTextEntries;
 
-	// TODO: refactor this
-	int32 wordSizeChar;
-	int32 wordSizePixel;
-
 	const int16 spaceChar = 0x20;
+
+	// TODO: refactor all this variables and related functions
+	char buf1[256];
+	char buf2[256];
+	char *printText8Ptr1;
+	char *printText8Ptr2;
+	int32 printText8Var1;
+	int32 printText8Var2;
+	int32 printText8Var3;
+	int32 TEXT_CurrentLetterX;
+	int32 printText8Var5;
+	int32 printText8Var6;
+	int32 TEXT_CurrentLetterY;
+	char *printText8Var8;
+	int32 printText10Var1;
+	int32 addLineBreakX;
+	int16 pt8s4[96];
+	int32 printText8PrepareBufferVar2;
+	// ---
 public:
 	Text(TwinEEngine *engine) : _engine(engine) {}
 
@@ -120,26 +141,11 @@ public:
 
 	// TODO: refactor all this variables and related functions
 	int32 printTextVar13;
-	char buf1[256];
-	char buf2[256];
-	char *printText8Ptr1;
-	char *printText8Ptr2;
-	int32 printText8Var1;
-	int32 printText8Var2;
-	int32 printText8Var3;
-	int32 TEXT_CurrentLetterX;
-	int32 printText8Var5;
-	int32 printText8Var6;
-	int32 TEXT_CurrentLetterY;
-	char *printText8Var8;
 	int32 newGameVar4;
 	int32 newGameVar5;
 	int32 hasHiddenVox; // printTextVar5
 	int32 voxHiddenIndex;
-	int32 printText10Var1;
-	int32 addLineBreakX;
-	int16 pt8s4[96];
-	int32 printText8PrepareBufferVar2;
+	// ---
 
 	int32 currDialTextEntry; // ordered entry
 	int32 nextDialTextEntry; // ordered entry

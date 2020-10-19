@@ -43,21 +43,21 @@ namespace TwinE {
 
 void Text::initVoxBank(int32 bankIdx) {
 	static const char *LanguageSufixTypes[] = {
-		"sys",
-		"cre",
-		"gam",
-		"000",
-		"001",
-		"002",
-		"003",
-		"004",
-		"005",
-		"006",
-		"007",
-		"008",
-		"009",
-		"010",
-		"011"};
+	    "sys",
+	    "cre",
+	    "gam",
+	    "000",
+	    "001",
+	    "002",
+	    "003",
+	    "004",
+	    "005",
+	    "006",
+	    "007",
+	    "008",
+	    "009",
+	    "010",
+	    "011"};
 	if (bankIdx < 0 || bankIdx >= ARRAYSIZE(LanguageSufixTypes)) {
 		error("bankIdx is out of bounds: %i", bankIdx);
 	}
@@ -360,13 +360,10 @@ void Text::initProgressiveTextBuffer() {
 }
 
 void Text::printText8Sub4(int16 a, int16 b, int16 c) {
-	int32 temp;
 	int32 counter2 = 0;
-	int32 var1;
-	int32 var2;
 
 	if (printText8Var3 < 32) {
-		temp = printText8Var3 * 3;
+		const int32 temp = printText8Var3 * 3;
 		pt8s4[temp] = c;
 		pt8s4[temp + 1] = a;
 		pt8s4[temp + 2] = b;
@@ -374,31 +371,33 @@ void Text::printText8Sub4(int16 a, int16 b, int16 c) {
 		printText8Var3++;
 	} else {
 		while (counter2 < 31) {
-			var1 = (counter2 + 1) * 3;
-			var2 = counter2 * 3;
+			const int32 var1 = (counter2 + 1) * 3;
+			const int32 var2 = counter2 * 3;
 			pt8s4[var2] = pt8s4[var1];
 			pt8s4[var2 + 1] = pt8s4[var1 + 1];
 			pt8s4[var2 + 2] = pt8s4[var1 + 2];
 			counter2++;
-		};
+		}
 		pt8s4[93] = c;
 		pt8s4[94] = a;
 		pt8s4[95] = b;
 	}
 }
 
-void Text::getWordSize(const char *arg1, char *arg2) {
+Text::WordSize Text::getWordSize(const char *arg1, char *arg2) {
 	int32 temp = 0;
 	const char *arg2Save = arg2;
 
-	while (*arg1 != 0 && *arg1 != 1 && *arg1 != 0x20) {
+	while (*arg1 != '\0' && *arg1 != '\1' && *arg1 != ' ') {
 		temp++;
 		*arg2++ = *arg1++;
 	}
 
-	wordSizeChar = temp;
-	*arg2 = 0;
-	wordSizePixel = getTextSize(arg2Save);
+	WordSize size;
+	size.inChar = temp;
+	*arg2 = '\0';
+	size.inPixel = getTextSize(arg2Save);
+	return size;
 }
 
 void Text::processTextLine() {
@@ -422,32 +421,32 @@ void Text::processTextLine() {
 
 		if (*buffer != 0) {
 			printText8Var8 = buffer;
-			getWordSize(buffer, buf1);
-			if (addLineBreakX + dialCharSpace + wordSizePixel < dialTextBoxParam2) {
+			WordSize wordSize = getWordSize(buffer, buf1);
+			if (addLineBreakX + dialCharSpace + wordSize.inPixel < dialTextBoxParam2) {
 				temp = buffer + 1;
 				if (*buffer == 1) {
 					var4 = 0;
 					buffer = temp;
 				} else {
-					if (*buf1 == 0x40) {
+					if (*buf1 == '@') {
 						var4 = 0;
 						buffer = temp;
 						if (addLineBreakX == 0) {
 							addLineBreakX = 7;
 							*((int16 *)buf2) = spaceChar;
 						}
-						if (buf1[1] == 0x50) {
+						if (buf1[1] == 'P') {
 							printText8Var1 = dialTextBoxParam1;
 							buffer++;
 						}
 					} else {
-						buffer += wordSizeChar;
+						buffer += wordSize.inChar;
 						printText8Var8 = buffer;
 						strncat(buf2, buf1, sizeof(buf2));
 						strncat(buf2, " ", sizeof(buf2)); // not 100% accurate
 						printText8PrepareBufferVar2++;
 
-						addLineBreakX += wordSizePixel + dialCharSpace;
+						addLineBreakX += wordSize.inPixel + dialCharSpace;
 						if (*printText8Var8 != 0) {
 							printText8Var8++;
 							continue;
