@@ -21,6 +21,7 @@
  */
 
 #include "twine/xmidi.h"
+#include "common/textconsole.h"
 #include "common/util.h"
 #include "twine/twine.h"
 
@@ -187,6 +188,9 @@ static void save_event(struct EventInfo *info, uint32 current_time) {
 	struct CachedEvent *prev, *next, *temp;
 
 	temp = (struct CachedEvent *)malloc(sizeof(struct CachedEvent));
+	if (!temp) {
+		error("Failed to allocate memory for the midi buffer");
+	}
 	temp->eventInfo = info;
 	temp->time = current_time + delta;
 	temp->next = NULL;

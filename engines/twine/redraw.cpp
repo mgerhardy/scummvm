@@ -21,6 +21,7 @@
  */
 
 #include "twine/redraw.h"
+#include "common/textconsole.h"
 #include "twine/actor.h"
 #include "twine/animations.h"
 #include "twine/collision.h"
@@ -775,15 +776,17 @@ void Redraw::drawBubble(int32 actorIdx) {
 }
 
 void Redraw::zoomScreenScale() {
-	int h, w;
 	uint8 *dest;
 	uint8 *zoomWorkVideoBuffer = (uint8 *)malloc((SCREEN_WIDTH * SCREEN_HEIGHT) * sizeof(uint8));
+	if (!zoomWorkVideoBuffer) {
+		error("Failed to allocate memory for the scale buffer");
+	}
 	memcpy(zoomWorkVideoBuffer, _engine->workVideoBuffer, SCREEN_WIDTH * SCREEN_HEIGHT);
 
 	dest = _engine->workVideoBuffer;
 
-	for (h = 0; h < SCREEN_HEIGHT; h++) {
-		for (w = 0; w < SCREEN_WIDTH; w++) {
+	for (int h = 0; h < SCREEN_HEIGHT; h++) {
+		for (int w = 0; w < SCREEN_WIDTH; w++) {
 			*dest++ = *zoomWorkVideoBuffer;
 			*dest++ = *zoomWorkVideoBuffer++;
 		}

@@ -22,6 +22,7 @@
 
 #include "twine/animations.h"
 #include "common/system.h"
+#include "common/textconsole.h"
 #include "common/util.h"
 #include "twine/actor.h"
 #include "twine/collision.h"
@@ -530,10 +531,14 @@ void Animations::processAnimActions(int32 actorIdx) {
 	DataReader *data;
 
 	actor = &_engine->_scene->sceneActors[actorIdx];
-	if (!actor->animExtraPtr)
+	if (!actor->animExtraPtr) {
 		return; // avoid null pointers
+	}
 
 	data = (DataReader *)malloc(sizeof(DataReader));
+	if (!data) {
+		error("Failed to allocate memory for the animation actions");
+	}
 	data->ptr = actor->animExtraPtr;
 
 	endAnimEntityIdx = readByte(data);

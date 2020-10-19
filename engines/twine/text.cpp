@@ -443,8 +443,8 @@ void Text::processTextLine() {
 					} else {
 						buffer += wordSizeChar;
 						printText8Var8 = buffer;
-						strcat(buf2, buf1);
-						strcat(buf2, " "); // not 100% accurate
+						strncat(buf2, buf1, sizeof(buf2));
+						strncat(buf2, " ", sizeof(buf2)); // not 100% accurate
 						printText8PrepareBufferVar2++;
 
 						addLineBreakX += wordSizePixel + dialCharSpace;
