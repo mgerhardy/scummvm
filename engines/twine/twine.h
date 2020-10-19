@@ -78,18 +78,6 @@ typedef struct ConfigFile {
 	bool FlagKeepVoice;
 	/** Type of music file to be used */
 	int8 MidiType;
-	/** Wave volume */
-	int32 WaveVolume;
-	/** Chacters voices volume */
-	int32 VoiceVolume;
-	/** Music volume */
-	int32 MusicVolume;
-	/** CD volume */
-	int32 CDVolume;
-	/** Line-In volume */
-	int32 LineVolume;
-	/** Main volume controller */
-	int32 MasterVolume;
 	/** *Game version */
 	int32 Version;
 	/** To allow fullscreen or window mode. */
@@ -114,12 +102,8 @@ typedef struct ConfigFile {
 	int32 AutoAgressive;
 	/** SceZoom mode type */
 	int32 SceZoom;
-	/** FillDetails mode type */
-	int32 FillDetails;
 	/** Flag to quit the game */
 	int32 Quit;
-	/** Flag to change interface style */
-	int32 InterfaceStyle;
 	/** Flag to toggle Wall Collision */
 	int32 WallCollision;
 } ConfigFile;

@@ -21,6 +21,9 @@
  */
 
 #include "twine/menu.h"
+#include "audio/mixer.h"
+#include "backends/audiocd/audiocd.h"
+#include "common/config-manager.h"
 #include "common/scummsys.h"
 #include "common/system.h"
 #include "twine/actor.h"
@@ -295,12 +298,6 @@ void Menu::drawBox(int32 left, int32 top, int32 right, int32 bottom) {
 }
 
 void Menu::drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, int32 mode) {
-	int32 right;
-	int32 top;
-	int32 left;
-	int32 bottom2;
-	int32 bottom;
-	int32 textSize;
 	char dialText[256];
 	/*
 	 * int CDvolumeRemaped; int musicVolumeRemaped; int masterVolumeRemaped; int lineVolumeRemaped;
@@ -309,56 +306,41 @@ void Menu::drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, in
 
 	memset(dialText, 0, sizeof(dialText));
 
-	left = width - kMainMenuButtonSpan / 2;
-	right = width + kMainMenuButtonSpan / 2;
+	int32 left = width - kMainMenuButtonSpan / 2;
+	int32 right = width + kMainMenuButtonSpan / 2;
 
 	// topheigh is the center Y pos of the button
-	top = topheight - 25;              // this makes the button be 50 height
-	bottom = bottom2 = topheight + 25; // ||
+	int32 top = topheight - 25;    // this makes the button be 50 height
+	int32 bottom = topheight + 25; // ||
+	int32 bottom2 = bottom;
 
 	if (mode != 0) {
-		if (id <= 5 && id >= 1) {
+		if (id <= kMasterVolume && id >= kMusicVolume) {
 			int32 newWidth = 0;
-
 			switch (id) {
-			case 1: {
-				if (_engine->cfgfile.MusicVolume > 255)
-					_engine->cfgfile.MusicVolume = 255;
-				if (_engine->cfgfile.MusicVolume < 0)
-					_engine->cfgfile.MusicVolume = 0;
-				newWidth = _engine->_screens->crossDot(left, right, 255, _engine->cfgfile.MusicVolume);
+			case kMusicVolume: {
+				const int volume = _engine->_system->getMixer()->getVolumeForSoundType(Audio::Mixer::SoundType::kMusicSoundType);
+				newWidth = _engine->_screens->crossDot(left, right, Audio::Mixer::kMaxMixerVolume, volume);
 				break;
 			}
-			case 2: {
-				if (_engine->cfgfile.WaveVolume > 255)
-					_engine->cfgfile.WaveVolume = 255;
-				if (_engine->cfgfile.WaveVolume < 0)
-					_engine->cfgfile.WaveVolume = 0;
-				newWidth = _engine->_screens->crossDot(left, right, 255, _engine->cfgfile.WaveVolume);
+			case kSoundVolume: {
+				const int volume = _engine->_system->getMixer()->getVolumeForSoundType(Audio::Mixer::SoundType::kSFXSoundType);
+				newWidth = _engine->_screens->crossDot(left, right, Audio::Mixer::kMaxMixerVolume, volume);
 				break;
 			}
-			case 3: {
-				if (_engine->cfgfile.CDVolume > 255)
-					_engine->cfgfile.CDVolume = 255;
-				if (_engine->cfgfile.CDVolume < 0)
-					_engine->cfgfile.CDVolume = 0;
-				newWidth = _engine->_screens->crossDot(left, right, 255, _engine->cfgfile.CDVolume);
+			case kCDVolume: {
+				const AudioCDManager::Status status = _engine->_system->getAudioCDManager()->getStatus();
+				newWidth = _engine->_screens->crossDot(left, right, Audio::Mixer::kMaxMixerVolume, status.volume);
 				break;
 			}
-			case 4: {
-				if (_engine->cfgfile.LineVolume > 255)
-					_engine->cfgfile.LineVolume = 255;
-				if (_engine->cfgfile.LineVolume < 0)
-					_engine->cfgfile.LineVolume = 0;
-				newWidth = _engine->_screens->crossDot(left, right, 255, _engine->cfgfile.LineVolume);
+			case kLineVolume: {
+				const int volume = _engine->_system->getMixer()->getVolumeForSoundType(Audio::Mixer::SoundType::kSpeechSoundType);
+				newWidth = _engine->_screens->crossDot(left, right, Audio::Mixer::kMaxMixerVolume, volume);
 				break;
 			}
-			case 5: {
-				if (_engine->cfgfile.MasterVolume > 255)
-					_engine->cfgfile.MasterVolume = 255;
-				if (_engine->cfgfile.MasterVolume < 0)
-					_engine->cfgfile.MasterVolume = 0;
-				newWidth = _engine->_screens->crossDot(left, right, 255, _engine->cfgfile.MasterVolume);
+			case kMasterVolume: {
+				const int volume = _engine->_system->getMixer()->getVolumeForSoundType(Audio::Mixer::SoundType::kPlainSoundType);
+				newWidth = _engine->_screens->crossDot(left, right, Audio::Mixer::kMaxMixerVolume, volume);
 				break;
 			}
 			};
@@ -374,10 +356,6 @@ void Menu::drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, in
 				plasmaEffectPtr[_engine->getRandomNumber() % 320 * 10 + 6400] = 255;
 			}
 		}
-
-		if (id <= 5 && id >= 1) {
-			// implement this
-		}
 	} else {
 		_engine->_interface->blitBox(left, top, right, bottom, (int8 *)_engine->workVideoBuffer, left, top, (int8 *)_engine->frontVideoBuffer);
 		drawTransparentBox(left, top, right, bottom2, 4);
@@ -388,7 +366,7 @@ void Menu::drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, in
 	_engine->_text->setFontColor(15);
 	_engine->_text->setFontParameters(2, 8);
 	_engine->_text->getMenuText(value, dialText);
-	textSize = _engine->_text->getTextSize(dialText);
+	const int32 textSize = _engine->_text->getTextSize(dialText);
 	_engine->_text->drawText(width - (textSize / 2), topheight - 18, dialText);
 
 	// TODO: make volume buttons
@@ -397,19 +375,13 @@ void Menu::drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, in
 }
 
 void Menu::drawButton(int16 *menuSettings, int32 mode) {
-	int32 buttonNumber;
-	int32 maxButton;
 	int16 *localData = menuSettings;
-	int32 topHeight;
-	uint8 menuItemId;
-	uint16 menuItemValue; // applicable for sound menus, to save the volume/sound bar
-	int8 currentButton;
 
-	buttonNumber = *localData;
+	int32 buttonNumber = *localData;
 	localData += 1;
-	maxButton = *localData;
+	int32 maxButton = *localData;
 	localData += 1;
-	topHeight = *localData;
+	int32 topHeight = *localData;
 	localData += 2;
 
 	if (topHeight == 0) {
@@ -422,13 +394,14 @@ void Menu::drawButton(int16 *menuSettings, int32 mode) {
 		return;
 	}
 
-	currentButton = 0;
+	uint8 currentButton = 0;
 
 	do {
 		// get menu item settings
-		menuItemId = (uint8)*localData;
+		uint8 menuItemId = (uint8)*localData;
 		localData += 1;
-		menuItemValue = *localData;
+		// applicable for sound menus, to save the volume/sound bar
+		uint16 menuItemValue = *localData;
 		localData += 1;
 		if (mode != 0) {
 			if (currentButton == buttonNumber) {
@@ -451,23 +424,15 @@ void Menu::drawButton(int16 *menuSettings, int32 mode) {
 }
 
 int32 Menu::processMenu(int16 *menuSettings) {
-	int32 localTime;
-	int32 numEntry;
-	int32 buttonNeedRedraw;
-	int32 maxButton;
 	int16 *localData = menuSettings;
 	int16 currentButton;
-	int32 musicChanged;
 	int32 buttonReleased = 1;
-
-	musicChanged = 0;
-
-	buttonNeedRedraw = 1;
-
-	numEntry = localData[1];
+	int32 musicChanged = 0;
+	int32 buttonNeedRedraw = 1;
+	int32 numEntry = localData[1];
 	currentButton = 0; // localData[0];
-	localTime = _engine->lbaTime;
-	maxButton = numEntry - 1;
+	int32 localTime = _engine->lbaTime;
+	int32 maxButton = numEntry - 1;
 
 	_engine->readKeys();
 
@@ -514,52 +479,58 @@ int32 Menu::processMenu(int16 *menuSettings) {
 
 				switch (id) {
 				case kMusicVolume: {
+					int volume = _engine->_system->getMixer()->getVolumeForSoundType(Audio::Mixer::SoundType::kMusicSoundType);
 					if (((uint8)_engine->_keyboard.key & 4)) { // on arrow key left
-						_engine->cfgfile.MusicVolume -= 4;
+						volume -= 4;
 					}
 					if (((uint8)_engine->_keyboard.key & 8)) { // on arrow key right
-						_engine->cfgfile.MusicVolume += 4;
+						volume += 4;
 					}
-					_engine->_music->musicVolume(_engine->cfgfile.MusicVolume);
+					_engine->_music->musicVolume(volume);
 					break;
 				}
 				case kSoundVolume: {
+					int volume = _engine->_system->getMixer()->getVolumeForSoundType(Audio::Mixer::kSFXSoundType);
 					if (((uint8)_engine->_keyboard.key & 4)) { // on arrow key left
-						_engine->cfgfile.WaveVolume -= 4;
+						volume -= 4;
 					}
 					if (((uint8)_engine->_keyboard.key & 8)) { // on arrow key right
-						_engine->cfgfile.WaveVolume += 4;
+						volume += 4;
 					}
-					_engine->_sound->sampleVolume(-1, _engine->cfgfile.WaveVolume);
+					_engine->_system->getMixer()->setVolumeForSoundType(Audio::Mixer::kSFXSoundType, volume);
 					break;
 				}
 				case kCDVolume: {
+					AudioCDManager::Status status = _engine->_system->getAudioCDManager()->getStatus();
 					if (((uint8)_engine->_keyboard.key & 4)) { // on arrow key left
-						_engine->cfgfile.CDVolume -= 4;
+						status.volume -= 4;
 					}
 					if (((uint8)_engine->_keyboard.key & 8)) { // on arrow key right
-						_engine->cfgfile.CDVolume += 4;
+						status.volume += 4;
 					}
+					_engine->_system->getAudioCDManager()->setVolume(status.volume);
 					break;
 				}
 				case kLineVolume: {
+					int volume = _engine->_system->getMixer()->getVolumeForSoundType(Audio::Mixer::kSpeechSoundType);
 					if (((uint8)_engine->_keyboard.key & 4)) { // on arrow key left
-						_engine->cfgfile.LineVolume -= 4;
+						volume -= 4;
 					}
 					if (((uint8)_engine->_keyboard.key & 8)) { // on arrow key right
-						_engine->cfgfile.LineVolume += 4;
+						volume += 4;
 					}
+					_engine->_system->getMixer()->setVolumeForSoundType(Audio::Mixer::kSpeechSoundType, volume);
 					break;
 				}
 				case kMasterVolume: {
+					int volume = _engine->_system->getMixer()->getVolumeForSoundType(Audio::Mixer::kPlainSoundType);
 					if (((uint8)_engine->_keyboard.key & 4)) { // on arrow key left
-						_engine->cfgfile.MasterVolume -= 4;
+						volume -= 4;
 					}
 					if (((uint8)_engine->_keyboard.key & 8)) { // on arrow key right
-						_engine->cfgfile.MasterVolume += 4;
+						volume += 4;
 					}
-					_engine->_music->musicVolume(_engine->cfgfile.MusicVolume);
-					_engine->_sound->sampleVolume(-1, _engine->cfgfile.WaveVolume);
+					_engine->_system->getMixer()->setVolumeForSoundType(Audio::Mixer::kPlainSoundType, volume);
 					break;
 				}
 				default:

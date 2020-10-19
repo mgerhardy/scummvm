@@ -42,6 +42,10 @@ Sound::Sound(TwinEEngine *engine) : _engine(engine) {
 }
 
 void Sound::sampleVolume(int32 chan, int32 volume) {
+	if (chan == -1) {
+		_engine->_system->getMixer()->setVolumeForSoundType(Audio::Mixer::kPlainSoundType, volume);
+		return;
+	}
 	if (chan < 0 || chan > ARRAYSIZE(samplesPlaying)) {
 		error("Given channel index is out of bounds: %i", chan);
 	}
@@ -71,7 +75,7 @@ void Sound::playFlaSample(int32 index, int32 frequency, int32 repeat, int32 x, i
 	Common::MemoryReadStream stream(sampPtr, sampSize, DisposeAfterUse::YES);
 	Audio::SeekableAudioStream *audioStream = Audio::makeWAVStream(&stream, DisposeAfterUse::NO);
 	// TODO: mgerhardy repeat flag
-	_engine->_system->getMixer()->playStream(Audio::Mixer::kPlainSoundType, &samplesPlaying[channelIdx], audioStream, index, _engine->cfgfile.WaveVolume);
+	_engine->_system->getMixer()->playStream(Audio::Mixer::kPlainSoundType, &samplesPlaying[channelIdx], audioStream, index);
 }
 
 void Sound::setSamplePosition(int32 chan, int32 x, int32 y, int32 z) {
@@ -113,7 +117,7 @@ void Sound::playSample(int32 index, int32 frequency, int32 repeat, int32 x, int3
 	Common::MemoryReadStream stream(sampPtr, sampSize, DisposeAfterUse::YES);
 	Audio::SeekableAudioStream *audioStream = Audio::makeWAVStream(&stream, DisposeAfterUse::NO);
 	// TODO: mgerhardy repeat flag
-	_engine->_system->getMixer()->playStream(Audio::Mixer::kPlainSoundType, &samplesPlaying[channelIdx], audioStream, index, _engine->cfgfile.WaveVolume);
+	_engine->_system->getMixer()->playStream(Audio::Mixer::kPlainSoundType, &samplesPlaying[channelIdx], audioStream, index);
 }
 
 void Sound::resumeSamples() {
@@ -219,7 +223,7 @@ void Sound::playVoxSample(int32 index) {
 
 	Common::MemoryReadStream stream(sampPtr, sampSize, DisposeAfterUse::YES);
 	Audio::SeekableAudioStream *audioStream = Audio::makeWAVStream(&stream, DisposeAfterUse::NO);
-	_engine->_system->getMixer()->playStream(Audio::Mixer::kPlainSoundType, &samplesPlaying[channelIdx], audioStream, index, _engine->cfgfile.WaveVolume);
+	_engine->_system->getMixer()->playStream(Audio::Mixer::kPlainSoundType, &samplesPlaying[channelIdx], audioStream, index);
 
 }
 

@@ -49,20 +49,19 @@ uint8 *midiPtr;
 #endif
 
 void Music::musicVolume(int32 volume) {
-#if 0 // TODO
-	// div 2 because LBA use 255 range and SDL_mixer use 128 range
-	Mix_VolumeMusic(volume / 2);
-#endif
+	_engine->_system->getMixer()->setVolumeForSoundType(Audio::Mixer::SoundType::kMusicSoundType, volume);
 }
 
 void Music::musicFadeIn(int32 loops, int32 ms) {
+	int volume = _engine->_system->getMixer()->getVolumeForSoundType(Audio::Mixer::SoundType::kMusicSoundType);
 #if 0 // TODO
 	Mix_FadeInMusic(current_track, loops, ms);
 #endif
-	musicVolume(_engine->cfgfile.MusicVolume);
+	musicVolume(volume);
 }
 
 void Music::musicFadeOut(int32 ms) {
+	int volume = _engine->_system->getMixer()->getVolumeForSoundType(Audio::Mixer::SoundType::kMusicSoundType);
 #if 0 // TODO
 	while (!Mix_FadeOutMusic(ms) && Mix_PlayingMusic()) {
 		SDL_Delay(100);
@@ -70,7 +69,7 @@ void Music::musicFadeOut(int32 ms) {
 	Mix_HaltMusic();
 	Mix_RewindMusic();
 #endif
-	musicVolume(_engine->cfgfile.MusicVolume);
+	musicVolume(volume);
 }
 
 void Music::playTrackMusicCd(int32 track) {

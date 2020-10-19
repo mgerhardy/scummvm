@@ -132,11 +132,11 @@ void TwinEEngine::initConfigurations() {
 	// TODO: use Language abstraction
 	cfgfile.Language = ConfGetOrDefault("Language", "English");
 	cfgfile.LanguageId = getLanguageTypeIndex(cfgfile.Language.c_str());
-	cfgfile.LanguageCD = ConfGetOrDefault("LanguageCD", "English");
+	cfgfile.LanguageCD = ConfGetOrDefault("LanguageCD", "None");
 	cfgfile.LanguageCDId = getLanguageTypeIndex(cfgfile.LanguageCD.c_str()) + 1;
 
 	cfgfile.FlagDisplayText = ConfGetOrDefault("FlagDisplayText", "ON") == "ON";
-	cfgfile.FlagKeepVoice = ConfGetOrDefault("FlagKeepVoice", "ON") == "ON";
+	cfgfile.FlagKeepVoice = ConfGetOrDefault("FlagKeepVoice", "OFF") == "ON";
 	const Common::String midiType = ConfGetOrDefault("MidiType", "auto");
 	if (midiType == "auto") {
 		Common::File midiHqr;
@@ -150,12 +150,6 @@ void TwinEEngine::initConfigurations() {
 	} else {
 		cfgfile.MidiType = 0;
 	}
-	cfgfile.VoiceVolume = cfgfile.WaveVolume = ConfGetIntOrDefault("WaveVolume", 255);
-	cfgfile.VoiceVolume = ConfGetIntOrDefault("VoiceVolume", cfgfile.VoiceVolume);
-	cfgfile.MusicVolume = ConfGetIntOrDefault("MusicVolume", 255);
-	cfgfile.CDVolume = ConfGetIntOrDefault("CDVolume", 255);
-	cfgfile.LineVolume = ConfGetIntOrDefault("LineVolume", 255);
-	cfgfile.MasterVolume = ConfGetIntOrDefault("MasterVolume", 255);
 	cfgfile.Version = ConfGetIntOrDefault("Version", 0);
 	cfgfile.FullScreen = ConfGetIntOrDefault("FullScreen", 1) == 1;
 	cfgfile.UseCD = ConfGetIntOrDefault("UseCD", 0);
@@ -168,8 +162,6 @@ void TwinEEngine::initConfigurations() {
 	cfgfile.AutoAgressive = ConfGetIntOrDefault("CombatAuto", 0);
 	cfgfile.ShadowMode = ConfGetIntOrDefault("Shadow", 0);
 	cfgfile.SceZoom = ConfGetIntOrDefault("SceZoom", 0);
-	cfgfile.FillDetails = ConfGetIntOrDefault("FillDetails", 0);
-	cfgfile.InterfaceStyle = ConfGetIntOrDefault("InterfaceStyle", 0);
 	cfgfile.WallCollision = ConfGetIntOrDefault("WallCollision", 0);
 }
 
