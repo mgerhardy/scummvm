@@ -37,7 +37,6 @@ class Sound {
 private:
 	TwinEEngine *_engine;
 
-	/** SDL_Mixer channels */
 	int32 channel;
 	int32 channelIdx = -1;
 	int32 isChannelPlaying(int32 channel);

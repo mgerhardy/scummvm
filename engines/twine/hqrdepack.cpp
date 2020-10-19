@@ -20,35 +20,31 @@
  *
  */
 
+#include "twine/hqrdepack.h"
 #include "common/system.h"
 #include "common/textconsole.h"
-#include "twine/hqrdepack.h"
 
 namespace TwinE {
 
 HQRDepack::HQRDepack(TwinEEngine *engine) : _engine(engine) {}
 
 void HQRDepack::hqrDecompressEntry(uint8 *dst, uint8 *src, int32 decompsize, int32 mode) {
-	uint8 b;
-	int32 lenght, d, i;
-	uint16 offset;
-	uint8 *ptr;
-
 	do {
-		b = *(src++);
-		for (d = 0; d < 8; d++) {
+		uint8 b = *(src++);
+		for (int32 d = 0; d < 8; d++) {
+			int32 length;
 			if (!(b & (1 << d))) {
-				offset = *(uint16 *)(src);
+				uint16 offset = *(uint16 *)(src);
 				src += 2;
-				lenght = (offset & 0x0F) + (mode + 1);
-				ptr = dst - (offset >> 4) - 1;
-				for (i = 0; i < lenght; i++)
+				length = (offset & 0x0F) + (mode + 1);
+				uint8 *ptr = dst - (offset >> 4) - 1;
+				for (int32 i = 0; i < length; i++)
 					*(dst++) = *(ptr++);
 			} else {
-				lenght = 1;
+				length = 1;
 				*(dst++) = *(src++);
 			}
-			decompsize -= lenght;
+			decompsize -= length;
 			if (decompsize <= 0)
 				return;
 		}
@@ -56,56 +52,52 @@ void HQRDepack::hqrDecompressEntry(uint8 *dst, uint8 *src, int32 decompsize, int
 }
 
 void HQRDepack::hqrDecompressLZEntry(uint8 *dst, uint8 *src, int32 decompsize, int32 mode) {
-	uint16 offset;
-	int32 lenght;
-	uint8 *ptr;
-
 	while (decompsize > 0) {
-		uint8 bits;
 		uint8 type = *(src++);
-		for (bits = 1; bits != 0; bits <<= 1) {
+		for (uint8 bits = 1; bits != 0; bits <<= 1) {
+			int32 length;
 			if (!(type & bits)) {
-				offset = *(uint16 *)(src);
+				uint16 offset = *(uint16 *)(src);
 				src += 2;
-				lenght = (offset & 0x0F) + (mode + 1);
-				ptr = dst - (offset >> 4) - 1;
+				length = (offset & 0x0F) + (mode + 1);
+				uint8 *ptr = dst - (offset >> 4) - 1;
 				if (offset == 0) {
-					memset(dst, *ptr, lenght);
+					memset(dst, *ptr, length);
 				} else {
-					if ((ptr + lenght) >= dst) {
-						int32 n;
+					if ((ptr + length) >= dst) {
 						uint8 *tmp = dst;
-						for (n = 0; n < lenght; n++)
+						for (int32 n = 0; n < length; n++)
 							*tmp++ = *ptr++;
 					} else {
-						memcpy(dst, ptr, lenght);
+						memcpy(dst, ptr, length);
 					}
 				}
-				dst += lenght;
+				dst += length;
 			} else {
-				lenght = 1;
+				length = 1;
 				*(dst++) = *(src++);
 			}
-			decompsize -= lenght;
-			if (decompsize <= 0)
+			decompsize -= length;
+			if (decompsize <= 0) {
 				return;
+			}
 		}
 	}
 }
 
 int32 HQRDepack::hqrGetEntry(uint8 *ptr, const char *filename, int32 index) {
-	uint32 headerSize;
-	uint32 offsetToData;
-	uint32 realSize;
-	uint32 compSize;
-	uint16 mode;
-
-	if (!filename)
+	if (!ptr) {
 		return 0;
+	}
+	if (!filename) {
+		return 0;
+	}
 
-	if (!fropen2(&fr, filename, "rb"))
-		warning("HQR: %s can't be found !", filename);
+	if (!fropen2(&fr, filename, "rb")) {
+		error("HQR: %s can't be found!", filename);
+	}
 
+	uint32 headerSize;
 	frread(&fr, &headerSize, 4);
 
 	if ((uint32)index >= headerSize / 4) {
@@ -115,21 +107,16 @@ int32 HQRDepack::hqrGetEntry(uint8 *ptr, const char *filename, int32 index) {
 	}
 
 	frseek(&fr, index * 4);
+	uint32 offsetToData;
 	frread(&fr, &offsetToData, 4);
 
 	frseek(&fr, offsetToData);
+	uint32 realSize;
 	frread(&fr, &realSize, 4);
+	uint32 compSize;
 	frread(&fr, &compSize, 4);
+	uint16 mode;
 	frread(&fr, &mode, 2);
-
-	if (!ptr)
-		ptr = (uint8 *)malloc(realSize);
-
-	if (!ptr) {
-		warning("HQR WARNING: Unable to allocate memory!!");
-		frclose(&fr);
-		return 0;
-	}
 
 	// uncompressed
 	if (mode == 0) {
@@ -150,18 +137,15 @@ int32 HQRDepack::hqrGetEntry(uint8 *ptr, const char *filename, int32 index) {
 }
 
 int HQRDepack::hqrEntrySize(const char *filename, int32 index) {
-	uint32 headerSize;
-	uint32 offsetToData;
-	uint32 realSize;
-
-	if (!filename)
+	if (!filename) {
 		return 0;
-
-	if (!fropen2(&fr, filename, "rb")) {
-		error("HQR: %s can't be found !\n", filename);
-		g_system->fatalError();
 	}
 
+	if (!fropen2(&fr, filename, "rb")) {
+		error("HQR: %s can't be found!", filename);
+	}
+
+	uint32 headerSize;
 	frread(&fr, &headerSize, 4);
 
 	if ((uint32)index >= headerSize / 4) {
@@ -171,9 +155,11 @@ int HQRDepack::hqrEntrySize(const char *filename, int32 index) {
 	}
 
 	frseek(&fr, index * 4);
+	uint32 offsetToData;
 	frread(&fr, &offsetToData, 4);
 
 	frseek(&fr, offsetToData);
+	uint32 realSize;
 	frread(&fr, &realSize, 4);
 
 	frclose(&fr);
@@ -182,25 +168,21 @@ int HQRDepack::hqrEntrySize(const char *filename, int32 index) {
 }
 
 int HQRDepack::hqrNumEntries(const char *filename) {
-	uint32 headerSize;
-
-	if (!filename)
+	if (!filename) {
 		return 0;
-
-	if (!fropen2(&fr, filename, "rb")) {
-		error("HQR: %s can't be found !\n", filename);
-		g_system->fatalError();
 	}
 
-	frread(&fr, &headerSize, 4);
+	if (!fropen2(&fr, filename, "rb")) {
+		error("HQR: %s can't be found!", filename);
+	}
 
-	return headerSize / 4;
+	uint32 headerSize;
+	frread(&fr, &headerSize, 4);
+	return (int)headerSize / 4;
 }
 
 int32 HQRDepack::hqrGetallocEntry(uint8 **ptr, const char *filename, int32 index) {
-	int32 size;
-	size = hqrEntrySize(filename, index);
-
+	const int32 size = hqrEntrySize(filename, index);
 	*ptr = (uint8 *)malloc(size * sizeof(uint8));
 	if (!*ptr) {
 		warning("HQR WARNING: unable to allocate entry memory!!");
@@ -211,20 +193,19 @@ int32 HQRDepack::hqrGetallocEntry(uint8 **ptr, const char *filename, int32 index
 	return size;
 }
 
-
 int32 HQRDepack::hqrGetVoxEntry(uint8 *ptr, const char *filename, int32 index, int32 hiddenIndex) {
-	uint32 headerSize;
-	uint32 offsetToData;
-	uint32 realSize;
-	uint32 compSize;
-	uint16 mode;
-
-	if (!filename)
+	if (!ptr) {
 		return 0;
+	}
+	if (!filename) {
+		return 0;
+	}
 
-	if (!fropen2(&fr, filename, "rb"))
-		warning("HQR: %s can't be found!", filename);
+	if (!fropen2(&fr, filename, "rb")) {
+		error("HQR: %s can't be found!", filename);
+	}
 
+	uint32 headerSize;
 	frread(&fr, &headerSize, 4);
 
 	if ((uint32)index >= headerSize / 4) {
@@ -234,33 +215,25 @@ int32 HQRDepack::hqrGetVoxEntry(uint8 *ptr, const char *filename, int32 index, i
 	}
 
 	frseek(&fr, index * 4);
+	uint32 offsetToData;
 	frread(&fr, &offsetToData, 4);
 
 	frseek(&fr, offsetToData);
+	uint32 realSize;
 	frread(&fr, &realSize, 4);
+	uint32 compSize;
 	frread(&fr, &compSize, 4);
+	uint16 mode;
 	frread(&fr, &mode, 2);
 
 	// exist hidden entries
-	if (hiddenIndex > 0) {
-		int32 i = 0;
-		for (i = 0; i < hiddenIndex; i++) {
-			frseek(&fr, offsetToData + compSize + 10);   // hidden entry
-			offsetToData = offsetToData + compSize + 10; // current hidden offset
+	for (int32 i = 0; i < hiddenIndex; i++) {
+		frseek(&fr, offsetToData + compSize + 10);   // hidden entry
+		offsetToData = offsetToData + compSize + 10; // current hidden offset
 
-			frread(&fr, &realSize, 4);
-			frread(&fr, &compSize, 4);
-			frread(&fr, &mode, 2);
-		}
-	}
-
-	if (!ptr)
-		ptr = (uint8 *)malloc(realSize);
-
-	if (!ptr) {
-		warning("HQR WARNING: Unable to allocate memory!!");
-		frclose(&fr);
-		return 0;
+		frread(&fr, &realSize, 4);
+		frread(&fr, &compSize, 4);
+		frread(&fr, &mode, 2);
 	}
 
 	// uncompressed
@@ -282,19 +255,15 @@ int32 HQRDepack::hqrGetVoxEntry(uint8 *ptr, const char *filename, int32 index, i
 }
 
 int HQRDepack::hqrVoxEntrySize(const char *filename, int32 index, int32 hiddenIndex) {
-	uint32 headerSize;
-	uint32 offsetToData;
-	uint32 realSize;
-	uint32 compSize;
-
-	if (!filename)
+	if (!filename) {
 		return 0;
-
-	if (!fropen2(&fr, filename, "rb")) {
-		warning("HQR: %s can't be found !", filename);
-		g_system->fatalError();
 	}
 
+	if (!fropen2(&fr, filename, "rb")) {
+		error("HQR: %s can't be found!", filename);
+	}
+
+	uint32 headerSize;
 	frread(&fr, &headerSize, 4);
 
 	if ((uint32)index >= headerSize / 4) {
@@ -304,22 +273,22 @@ int HQRDepack::hqrVoxEntrySize(const char *filename, int32 index, int32 hiddenIn
 	}
 
 	frseek(&fr, index * 4);
+	uint32 offsetToData;
 	frread(&fr, &offsetToData, 4);
 
 	frseek(&fr, offsetToData);
+	uint32 realSize;
 	frread(&fr, &realSize, 4);
+	uint32 compSize;
 	frread(&fr, &compSize, 4);
 
 	// exist hidden entries
-	if (hiddenIndex > 0) {
-		int32 i = 0;
-		for (i = 0; i < hiddenIndex; i++) {
-			frseek(&fr, offsetToData + compSize + 10);   // hidden entry
-			offsetToData = offsetToData + compSize + 10; // current hidden offset
+	for (int32 i = 0; i < hiddenIndex; i++) {
+		frseek(&fr, offsetToData + compSize + 10);   // hidden entry
+		offsetToData = offsetToData + compSize + 10; // current hidden offset
 
-			frread(&fr, &realSize, 4);
-			frread(&fr, &compSize, 4);
-		}
+		frread(&fr, &realSize, 4);
+		frread(&fr, &compSize, 4);
 	}
 
 	frclose(&fr);
@@ -328,8 +297,7 @@ int HQRDepack::hqrVoxEntrySize(const char *filename, int32 index, int32 hiddenIn
 }
 
 int32 HQRDepack::hqrGetallocVoxEntry(uint8 **ptr, const char *filename, int32 index, int32 hiddenIndex) {
-	int32 size;
-	size = hqrVoxEntrySize(filename, index, hiddenIndex);
+	const int32 size = hqrVoxEntrySize(filename, index, hiddenIndex);
 
 	*ptr = (uint8 *)malloc(size * sizeof(uint8));
 	if (!*ptr) {
