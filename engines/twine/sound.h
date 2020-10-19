@@ -40,9 +40,6 @@ private:
 	/** Get the channel where the sample is playing */
 	int32 getSampleChannel(int32 index);
 
-	int32 channel;
-	int32 channelIdx = -1;
-
 	/** Samples playing at the same time */
 	Audio::SoundHandle samplesPlaying[NUM_CHANNELS];
 

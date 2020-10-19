@@ -128,7 +128,7 @@ void TwinEEngine::initConfigurations() {
 	const Common::String midiType = ConfGetOrDefault("MidiType", "auto");
 	if (midiType == "auto") {
 		Common::File midiHqr;
-		if (midiHqr.exists(HQR_MIDI_MI_WIN_FILE)) {
+		if (midiHqr.exists(Resources::HQR_MIDI_MI_WIN_FILE)) {
 			cfgfile.MidiType = 1;
 		} else {
 			cfgfile.MidiType = 0;

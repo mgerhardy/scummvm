@@ -135,11 +135,11 @@ void Text::initTextBank(int32 bankIdx) { // InitDial
 	// get index according with language
 	langIdx = (_engine->cfgfile.LanguageId * 14) * 2 + bankIdx * 2;
 
-	hqrSize = _engine->_hqrdepack->hqrGetallocEntry((uint8 **)&dialOrderPtr, HQR_TEXT_FILE, langIdx);
+	hqrSize = _engine->_hqrdepack->hqrGetallocEntry((uint8 **)&dialOrderPtr, Resources::HQR_TEXT_FILE, langIdx);
 
 	numDialTextEntries = hqrSize / 2;
 
-	hqrSize = _engine->_hqrdepack->hqrGetallocEntry((uint8 **)&dialTextPtr, HQR_TEXT_FILE, ++langIdx);
+	hqrSize = _engine->_hqrdepack->hqrGetallocEntry((uint8 **)&dialTextPtr, Resources::HQR_TEXT_FILE, ++langIdx);
 
 	if (_engine->cfgfile.LanguageCDId) {
 		initVoxBank(bankIdx);

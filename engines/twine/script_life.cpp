@@ -1227,7 +1227,7 @@ static int32 lFADE_PAL_RED(TwinEEngine *engine, int32 actorIdx, ActorStruct *act
 /*0x53*/
 static int32 lFADE_ALARM_RED(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	engine->freezeTime();
-	engine->_hqrdepack->hqrGetEntry(engine->_screens->palette, HQR_RESS_FILE, RESSHQR_ALARMREDPAL);
+	engine->_hqrdepack->hqrGetEntry(engine->_screens->palette, Resources::HQR_RESS_FILE, RESSHQR_ALARMREDPAL);
 	engine->_screens->convertPalToRGBA(engine->_screens->palette, engine->_screens->paletteRGBA);
 	engine->_screens->fadePalRed(engine->_screens->paletteRGBA);
 	engine->_screens->useAlternatePalette = 1;
@@ -1238,7 +1238,7 @@ static int32 lFADE_ALARM_RED(TwinEEngine *engine, int32 actorIdx, ActorStruct *a
 /*0x54*/
 static int32 lFADE_ALARM_PAL(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	engine->freezeTime();
-	engine->_hqrdepack->hqrGetEntry(engine->_screens->palette, HQR_RESS_FILE, RESSHQR_ALARMREDPAL);
+	engine->_hqrdepack->hqrGetEntry(engine->_screens->palette, Resources::HQR_RESS_FILE, RESSHQR_ALARMREDPAL);
 	engine->_screens->convertPalToRGBA(engine->_screens->palette, engine->_screens->paletteRGBA);
 	engine->_screens->adjustCrossPalette(engine->_screens->paletteRGBA, engine->_screens->mainPaletteRGBA);
 	engine->_screens->useAlternatePalette = 0;
@@ -1258,7 +1258,7 @@ static int32 lFADE_RED_PAL(TwinEEngine *engine, int32 actorIdx, ActorStruct *act
 /*0x56*/
 static int32 lFADE_RED_ALARM(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	engine->freezeTime();
-	engine->_hqrdepack->hqrGetEntry(engine->_screens->palette, HQR_RESS_FILE, RESSHQR_ALARMREDPAL);
+	engine->_hqrdepack->hqrGetEntry(engine->_screens->palette, Resources::HQR_RESS_FILE, RESSHQR_ALARMREDPAL);
 	engine->_screens->convertPalToRGBA(engine->_screens->palette, engine->_screens->paletteRGBA);
 	engine->_screens->fadeRedPal(engine->_screens->paletteRGBA);
 	engine->_screens->useAlternatePalette = 1;
@@ -1269,7 +1269,7 @@ static int32 lFADE_RED_ALARM(TwinEEngine *engine, int32 actorIdx, ActorStruct *a
 /*0x57*/
 static int32 lFADE_PAL_ALARM(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	engine->freezeTime();
-	engine->_hqrdepack->hqrGetEntry(engine->_screens->palette, HQR_RESS_FILE, RESSHQR_ALARMREDPAL);
+	engine->_hqrdepack->hqrGetEntry(engine->_screens->palette, Resources::HQR_RESS_FILE, RESSHQR_ALARMREDPAL);
 	engine->_screens->convertPalToRGBA(engine->_screens->palette, engine->_screens->paletteRGBA);
 	engine->_screens->adjustCrossPalette(engine->_screens->mainPaletteRGBA, engine->_screens->paletteRGBA);
 	engine->_screens->useAlternatePalette = 1;
@@ -1321,7 +1321,7 @@ static int32 lASK_CHOICE_OBJ(TwinEEngine *engine, int32 actorIdx, ActorStruct *a
 /*0x5C*/
 static int32 lSET_DARK_PAL(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 	engine->freezeTime();
-	engine->_hqrdepack->hqrGetEntry(engine->_screens->palette, HQR_RESS_FILE, RESSHQR_DARKPAL);
+	engine->_hqrdepack->hqrGetEntry(engine->_screens->palette, Resources::HQR_RESS_FILE, RESSHQR_DARKPAL);
 	if (!engine->_screens->lockPalette) {
 		engine->_screens->convertPalToRGBA(engine->_screens->palette, engine->_screens->paletteRGBA);
 		engine->setPalette(engine->_screens->paletteRGBA);

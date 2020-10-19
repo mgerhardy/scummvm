@@ -687,7 +687,7 @@ void Menu::mainMenu() {
 	// load menu effect file only once
 	plasmaEffectPtr = (uint8 *)malloc(kPlasmaEffectFilesize);
 	memset(plasmaEffectPtr, 0, kPlasmaEffectFilesize);
-	_engine->_hqrdepack->hqrGetEntry(plasmaEffectPtr, HQR_RESS_FILE, RESSHQR_PLASMAEFFECT);
+	_engine->_hqrdepack->hqrGetEntry(plasmaEffectPtr, Resources::HQR_RESS_FILE, RESSHQR_PLASMAEFFECT);
 
 	while (!_engine->cfgfile.Quit) {
 		_engine->_text->initTextBank(0);

@@ -178,7 +178,7 @@ void Scene::loadScene() {
 		localScene += 2;
 
 		if (!sceneActors[i].staticFlags.bIsSpriteActor) {
-			_engine->_hqrdepack->hqrGetallocEntry(&sceneActors[i].entityDataPtr, HQR_FILE3D_FILE, sceneActors[i].entity);
+			_engine->_hqrdepack->hqrGetallocEntry(&sceneActors[i].entityDataPtr, Resources::HQR_FILE3D_FILE, sceneActors[i].entity);
 		}
 
 		sceneActors[i].body = *(localScene++);
@@ -278,7 +278,7 @@ void Scene::loadScene() {
 
 int32 Scene::initScene(int32 index) {
 	// load scene from file
-	_engine->_hqrdepack->hqrGetallocEntry(&currentScene, HQR_SCENE_FILE, index);
+	_engine->_hqrdepack->hqrGetallocEntry(&currentScene, Resources::HQR_SCENE_FILE, index);
 
 	loadScene();
 

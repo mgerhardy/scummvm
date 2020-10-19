@@ -130,9 +130,9 @@ void Music::playMidiMusic(int32 midiIdx, int32 loop) {
 	currentMusic = midiIdx;
 
 	if (_engine->cfgfile.MidiType == 0)
-		sprintf(filename, "%s", HQR_MIDI_MI_DOS_FILE);
+		sprintf(filename, "%s", Resources::HQR_MIDI_MI_DOS_FILE);
 	else
-		sprintf(filename, "%s", HQR_MIDI_MI_WIN_FILE);
+		sprintf(filename, "%s", Resources::HQR_MIDI_MI_WIN_FILE);
 
 	if (midiPtr) {
 		musicFadeOut(FADE_MS / 2);

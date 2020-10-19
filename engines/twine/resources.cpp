@@ -31,7 +31,7 @@ namespace TwinE {
 
 void Resources::initPalettes() {
 	// Init standard palette
-	_engine->_hqrdepack->hqrGetallocEntry(&_engine->_screens->mainPalette, HQR_RESS_FILE, RESSHQR_MAINPAL);
+	_engine->_hqrdepack->hqrGetallocEntry(&_engine->_screens->mainPalette, Resources::HQR_RESS_FILE, RESSHQR_MAINPAL);
 	_engine->_screens->convertPalToRGBA(_engine->_screens->mainPalette, _engine->_screens->mainPaletteRGBA);
 
 	memcpy(_engine->_screens->palette, _engine->_screens->mainPalette, NUMOFCOLORS * 3);
@@ -45,37 +45,37 @@ void Resources::initPalettes() {
 
 void Resources::preloadSprites() {
 	int32 i;
-	int32 numEntries = _engine->_hqrdepack->hqrNumEntries(HQR_SPRITES_FILE) - 1;
+	int32 numEntries = _engine->_hqrdepack->hqrNumEntries(Resources::HQR_SPRITES_FILE) - 1;
 
 	for (i = 0; i < numEntries; i++) {
-		_engine->_actor->spriteSizeTable[i] = _engine->_hqrdepack->hqrGetallocEntry(&_engine->_actor->spriteTable[i], HQR_SPRITES_FILE, i);
+		_engine->_actor->spriteSizeTable[i] = _engine->_hqrdepack->hqrGetallocEntry(&_engine->_actor->spriteTable[i], Resources::HQR_SPRITES_FILE, i);
 	}
 }
 
 void Resources::preloadAnimations() {
 	int32 i;
-	int32 numEntries = _engine->_hqrdepack->hqrNumEntries(HQR_ANIM_FILE) - 1;
+	int32 numEntries = _engine->_hqrdepack->hqrNumEntries(Resources::HQR_ANIM_FILE) - 1;
 
 	for (i = 0; i < numEntries; i++) {
-		_engine->_animations->animSizeTable[i] = _engine->_hqrdepack->hqrGetallocEntry(&_engine->_animations->animTable[i], HQR_ANIM_FILE, i);
+		_engine->_animations->animSizeTable[i] = _engine->_hqrdepack->hqrGetallocEntry(&_engine->_animations->animTable[i], Resources::HQR_ANIM_FILE, i);
 	}
 }
 
 void Resources::preloadSamples() {
 	int32 i;
-	int32 numEntries = _engine->_hqrdepack->hqrNumEntries(HQR_SAMPLES_FILE) - 1;
+	int32 numEntries = _engine->_hqrdepack->hqrNumEntries(Resources::HQR_SAMPLES_FILE) - 1;
 
 	for (i = 0; i < numEntries; i++) {
-		_engine->_sound->samplesSizeTable[i] = _engine->_hqrdepack->hqrGetallocEntry(&_engine->_sound->samplesTable[i], HQR_SAMPLES_FILE, i);
+		_engine->_sound->samplesSizeTable[i] = _engine->_hqrdepack->hqrGetallocEntry(&_engine->_sound->samplesTable[i], Resources::HQR_SAMPLES_FILE, i);
 	}
 }
 
 void Resources::preloadInventoryItems() {
 	int32 i;
-	int32 numEntries = _engine->_hqrdepack->hqrNumEntries(HQR_INVOBJ_FILE) - 1;
+	int32 numEntries = _engine->_hqrdepack->hqrNumEntries(Resources::HQR_INVOBJ_FILE) - 1;
 
 	for (i = 0; i < numEntries; i++) {
-		inventorySizeTable[i] = _engine->_hqrdepack->hqrGetallocEntry(&inventoryTable[i], HQR_INVOBJ_FILE, i);
+		inventorySizeTable[i] = _engine->_hqrdepack->hqrGetallocEntry(&inventoryTable[i], Resources::HQR_INVOBJ_FILE, i);
 	}
 }
 
@@ -84,16 +84,16 @@ void Resources::initResources() {
 	initPalettes();
 
 	// load LBA font
-	_engine->_hqrdepack->hqrGetallocEntry(&_engine->_text->fontPtr, HQR_RESS_FILE, RESSHQR_LBAFONT);
+	_engine->_hqrdepack->hqrGetallocEntry(&_engine->_text->fontPtr, Resources::HQR_RESS_FILE, RESSHQR_LBAFONT);
 
 	_engine->_text->setFontParameters(2, 8);
 	_engine->_text->setFontColor(14);
 	_engine->_text->setTextCrossColor(136, 143, 2);
 
-	_engine->_hqrdepack->hqrGetallocEntry(&_engine->_scene->spriteShadowPtr, HQR_RESS_FILE, RESSHQR_SPRITESHADOW);
+	_engine->_hqrdepack->hqrGetallocEntry(&_engine->_scene->spriteShadowPtr, Resources::HQR_RESS_FILE, RESSHQR_SPRITESHADOW);
 
 	// load sprite actors bounding box data
-	_engine->_hqrdepack->hqrGetallocEntry(&_engine->_scene->spriteBoundingBoxPtr, HQR_RESS_FILE, RESSHQR_SPRITEBOXDATA);
+	_engine->_hqrdepack->hqrGetallocEntry(&_engine->_scene->spriteBoundingBoxPtr, Resources::HQR_RESS_FILE, RESSHQR_SPRITEBOXDATA);
 
 	preloadSprites();
 	preloadAnimations();

@@ -308,7 +308,7 @@ int32 Grid::loadGridBricks(int32 gridSize) {
 
 	for (uint32 i = firstBrick; i <= lastBrick; i++) {
 		if (brickUsageTable[i]) {
-			brickSizeTable[i] = _engine->_hqrdepack->hqrGetallocEntry(&brickTable[i], HQR_LBA_BRK_FILE, i);
+			brickSizeTable[i] = _engine->_hqrdepack->hqrGetallocEntry(&brickTable[i], Resources::HQR_LBA_BRK_FILE, i);
 		}
 	}
 
@@ -412,10 +412,10 @@ void Grid::createCellingGridMap(uint8 *gridPtr) {
 
 int32 Grid::initGrid(int32 index) {
 	// load grids from file
-	int32 gridSize = _engine->_hqrdepack->hqrGetallocEntry(&currentGrid, HQR_LBA_GRI_FILE, index);
+	int32 gridSize = _engine->_hqrdepack->hqrGetallocEntry(&currentGrid, Resources::HQR_LBA_GRI_FILE, index);
 
 	// load layouts from file
-	_engine->_hqrdepack->hqrGetallocEntry(&currentBll, HQR_LBA_BLL_FILE, index);
+	_engine->_hqrdepack->hqrGetallocEntry(&currentBll, Resources::HQR_LBA_BLL_FILE, index);
 
 	loadGridBricks(gridSize);
 
@@ -432,7 +432,7 @@ int32 Grid::initCellingGrid(int32 index) {
 	uint8 *gridPtr;
 
 	// load grids from file
-	_engine->_hqrdepack->hqrGetallocEntry(&gridPtr, HQR_LBA_GRI_FILE, index + CELLING_GRIDS_START_INDEX);
+	_engine->_hqrdepack->hqrGetallocEntry(&gridPtr, Resources::HQR_LBA_GRI_FILE, index + CELLING_GRIDS_START_INDEX);
 
 	createCellingGridMap(gridPtr);
 

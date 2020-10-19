@@ -57,13 +57,13 @@ void Sound::playFlaSample(int32 index, int32 frequency, int32 repeat, int32 x, i
 		return;
 	}
 
-	channelIdx = getFreeSampleChannelIndex();
+	int channelIdx = getFreeSampleChannelIndex();
 	if (channelIdx == -1) {
 		return;
 	}
 
 	char sampfile[256];
-	sprintf(sampfile, FLA_DIR "%s", HQR_FLASAMP_FILE);
+	sprintf(sampfile, FLA_DIR "%s", Resources::HQR_FLASAMP_FILE);
 
 	uint8 *sampPtr;
 	int32 sampSize = _engine->_hqrdepack->hqrGetallocEntry(&sampPtr, sampfile, index);
@@ -96,12 +96,12 @@ void Sound::playSample(int32 index, int32 frequency, int32 repeat, int32 x, int3
 		return;
 	}
 
-	channelIdx = getFreeSampleChannelIndex();
+	int channelIdx = getFreeSampleChannelIndex();
 	if (channelIdx == -1) {
 		return;
 	}
 	uint8 *sampPtr;
-	int32 sampSize = _engine->_hqrdepack->hqrGetallocEntry(&sampPtr, HQR_SAMPLES_FILE, index);
+	int32 sampSize = _engine->_hqrdepack->hqrGetallocEntry(&sampPtr, Resources::HQR_SAMPLES_FILE, index);
 	// Fix incorrect sample files first byte
 	if (*sampPtr != 'C') {
 		*sampPtr = 'C';
@@ -192,8 +192,7 @@ int32 Sound::isSamplePlaying(int32 index) {
 }
 
 int32 Sound::getFreeSampleChannelIndex() {
-	int i = 0;
-	for (i = 0; i < NUM_CHANNELS; i++) {
+	for (int i = 0; i < NUM_CHANNELS; i++) {
 		if (!_engine->_system->getMixer()->isSoundHandleActive(samplesPlaying[i])) {
 			return i;
 		}
@@ -206,7 +205,7 @@ void Sound::playVoxSample(int32 index) {
 		return;
 	}
 
-	channelIdx = getFreeSampleChannelIndex();
+	int channelIdx = getFreeSampleChannelIndex();
 	if (channelIdx != -1) {
 		return;
 	}

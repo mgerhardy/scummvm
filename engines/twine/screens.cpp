@@ -39,7 +39,7 @@ void Screens::adelineLogo() {
 }
 
 void Screens::loadMenuImage(int16 fade_in) {
-	_engine->_hqrdepack->hqrGetEntry(_engine->workVideoBuffer, HQR_RESS_FILE, RESSHQR_MENUIMG);
+	_engine->_hqrdepack->hqrGetEntry(_engine->workVideoBuffer, Resources::HQR_RESS_FILE, RESSHQR_MENUIMG);
 	copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 	if (fade_in) {
 		fadeToPal(paletteRGBA);
@@ -51,12 +51,12 @@ void Screens::loadMenuImage(int16 fade_in) {
 }
 
 void Screens::loadCustomPalette(int32 index) {
-	_engine->_hqrdepack->hqrGetEntry(palette, HQR_RESS_FILE, index);
+	_engine->_hqrdepack->hqrGetEntry(palette, Resources::HQR_RESS_FILE, index);
 	convertPalToRGBA(palette, paletteRGBACustom);
 }
 
 void Screens::loadImage(int32 index, int16 fade_in) {
-	_engine->_hqrdepack->hqrGetEntry(_engine->workVideoBuffer, HQR_RESS_FILE, index);
+	_engine->_hqrdepack->hqrGetEntry(_engine->workVideoBuffer, Resources::HQR_RESS_FILE, index);
 	copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 	loadCustomPalette(index + 1);
 	if (fade_in) {

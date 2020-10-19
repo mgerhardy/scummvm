@@ -66,23 +66,23 @@ void Actor::restartHeroScene() {
 }
 
 void Actor::loadHeroEntities() {
-	_engine->_hqrdepack->hqrGetallocEntry(&heroEntityATHLETIC, HQR_FILE3D_FILE, FILE3DHQR_HEROATHLETIC);
+	_engine->_hqrdepack->hqrGetallocEntry(&heroEntityATHLETIC, Resources::HQR_FILE3D_FILE, FILE3DHQR_HEROATHLETIC);
 	_engine->_scene->sceneHero->entityDataPtr = heroEntityATHLETIC;
 	heroAnimIdxATHLETIC = _engine->_animations->getBodyAnimIndex(0, 0);
 
-	_engine->_hqrdepack->hqrGetallocEntry(&heroEntityAGGRESSIVE, HQR_FILE3D_FILE, FILE3DHQR_HEROAGGRESSIVE);
+	_engine->_hqrdepack->hqrGetallocEntry(&heroEntityAGGRESSIVE, Resources::HQR_FILE3D_FILE, FILE3DHQR_HEROAGGRESSIVE);
 	_engine->_scene->sceneHero->entityDataPtr = heroEntityAGGRESSIVE;
 	heroAnimIdxAGGRESSIVE = _engine->_animations->getBodyAnimIndex(0, 0);
 
-	_engine->_hqrdepack->hqrGetallocEntry(&heroEntityDISCRETE, HQR_FILE3D_FILE, FILE3DHQR_HERODISCRETE);
+	_engine->_hqrdepack->hqrGetallocEntry(&heroEntityDISCRETE, Resources::HQR_FILE3D_FILE, FILE3DHQR_HERODISCRETE);
 	_engine->_scene->sceneHero->entityDataPtr = heroEntityDISCRETE;
 	heroAnimIdxDISCRETE = _engine->_animations->getBodyAnimIndex(0, 0);
 
-	_engine->_hqrdepack->hqrGetallocEntry(&heroEntityPROTOPACK, HQR_FILE3D_FILE, FILE3DHQR_HEROPROTOPACK);
+	_engine->_hqrdepack->hqrGetallocEntry(&heroEntityPROTOPACK, Resources::HQR_FILE3D_FILE, FILE3DHQR_HEROPROTOPACK);
 	_engine->_scene->sceneHero->entityDataPtr = heroEntityPROTOPACK;
 	heroAnimIdxPROTOPACK = _engine->_animations->getBodyAnimIndex(0, 0);
 
-	_engine->_hqrdepack->hqrGetallocEntry(&heroEntityNORMAL, HQR_FILE3D_FILE, FILE3DHQR_HERONORMAL);
+	_engine->_hqrdepack->hqrGetallocEntry(&heroEntityNORMAL, Resources::HQR_FILE3D_FILE, FILE3DHQR_HERONORMAL);
 	_engine->_scene->sceneHero->entityDataPtr = heroEntityNORMAL;
 	heroAnimIdxNORMAL = _engine->_animations->getBodyAnimIndex(0, 0);
 
@@ -164,7 +164,7 @@ int32 Actor::initBody(int32 bodyIdx, int32 actorIdx) {
 				int16 flag = *((uint16 *)bodyPtr3);
 
 				if (!(flag & 0x8000)) {
-					_engine->_hqrdepack->hqrGetallocEntry(&bodyTable[currentPositionInBodyPtrTab], HQR_BODY_FILE, flag & 0xFFFF);
+					_engine->_hqrdepack->hqrGetallocEntry(&bodyTable[currentPositionInBodyPtrTab], Resources::HQR_BODY_FILE, flag & 0xFFFF);
 
 					if (!bodyTable[currentPositionInBodyPtrTab]) {
 						error("HQR ERROR: Loading body entities");

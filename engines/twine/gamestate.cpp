@@ -474,8 +474,8 @@ void GameState::processGameoverAnimation() { // makeGameOver
 	// TODO: drawInGameTransBox
 	_engine->setPalette(_engine->_screens->paletteRGBA);
 	_engine->_screens->copyScreen(_engine->frontVideoBuffer, _engine->workVideoBuffer);
-	uint8 *gameOverPtr = (uint8 *)malloc(_engine->_hqrdepack->hqrEntrySize(HQR_RESS_FILE, RESSHQR_GAMEOVERMDL));
-	_engine->_hqrdepack->hqrGetEntry(gameOverPtr, HQR_RESS_FILE, RESSHQR_GAMEOVERMDL);
+	uint8 *gameOverPtr = (uint8 *)malloc(_engine->_hqrdepack->hqrEntrySize(Resources::HQR_RESS_FILE, RESSHQR_GAMEOVERMDL));
+	_engine->_hqrdepack->hqrGetEntry(gameOverPtr, Resources::HQR_RESS_FILE, RESSHQR_GAMEOVERMDL);
 
 	if (gameOverPtr) {
 		int32 avg, cdot;
