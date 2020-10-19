@@ -893,9 +893,9 @@ void TwinEEngine::initScreenBuffer(uint8 *buffer, int32 width, int32 height) {
 	screenBuffer = SDL_CreateRGBSurfaceFrom(buffer, width, height, 8, SCREEN_WIDTH, 0, 0, 0, 0);
 #endif
 }
-#if 0
 
 void TwinEEngine::crossFade(uint8 *buffer, uint8 *palette) {
+#if 0
 	int32 i;
 	SDL_Surface *backupSurface;
 	SDL_Surface *newSurface;
@@ -937,8 +937,8 @@ void TwinEEngine::crossFade(uint8 *buffer, uint8 *palette) {
 	SDL_FreeSurface(backupSurface);
 	SDL_FreeSurface(newSurface);
 	SDL_FreeSurface(tempSurface);
-}
 #endif
+}
 
 void TwinEEngine::toggleFullscreen() {
 #if 0

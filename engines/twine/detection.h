@@ -26,10 +26,7 @@
 namespace TwinE {
 
 enum GameFlag {
-	kGameFlagDemo = 1 << 0,
-	kGameFlagEncodedData = 1 << 1,
-	kGameFlagNoSubtitles = 1 << 2,
-	kGameFlagIntroOnly = 1 << 3
+	kGameFlagDemo = 1 << 0
 };
 
 } // End of namespace TwinE

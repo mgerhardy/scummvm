@@ -20,13 +20,15 @@
  *
  */
 
+#include "base/plugins.h"
+#include "common/fs.h"
 #include "common/savefile.h"
 #include "common/system.h"
-#include "common/fs.h"
 #include "engines/advancedDetector.h"
-#include "base/plugins.h"
 
 #include "twine/twine.h"
+
+namespace TwinE {
 
 class TwinEMetaEngine : public AdvancedMetaEngine {
 public:
@@ -46,8 +48,10 @@ public:
 	}
 };
 
-#if PLUGIN_ENABLED_DYNAMIC(TwinE)
-	REGISTER_PLUGIN_DYNAMIC(TwinE, PLUGIN_TYPE_ENGINE, TwinEMetaEngine);
+} // namespace TwinE
+
+#if PLUGIN_ENABLED_DYNAMIC(TWINE)
+REGISTER_PLUGIN_DYNAMIC(TWINE, PLUGIN_TYPE_ENGINE, TwinE::TwinEMetaEngine);
 #else
-	REGISTER_PLUGIN_STATIC(TwinE, PLUGIN_TYPE_ENGINE, TwinEMetaEngine);
+REGISTER_PLUGIN_STATIC(TWINE, PLUGIN_TYPE_ENGINE, TwinE::TwinEMetaEngine);
 #endif

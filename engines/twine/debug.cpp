@@ -59,7 +59,7 @@ void Debug::debugDrawButton(int32 left, int32 top, int32 right, int32 bottom, co
 }
 
 void Debug::debugDrawWindowBox(int32 left, int32 top, int32 right, int32 bottom, int32 alpha) {
-	_engine->_menu->drawTransparentBox(left, top, right, bottom, alpha);
+	_engine->_interface->drawTransparentBox(left, top, right, bottom, alpha);
 	_engine->_menu->drawBox(left, top, right, bottom);
 	//_engine->copyBlockPhys(left,top,right,bottom);
 }

@@ -355,7 +355,7 @@ void Menu::drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, in
 		}
 	} else {
 		_engine->_interface->blitBox(left, top, right, bottom, (int8 *)_engine->workVideoBuffer, left, top, (int8 *)_engine->frontVideoBuffer);
-		drawTransparentBox(left, top, right, bottom2, 4);
+		_engine->_interface->drawTransparentBox(left, top, right, bottom2, 4);
 	}
 
 	drawBox(left, top, right, bottom);
@@ -877,7 +877,7 @@ void Menu::drawBehaviour(int16 behaviour, int32 angle, int16 cantDrawBox) {
 
 void Menu::drawBehaviourMenu(int32 angle) {
 	drawBox(100, 100, 550, 290);
-	drawTransparentBox(101, 101, 549, 289, 2);
+	_engine->_interface->drawTransparentBox(101, 101, 549, 289, 2);
 
 	_engine->_animations->setAnimAtKeyframe(behaviourAnimState[kNormal], _engine->_animations->animTable[_engine->_actor->heroAnimIdx[kNormal]], behaviourEntity, &behaviourAnimData[kNormal]);
 	drawBehaviour(kNormal, angle, 0);
@@ -1027,7 +1027,7 @@ void Menu::drawItem(int32 item) {
 void Menu::drawInventoryItems() {
 	int32 item;
 
-	drawTransparentBox(17, 10, 622, 320, 4);
+	_engine->_interface->drawTransparentBox(17, 10, 622, 320, 4);
 	drawBox(17, 10, 622, 320);
 	drawMagicItemsBox(110, 18, 188, 311, 75);
 	_engine->copyBlockPhys(17, 10, 622, 320);

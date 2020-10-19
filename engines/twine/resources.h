@@ -92,23 +92,23 @@ namespace TwinE {
 #define SPRITEHQR_DIAG_BUBBLE_RIGHT 90
 #define SPRITEHQR_DIAG_BUBBLE_LEFT 91
 
-const char *HQR_RESS_FILE = "ress.hqr";
-const char *HQR_TEXT_FILE = "text.hqr";
-const char *HQR_FLASAMP_FILE = "flasamp.hqr";
-const char *HQR_MIDI_MI_DOS_FILE = "midi_mi.hqr";
-const char *HQR_MIDI_MI_WIN_FILE = "midi_mi_win.hqr";
-const char *HQR_MIDI_MI_WIN_MP3_FILE = "midi_mi_win_mp3.hqr";
-const char *HQR_MIDI_MI_WIN_OGG_FILE = "midi_mi_win_ogg.hqr";
-const char *HQR_SAMPLES_FILE = "samples.hqr";
-const char *HQR_LBA_GRI_FILE = "lba_gri.hqr";
-const char *HQR_LBA_BLL_FILE = "lba_bll.hqr";
-const char *HQR_LBA_BRK_FILE = "lba_brk.hqr";
-const char *HQR_SCENE_FILE = "scene.hqr";
-const char *HQR_SPRITES_FILE = "sprites.hqr";
-const char *HQR_FILE3D_FILE = "file3d.hqr";
-const char *HQR_BODY_FILE = "body.hqr";
-const char *HQR_ANIM_FILE = "anim.hqr";
-const char *HQR_INVOBJ_FILE = "invobj.hqr";
+static const char *HQR_RESS_FILE = "ress.hqr";
+static const char *HQR_TEXT_FILE = "text.hqr";
+static const char *HQR_FLASAMP_FILE = "flasamp.hqr";
+static const char *HQR_MIDI_MI_DOS_FILE = "midi_mi.hqr";
+static const char *HQR_MIDI_MI_WIN_FILE = "midi_mi_win.hqr";
+static const char *HQR_MIDI_MI_WIN_MP3_FILE = "midi_mi_win_mp3.hqr";
+static const char *HQR_MIDI_MI_WIN_OGG_FILE = "midi_mi_win_ogg.hqr";
+static const char *HQR_SAMPLES_FILE = "samples.hqr";
+static const char *HQR_LBA_GRI_FILE = "lba_gri.hqr";
+static const char *HQR_LBA_BLL_FILE = "lba_bll.hqr";
+static const char *HQR_LBA_BRK_FILE = "lba_brk.hqr";
+static const char *HQR_SCENE_FILE = "scene.hqr";
+static const char *HQR_SPRITES_FILE = "sprites.hqr";
+static const char *HQR_FILE3D_FILE = "file3d.hqr";
+static const char *HQR_BODY_FILE = "body.hqr";
+static const char *HQR_ANIM_FILE = "anim.hqr";
+static const char *HQR_INVOBJ_FILE = "invobj.hqr";
 
 class TwinEEngine;
 class Resources {
