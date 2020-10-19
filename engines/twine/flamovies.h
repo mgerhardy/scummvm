@@ -24,7 +24,7 @@
 #define TWINE_FLAMOVIES_H
 
 #include "common/scummsys.h"
-#include "twine/filereader.h"
+#include "common/file.h"
 
 namespace TwinE {
 
@@ -110,8 +110,6 @@ private:
 	FLAHeaderStruct flaHeaderData;
 	/** FLA movie header data */
 	FLAFrameDataStruct frameData;
-
-	FileReader frFla;
 
 	void drawKeyFrame(uint8 *ptr, int32 width, int32 height);
 	void drawDeltaFrame(uint8 *ptr, int32 width);

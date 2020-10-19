@@ -122,7 +122,7 @@ void GameState::initHeroVars() {    // reinitAll3
 	_engine->_scene->sceneHero->talkColor = 4;
 }
 
-void GameState::initEngineVars(int32 save) { // reinitAll
+void GameState::initEngineVars() { // reinitAll
 	_engine->_interface->resetClip();
 
 	_engine->_scene->alphaLight = 896;
@@ -160,13 +160,6 @@ void GameState::initEngineVars(int32 save) { // reinitAll
 	_engine->_actor->heroBehaviour = 0;
 	_engine->_actor->previousHeroAngle = 0;
 	_engine->_actor->previousHeroBehaviour = 0;
-
-	if (save == -1) {
-		loadGame();
-		if (_engine->_scene->newHeroX == -1) {
-			_engine->_scene->heroPositionType = kNoPosition;
-		}
-	}
 }
 
 void GameState::loadGame() {

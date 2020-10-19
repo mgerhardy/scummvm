@@ -106,7 +106,7 @@ public:
 	int32 choiceAnswer;            // inGameMenuAnswer
 
 	/** Initialize all engine variables */
-	void initEngineVars(int32 save);
+	void initEngineVars();
 
 	/** Initialize engine 3D projections */
 	void initEngineProjections();

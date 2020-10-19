@@ -103,7 +103,7 @@ void MenuOptions::showCredits() {
 	tmpLanguageCDIdx = _engine->cfgfile.LanguageCDId;
 	_engine->cfgfile.ShadowMode = 0;
 	_engine->cfgfile.LanguageCDId = 0;
-	_engine->_gameState->initEngineVars(1);
+	_engine->_gameState->initEngineVars();
 	_engine->_scene->currentSceneIdx = 119;
 	_engine->_scene->needChangeScene = 119;
 
@@ -270,7 +270,7 @@ int32 MenuOptions::enterPlayerName(int32 textIdx) {
 void MenuOptions::newGameMenu() {
 	//TODO: process players name
 	if (enterPlayerName(MAINMENU_ENTERPLAYERNAME)) {
-		_engine->_gameState->initEngineVars(1);
+		_engine->_gameState->initEngineVars();
 		newGame();
 
 		if (_engine->gameEngineLoop()) {
@@ -298,7 +298,11 @@ void MenuOptions::continueGameMenu() {
 	//TODO: get list of saved games
 	//if(chooseSave(MAINMENU_CONTINUEGAME))
 	{
-		_engine->_gameState->initEngineVars(-1); // will load game
+		_engine->_gameState->initEngineVars();
+		_engine->_gameState->loadGame();
+		if (_engine->_scene->newHeroX == -1) {
+			_engine->_scene->heroPositionType = kNoPosition;
+		}
 		if (_engine->_gameState->gameChapter == 0 && _engine->_scene->currentSceneIdx == 0) {
 			newGame();
 		} else {
