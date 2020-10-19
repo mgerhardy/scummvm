@@ -347,10 +347,10 @@ void Text::initText(int32 index) {
 void Text::initProgressiveTextBuffer() {
 	int32 i = 0;
 
-	buf2[0] = 0;
+	buf2[0] = '\0';
 
 	while (i < dialTextBufferSize) {
-		strcat((char *)buf2, " ");
+		strncat(buf2, " ", sizeof(buf2));
 		i++;
 	};
 
