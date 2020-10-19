@@ -793,15 +793,13 @@ void Menu::drawInfoMenu(int16 left, int16 top) {
 	/** draw coin sprite */
 	_engine->_grid->drawSprite(0, boxLeft, top + 15, _engine->_actor->spriteTable[SPRITEHQR_KASHES]);
 	_engine->_text->setFontColor(155);
-	Common::String inventoryNumKashes;
-	inventoryNumKashes.format("%d", _engine->_gameState->inventoryNumKashes);
+	Common::String inventoryNumKashes = Common::String::format("%d", _engine->_gameState->inventoryNumKashes);
 	_engine->_text->drawText(left + 370, top + 5, inventoryNumKashes.c_str());
 
 	/** draw key sprite */
 	_engine->_grid->drawSprite(0, boxLeft, top + 55, _engine->_actor->spriteTable[SPRITEHQR_KEY]);
 	_engine->_text->setFontColor(155);
-	Common::String inventoryNumKeys;
-	inventoryNumKashes.format("%d", _engine->_gameState->inventoryNumKeys);
+	Common::String inventoryNumKeys = Common::String::format("%d", _engine->_gameState->inventoryNumKeys);
 	_engine->_text->drawText(left + 370, top + 40, inventoryNumKeys.c_str());
 
 	// prevent
@@ -1014,8 +1012,7 @@ void Menu::drawItem(int32 item) {
 
 		if (item == 15) { // has GAS
 			_engine->_text->setFontColor(15);
-			Common::String inventoryNumGas;
-			inventoryNumGas.format("%d", _engine->_gameState->inventoryNumGas);
+			Common::String inventoryNumGas = Common::String::format("%d", _engine->_gameState->inventoryNumGas);
 			_engine->_text->drawText(left + 3, top + 32, inventoryNumGas.c_str());
 		}
 	}

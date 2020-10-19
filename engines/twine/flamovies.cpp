@@ -257,8 +257,7 @@ void FlaMovies::playFlaMovie(const char *flaName) {
 		}
 	}
 
-	Common::String fileNamePath;
-	fileNamePath.format(FLA_DIR "%s" FLA_EXT, flaName);
+	Common::String fileNamePath = Common::String::format(FLA_DIR "%s" FLA_EXT, flaName);
 
 	_fadeOut = -1;
 	fadeOutFrames = 0;
