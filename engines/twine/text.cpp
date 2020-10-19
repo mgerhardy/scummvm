@@ -22,6 +22,7 @@
 
 #include "twine/text.h"
 #include "common/scummsys.h"
+#include "common/str.h"
 #include "common/system.h"
 #include "twine/hqrdepack.h"
 #include "twine/interface.h"
@@ -40,41 +41,31 @@ namespace TwinE {
 /** Common movie directory */
 #define VOX_DIR "vox/"
 
-const char *LanguagePrefixTypes[] = {
-    "EN_",
-    "FR_",
-    "DE_",
-    "SP_",
-    "IT_"};
-
-const char *LanguageSufixTypes[] = {
-    "sys",
-    "cre",
-    "gam",
-    "000",
-    "001",
-    "002",
-    "003",
-    "004",
-    "005",
-    "006",
-    "007",
-    "008",
-    "009",
-    "010",
-    "011"};
-
 void Text::initVoxBank(int32 bankIdx) {
+	static const char *LanguageSufixTypes[] = {
+		"sys",
+		"cre",
+		"gam",
+		"000",
+		"001",
+		"002",
+		"003",
+		"004",
+		"005",
+		"006",
+		"007",
+		"008",
+		"009",
+		"010",
+		"011"};
+	if (bankIdx < 0 || bankIdx >= ARRAYSIZE(LanguageSufixTypes)) {
+		error("bankIdx is out of bounds: %i", bankIdx);
+	}
 	// get the correct vox hqr file
-	memset(currentVoxBankFile, 0, sizeof(int8));
-	sprintf(currentVoxBankFile, VOX_DIR);
-	strcat(currentVoxBankFile, LanguagePrefixTypes[_engine->cfgfile.LanguageId]);
-	strcat(currentVoxBankFile, LanguageSufixTypes[bankIdx]);
-	strcat(currentVoxBankFile, VOX_EXT);
+	currentVoxBankFile = Common::String::format(VOX_DIR "%s%s" VOX_EXT, LanguageTypes[_engine->cfgfile.LanguageId].id, LanguageSufixTypes[bankIdx]);
 
 	// TODO check the rest to reverse
 }
-
 int32 Text::initVoxToPlay(int32 index) { // setVoxFileAtDigit
 	int32 i = 0;
 	int32 currIdx = 0;
@@ -144,11 +135,11 @@ void Text::initTextBank(int32 bankIdx) { // InitDial
 	// get index according with language
 	langIdx = (_engine->cfgfile.LanguageId * 14) * 2 + bankIdx * 2;
 
-	hqrSize = _engine->_hqrdepack->hqrGetallocEntry((uint8**)&dialOrderPtr, HQR_TEXT_FILE, langIdx);
+	hqrSize = _engine->_hqrdepack->hqrGetallocEntry((uint8 **)&dialOrderPtr, HQR_TEXT_FILE, langIdx);
 
 	numDialTextEntries = hqrSize / 2;
 
-	hqrSize = _engine->_hqrdepack->hqrGetallocEntry((uint8**)&dialTextPtr, HQR_TEXT_FILE, ++langIdx);
+	hqrSize = _engine->_hqrdepack->hqrGetallocEntry((uint8 **)&dialTextPtr, HQR_TEXT_FILE, ++langIdx);
 
 	if (_engine->cfgfile.LanguageCDId) {
 		initVoxBank(bankIdx);
@@ -774,17 +765,14 @@ void Text::setTextCrossColor(int32 stopColor, int32 startColor, int32 stepSize) 
 	dialTextBufferSize = ((startColor - stopColor) + 1) / stepSize;
 }
 
-int32 Text::getText(int32 index) { // findString
+bool Text::getText(int32 index) { // findString
 	int32 currIdx = 0;
 	int32 orderIdx = 0;
-	int32 numEntries;
-	int32 ptrCurrentEntry;
-	int32 ptrNextEntry;
 
 	int16 *localTextBuf = (int16 *)dialTextPtr;
 	int16 *localOrderBuf = (int16 *)dialOrderPtr;
 
-	numEntries = numDialTextEntries;
+	int32 numEntries = numDialTextEntries;
 
 	// choose right text from order index
 	do {
@@ -794,11 +782,12 @@ int32 Text::getText(int32 index) { // findString
 		currIdx++;
 	} while (currIdx < numDialTextEntries);
 
-	if (currIdx >= numEntries)
-		return 0;
+	if (currIdx >= numEntries) {
+		return false;
+	}
 
-	ptrCurrentEntry = localTextBuf[currIdx];
-	ptrNextEntry = localTextBuf[currIdx + 1];
+	int32 ptrCurrentEntry = localTextBuf[currIdx];
+	int32 ptrNextEntry = localTextBuf[currIdx + 1];
 
 	currDialTextPtr = (dialTextPtr + ptrCurrentEntry);
 	currDialTextSize = ptrNextEntry - ptrCurrentEntry;
@@ -807,7 +796,7 @@ int32 Text::getText(int32 index) { // findString
 	// RECHECK: this was added for vox playback
 	currDialTextEntry = currIdx;
 
-	return 1;
+	return true;
 }
 
 void Text::copyText(const char *src, char *dst, int32 size) { // copyStringToString
@@ -816,21 +805,22 @@ void Text::copyText(const char *src, char *dst, int32 size) { // copyStringToStr
 		*(dst++) = *(src++);
 }
 
-void Text::getMenuText(int32 index, char *text) { // GetMultiText
+void Text::getMenuText(int32 index, char *text, uint32 textSize) { // GetMultiText
 	if (index == _engine->_menu->currMenuTextIndex) {
 		if (_engine->_menu->currMenuTextBank == currentTextBank) {
-			strcpy(text, _engine->_menu->currMenuTextBuffer);
+			Common::strlcpy(text, _engine->_menu->currMenuTextBuffer, textSize);
 			return;
 		}
 	}
 	if (!getText(index)) {
 		// if doesn't have text
-		text[0] = 0;
+		text[0] = '\0';
 		return;
 	}
 
-	if ((currDialTextSize - 1) > 0xFF)
+	if ((currDialTextSize - 1) > 0xFF) {
 		currDialTextSize = 0xFF;
+	}
 
 	copyText(currDialTextPtr, text, currDialTextSize);
 	currDialTextSize++;

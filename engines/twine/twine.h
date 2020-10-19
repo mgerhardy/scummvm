@@ -56,22 +56,28 @@ namespace TwinE {
 /** Number of colors used in the game */
 #define NUMOFCOLORS 256
 
+static const struct TwinELanguage {
+	const char *name;
+	const char *id;
+} LanguageTypes[] = {
+	{"English", "EN_"},
+	{"Francais", "FR_"},
+	{"Deutsch", "DE_"},
+	{"Espanol", "SP_"},
+	{"Italiano", "IT_"},
+	{"Portugues", ""}
+};
+
 /** Configuration file structure
 
 	Used in the engine to load/use certain parts of code according with
 	this settings. Check \a lba.cfg file for valid values for each settings.\n
 	All the settings with (*) means they are new and only exist in this engine. */
 typedef struct ConfigFile {
-	/** Language name */
-	Common::String Language;
-	/** Language CD name */
-	Common::String LanguageCD;
-	/** Language Identification according with Language setting. */
+	/** Index into the LanguageTypes array. */
 	int32 LanguageId;
-	/** Language Identification according with Language setting. */
+	/** Index into the LanguageTypes array. */
 	int32 LanguageCDId;
-	/** Enable/Disable game dialogues */
-	int8 FlagDisplayTextStr[3];
 	/** Enable/Disable game dialogues */
 	bool FlagDisplayText;
 	/** Save voice files on hard disk */

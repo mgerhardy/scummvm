@@ -212,7 +212,7 @@ void Sound::playVoxSample(int32 index) {
 	}
 
 	uint8 *sampPtr = nullptr;
-	int32 sampSize = _engine->_hqrdepack->hqrGetallocVoxEntry(&sampPtr, _engine->_text->currentVoxBankFile, index, _engine->_text->voxHiddenIndex);
+	int32 sampSize = _engine->_hqrdepack->hqrGetallocVoxEntry(&sampPtr, _engine->_text->currentVoxBankFile.c_str(), index, _engine->_text->voxHiddenIndex);
 
 	// Fix incorrect sample files first byte
 	if (*sampPtr != 'C') {
@@ -224,7 +224,6 @@ void Sound::playVoxSample(int32 index) {
 	Common::MemoryReadStream stream(sampPtr, sampSize, DisposeAfterUse::YES);
 	Audio::SeekableAudioStream *audioStream = Audio::makeWAVStream(&stream, DisposeAfterUse::NO);
 	_engine->_system->getMixer()->playStream(Audio::Mixer::kPlainSoundType, &samplesPlaying[channelIdx], audioStream, index);
-
 }
 
 } // namespace TwinE

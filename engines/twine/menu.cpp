@@ -298,13 +298,10 @@ void Menu::drawBox(int32 left, int32 top, int32 right, int32 bottom) {
 }
 
 void Menu::drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, int32 mode) {
-	char dialText[256];
 	/*
 	 * int CDvolumeRemaped; int musicVolumeRemaped; int masterVolumeRemaped; int lineVolumeRemaped;
 	 * int waveVolumeRemaped;
 	 */
-
-	memset(dialText, 0, sizeof(dialText));
 
 	int32 left = width - kMainMenuButtonSpan / 2;
 	int32 right = width + kMainMenuButtonSpan / 2;
@@ -365,7 +362,8 @@ void Menu::drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, in
 
 	_engine->_text->setFontColor(15);
 	_engine->_text->setFontParameters(2, 8);
-	_engine->_text->getMenuText(value, dialText);
+	char dialText[256];
+	_engine->_text->getMenuText(value, dialText, sizeof(dialText));
 	const int32 textSize = _engine->_text->getTextSize(dialText);
 	_engine->_text->drawText(width - (textSize / 2), topheight - 18, dialText);
 
@@ -825,15 +823,12 @@ void Menu::drawInfoMenu(int16 left, int16 top) {
 }
 
 void Menu::drawBehaviour(int16 behaviour, int32 angle, int16 cantDrawBox) {
-	uint8 *currentAnim;
-	char dialText[256];
-
 	int32 boxLeft = behaviour * 110 + 110;
 	int32 boxRight = boxLeft + 99;
 	int32 boxTop = 110;
 	int32 boxBottom = 229;
 
-	currentAnim = _engine->_animations->animTable[_engine->_actor->heroAnimIdx[behaviour]];
+	uint8 *currentAnim = _engine->_animations->animTable[_engine->_actor->heroAnimIdx[behaviour]];
 	int32 currentAnimState = behaviourAnimState[behaviour];
 
 	if (_engine->_animations->setModelAnimation(currentAnimState, currentAnim, behaviourEntity, &behaviourAnimData[behaviour])) {
@@ -862,10 +857,11 @@ void Menu::drawBehaviour(int16 behaviour, int32 angle, int16 cantDrawBox) {
 
 		_engine->_text->setFontColor(15);
 
+		char dialText[256];
 		if (_engine->_actor->heroBehaviour == 2 && _engine->_actor->autoAgressive == 1) {
-			_engine->_text->getMenuText(4, dialText);
+			_engine->_text->getMenuText(4, dialText, sizeof(dialText));
 		} else {
-			_engine->_text->getMenuText(_engine->_actor->heroBehaviour, dialText);
+			_engine->_text->getMenuText(_engine->_actor->heroBehaviour, dialText, sizeof(dialText));
 		}
 
 		_engine->_text->drawText((650 - _engine->_text->getTextSize(dialText)) / 2, 240, dialText);

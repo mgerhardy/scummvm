@@ -1458,7 +1458,7 @@ static int32 lTEXT(TwinEEngine *engine, int32 actorIdx, ActorStruct *actor) {
 			}
 		}
 
-		engine->_text->getMenuText(textIdx, textStr);
+		engine->_text->getMenuText(textIdx, textStr, sizeof(textStr));
 		textSize = textBoxRight = engine->_text->getTextSize(textStr);
 		engine->_text->setFontColor(15);
 		engine->_text->drawText(0, drawVar1, textStr);

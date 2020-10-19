@@ -216,7 +216,7 @@ int32 MenuOptions::enterPlayerName(int32 textIdx) {
 		_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 		_engine->flip(); //frontVideoBuffer
 		_engine->_text->initTextBank(0);
-		_engine->_text->getMenuText(textIdx, buffer);
+		_engine->_text->getMenuText(textIdx, buffer, sizeof(buffer));
 		_engine->_text->setFontColor(15);
 		_engine->_text->drawText(320 - (_engine->_text->getTextSize(buffer) / 2), 20, buffer);
 		_engine->copyBlockPhys(0, 0, 639, 99);

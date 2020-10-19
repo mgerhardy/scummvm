@@ -24,6 +24,7 @@
 #define TWINE_TEXT_H
 
 #include "common/scummsys.h"
+#include "common/str.h"
 
 namespace TwinE {
 
@@ -142,7 +143,7 @@ public:
 
 	int32 currDialTextEntry; // ordered entry
 	int32 nextDialTextEntry; // ordered entry
-	char currentVoxBankFile[256];
+	Common::String currentVoxBankFile;
 
 	int32 showDialogueBubble;
 
@@ -203,14 +204,15 @@ public:
 	 * Get dialogue text into text buffer
 	 * @param index dialogue index
 	 */
-	int32 getText(int32 index);
+	bool getText(int32 index);
 
 	/**
 	 * Gets menu dialogue text
 	 * @param index text index to display
-	 * @param dialogue dialogue text buffer to display
+	 * @param text dialogue text buffer to display
+	 * @param textSize The size of the text buffer
 	 */
-	void getMenuText(int32 index, char *text);
+	void getMenuText(int32 index, char *text, uint32 textSize);
 
 	void textClipFull();
 	void textClipSmall();

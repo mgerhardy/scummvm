@@ -665,13 +665,12 @@ void Redraw::redrawEngineActions(int32 bgRedraw) { // fullRedraw
 				_engine->_gameState->initEngineProjections();
 			} break;
 			case koText: {
-				int32 textLength, textHeight;
 				char text[256];
 
-				_engine->_text->getMenuText(overlay->info0, text);
+				_engine->_text->getMenuText(overlay->info0, text, sizeof(text));
 
-				textLength = _engine->_text->getTextSize(text);
-				textHeight = 48;
+				int32 textLength = _engine->_text->getTextSize(text);
+				int32 textHeight = 48;
 
 				renderLeft = overlay->X - (textLength / 2);
 				renderTop = overlay->Y - 24;

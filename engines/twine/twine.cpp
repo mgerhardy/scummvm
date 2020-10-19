@@ -25,6 +25,7 @@
 #include "common/debug.h"
 #include "common/error.h"
 #include "common/events.h"
+#include "common/str.h"
 #include "common/system.h"
 #include "common/textconsole.h"
 #include "engines/util.h"
@@ -91,32 +92,19 @@ void TwinEEngine::allocVideoMemory() {
 	// initVideoVar1 = -1;
 }
 
-static int getLanguageTypeIndex(const char *language) {
-	int32 i;
+static int getLanguageTypeIndex(const char *languageName) {
 	char buffer[256];
-	char *ptr;
+	Common::strlcpy(buffer, languageName, sizeof(buffer));
 
-	strcpy(buffer, language);
-
-	ptr = strchr(buffer, ' ');
-
-	if (ptr) {
-		*ptr = 0;
+	char *ptr = strchr(buffer, ' ');
+	if (ptr != nullptr) {
+		*ptr = '\0';
 	}
 
-	static const char LanguageTypes[][10] = {
-	    "English",
-	    "Francais",
-	    "Deutsch",
-	    "Espanol",
-	    "Italiano",
-	    "Portugues"};
-	const int32 length = sizeof(LanguageTypes) / 10;
-	for (i = 0; i < length; i++) {
-		if (strlen(LanguageTypes[i])) {
-			if (!strcmp(LanguageTypes[i], buffer)) {
-				return i;
-			}
+	const int32 length = ARRAYSIZE(LanguageTypes);
+	for (int32 i = 0; i < length; i++) {
+		if (!strcmp(LanguageTypes[i].name, buffer)) {
+			return i;
 		}
 	}
 
@@ -129,11 +117,11 @@ static int getLanguageTypeIndex(const char *language) {
 void TwinEEngine::initConfigurations() {
 	// TODO: use existing entries for some of the settings - like volume and so on.
 
-	// TODO: use Language abstraction
-	cfgfile.Language = ConfGetOrDefault("Language", "English");
-	cfgfile.LanguageId = getLanguageTypeIndex(cfgfile.Language.c_str());
-	cfgfile.LanguageCD = ConfGetOrDefault("LanguageCD", "None");
-	cfgfile.LanguageCDId = getLanguageTypeIndex(cfgfile.LanguageCD.c_str()) + 1;
+	Common::String language = ConfGetOrDefault("Language", Common::getLanguageDescription(_gameLang));
+	cfgfile.LanguageId = getLanguageTypeIndex(language.c_str()) + 1;
+
+	Common::String languageCD = ConfGetOrDefault("LanguageCD", "None");
+	cfgfile.LanguageCDId = getLanguageTypeIndex(languageCD.c_str()) + 1;
 
 	cfgfile.FlagDisplayText = ConfGetOrDefault("FlagDisplayText", "ON") == "ON";
 	cfgfile.FlagKeepVoice = ConfGetOrDefault("FlagKeepVoice", "OFF") == "ON";
@@ -150,7 +138,7 @@ void TwinEEngine::initConfigurations() {
 	} else {
 		cfgfile.MidiType = 0;
 	}
-	cfgfile.Version = ConfGetIntOrDefault("Version", 0);
+	cfgfile.Version = ConfGetIntOrDefault("Version", EUROPE_VERSION);
 	cfgfile.FullScreen = ConfGetIntOrDefault("FullScreen", 1) == 1;
 	cfgfile.UseCD = ConfGetIntOrDefault("UseCD", 0);
 	cfgfile.Sound = ConfGetIntOrDefault("Sound", 0);
