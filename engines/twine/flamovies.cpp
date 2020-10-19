@@ -248,22 +248,19 @@ void FlaMovies::playFlaMovie(const char *flaName) {
 
 	_engine->_music->stopMusic();
 
-	// take extension if movie name has it
-	int32 flaNameLength = (int32)strlen((const char *)flaName);
-	for (int32 i = 0; i < flaNameLength; i++) {
-		if (flaName[i] == '.') {
-			flaNameLength = i;
-			break;
-		}
+	Common::String fileNamePath = Common::String::format(FLA_DIR "%s", flaName);
+	const size_t n = fileNamePath.findLastOf(".");
+	if (n != Common::String::npos) {
+		fileNamePath.erase(n);
 	}
-
-	Common::String fileNamePath = Common::String::format(FLA_DIR "%s" FLA_EXT, flaName);
+	fileNamePath += FLA_EXT;
 
 	_fadeOut = -1;
 	fadeOutFrames = 0;
 
 	if (!file.open(fileNamePath)) {
-		error("Failed to open fla movie '%s'", fileNamePath.c_str());
+		warning("Failed to open fla movie '%s'", fileNamePath.c_str());
+		return;
 	}
 
 	workVideoBufferCopy = _engine->workVideoBuffer;
