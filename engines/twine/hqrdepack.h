@@ -24,7 +24,6 @@
 #define TWINE_HQRDEPACK_H
 
 #include "common/scummsys.h"
-#include "twine/filereader.h"
 
 namespace TwinE {
 
@@ -33,8 +32,6 @@ class TwinEEngine;
 class HQRDepack {
 private:
 	TwinEEngine *_engine;
-
-	FileReader fr;
 
 	/**
 	 * Get a HQR entry pointer

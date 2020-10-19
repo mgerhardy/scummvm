@@ -21,6 +21,7 @@
  */
 
 #include "twine/hqrdepack.h"
+#include "common/file.h"
 #include "common/system.h"
 #include "common/textconsole.h"
 
@@ -93,45 +94,38 @@ int32 HQRDepack::hqrGetEntry(uint8 *ptr, const char *filename, int32 index) {
 		return 0;
 	}
 
-	if (!fropen2(&fr, filename, "rb")) {
+	Common::File file;
+	if (!file.open(filename)) {
 		error("HQR: %s can't be found!", filename);
 	}
 
-	uint32 headerSize;
-	frread(&fr, &headerSize, 4);
+	uint32 headerSize = file.readUint32LE();
 
 	if ((uint32)index >= headerSize / 4) {
 		warning("HQR WARNING: Invalid entry index!!");
-		frclose(&fr);
 		return 0;
 	}
 
-	frseek(&fr, index * 4);
-	uint32 offsetToData;
-	frread(&fr, &offsetToData, 4);
+	file.seek(index * 4);
+	uint32 offsetToData = file.readUint32LE();
 
-	frseek(&fr, offsetToData);
-	uint32 realSize;
-	frread(&fr, &realSize, 4);
-	uint32 compSize;
-	frread(&fr, &compSize, 4);
-	uint16 mode;
-	frread(&fr, &mode, 2);
+	file.seek(offsetToData);
+	uint32 realSize = file.readUint32LE();
+	uint32 compSize = file.readUint32LE();
+	uint16 mode = file.readUint16LE();
 
 	// uncompressed
 	if (mode == 0) {
-		frread(&fr, ptr, realSize);
+		file.read(ptr, realSize);
 	}
 	// compressed: modes (1 & 2)
 	else if (mode == 1 || mode == 2) {
 		uint8 *compDataPtr = 0;
 		compDataPtr = (uint8 *)malloc(compSize);
-		frread(&fr, compDataPtr, compSize);
+		file.read(compDataPtr, compSize);
 		hqrDecompressEntry(ptr, compDataPtr, realSize, mode);
 		free(compDataPtr);
 	}
-
-	frclose(&fr);
 
 	return realSize;
 }
@@ -141,28 +135,26 @@ int HQRDepack::hqrEntrySize(const char *filename, int32 index) {
 		return 0;
 	}
 
-	if (!fropen2(&fr, filename, "rb")) {
+	Common::File file;
+	if (!file.open(filename)) {
 		error("HQR: %s can't be found!", filename);
 	}
 
 	uint32 headerSize;
-	frread(&fr, &headerSize, 4);
+	file.read(&headerSize, 4);
 
 	if ((uint32)index >= headerSize / 4) {
 		warning("HQR WARNING: Invalid entry index!!");
-		frclose(&fr);
 		return 0;
 	}
 
-	frseek(&fr, index * 4);
+	file.seek(index * 4);
 	uint32 offsetToData;
-	frread(&fr, &offsetToData, 4);
+	file.read(&offsetToData, 4);
 
-	frseek(&fr, offsetToData);
+	file.seek(offsetToData);
 	uint32 realSize;
-	frread(&fr, &realSize, 4);
-
-	frclose(&fr);
+	file.read(&realSize, 4);
 
 	return realSize;
 }
@@ -172,12 +164,13 @@ int HQRDepack::hqrNumEntries(const char *filename) {
 		return 0;
 	}
 
-	if (!fropen2(&fr, filename, "rb")) {
+	Common::File file;
+	if (!file.open(filename)) {
 		error("HQR: %s can't be found!", filename);
 	}
 
 	uint32 headerSize;
-	frread(&fr, &headerSize, 4);
+	file.read(&headerSize, 4);
 	return (int)headerSize / 4;
 }
 
@@ -201,55 +194,53 @@ int32 HQRDepack::hqrGetVoxEntry(uint8 *ptr, const char *filename, int32 index, i
 		return 0;
 	}
 
-	if (!fropen2(&fr, filename, "rb")) {
+	Common::File file;
+	if (!file.open(filename)) {
 		error("HQR: %s can't be found!", filename);
 	}
 
 	uint32 headerSize;
-	frread(&fr, &headerSize, 4);
+	file.read(&headerSize, 4);
 
 	if ((uint32)index >= headerSize / 4) {
 		warning("HQR WARNING: Invalid entry index!!");
-		frclose(&fr);
 		return 0;
 	}
 
-	frseek(&fr, index * 4);
+	file.seek(index * 4);
 	uint32 offsetToData;
-	frread(&fr, &offsetToData, 4);
+	file.read(&offsetToData, 4);
 
-	frseek(&fr, offsetToData);
+	file.seek(offsetToData);
 	uint32 realSize;
-	frread(&fr, &realSize, 4);
+	file.read(&realSize, 4);
 	uint32 compSize;
-	frread(&fr, &compSize, 4);
+	file.read(&compSize, 4);
 	uint16 mode;
-	frread(&fr, &mode, 2);
+	file.read(&mode, 2);
 
 	// exist hidden entries
 	for (int32 i = 0; i < hiddenIndex; i++) {
-		frseek(&fr, offsetToData + compSize + 10);   // hidden entry
+		file.seek(offsetToData + compSize + 10);   // hidden entry
 		offsetToData = offsetToData + compSize + 10; // current hidden offset
 
-		frread(&fr, &realSize, 4);
-		frread(&fr, &compSize, 4);
-		frread(&fr, &mode, 2);
+		file.read(&realSize, 4);
+		file.read(&compSize, 4);
+		file.read(&mode, 2);
 	}
 
 	// uncompressed
 	if (mode == 0) {
-		frread(&fr, ptr, realSize);
+		file.read(ptr, realSize);
 	}
 	// compressed: modes (1 & 2)
 	else if (mode == 1 || mode == 2) {
 		uint8 *compDataPtr = 0;
 		compDataPtr = (uint8 *)malloc(compSize);
-		frread(&fr, compDataPtr, compSize);
+		file.read(compDataPtr, compSize);
 		hqrDecompressEntry(ptr, compDataPtr, realSize, mode);
 		free(compDataPtr);
 	}
-
-	frclose(&fr);
 
 	return realSize;
 }
@@ -259,39 +250,37 @@ int HQRDepack::hqrVoxEntrySize(const char *filename, int32 index, int32 hiddenIn
 		return 0;
 	}
 
-	if (!fropen2(&fr, filename, "rb")) {
+	Common::File file;
+	if (!file.open(filename)) {
 		error("HQR: %s can't be found!", filename);
 	}
 
 	uint32 headerSize;
-	frread(&fr, &headerSize, 4);
+	file.read(&headerSize, 4);
 
 	if ((uint32)index >= headerSize / 4) {
 		warning("HQR WARNING: Invalid entry index!!");
-		frclose(&fr);
 		return 0;
 	}
 
-	frseek(&fr, index * 4);
+	file.seek(index * 4);
 	uint32 offsetToData;
-	frread(&fr, &offsetToData, 4);
+	file.read(&offsetToData, 4);
 
-	frseek(&fr, offsetToData);
+	file.seek(offsetToData);
 	uint32 realSize;
-	frread(&fr, &realSize, 4);
+	file.read(&realSize, 4);
 	uint32 compSize;
-	frread(&fr, &compSize, 4);
+	file.read(&compSize, 4);
 
 	// exist hidden entries
 	for (int32 i = 0; i < hiddenIndex; i++) {
-		frseek(&fr, offsetToData + compSize + 10);   // hidden entry
+		file.seek(offsetToData + compSize + 10);   // hidden entry
 		offsetToData = offsetToData + compSize + 10; // current hidden offset
 
-		frread(&fr, &realSize, 4);
-		frread(&fr, &compSize, 4);
+		file.read(&realSize, 4);
+		file.read(&compSize, 4);
 	}
-
-	frclose(&fr);
 
 	return realSize;
 }

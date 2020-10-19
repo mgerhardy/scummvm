@@ -21,6 +21,7 @@
  */
 
 #include "twine/flamovies.h"
+#include "common/file.h"
 #include "common/system.h"
 #include "twine/filereader.h"
 #include "twine/grid.h"
@@ -163,11 +164,11 @@ void FlaMovies::processFrame() {
 	int32 aux = 0;
 	uint8 *ptr;
 
-	frread(&frFla, &frameData.videoSize, 1);
-	frread(&frFla, &frameData.dummy, 1);
-	frread(&frFla, &frameData.frameVar0, 4);
+	file.read(&frameData.videoSize, 1);
+	file.read(&frameData.dummy, 1);
+	file.read(&frameData.frameVar0, 4);
 
-	frread(&frFla, workVideoBufferCopy, frameData.frameVar0);
+	file.read(workVideoBufferCopy, frameData.frameVar0);
 
 	if ((int32)frameData.videoSize <= 0)
 		return;
@@ -237,11 +238,6 @@ static void fla_pcxList(const char *flaName) {
 FlaMovies::FlaMovies(TwinEEngine *engine) : _engine(engine) {}
 
 void FlaMovies::playFlaMovie(const char *flaName) {
-	int32 i;
-	int32 currentFrame;
-	int16 tmpValue;
-	int8 fileNamePath[256];
-
 	_engine->_sound->stopSamples();
 
 	// Play FLA PCX instead of movies
@@ -254,46 +250,43 @@ void FlaMovies::playFlaMovie(const char *flaName) {
 
 	// take extension if movie name has it
 	int32 flaNameLength = (int32)strlen((const char *)flaName);
-	for (i = 0; i < flaNameLength; i++) {
+	for (int32 i = 0; i < flaNameLength; i++) {
 		if (flaName[i] == '.') {
 			flaNameLength = i;
 			break;
 		}
 	}
 
-	sprintf((char *)fileNamePath, FLA_DIR);
-	strncat((char *)fileNamePath, (const char *)flaName, flaNameLength);
-	strcat((char *)fileNamePath, FLA_EXT);
+	Common::String fileNamePath;
+	fileNamePath.format(FLA_DIR "%s" FLA_EXT, flaName);
 
 	_fadeOut = -1;
 	fadeOutFrames = 0;
 
-	if (!fropen2(&frFla, (char *)fileNamePath, "rb"))
-		return;
+	Common::File file;
+	if (!file.open(fileNamePath)) {
+		error("Failed to open fla movie '%s'", fileNamePath.c_str());
+	}
 
 	workVideoBufferCopy = _engine->workVideoBuffer;
 
-	// TODO: use Stream::readUint32LE
-	frread(&frFla, &flaHeaderData.version, 6);
-	frread(&frFla, &flaHeaderData.numOfFrames, 4);
-	frread(&frFla, &flaHeaderData.speed, 1);
-	frread(&frFla, &flaHeaderData.var1, 1);
-	frread(&frFla, &flaHeaderData.xsize, 2);
-	frread(&frFla, &flaHeaderData.ysize, 2);
+	file.read(&flaHeaderData.version, 6);
+	flaHeaderData.numOfFrames = file.readUint32LE();
+	flaHeaderData.speed = file.readByte();
+	flaHeaderData.var1 = file.readByte();
+	flaHeaderData.xsize = file.readUint16LE();
+	flaHeaderData.ysize = file.readUint16LE();
 
-	frread(&frFla, &samplesInFla, 2);
-	frread(&frFla, &tmpValue, 2);
+	samplesInFla = file.readUint16LE();
+	file.skip(2);
 
-	for (i = 0; i < samplesInFla; i++) {
-		int16 var0;
-		int16 var1;
-		frread(&frFla, &var0, 2);
-		frread(&frFla, &var1, 2);
-		flaSampleTable[i] = var0;
+	for (int32 i = 0; i < samplesInFla; i++) {
+		flaSampleTable[i] = file.readSint16LE();
+		file.skip(2);
 	}
 
 	if (!strcmp((const char *)flaHeaderData.version, "V1.3")) {
-		currentFrame = 0;
+		int32 currentFrame = 0;
 
 		do {
 			if (currentFrame == flaHeaderData.numOfFrames) {
