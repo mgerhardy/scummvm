@@ -54,7 +54,7 @@ void Debug::debugFillButton(int32 X, int32 Y, int32 width, int32 height, int8 co
 void Debug::debugDrawButton(int32 left, int32 top, int32 right, int32 bottom, const char *text, int32 textLeft, int32 textRight, int32 isActive, int8 color) {
 	debugFillButton(left + 1, top + 1, right - left - 1, bottom - top - 1, color);
 	_engine->_menu->drawBox(left, top, right, bottom);
-	_engine->ttfDrawText(textLeft, textRight, text, 0);
+	_engine->drawText(textLeft, textRight, text, 0);
 	_engine->copyBlockPhys(left, top, right, bottom);
 }
 
@@ -97,7 +97,7 @@ void Debug::debugDrawWindow(int32 w) {
 		int32 l;
 
 		for (l = 0; l < debugWindows[w].numLines; l++) {
-			_engine->ttfDrawText(left + 10, top + l * 20 + 5, debugWindows[w].text[l], 0);
+			_engine->drawText(left + 10, top + l * 20 + 5, debugWindows[w].text[l], 0);
 		}
 	}
 

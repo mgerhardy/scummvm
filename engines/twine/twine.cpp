@@ -1267,7 +1267,7 @@ void TwinEEngine::readKeys() {
 #endif
 }
 
-void TwinEEngine::ttfDrawText(int32 x, int32 y, const char *string, int32 center) {
+void TwinEEngine::drawText(int32 x, int32 y, const char *string, int32 center) {
 #if 0 // TODO
 	SDL_Color white = {0xFF, 0xFF, 0xFF, 0};
 	SDL_Color *forecol = &white;

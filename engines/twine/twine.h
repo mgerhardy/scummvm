@@ -150,6 +150,10 @@ class Debug;
 class DebugScene;
 
 class TwinEEngine : public Engine {
+private:
+	int32 isTimeFreezed = 0;
+	int32 saveFreezedTime = 0;
+
 public:
 	TwinEEngine(OSystem *system, Common::Language language, uint32 flags);
 	~TwinEEngine() override;
@@ -191,9 +195,6 @@ public:
 
 	/** CD Game directory */
 	const char *cdDir;
-
-	int32 isTimeFreezed = 0;
-	int32 saveFreezedTime = 0;
 
 	/** Initialize LBA engine */
 	void initEngine();
@@ -250,8 +251,10 @@ public:
 	void freezeTime();
 	void unfreezeTime();
 
-	/** Game engine main loop
-	@return true if we want to show credit sequence */
+	/**
+	 * Game engine main loop
+	 * @return true if we want to show credit sequence
+	 */
 	bool gameEngineLoop();
 
 	Common::RandomSource _rnd;
@@ -275,22 +278,26 @@ public:
 	/** Blit surface in the screen */
 	void flip();
 
-	/** Blit surface in the screen in a determinate area
-	@param left left position to start copy
-	@param top top position to start copy
-	@param right right position to start copy
-	@param bottom bottom position to start copy */
+	/**
+	 * Blit surface in the screen in a determinate area
+	 * @param left left position to start copy
+	 * @param top top position to start copy
+	 * @param right right position to start copy
+	 * @param bottom bottom position to start copy
+	 */
 	void copyBlockPhys(int32 left, int32 top, int32 right, int32 bottom);
 
-	/** Create SDL screen surface
-	@param buffer screen buffer to blit surface
-	@param width screen width size
-	@param height screen height size */
+	/** Create screen surface
+	 * @param buffer screen buffer to blit surface
+	 * @param width screen width size
+	 * @param height screen height size
+	 */
 	void initScreenBuffer(uint8 *buffer, int32 width, int32 height);
 
 	/** Cross fade feature
-	@param buffer screen buffer
-	@param palette new palette to cross fade*/
+	 * @param buffer screen buffer
+	 * @param palette new palette to cross fade
+	 */
 	void crossFade(uint8 *buffer, uint8 *palette);
 
 	/** Switch between window and fullscreen modes */
@@ -299,15 +306,19 @@ public:
 	/** Handle keyboard pressed keys */
 	void readKeys();
 
-	/** Display SDL text in screen
-	@param x X coordinate in screen
-	@param y Y coordinate in screen
-	@param string text to display
-	@param center if the text should be centered accoding with the giving positions */
-	void ttfDrawText(int32 x, int32 y, const char *string, int32 center);
+	/**
+	 * Display text in screen
+	 * @param x X coordinate in screen
+	 * @param y Y coordinate in screen
+	 * @param string text to display
+	 * @param center if the text should be centered accoding with the giving positions
+	 */
+	void drawText(int32 x, int32 y, const char *string, int32 center);
 
-	/** Gets SDL mouse positions
-	@param mouseData structure that contains mouse position info */
+	/**
+	 * Gets mouse positions
+	 * @param mouseData structure that contains mouse position info
+	 */
 	void getMousePositions(MouseStatusStruct *mouseData);
 };
 
