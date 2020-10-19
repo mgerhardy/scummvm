@@ -283,7 +283,6 @@ TwinEEngine::~TwinEEngine() {
 	delete _interface;
 	delete _menu;
 	delete _flaMovies;
-	delete _menu;
 	delete _music;
 	delete _redraw;
 	delete _renderer;

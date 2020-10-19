@@ -261,6 +261,9 @@ static int32 read_event_info(uint8 *data, struct EventInfo *info, uint32 current
 		} else {
 			//info("Found Note On with duration %X. Saving a Note Off for later", info->length);
 			injectedEvent = (struct EventInfo *)malloc(sizeof(struct EventInfo));
+			if (!injectedEvent) {
+				error("Could not allocate memory for event info");
+			}
 			injectedEvent->event = 0x80 | (info->event & 0x0f);
 			injectedEvent->basic.param1 = info->basic.param1;
 			injectedEvent->basic.param2 = info->basic.param2;
