@@ -40,7 +40,7 @@ namespace TwinE {
 /** Main menu enter players name */
 #define MAINMENU_ENTERPLAYERNAME 42
 
-static const int8 allowedCharIndex[] = " ABCDEFGHIJKLM.NOPQRSTUVWXYZ-abcdefghijklm?nopqrstuvwxyz!0123456789\040\b\r\0";
+static const char allowedCharIndex[] = " ABCDEFGHIJKLM.NOPQRSTUVWXYZ-abcdefghijklm?nopqrstuvwxyz!0123456789\040\b\r\0";
 
 void MenuOptions::newGame() {
 	int32 tmpFlagDisplayText;
@@ -124,7 +124,7 @@ void MenuOptions::showCredits() {
 }
 
 void MenuOptions::drawSelectableCharacter(int32 x, int32 y, int32 arg) {
-	int8 buffer[256];
+	char buffer[256];
 	int32 centerX, left, top, centerY, bottom, right, right2;
 
 	buffer[0] = allowedCharIndex[y + x * 14];
@@ -210,7 +210,7 @@ void MenuOptions::drawPlayerName(int32 centerx, int32 top, int8 * /*playerName*/
 }
 
 int32 MenuOptions::enterPlayerName(int32 textIdx) {
-	int8 buffer[256];
+	char buffer[256];
 
 	while (1) {
 		_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);

@@ -210,8 +210,6 @@ public:
 	void initMCGA();
 	void initSVGA();
 
-	int8 *ITOA(int32 number);
-	/** Init configuration file \a lba.cfg */
 	void initConfigurations();
 	/** Initialize all needed stuffs at first time running engine */
 	void initAll();

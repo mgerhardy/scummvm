@@ -49,7 +49,7 @@ private:
 	void drawCharacterShadow(int32 x, int32 y, uint8 character, int32 color);
 	void initProgressiveTextBuffer();
 	void printText8Sub4(int16 a, int16 b, int16 c);
-	void getWordSize(uint8 *arg1, uint8 *arg2);
+	void getWordSize(const char *arg1, char *arg2);
 	void processTextLine();
 	// draw next page arrow polygon
 	void printText10Sub();
@@ -59,17 +59,17 @@ private:
 	@param src source text buffer
 	@param dst destination text buffer
 	@param size text size */
-	void copyText(int8 *src, int8 *dst, int32 size);
+	void copyText(const char *src, char *dst, int32 size);
 
 	// RECHECK THIS LATER
 	int32 currentBankIdx = -1; // textVar1
-	uint8 textVar2[256];
+	char textVar2[256];
 	uint8 textVar3;
 
 	/** Dialogue text pointer */
-	uint8 *dialTextPtr; // bufText
+	char *dialTextPtr; // bufText
 	/** Dialogue entry order pointer */
-	uint8 *dialOrderPtr; // bufOrder
+	char *dialOrderPtr; // bufOrder
 	/** Number of dialogues text entries */
 	int16 numDialTextEntries;
 
@@ -86,7 +86,7 @@ public:
 	/** Current dialogue text size */
 	int32 currDialTextSize;
 	/** Current dialogue text pointer */
-	uint8 *currDialTextPtr;
+	char *currDialTextPtr;
 
 	/** Font buffer pointer */
 	uint8 *fontPtr;
@@ -119,10 +119,10 @@ public:
 
 	// TODO: refactor all this variables and related functions
 	int32 printTextVar13;
-	uint8 buf1[256];
-	uint8 buf2[256];
-	uint8 *printText8Ptr1;
-	uint8 *printText8Ptr2;
+	char buf1[256];
+	char buf2[256];
+	char *printText8Ptr1;
+	char *printText8Ptr2;
 	int32 printText8Var1;
 	int32 printText8Var2;
 	int32 printText8Var3;
@@ -130,7 +130,7 @@ public:
 	int32 printText8Var5;
 	int32 printText8Var6;
 	int32 TEXT_CurrentLetterY;
-	uint8 *printText8Var8;
+	char *printText8Var8;
 	int32 newGameVar4;
 	int32 newGameVar5;
 	int32 hasHiddenVox; // printTextVar5
@@ -156,7 +156,7 @@ public:
 	 * @param y Y coordinate in screen
 	 * @param dialogue ascii text to display
 	 */
-	void drawText(int32 x, int32 y, const int8 *dialogue);
+	void drawText(int32 x, int32 y, const char *dialogue);
 
 	void drawTextFullscreen(int32 index);
 
@@ -164,7 +164,7 @@ public:
 	 * Gets dialogue text width size
 	 * @param dialogue ascii text to display
 	 */
-	int32 getTextSize(const int8 *dialogue);
+	int32 getTextSize(const char *dialogue);
 
 	void initDialogueBox();
 	void initInventoryDialogueBox();
@@ -210,7 +210,7 @@ public:
 	 * @param index text index to display
 	 * @param dialogue dialogue text buffer to display
 	 */
-	void getMenuText(int32 index, int8 *text);
+	void getMenuText(int32 index, char *text);
 
 	void textClipFull();
 	void textClipSmall();

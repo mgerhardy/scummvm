@@ -178,10 +178,13 @@ void TwinEEngine::initEngine() {
 	initConfigurations();
 
 	// Show engine information
-	debug("TwinEngine v%s\n\n", ENGINE_VERSION);
-	debug("(c)2002 The TwinEngine team. Refer to AUTHORS file for further details.\n");
-	debug("Released under the terms of the GNU GPL license version 2 (or, at your opinion, any later). See COPYING file.\n\n");
-	debug("The original Little Big Adventure game is:\n\t(c)1994 by Adeline Software International, All Rights Reserved.\n\n");
+	debug("TwinEngine v%s", ENGINE_VERSION);
+	debug("(c)2002 The TwinEngine team.");
+	debug("(c)2020 The ScummVM team.");
+	debug("Refer to the credits for further details.");
+	debug("Released under the terms of the GNU GPL license version 2 (or, at your opinion, any later). See COPYING file.");
+	debug("The original Little Big Adventure game is:");
+	debug("(c)1994 by Adeline Software International, All Rights Reserved.");
 
 	allocVideoMemory();
 	_screens->clearScreen();
@@ -255,23 +258,6 @@ void TwinEEngine::initAll() {
 	_resources->initResources();
 
 	initSVGA();
-}
-
-// AUX FUNC
-
-int8 *TwinEEngine::ITOA(int32 number) {
-	int32 numDigits = 1;
-	char *text;
-
-	if (number >= 10 && number <= 99) {
-		numDigits = 2;
-	} else if (number >= 100 && number <= 999) {
-		numDigits = 3;
-	}
-
-	text = (char *)malloc(sizeof(char) * (numDigits + 1));
-	sprintf(text, "%d", number);
-	return (int8 *)text;
 }
 
 TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flags)
@@ -607,7 +593,7 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 		if (loopCurrentKey == Keys::Pause) {
 			freezeTime();
 			_text->setFontColor(15);
-			_text->drawText(5, 446, (const int8 *)"Pause"); // no key for pause in Text Bank
+			_text->drawText(5, 446, "Pause"); // no key for pause in Text Bank
 			copyBlockPhys(5, 446, 100, 479);
 			do {
 				readKeys();

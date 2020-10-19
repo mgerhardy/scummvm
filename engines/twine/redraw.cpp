@@ -603,7 +603,7 @@ void Redraw::redrawEngineActions(int32 bgRedraw) { // fullRedraw
 				char text[10];
 				sprintf(text, "%d", overlay->info0);
 
-				textLength = _engine->_text->getTextSize((int8 *)text);
+				textLength = _engine->_text->getTextSize(text);
 				textHeight = 48;
 
 				renderLeft = overlay->X - (textLength / 2);
@@ -615,7 +615,7 @@ void Redraw::redrawEngineActions(int32 bgRedraw) { // fullRedraw
 
 				_engine->_text->setFontColor(overlay->info1);
 
-				_engine->_text->drawText(renderLeft, renderTop, (int8 *)text);
+				_engine->_text->drawText(renderLeft, renderTop, text);
 
 				if (_engine->_interface->textWindowLeft <= _engine->_interface->textWindowRight && _engine->_interface->textWindowTop <= _engine->_interface->textWindowBottom) {
 					addRedrawArea(_engine->_interface->textWindowLeft, _engine->_interface->textWindowTop, renderRight, renderBottom);
@@ -629,7 +629,7 @@ void Redraw::redrawEngineActions(int32 bgRedraw) { // fullRedraw
 
 				sprintf(text, "%d", range);
 
-				textLength = _engine->_text->getTextSize((int8 *)text);
+				textLength = _engine->_text->getTextSize(text);
 				textHeight = 48;
 
 				renderLeft = overlay->X - (textLength / 2);
@@ -641,7 +641,7 @@ void Redraw::redrawEngineActions(int32 bgRedraw) { // fullRedraw
 
 				_engine->_text->setFontColor(155);
 
-				_engine->_text->drawText(renderLeft, renderTop, (int8 *)text);
+				_engine->_text->drawText(renderLeft, renderTop, text);
 
 				if (_engine->_interface->textWindowLeft <= _engine->_interface->textWindowRight && _engine->_interface->textWindowTop <= _engine->_interface->textWindowBottom) {
 					addRedrawArea(_engine->_interface->textWindowLeft, _engine->_interface->textWindowTop, renderRight, renderBottom);
@@ -666,7 +666,7 @@ void Redraw::redrawEngineActions(int32 bgRedraw) { // fullRedraw
 			} break;
 			case koText: {
 				int32 textLength, textHeight;
-				int8 text[256];
+				char text[256];
 
 				_engine->_text->getMenuText(overlay->info0, text);
 

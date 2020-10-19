@@ -46,7 +46,7 @@ static uint8 *scriptPtr; // local script pointer
 static uint8 *opcodePtr; // local opcode script pointer
 
 static int32 drawVar1;
-static int8 textStr[256]; // string
+static char textStr[256]; // string
 
 /** Returns:
 	   -1 - Need implementation

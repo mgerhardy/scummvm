@@ -301,7 +301,7 @@ void Menu::drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, in
 	int32 bottom2;
 	int32 bottom;
 	int32 textSize;
-	int8 dialText[256];
+	char dialText[256];
 	/*
 	 * int CDvolumeRemaped; int musicVolumeRemaped; int masterVolumeRemaped; int lineVolumeRemaped;
 	 * int waveVolumeRemaped;
@@ -824,12 +824,16 @@ void Menu::drawInfoMenu(int16 left, int16 top) {
 	/** draw coin sprite */
 	_engine->_grid->drawSprite(0, boxLeft, top + 15, _engine->_actor->spriteTable[SPRITEHQR_KASHES]);
 	_engine->_text->setFontColor(155);
-	_engine->_text->drawText(left + 370, top + 5, _engine->ITOA(_engine->_gameState->inventoryNumKashes));
+	Common::String inventoryNumKashes;
+	inventoryNumKashes.format("%d", _engine->_gameState->inventoryNumKashes);
+	_engine->_text->drawText(left + 370, top + 5, inventoryNumKashes.c_str());
 
 	/** draw key sprite */
 	_engine->_grid->drawSprite(0, boxLeft, top + 55, _engine->_actor->spriteTable[SPRITEHQR_KEY]);
 	_engine->_text->setFontColor(155);
-	_engine->_text->drawText(left + 370, top + 40, _engine->ITOA(_engine->_gameState->inventoryNumKeys));
+	Common::String inventoryNumKeys;
+	inventoryNumKashes.format("%d", _engine->_gameState->inventoryNumKeys);
+	_engine->_text->drawText(left + 370, top + 40, inventoryNumKeys.c_str());
 
 	// prevent
 	if (_engine->_gameState->inventoryNumLeafs > _engine->_gameState->inventoryNumLeafsBox) {
@@ -851,16 +855,15 @@ void Menu::drawInfoMenu(int16 left, int16 top) {
 
 void Menu::drawBehaviour(int16 behaviour, int32 angle, int16 cantDrawBox) {
 	uint8 *currentAnim;
-	int32 boxLeft, boxTop, boxRight, boxBottom, currentAnimState;
-	int8 dialText[256];
+	char dialText[256];
 
-	boxLeft = behaviour * 110 + 110;
-	boxRight = boxLeft + 99;
-	boxTop = 110;
-	boxBottom = 229;
+	int32 boxLeft = behaviour * 110 + 110;
+	int32 boxRight = boxLeft + 99;
+	int32 boxTop = 110;
+	int32 boxBottom = 229;
 
 	currentAnim = _engine->_animations->animTable[_engine->_actor->heroAnimIdx[behaviour]];
-	currentAnimState = behaviourAnimState[behaviour];
+	int32 currentAnimState = behaviourAnimState[behaviour];
 
 	if (_engine->_animations->setModelAnimation(currentAnimState, currentAnim, behaviourEntity, &behaviourAnimData[behaviour])) {
 		currentAnimState++; // keyframe
@@ -1044,7 +1047,9 @@ void Menu::drawItem(int32 item) {
 
 		if (item == 15) { // has GAS
 			_engine->_text->setFontColor(15);
-			_engine->_text->drawText(left + 3, top + 32, _engine->ITOA(_engine->_gameState->inventoryNumGas));
+			Common::String inventoryNumGas;
+			inventoryNumGas.format("%d", _engine->_gameState->inventoryNumGas);
+			_engine->_text->drawText(left + 3, top + 32, inventoryNumGas.c_str());
 		}
 	}
 

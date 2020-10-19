@@ -76,7 +76,7 @@ public:
 
 	int32 currMenuTextIndex;
 	int32 currMenuTextBank;
-	int8 currMenuTextBuffer[256];
+	char currMenuTextBuffer[256];
 
 	int16 itemAngle[255]; // objectRotation
 

@@ -144,11 +144,11 @@ void Text::initTextBank(int32 bankIdx) { // InitDial
 	// get index according with language
 	langIdx = (_engine->cfgfile.LanguageId * 14) * 2 + bankIdx * 2;
 
-	hqrSize = _engine->_hqrdepack->hqrGetallocEntry(&dialOrderPtr, HQR_TEXT_FILE, langIdx);
+	hqrSize = _engine->_hqrdepack->hqrGetallocEntry((uint8**)&dialOrderPtr, HQR_TEXT_FILE, langIdx);
 
 	numDialTextEntries = hqrSize / 2;
 
-	hqrSize = _engine->_hqrdepack->hqrGetallocEntry(&dialTextPtr, HQR_TEXT_FILE, ++langIdx);
+	hqrSize = _engine->_hqrdepack->hqrGetallocEntry((uint8**)&dialTextPtr, HQR_TEXT_FILE, ++langIdx);
 
 	if (_engine->cfgfile.LanguageCDId) {
 		initVoxBank(bankIdx);
@@ -260,7 +260,7 @@ void Text::drawCharacterShadow(int32 x, int32 y, uint8 character, int32 color) {
 	}
 }
 
-void Text::drawText(int32 x, int32 y, const int8 *dialogue) { // Font
+void Text::drawText(int32 x, int32 y, const char *dialogue) { // Font
 	uint8 currChar;
 
 	if (fontPtr == 0) // if the font is not defined
@@ -285,7 +285,7 @@ void Text::drawText(int32 x, int32 y, const int8 *dialogue) { // Font
 	} while (1);
 }
 
-int32 Text::getTextSize(const int8 *dialogue) { // SizeFont
+int32 Text::getTextSize(const char *dialogue) { // SizeFont
 	uint8 currChar;
 	dialTextSize = 0;
 
@@ -396,9 +396,9 @@ void Text::printText8Sub4(int16 a, int16 b, int16 c) {
 	}
 }
 
-void Text::getWordSize(uint8 *arg1, uint8 *arg2) {
+void Text::getWordSize(const char *arg1, char *arg2) {
 	int32 temp = 0;
-	uint8 *arg2Save = arg2;
+	const char *arg2Save = arg2;
 
 	while (*arg1 != 0 && *arg1 != 1 && *arg1 != 0x20) {
 		temp++;
@@ -407,13 +407,13 @@ void Text::getWordSize(uint8 *arg1, uint8 *arg2) {
 
 	wordSizeChar = temp;
 	*arg2 = 0;
-	wordSizePixel = getTextSize((int8 *)arg2Save);
+	wordSizePixel = getTextSize(arg2Save);
 }
 
 void Text::processTextLine() {
 	int16 var4;
-	uint8 *buffer;
-	uint8 *temp;
+	char *buffer;
+	char *temp;
 
 	buffer = printText8Var8;
 	dialCharSpace = 7;
@@ -452,8 +452,8 @@ void Text::processTextLine() {
 					} else {
 						buffer += wordSizeChar;
 						printText8Var8 = buffer;
-						strcat((char *)buf2, (char *)buf1);
-						strcat((char *)buf2, " "); // not 100% accurate
+						strcat(buf2, buf1);
+						strcat(buf2, " "); // not 100% accurate
 						printText8PrepareBufferVar2++;
 
 						addLineBreakX += wordSizePixel + dialCharSpace;
@@ -810,16 +810,16 @@ int32 Text::getText(int32 index) { // findString
 	return 1;
 }
 
-void Text::copyText(int8 *src, int8 *dst, int32 size) { // copyStringToString
+void Text::copyText(const char *src, char *dst, int32 size) { // copyStringToString
 	int32 i;
 	for (i = 0; i < size; i++)
 		*(dst++) = *(src++);
 }
 
-void Text::getMenuText(int32 index, int8 *text) { // GetMultiText
+void Text::getMenuText(int32 index, char *text) { // GetMultiText
 	if (index == _engine->_menu->currMenuTextIndex) {
 		if (_engine->_menu->currMenuTextBank == currentTextBank) {
-			strcpy((char *)text, (char *)_engine->_menu->currMenuTextBuffer);
+			strcpy(text, _engine->_menu->currMenuTextBuffer);
 			return;
 		}
 	}
@@ -832,7 +832,7 @@ void Text::getMenuText(int32 index, int8 *text) { // GetMultiText
 	if ((currDialTextSize - 1) > 0xFF)
 		currDialTextSize = 0xFF;
 
-	copyText((int8 *)currDialTextPtr, text, currDialTextSize);
+	copyText(currDialTextPtr, text, currDialTextSize);
 	currDialTextSize++;
 	copyText(text, _engine->_menu->currMenuTextBuffer, currDialTextSize);
 
