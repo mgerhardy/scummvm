@@ -251,16 +251,17 @@ public:
 	Common::RandomSource _rnd;
 	Common::Language _gameLang;
 	uint32 _gameFlags;
-	int _startSlot;
 
-	// TODO: mgerhardy - most stuff below this point must be replaced or reworked
-
-	/** Deplay certain seconds till proceed - Can also Skip this delay
-	@param time time in seconds to delay */
+	/**
+	 * Deplay certain seconds till proceed - Can also Skip this delay
+	 * @param time time in seconds to delay
+	 */
 	void delaySkip(uint32 time);
 
-	/** Set a new palette in the SDL screen buffer
-	@param palette palette to set */
+	/**
+	 * Set a new palette in the SDL screen buffer
+	 * @param palette palette to set
+	 */
 	void setPalette(uint8 *palette);
 
 	/** Fade screen from black to white */
