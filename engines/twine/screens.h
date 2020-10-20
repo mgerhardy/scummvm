@@ -142,7 +142,7 @@ public:
 	/** Copy a determinate screen buffer to another
 	@param source screen buffer
 	@param destination screen buffer */
-	void copyScreen(uint8 *source, uint8 *destination);
+	void copyScreen(const uint8 *source, uint8 *destination);
 
 	/** Clear front buffer screen */
 	void clearScreen();

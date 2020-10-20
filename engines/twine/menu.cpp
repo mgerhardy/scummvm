@@ -1179,7 +1179,7 @@ void Menu::processInventoryMenu() {
 	while (_engine->_keyboard.skipIntro != 0 && _engine->_keyboard.skippedKey != 0) {
 		_engine->readKeys();
 		_engine->_system->delayMillis(1);
-		// TODO: check if g_system->updateScreen() is needed here
+		_engine->flip(); // TODO: needed?
 	}
 }
 

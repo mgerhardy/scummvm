@@ -1479,7 +1479,6 @@ int32 Renderer::renderAnimatedModel(uint8 *bodyPtr) {
 			currentMatrixTableEntry += 36;
 			elementsPtr += 38;
 			elemEntryPtr = (elementEntry *)elementsPtr;
-
 		} while (--numOfPrimitives);
 	}
 
@@ -1585,8 +1584,6 @@ int32 Renderer::renderAnimatedModel(uint8 *bodyPtr) {
 
 		tmpElemPtr = pri2Ptr3 = elementsPtr2 + 18;
 
-		//assert(frontVideoBufferbis == frontVideoBuffer);
-
 		do { // for each element
 			numOfShades = *((uint16 *)tmpElemPtr);
 
@@ -1634,7 +1631,6 @@ int32 Renderer::renderAnimatedModel(uint8 *bodyPtr) {
 					*((uint16 *)currentShadeDestination) = shade;
 					currentShadeDestination += 2;
 					shadePtr += 2;
-
 				} while (--numShades);
 			}
 
@@ -1729,12 +1725,10 @@ int Renderer::renderIsoModel(int32 X, int32 Y, int32 Z, int32 angleX, int32 angl
 
 	if (bodyHeader & 2) { // if animated
 		// the mostly used renderer code
-		return (renderAnimatedModel(ptr));
-	} else {
-		error("Unsupported unanimated model render!\n");
+		return renderAnimatedModel(ptr);
 	}
-
-	return (0);
+	error("Unsupported unanimated model render!");
+	return 0;
 }
 
 void Renderer::copyActorInternAnim(uint8 *bodyPtrSrc, uint8 *bodyPtrDest) {

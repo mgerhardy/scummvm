@@ -221,15 +221,6 @@ public:
 	uint8 *workVideoBuffer;
 	/** Main game video buffer */
 	uint8 *frontVideoBuffer;
-	/** Auxiliar game video buffer */
-	uint8 *frontVideoBufferbis;
-
-	/** Main screen surface buffer */
-	Graphics::Surface *screen = NULL;
-	/** Auxiliar screen surface buffer */
-	Graphics::Surface *screenBuffer = NULL;
-	/** Auxiliar surface table  */
-	Graphics::Surface *surfaceTable[16];
 
 	/** temporary screen table */
 	int32 screenLookupTable[2000];
@@ -286,13 +277,6 @@ public:
 	 * @param bottom bottom position to start copy
 	 */
 	void copyBlockPhys(int32 left, int32 top, int32 right, int32 bottom);
-
-	/** Create screen surface
-	 * @param buffer screen buffer to blit surface
-	 * @param width screen width size
-	 * @param height screen height size
-	 */
-	void initScreenBuffer(uint8 *buffer, int32 width, int32 height);
 
 	/** Cross fade feature
 	 * @param buffer screen buffer

@@ -29,6 +29,7 @@
 #include "common/system.h"
 #include "common/textconsole.h"
 #include "engines/util.h"
+#include "graphics/palette.h"
 #include "gui/debugger.h"
 #include "twine/actor.h"
 #include "twine/animations.h"
@@ -75,11 +76,83 @@ enum InventoryItems {
 /** Engine current version */
 static const char *ENGINE_VERSION = "0.2.0";
 
+TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flags)
+    : Engine(system), _gameLang(language), _gameFlags(flags), _rnd("twine") {
+	setDebugger(new GUI::Debugger());
+	_actor = new Actor(this);
+	_animations = new Animations(this);
+	_collision = new Collision(this);
+	_extra = new Extra(this);
+	_gameState = new GameState(this);
+	_grid = new Grid(this);
+	_movements = new Movements(this);
+	_hqrdepack = new HQRDepack(this);
+	_interface = new Interface(this);
+	_menu = new Menu(this);
+	_flaMovies = new FlaMovies(this);
+	_menuOptions = new MenuOptions(this);
+	_music = new Music(this);
+	_redraw = new Redraw(this);
+	_renderer = new Renderer(this);
+	_resources = new Resources(this);
+	_scene = new Scene(this);
+	_screens = new Screens(this);
+	_scriptLife = new ScriptLife(this);
+	_scriptMove = new ScriptMove(this);
+	_holomap = new Holomap(this);
+	_sound = new Sound(this);
+	_text = new Text(this);
+	_debugGrid = new DebugGrid(this);
+	_debug = new Debug(this);
+	_debugScene = new DebugScene(this);
+}
+
+TwinEEngine::~TwinEEngine() {
+	delete _actor;
+	delete _animations;
+	delete _collision;
+	delete _extra;
+	delete _gameState;
+	delete _grid;
+	delete _movements;
+	delete _hqrdepack;
+	delete _interface;
+	delete _menu;
+	delete _flaMovies;
+	delete _music;
+	delete _redraw;
+	delete _renderer;
+	delete _resources;
+	delete _scene;
+	delete _screens;
+	delete _scriptLife;
+	delete _scriptMove;
+	delete _holomap;
+	delete _sound;
+	delete _text;
+	delete _debugGrid;
+	delete _debug;
+	delete _debugScene;
+}
+
+Common::Error TwinEEngine::run() {
+	syncSoundSettings();
+	initGraphics(SCREEN_WIDTH, SCREEN_HEIGHT);
+	initAll();
+	initEngine();
+	_music->stopTrackMusic();
+	_music->stopMidiMusic();
+	return Common::kNoError;
+}
+
+bool TwinEEngine::hasFeature(EngineFeature f) const {
+	return false;
+}
+
 void TwinEEngine::allocVideoMemory() {
 	const size_t videoBufferSize = (SCREEN_WIDTH * SCREEN_HEIGHT) * sizeof(uint8);
 	workVideoBuffer = (uint8 *)malloc(videoBufferSize);
-	frontVideoBuffer = frontVideoBufferbis = (uint8 *)malloc(videoBufferSize);
-	initScreenBuffer(frontVideoBuffer, SCREEN_WIDTH, SCREEN_HEIGHT);
+	frontVideoBuffer = (uint8 *)malloc(videoBufferSize);
 
 	int32 j = 0;
 	int32 k = 0;
@@ -238,101 +311,6 @@ void TwinEEngine::initAll() {
 	_resources->initResources();
 
 	initSVGA();
-}
-
-TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flags)
-    : Engine(system), _gameLang(language), _gameFlags(flags), _rnd("twine") {
-	setDebugger(new GUI::Debugger());
-	_actor = new Actor(this);
-	_animations = new Animations(this);
-	_collision = new Collision(this);
-	_extra = new Extra(this);
-	_gameState = new GameState(this);
-	_grid = new Grid(this);
-	_movements = new Movements(this);
-	_hqrdepack = new HQRDepack(this);
-	_interface = new Interface(this);
-	_menu = new Menu(this);
-	_flaMovies = new FlaMovies(this);
-	_menuOptions = new MenuOptions(this);
-	_music = new Music(this);
-	_redraw = new Redraw(this);
-	_renderer = new Renderer(this);
-	_resources = new Resources(this);
-	_scene = new Scene(this);
-	_screens = new Screens(this);
-	_scriptLife = new ScriptLife(this);
-	_scriptMove = new ScriptMove(this);
-	_holomap = new Holomap(this);
-	_sound = new Sound(this);
-	_text = new Text(this);
-	_debugGrid = new DebugGrid(this);
-	_debug = new Debug(this);
-	_debugScene = new DebugScene(this);
-}
-
-TwinEEngine::~TwinEEngine() {
-	delete _actor;
-	delete _animations;
-	delete _collision;
-	delete _extra;
-	delete _gameState;
-	delete _grid;
-	delete _movements;
-	delete _hqrdepack;
-	delete _interface;
-	delete _menu;
-	delete _flaMovies;
-	delete _music;
-	delete _redraw;
-	delete _renderer;
-	delete _resources;
-	delete _scene;
-	delete _screens;
-	delete _scriptLife;
-	delete _scriptMove;
-	delete _holomap;
-	delete _sound;
-	delete _text;
-	delete _debugGrid;
-	delete _debug;
-	delete _debugScene;
-}
-
-bool TwinEEngine::hasFeature(EngineFeature f) const {
-	return false;
-}
-
-Common::Error TwinEEngine::run() {
-	syncSoundSettings();
-	initGraphics(SCREEN_WIDTH, SCREEN_HEIGHT);
-
-#if 0
-	int32 i;
-	int32 freq;
-
-	// Verify if we want to use high quality sounds
-	if (cfgfile.Sound > 1)
-		freq = HIGH_QUALITY_FREQUENCY;
-	else
-		freq = ORIGINAL_GAME_FREQUENCY;
-
-	screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32, SDL_SWSURFACE);
-
-	if (screen == NULL) {
-		error("Couldn't set 640x480x8 video mode: %s\n\n", SDL_GetError());
-	}
-
-	for (i = 0; i < 16; i++) {
-		surfaceTable[i] = SDL_CreateRGBSurface(SDL_SWSURFACE, SCREEN_WIDTH, SCREEN_HEIGHT, 32, rmask, gmask, bmask, 0);
-	}
-#endif
-
-	initAll();
-	initEngine();
-	_music->stopTrackMusic();
-	_music->stopMidiMusic();
-	return Common::kNoError;
 }
 
 int TwinEEngine::getRandomNumber(uint max) {
@@ -803,22 +781,7 @@ bool TwinEEngine::gameEngineLoop() { // mainLoop
 	return false;
 }
 
-/** Original audio frequency */
-#define ORIGINAL_GAME_FREQUENCY 11025
-/** High quality audio frequency */
-#define HIGH_QUALITY_FREQUENCY 44100
-
-#if 0
-/** SDL screen color */
-SDL_Color screenColors[256];
-
-TTF_Font *font;
-#endif
-
-/** Deplay certain seconds till proceed - Can skip delay
-	@param time time in seconds to delay */
 void TwinEEngine::delaySkip(uint32 time) {
-#if 0
 	uint32 startTicks = _system->getMillis();
 	uint32 stopTicks = 0;
 	_keyboard.skipIntro = 0;
@@ -834,31 +797,18 @@ void TwinEEngine::delaySkip(uint32 time) {
 		_system->delayMillis(1);
 		//lbaTime++;
 	} while (stopTicks <= time);
-#endif
 }
 
-/** Set a new palette in the SDL screen buffer
-	@param palette palette to set */
 void TwinEEngine::setPalette(uint8 *palette) {
-#if 0
-	SDL_Color *screenColorsTemp = (SDL_Color *)palette;
-
-	SDL_SetColors(screenBuffer, screenColorsTemp, 0, 256);
-	SDL_BlitSurface(screenBuffer, NULL, screen, NULL);
-	SDL_UpdateRect(screen, 0, 0, 0, 0);
-#endif
+	g_system->getPaletteManager()->setPalette(palette, 0, 256);
+	flip();
 }
 
-/** Fade screen from black to white */
 void TwinEEngine::fadeBlackToWhite() {
 #if 0
-	int32 i;
-
 	SDL_Color colorPtr[256];
-
 	SDL_UpdateRect(screen, 0, 0, 0, 0);
-
-	for (i = 0; i < 256; i += 3) {
+	for (int32 i = 0; i < 256; i += 3) {
 		memset(colorPtr, i, sizeof(colorPtr));
 		SDL_SetPalette(screen, SDL_PHYSPAL, colorPtr, 0, 256);
 	}
@@ -866,96 +816,25 @@ void TwinEEngine::fadeBlackToWhite() {
 }
 
 void TwinEEngine::flip() {
+	g_system->copyRectToScreen(frontVideoBuffer, SCREEN_WIDTH, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 	g_system->updateScreen();
-#if 0
-	SDL_BlitSurface(screenBuffer, NULL, screen, NULL);
-	SDL_UpdateRect(screen, 0, 0, 0, 0);
-#endif
 }
 
 void TwinEEngine::copyBlockPhys(int32 left, int32 top, int32 right, int32 bottom) {
-#if 0
-	SDL_Rect rectangle;
-
-	rectangle.x = left;
-	rectangle.y = top;
-	rectangle.w = right - left + 1;
-	rectangle.h = bottom - top + 1;
-
-	SDL_BlitSurface(screenBuffer, &rectangle, screen, &rectangle);
-	SDL_UpdateRect(screen, left, top, right - left + 1, bottom - top + 1);
-#endif
-}
-
-void TwinEEngine::initScreenBuffer(uint8 *buffer, int32 width, int32 height) {
-#if 0
-	screenBuffer = SDL_CreateRGBSurfaceFrom(buffer, width, height, 8, SCREEN_WIDTH, 0, 0, 0, 0);
-#endif
+	g_system->copyRectToScreen(frontVideoBuffer, SCREEN_WIDTH, left, top, right - left + 1, bottom - top + 1);
+	g_system->updateScreen();
 }
 
 void TwinEEngine::crossFade(uint8 *buffer, uint8 *palette) {
-#if 0
-	int32 i;
-	SDL_Surface *backupSurface;
-	SDL_Surface *newSurface;
-	SDL_Surface *tempSurface;
-	Uint32 rmask, gmask, bmask;
-	//	Uint32 amask;
-
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-	rmask = 0xff000000;
-	gmask = 0x00ff0000;
-	bmask = 0x0000ff00;
-#else
-	rmask = 0x000000ff;
-	gmask = 0x0000ff00;
-	bmask = 0x00ff0000;
-#endif
-
-	backupSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, SCREEN_WIDTH, SCREEN_HEIGHT, 32, rmask, gmask, bmask, 0);
-	newSurface = SDL_CreateRGBSurface(SDL_SWSURFACE | SDL_SRCALPHA, SCREEN_WIDTH, SCREEN_HEIGHT, 32, rmask, gmask, bmask, 0);
-
-	tempSurface = SDL_CreateRGBSurfaceFrom(buffer, SCREEN_WIDTH, SCREEN_HEIGHT, 8, SCREEN_WIDTH, 0, 0, 0, 0);
-	SDL_SetColors(tempSurface, (SDL_Color *)palette, 0, 256);
-
-	SDL_BlitSurface(screen, NULL, backupSurface, NULL);
-	SDL_BlitSurface(tempSurface, NULL, newSurface, NULL);
-
-	for (i = 0; i < 8; i++) {
-		SDL_BlitSurface(backupSurface, NULL, surfaceTable[i], NULL);
-		SDL_SetAlpha(newSurface, SDL_SRCALPHA | SDL_RLEACCEL, i * 32);
-		SDL_BlitSurface(newSurface, NULL, surfaceTable[i], NULL);
-		SDL_BlitSurface(surfaceTable[i], NULL, screen, NULL);
-		SDL_UpdateRect(screen, 0, 0, 0, 0);
-		delaySkip(50);
-	}
-
-	SDL_BlitSurface(newSurface, NULL, screen, NULL);
-	SDL_UpdateRect(screen, 0, 0, 0, 0);
-
-	SDL_FreeSurface(backupSurface);
-	SDL_FreeSurface(newSurface);
-	SDL_FreeSurface(tempSurface);
-#endif
+	// TODO: implement cross fading
+	g_system->copyRectToScreen(buffer, SCREEN_WIDTH, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+	g_system->updateScreen();
 }
 
 void TwinEEngine::toggleFullscreen() {
-#if 0
-	SDL_FreeSurface(screen);
-
 	_redraw->reqBgRedraw = 1;
-
-	if (cfgfile.FullScreen) {
-		cfgfile.FullScreen = false;
-		screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32, SDL_SWSURFACE | SDL_FULLSCREEN);
-		copyScreen(workVideoBuffer, frontVideoBuffer);
-	} else {
-		cfgfile.FullScreen = true;
-		screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32, SDL_SWSURFACE);
-		copyScreen(workVideoBuffer, frontVideoBuffer);
-		SDL_ShowCursor(1);
-	}
-#endif
+	_system->setFeatureState(OSystem::kFeatureFullscreenMode, cfgfile.FullScreen);
+	cfgfile.FullScreen = !cfgfile.FullScreen;
 }
 
 /** Pressed key map - scanCodeTab1 */
@@ -1272,7 +1151,7 @@ void TwinEEngine::drawText(int32 x, int32 y, const char *string, int32 center) {
 	SDL_Color white = {0xFF, 0xFF, 0xFF, 0};
 	SDL_Color *forecol = &white;
 	SDL_Rect rectangle;
-	SDL_Surface *text = TTF_RenderText_Solid(font, string, *forecol);
+	Graphics::Surface *text = TTF_RenderText_Solid(font, string, *forecol);
 
 	if (center) {
 		rectangle.x = x - (text->w / 2);
