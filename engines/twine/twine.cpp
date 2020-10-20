@@ -414,15 +414,13 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 				}
 				break;
 			case kiBookOfBu: {
-				int32 tmpFlagDisplayText;
-
 				_screens->fadeToBlack(_screens->paletteRGB);
 				_screens->loadImage(RESSHQR_INTROSCREEN1IMG);
 				_text->initTextBank(2);
 				_text->newGameVar4 = 0;
 				_text->textClipFull();
 				_text->setFontCrossColor(15);
-				tmpFlagDisplayText = cfgfile.FlagDisplayText;
+				int32 tmpFlagDisplayText = cfgfile.FlagDisplayText;
 				cfgfile.FlagDisplayText = 1;
 				_text->drawTextFullscreen(161);
 				cfgfile.FlagDisplayText = tmpFlagDisplayText;

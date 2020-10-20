@@ -172,8 +172,7 @@ void Redraw::sortDrawingList(DrawListStruct *list, int32 listSize) {
 }
 
 void Redraw::addOverlay(int16 type, int16 info0, int16 X, int16 Y, int16 info1, int16 posType, int16 lifeTime) {
-	int32 i;
-	for (i = 0; i < OVERLAY_MAX_ENTRIES; i++) {
+	for (int32 i = 0; i < OVERLAY_MAX_ENTRIES; i++) {
 		OverlayListStruct *overlay = &overlayList[i];
 		if (overlay->info0 == -1) {
 			overlay->type = type;
@@ -183,19 +182,16 @@ void Redraw::addOverlay(int16 type, int16 info0, int16 X, int16 Y, int16 info1, 
 			overlay->info1 = info1;
 			overlay->posType = posType;
 			overlay->lifeTime = _engine->lbaTime + lifeTime * 50;
-			return;
+			break;
 		}
 	}
 }
 
 void Redraw::updateOverlayTypePosition(int16 X1, int16 Y1, int16 X2, int16 Y2) {
-	int32 i;
-	int16 newX, newY;
+	const int16 newX = X2 - X1;
+	const int16 newY = Y2 - Y1;
 
-	newX = X2 - X1;
-	newY = Y2 - Y1;
-
-	for (i = 0; i < OVERLAY_MAX_ENTRIES; i++) {
+	for (int32 i = 0; i < OVERLAY_MAX_ENTRIES; i++) {
 		OverlayListStruct *overlay = &overlayList[i];
 		if (overlay->type == koFollowActor) {
 			overlay->X = newX;
