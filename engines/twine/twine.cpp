@@ -1173,10 +1173,9 @@ void TwinEEngine::drawText(int32 x, int32 y, const char *string, int32 center) {
 void TwinEEngine::getMousePositions(MouseStatusStruct *mouseData) {
 #if 0 // TODO:
 	SDL_GetMouseState(&mouseData->X, &mouseData->Y);
+#endif
 	mouseData->left = leftMouse;
 	mouseData->right = rightMouse;
-#endif
-
 	leftMouse = 0;
 	rightMouse = 0;
 }
