@@ -55,7 +55,8 @@ enum _Keys {
 	TurnRight = 0x4D,
 	TurnLeft = 0x4B,
 	UseProtoPack = 0x24,
-	OpenHolomap = 0x23
+	OpenHolomap = 0x23,
+	InventoryMenu = 0x36
 };
 
 }

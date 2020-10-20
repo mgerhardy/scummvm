@@ -388,7 +388,7 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 
 		// inventory menu
 		loopInventoryItem = -1;
-		if (loopCurrentKey == 0x36 && _scene->sceneHero->entity != -1 && _scene->sceneHero->controlMode == kManual) {
+		if (loopCurrentKey == Keys::InventoryMenu && _scene->sceneHero->entity != -1 && _scene->sceneHero->controlMode == kManual) {
 			freezeTime();
 			_menu->processInventoryMenu();
 
@@ -933,7 +933,7 @@ void TwinEEngine::readKeys() {
 				break;
 			case Common::KEYCODE_LSHIFT:
 			case Common::KEYCODE_RSHIFT:
-				localKey = 0x36;
+				localKey = Keys::InventoryMenu;
 				break;
 			case Common::KEYCODE_LALT:
 			case Common::KEYCODE_RALT:
