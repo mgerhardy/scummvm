@@ -49,11 +49,6 @@ public:
 	void playTrackMusicCd(int32 track);
 	/** Stop CD music */
 	void stopTrackMusicCd();
-	/** Play MP3 music
-	@param track track number to play */
-	void playTrackMusicMp3(int32 track);
-	/** Stop MP3 music */
-	void stopTrackMusicMp3();
 	/** Generic play music, according with settings it plays CD or high quality sounds instead
 	@param track track number to play*/
 	void playTrackMusic(int32 track);
