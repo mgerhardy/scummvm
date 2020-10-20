@@ -32,9 +32,8 @@ class TwinEEngine;
 class ScriptMove {
 private:
 	TwinEEngine *_engine;
-
 public:
-	ScriptMove(TwinEEngine *engine) : _engine(engine) {}
+	ScriptMove(TwinEEngine *engine);
 
 	/** Process actor move script
 	@param actorIdx Current processed actor index */

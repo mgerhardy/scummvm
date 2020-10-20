@@ -819,7 +819,7 @@ void Menu::drawInfoMenu(int16 left, int16 top) {
 	_engine->copyBlockPhys(left, top, left + 450, top + 135);
 }
 
-void Menu::drawBehaviour(int16 behaviour, int32 angle, int16 cantDrawBox) {
+void Menu::drawBehaviour(HeroBehaviourType behaviour, int32 angle, int16 cantDrawBox) {
 	int32 boxLeft = behaviour * 110 + 110;
 	int32 boxRight = boxLeft + 99;
 	int32 boxTop = 110;
@@ -896,7 +896,6 @@ void Menu::drawBehaviourMenu(int32 angle) {
 void Menu::processBehaviourMenu() {
 	int32 tmpLanguageCD;
 	int32 tmpTextBank;
-	int32 tmpHeroBehaviour;
 	int32 tmpTime;
 
 	if (_engine->_actor->heroBehaviour == kProtoPack) {
@@ -925,7 +924,7 @@ void Menu::processBehaviourMenu() {
 
 	drawBehaviourMenu(_engine->_scene->sceneHero->angle);
 
-	tmpHeroBehaviour = _engine->_actor->heroBehaviour;
+	HeroBehaviourType tmpHeroBehaviour = _engine->_actor->heroBehaviour;
 
 	_engine->_animations->setAnimAtKeyframe(behaviourAnimState[_engine->_actor->heroBehaviour], _engine->_animations->animTable[_engine->_actor->heroAnimIdx[_engine->_actor->heroBehaviour]], behaviourEntity, &behaviourAnimData[_engine->_actor->heroBehaviour]);
 
@@ -937,21 +936,24 @@ void Menu::processBehaviourMenu() {
 		_engine->readKeys();
 		_engine->_keyboard.key = _engine->_keyboard.pressedKey;
 
+		int heroBehaviour = (int)_engine->_actor->heroBehaviour;
 		if (_engine->_keyboard.key & 8) {
-			_engine->_actor->heroBehaviour++;
+			heroBehaviour++;
 		}
 
 		if (_engine->_keyboard.key & 4) {
-			_engine->_actor->heroBehaviour--;
+			heroBehaviour--;
 		}
 
-		if (_engine->_actor->heroBehaviour < 0) {
-			_engine->_actor->heroBehaviour = 3;
+		if (heroBehaviour < kNormal) {
+			heroBehaviour = kDiscrete;
 		}
 
-		if (_engine->_actor->heroBehaviour >= 4) {
-			_engine->_actor->heroBehaviour = 0;
+		if (heroBehaviour >= kProtoPack) {
+			heroBehaviour = kNormal;
 		}
+
+		_engine->_actor->heroBehaviour = (HeroBehaviourType)heroBehaviour;
 
 		if (tmpHeroBehaviour != _engine->_actor->heroBehaviour) {
 			drawBehaviour(tmpHeroBehaviour, _engine->_scene->sceneHero->angle, 1);

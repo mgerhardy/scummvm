@@ -60,7 +60,7 @@ private:
 	/** Used to run the save game management menu */
 	int32 savemanageMenu();
 	void drawInfoMenu(int16 left, int16 top);
-	void drawBehaviour(int16 behaviour, int32 angle, int16 cantDrawBox);
+	void drawBehaviour(HeroBehaviourType behaviour, int32 angle, int16 cantDrawBox);
 	void drawInventoryItems();
 	void drawBehaviourMenu(int32 angle);
 	void drawItem(int32 item);

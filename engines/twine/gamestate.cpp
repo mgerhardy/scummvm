@@ -158,9 +158,9 @@ void GameState::initEngineVars() { // reinitAll
 
 	_engine->_text->currentTextBank = 0;
 	_engine->_scene->currentlyFollowedActor = 0;
-	_engine->_actor->heroBehaviour = 0;
+	_engine->_actor->heroBehaviour = kNormal;
 	_engine->_actor->previousHeroAngle = 0;
-	_engine->_actor->previousHeroBehaviour = 0;
+	_engine->_actor->previousHeroBehaviour = kNormal;
 }
 
 bool GameState::loadGame() {
@@ -196,7 +196,7 @@ bool GameState::loadGame() {
 	_engine->_scene->needChangeScene = file.readByte(); // scene index
 	gameChapter = file.readByte();
 
-	_engine->_actor->heroBehaviour = file.readByte();
+	_engine->_actor->heroBehaviour = (HeroBehaviourType)file.readByte();
 	_engine->_actor->previousHeroBehaviour = _engine->_actor->heroBehaviour;
 	_engine->_scene->sceneHero->life = file.readByte();
 	inventoryNumKashes = file.readSint16LE();

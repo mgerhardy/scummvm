@@ -499,9 +499,20 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 		}
 
 		// Process behaviour menu - Press CTRL and F1..F4 Keys
-		if ((loopCurrentKey == 0x1D || loopCurrentKey == 0x3B || loopCurrentKey == 0x3C || loopCurrentKey == 0x3D || loopCurrentKey == 0x3E) && _scene->sceneHero->entity != -1 && _scene->sceneHero->controlMode == kManual) {
-			if (loopCurrentKey != 0x1D) {
-				_actor->heroBehaviour = loopCurrentKey - 0x3B;
+		if ((loopCurrentKey == Keys::BehaviourMenu
+		  || loopCurrentKey == Keys::QuickBehaviourNormal
+		  || loopCurrentKey == Keys::QuickBehaviourAthletic
+		  || loopCurrentKey == Keys::QuickBehaviourAggressive
+		  || loopCurrentKey == Keys::QuickBehaviourDiscreet)
+		  && _scene->sceneHero->entity != -1 && _scene->sceneHero->controlMode == kManual) {
+			if (loopCurrentKey == Keys::QuickBehaviourNormal) {
+				_actor->heroBehaviour = HeroBehaviourType::kNormal;
+			} else if (loopCurrentKey == Keys::QuickBehaviourAthletic) {
+				_actor->heroBehaviour = HeroBehaviourType::kAthletic;
+			} else if (loopCurrentKey == Keys::QuickBehaviourAggressive) {
+				_actor->heroBehaviour = HeroBehaviourType::kAggressive;
+			} else if (loopCurrentKey == Keys::QuickBehaviourDiscreet) {
+				_actor->heroBehaviour = HeroBehaviourType::kDiscrete;
 			}
 			freezeTime();
 			_menu->processBehaviourMenu();

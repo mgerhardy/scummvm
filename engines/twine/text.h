@@ -70,91 +70,93 @@ private:
 
 	// RECHECK THIS LATER
 	int32 currentBankIdx = -1; // textVar1
-	char textVar2[256];
-	uint8 textVar3;
+	char textVar2[256] = "";
+	uint8 textVar3 = 0u;
 
 	/** Dialogue text pointer */
-	char *dialTextPtr; // bufText
+	char *dialTextPtr = nullptr; // bufText
 	/** Dialogue entry order pointer */
-	char *dialOrderPtr; // bufOrder
+	char *dialOrderPtr = nullptr; // bufOrder
 	/** Number of dialogues text entries */
-	int16 numDialTextEntries;
+	int16 numDialTextEntries = 0;
 
 	const int16 spaceChar = 0x20;
 
 	// TODO: refactor all this variables and related functions
-	char buf1[256];
-	char buf2[256];
-	char *printText8Ptr1;
-	char *printText8Ptr2;
-	int32 printText8Var1;
-	int32 printText8Var2;
-	int32 printText8Var3;
-	int32 TEXT_CurrentLetterX;
-	int32 printText8Var5;
-	int32 printText8Var6;
-	int32 TEXT_CurrentLetterY;
-	char *printText8Var8;
-	int32 printText10Var1;
-	int32 addLineBreakX;
+	char buf1[256] = "";
+	char buf2[256] = "";
+	char *printText8Ptr1 = nullptr;
+	char *printText8Ptr2 = nullptr;
+	int32 printText8Var1 = 0;
+	int32 printText8Var2 = 0;
+	int32 printText8Var3 = 0;
+	int32 TEXT_CurrentLetterX = 0;
+	int32 printText8Var5 = 0;
+	int32 printText8Var6 = 0;
+	int32 TEXT_CurrentLetterY = 0;
+	char *printText8Var8 = nullptr;
+	int32 printText10Var1 = 0;
+	int32 addLineBreakX = 0;
 	int16 pt8s4[96];
-	int32 printText8PrepareBufferVar2;
+	int32 printText8PrepareBufferVar2 = 0;
 	// ---
 public:
 	Text(TwinEEngine *engine) : _engine(engine) {}
 
 	/** Current text bank */
-	int32 currentTextBank;
+	int32 currentTextBank = 0;
 	/** Current dialogue text size */
-	int32 currDialTextSize;
+	int32 currDialTextSize = 0;
 	/** Current dialogue text pointer */
-	char *currDialTextPtr;
+	char *currDialTextPtr = nullptr;
 
 	/** Font buffer pointer */
-	uint8 *fontPtr;
+	uint8 *fontPtr = nullptr;
 
 	/** Dialogue text size */
-	int32 dialTextSize;
+	int32 dialTextSize = 0;
 	/** Pixel size between dialogue text */
-	int32 dialSpaceBetween;
+	int32 dialSpaceBetween = 0;
 	/** Pixel size of the space character */
-	int32 dialCharSpace;
+	int32 dialCharSpace = 0;
 	/** Dialogue text color */
-	int32 dialTextColor;
+	int32 dialTextColor = 0;
 
 	/** Dialogue text start color for cross coloring dialogues */
-	int32 dialTextStartColor;
+	int32 dialTextStartColor = 0;
 	/** Dialogue text stop color for cross coloring dialogues */
-	int32 dialTextStopColor;
+	int32 dialTextStopColor = 0;
 	/** Dialogue text step size for cross coloring dialogues */
-	int32 dialTextStepSize;
+	int32 dialTextStepSize = 0;
 	/** Dialogue text buffer size for cross coloring dialogues */
-	int32 dialTextBufferSize;
+	int32 dialTextBufferSize = 0;
 
-	int32 dialTextBoxLeft;   // dialogueBoxLeft
-	int32 dialTextBoxTop;    // dialogueBoxTop
-	int32 dialTextBoxRight;  // dialogueBoxRight
-	int32 dialTextBoxBottom; // dialogueBoxBottom
+	int32 dialTextBoxLeft = 0;   // dialogueBoxLeft
+	int32 dialTextBoxTop = 0;    // dialogueBoxTop
+	int32 dialTextBoxRight = 0;  // dialogueBoxRight
+	int32 dialTextBoxBottom = 0; // dialogueBoxBottom
 
-	int32 dialTextBoxParam1; // dialogueBoxParam1
-	int32 dialTextBoxParam2; // dialogueBoxParam2
+	int32 dialTextBoxParam1 = 0; // dialogueBoxParam1
+	int32 dialTextBoxParam2 = 0; // dialogueBoxParam2
 
 	// TODO: refactor all this variables and related functions
-	int32 printTextVar13;
-	int32 newGameVar4;
-	int32 newGameVar5;
-	int32 hasHiddenVox; // printTextVar5
-	int32 voxHiddenIndex;
+	int32 printTextVar13 = 0;
+	int32 newGameVar4 = 0;
+	int32 newGameVar5 = 0;
+	int32 hasHiddenVox = 0; // printTextVar5
+	int32 voxHiddenIndex = 0;
 	// ---
 
-	int32 currDialTextEntry; // ordered entry
-	int32 nextDialTextEntry; // ordered entry
+	int32 currDialTextEntry = 0; // ordered entry
+	int32 nextDialTextEntry = 0; // ordered entry
 	Common::String currentVoxBankFile;
 
-	int32 showDialogueBubble;
+	int32 showDialogueBubble = 0;
 
-	/** Initialize dialogue
-	@param bankIdx Text bank index*/
+	/**
+	 * Initialize dialogue
+	 * @param bankIdx Text bank index
+	 */
 	void initTextBank(int32 bankIdx);
 
 	/**
@@ -188,8 +190,10 @@ public:
 	 */
 	void setFontParameters(int32 spaceBetween, int32 charSpace);
 
-	/** Set the font cross color
-	@param color color number to choose */
+	/**
+	 * Set the font cross color
+	 * @param color color number to choose
+	 */
 	void setFontCrossColor(int32 color);
 
 	/**

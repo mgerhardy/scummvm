@@ -33,6 +33,16 @@ namespace TwinE {
 /** Total number of bodies allowed in the game */
 #define NUM_BODIES 200
 
+/** Hero behaviour
+ * <li> NORMAL: Talk / Read / Search / Use
+ * <li> ATHLETIC: Jump
+ * <li> AGGRESSIVE:
+ * Auto mode   : Fight
+ * Manual mode : While holding the spacebar down
+ * 			UP / RIGHT / LEFT will manually select
+ * 			different punch/kick options
+ * <li> DISCREET: Kneel down to hide
+ */
 enum HeroBehaviourType {
 	kNormal = 0,
 	kAthletic = 1,
@@ -43,16 +53,16 @@ enum HeroBehaviourType {
 
 /** Actors move structure */
 typedef struct ActorMoveStruct {
-	int16 from;
-	int16 to;
-	int16 numOfStep;
-	int32 timeOfChange;
+	int16 from = 0;
+	int16 to = 0;
+	int16 numOfStep = 0;
+	int32 timeOfChange = 0;
 } ActorMoveStruct;
 
 /** Actors zone volumique points structure */
 typedef struct ZVPoint {
-	int16 bottomLeft;
-	int16 topRight;
+	int16 bottomLeft = 0;
+	int16 topRight = 0;
 } ZVPoint;
 
 /** Actors zone volumique box structure */
@@ -64,8 +74,8 @@ typedef struct ZVBox {
 
 /** Actors animation timer structure */
 typedef struct AnimTimerDataStruct {
-	uint8 *ptr;
-	int32 time;
+	uint8 *ptr = nullptr;
+	int32 time = 0;
 } AnimTimerDataStruct;
 
 enum AnimationTypes {
@@ -142,63 +152,63 @@ typedef struct ActorStruct {
 	StaticFlagsStruct staticFlags;
 	DynamicFlagsStruct dynamicFlags;
 
-	int32 entity; // costumeIndex
-	int32 body;
-	AnimationTypes anim;
-	int32 animExtra;  //field_2
-	int32 brickShape; // field_3
-	uint8 *animExtraPtr;
-	int32 sprite; // field_8
-	uint8 *entityDataPtr;
+	int32 entity = 0; // costumeIndex
+	int32 body = 0;
+	AnimationTypes anim = kAnimNone;
+	int32 animExtra = 0;  //field_2
+	int32 brickShape = 0; // field_3
+	uint8 *animExtraPtr = nullptr;
+	int32 sprite = 0; // field_8
+	uint8 *entityDataPtr = nullptr;
 
-	int32 x;
-	int32 y;
-	int32 z;
-	int32 strengthOfHit; // field_66
-	int32 hitBy;
-	int32 bonusParameter; // field_10
-	int32 angle;
-	int32 speed;
-	int32 controlMode;
-	int32 info0;         // cropLeft
-	int32 info1;         // cropTop
-	int32 info2;         // cropRight
-	int32 info3;         // cropBottom
-	int32 followedActor; // same as info3
-	int32 bonusAmount;   // field_12
-	int32 talkColor;
-	int32 armor; // field_14
-	int32 life;
+	int32 x = 0;
+	int32 y = 0;
+	int32 z = 0;
+	int32 strengthOfHit = 0; // field_66
+	int32 hitBy = 0;
+	int32 bonusParameter = 0; // field_10
+	int32 angle = 0;
+	int32 speed = 0;
+	int32 controlMode = 0;
+	int32 info0 = 0;         // cropLeft
+	int32 info1 = 0;         // cropTop
+	int32 info2 = 0;         // cropRight
+	int32 info3 = 0;         // cropBottom
+	int32 followedActor = 0; // same as info3
+	int32 bonusAmount = 0;   // field_12
+	int32 talkColor = 0;
+	int32 armor = 0; // field_14
+	int32 life = 0;
 
-	int32 collisionX; // field_20
-	int32 collisionY; // field_22
-	int32 collisionZ; // field_24
+	int32 collisionX = 0; // field_20
+	int32 collisionY = 0; // field_22
+	int32 collisionZ = 0; // field_24
 
-	int32 positionInMoveScript;
-	uint8 *moveScript;
+	int32 positionInMoveScript = 0;
+	uint8 *moveScript = nullptr;
 
-	int32 positionInLifeScript;
-	uint8 *lifeScript;
+	int32 positionInLifeScript = 0;
+	uint8 *lifeScript = nullptr;
 
-	int32 labelIdx;        // script label index
-	int32 currentLabelPtr; // pointer to LABEL offset
-	int32 pausedTrackPtr;
+	int32 labelIdx = 0;        // script label index
+	int32 currentLabelPtr = 0; // pointer to LABEL offset
+	int32 pausedTrackPtr = 0;
 
 	//int costumeIndex;
-	int32 collision;
-	int32 standPosition;
-	int32 standOn;
-	int32 zone;
+	int32 collision = 0;
+	int32 standPosition = 0;
+	int32 standOn = 0;
+	int32 zone = 0;
 
-	int32 lastRotationAngle;
-	int32 lastX;
-	int32 lastZ;
-	int32 lastY;
-	int32 previousAnimIdx;
-	int32 doorStatus;
-	int32 animPosition;
-	int32 animType;   // field_78
-	int32 brickSound; // field_7A
+	int32 lastRotationAngle = 0;
+	int32 lastX = 0;
+	int32 lastZ = 0;
+	int32 lastY = 0;
+	int32 previousAnimIdx = 0;
+	int32 doorStatus = 0;
+	int32 animPosition = 0;
+	int32 animType = 0;   // field_78
+	int32 brickSound = 0; // field_7A
 
 	ZVBox boudingBox;
 	ActorMoveStruct move;
@@ -215,60 +225,50 @@ private:
 public:
 	Actor(TwinEEngine* engine);
 	/** Table with all loaded sprites */
-	uint8 *spriteTable[NUM_SPRITES];
+	uint8 *spriteTable[NUM_SPRITES] {nullptr};
 	/** Table with all loaded sprite sizes */
-	uint32 spriteSizeTable[NUM_SPRITES];
+	uint32 spriteSizeTable[NUM_SPRITES] {0};
 
 	/** Actor shadow X coordinate */
-	int32 shadowX;
+	int32 shadowX = 0;
 	/** Actor shadow Y coordinate */
-	int32 shadowY;
+	int32 shadowY = 0;
 	/** Actor shadow Z coordinate */
-	int32 shadowZ;
+	int32 shadowZ = 0;
 	/** Actor shadow collition type */
-	int8 shadowCollisionType; // shadowVar
+	int8 shadowCollisionType = 0; // shadowVar
 
-	/** Hero behaviour
-	 * <li> NORMAL: Talk / Read / Search / Use
-	 * <li> ATHLETIC: Jump
-	 * <li> AGGRESSIVE:
-	 * Auto mode   : Fight
-	 * Manual mode : While holding the spacebar down
-	 * 			UP / RIGHT / LEFT will manually select
-	 * 			different punch/kick options
-	 * <li> DISCREET: Kneel down to hide
-	 */
-	int16 heroBehaviour;
+	HeroBehaviourType heroBehaviour = kNormal;
 	/** Hero auto agressive mode */
-	int16 autoAgressive;
+	int16 autoAgressive = 0;
 	/** Previous Hero behaviour */
-	int16 previousHeroBehaviour;
+	HeroBehaviourType previousHeroBehaviour = kNormal;
 	/** Previous Hero angle */
-	int16 previousHeroAngle;
+	int16 previousHeroAngle = 0;
 
-	int16 cropBottomScreen;
+	int16 cropBottomScreen = 0;
 
 	/** Hero 3D entity for normal behaviour */
-	uint8 *heroEntityNORMAL; // file3D0
+	uint8 *heroEntityNORMAL = nullptr; // file3D0
 	/** Hero 3D entity for athletic behaviour */
-	uint8 *heroEntityATHLETIC; // file3D1
+	uint8 *heroEntityATHLETIC = nullptr; // file3D1
 	/** Hero 3D entity for aggressive behaviour */
-	uint8 *heroEntityAGGRESSIVE; // file3D2
+	uint8 *heroEntityAGGRESSIVE = nullptr; // file3D2
 	/** Hero 3D entity for discrete behaviour */
-	uint8 *heroEntityDISCRETE; // file3D3
+	uint8 *heroEntityDISCRETE = nullptr; // file3D3
 	/** Hero 3D entity for protopack behaviour */
-	uint8 *heroEntityPROTOPACK; // file3D4
+	uint8 *heroEntityPROTOPACK = nullptr; // file3D4
 
 	/** Hero current anim for normal behaviour */
-	int16 heroAnimIdxNORMAL; // TCos0Init
+	int16 heroAnimIdxNORMAL = 0; // TCos0Init
 	/** Hero current anim for athletic behaviour */
-	int16 heroAnimIdxATHLETIC; // TCos1Init
+	int16 heroAnimIdxATHLETIC = 0; // TCos1Init
 	/** Hero current anim for aggressive behaviour */
-	int16 heroAnimIdxAGGRESSIVE; // TCos2Init
+	int16 heroAnimIdxAGGRESSIVE = 0; // TCos2Init
 	/** Hero current anim for discrete behaviour */
-	int16 heroAnimIdxDISCRETE; // TCos3Init
+	int16 heroAnimIdxDISCRETE = 0; // TCos3Init
 	/** Hero current anim for protopack behaviour */
-	int16 heroAnimIdxPROTOPACK; // TCos4Init
+	int16 heroAnimIdxPROTOPACK = 0; // TCos4Init
 
 	/** Hero anim for behaviour menu */
 	int16 heroAnimIdx[4]; // TCOS

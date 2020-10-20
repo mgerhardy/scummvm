@@ -46,19 +46,19 @@ public:
 	uint8 paletteRGBCustom[NUMOFCOLORS * 3];
 
 	/** flag to check if a custom palette is in use */
-	int16 palCustom;
+	int16 palCustom = 0;
 
 	/** flag to check in the game palette was changed */
-	int16 palReseted;
+	int16 palReseted = 0;
 
 	/** flag to check if the main flag is locked */
-	int16 lockPalette;
+	int16 lockPalette = 0;
 
 	/** flag to check if we are using a different palette than the main one */
-	int16 useAlternatePalette;
+	int16 useAlternatePalette = 0;
 
 	/** main game palette */
-	uint8 *mainPalette;
+	uint8 *mainPalette = nullptr;
 
 	/** converted in-game palette */
 	uint8 mainPaletteRGB[NUMOFCOLORS * 3];
@@ -89,29 +89,37 @@ public:
 	@param palette current palette to fade in */
 	void fadeIn(uint8 *palette);
 
-	/** Fade image out
-	@param palette current palette to fade out */
+	/**
+	 * Fade image out
+	 * @param palette current palette to fade out
+	 */
 	void fadeOut(uint8 *palette);
 
-	/** Calculate a new color component according with an intensity
-	@param modifier color compenent
-	@param color color value
-	@param param unknown
-	@param intensity intensity value to adjust
-	@return new color component*/
+	/**
+	 * Calculate a new color component according with an intensity
+	 * @param modifier color compenent
+	 * @param color color value
+	 * @param param unknown
+	 * @param intensity intensity value to adjust
+	 * @return new color component
+	 */
 	int32 crossDot(int32 modifier, int32 color, int32 param, int32 intensity);
 
-	/** Adjust palette intensity
-	@param R red component of color
-	@param G green component of color
-	@param B blue component of color
-	@param palette palette to adjust
-	@param intensity intensity value to adjust */
+	/**
+	 * Adjust palette intensity
+	 * @param R red component of color
+	 * @param G green component of color
+	 * @param B blue component of color
+	 * @param palette palette to adjust
+	 * @param intensity intensity value to adjust
+	 */
 	void adjustPalette(uint8 R, uint8 G, uint8 B, uint8 *palette, int32 intensity);
 
-	/** Adjust between two palettes
-	@param pal1 palette from adjust
-	@param pal2 palette to adjust */
+	/**
+	 * Adjust between two palettes
+	 * @param pal1 palette from adjust
+	 * @param pal2 palette to adjust
+	 */
 	void adjustCrossPalette(uint8 *pal1, uint8 *pal2);
 
 	/** Fade image to black
