@@ -31,26 +31,26 @@ namespace TwinE {
 #define EXTRA_MAX_ENTRIES 50
 
 typedef struct ExtraListStruct {
-	int16 info0; // field_0
-	int16 x;
-	int16 y;
-	int16 z;
+	int16 info0 = 0; // field_0
+	int16 x = 0;
+	int16 y = 0;
+	int16 z = 0;
 
-	int16 lastX; // field_8
-	int16 lastY; // field_A
-	int16 lastZ; // field_C
+	int16 lastX = 0; // field_8
+	int16 lastY = 0; // field_A
+	int16 lastZ = 0; // field_C
 
 	ActorMoveStruct trackActorMove;
 
-	int16 destX; // field_E
-	int16 destY; // field_10
-	int16 destZ; // field_12
-	int16 type;  // field_14
-	int16 angle; // field_16
-	int32 lifeTime;
-	int16 actorIdx;      // field_ 1C
-	int16 strengthOfHit; // field_1E
-	int16 info1;         // field_20
+	int16 destX = 0; // field_E
+	int16 destY = 0; // field_10
+	int16 destZ = 0; // field_12
+	int16 type = 0;  // field_14
+	int16 angle = 0; // field_16
+	int32 lifeTime = 0;
+	int16 actorIdx = 0;      // field_ 1C
+	int16 strengthOfHit = 0; // field_1E
+	int16 info1 = 0;         // field_20
 } ExtraListStruct;
 
 enum ExtraSpecialType {

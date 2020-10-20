@@ -37,13 +37,13 @@ public:
 	Screens(TwinEEngine *engine) : _engine(engine) {}
 
 	/** In-game palette (should not be used, except in special case. otherwise use other images functions instead) */
-	uint8 palette[NUMOFCOLORS * 3];
+	uint8 palette[NUMOFCOLORS * 3] {0};
 
 	/** converted in-game palette */
-	uint8 paletteRGB[NUMOFCOLORS * 3];
+	uint8 paletteRGB[NUMOFCOLORS * 3] {0};
 
 	/** converted custom palette */
-	uint8 paletteRGBCustom[NUMOFCOLORS * 3];
+	uint8 paletteRGBCustom[NUMOFCOLORS * 3] {0};
 
 	/** flag to check if a custom palette is in use */
 	int16 palCustom = 0;
@@ -61,32 +61,40 @@ public:
 	uint8 *mainPalette = nullptr;
 
 	/** converted in-game palette */
-	uint8 mainPaletteRGB[NUMOFCOLORS * 3];
+	uint8 mainPaletteRGB[NUMOFCOLORS * 3] {0};
 
 	/** Load and display Adeline Logo */
 	void adelineLogo();
 
 	void copyPal(const uint8* in, uint8* out);
 
-	/** Load a custom palette
-	@param index \a RESS.HQR entry index (starting from 0) */
+	/**
+	 * Load a custom palette
+	 * @param index \a RESS.HQR entry index (starting from 0)
+	 */
 	void loadCustomPalette(int32 index);
 
 	/** Load and display Main Menu image */
 	void loadMenuImage(bool fade_in = true);
 
-	/** Load and display a particulary image on \a RESS.HQR file with cross fade effect
-	@param index \a RESS.HQR entry index (starting from 0)
-	@param fade_in if we fade in before using the palette */
+	/**
+	 * Load and display a particulary image on \a RESS.HQR file with cross fade effect
+	 * @param index \a RESS.HQR entry index (starting from 0)
+	 * @param fade_in if we fade in before using the palette
+	 */
 	void loadImage(int32 index, bool fade_in = true);
 
-	/** Load and display a particulary image on \a RESS.HQR file with cross fade effect and delay
-	@param index \a RESS.HQR entry index (starting from 0)
-	@param time number of seconds to delay */
+	/**
+	 * Load and display a particulary image on \a RESS.HQR file with cross fade effect and delay
+	 * @param index \a RESS.HQR entry index (starting from 0)
+	 * @param time number of seconds to delay
+	 */
 	void loadImageDelay(int32 index, int32 time);
 
-	/** Fade image in
-	@param palette current palette to fade in */
+	/**
+	 * Fade image in
+	 * @param palette current palette to fade in
+	 */
 	void fadeIn(uint8 *palette);
 
 	/**
@@ -122,8 +130,10 @@ public:
 	 */
 	void adjustCrossPalette(uint8 *pal1, uint8 *pal2);
 
-	/** Fade image to black
-	@param palette current palette to fade */
+	/**
+	 * Fade image to black
+	 * @param palette current palette to fade
+	 */
 	void fadeToBlack(uint8 *palette);
 
 	/** Fade image with another palette source

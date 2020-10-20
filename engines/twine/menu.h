@@ -32,26 +32,30 @@ private:
 	TwinEEngine *_engine;
 
 	/** Hero behaviour menu entity */
-	uint8 *behaviourEntity;
+	uint8 *behaviourEntity = 0;
 	/** Behaviour menu anim state */
-	int16 behaviourAnimState[4]; // winTab
+	int16 behaviourAnimState[4]{0}; // winTab
 	/** Behaviour menu anim data pointer */
 	AnimTimerDataStruct behaviourAnimData[4];
 
-	int32 inventorySelectedColor;
-	int32 inventorySelectedItem; // currentSelectedObjectInInventory
+	int32 inventorySelectedColor = 0;
+	int32 inventorySelectedItem = 0; // currentSelectedObjectInInventory
 
-	/** Draws main menu button
-	@param width menu button width
-	@param topheight is the height between the top of the screen and the first button
-	@param id current button identification from menu settings
-	@param value current button key pressed value
-	@param mode flag to know if should draw as a hover button or not */
+	/**
+	 * Draws main menu button
+	 * @param width menu button width
+	 * @param topheight is the height between the top of the screen and the first button
+	 * @param id current button identification from menu settings
+	 * @param value current button key pressed value
+	 * @param mode flag to know if should draw as a hover button or not
+	 */
 	void drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, int32 mode);
 	void plasmaEffectRenderFrame();
-	/** Process the menu button draw
-	@param data menu settings array
-	@param mode flag to know if should draw as a hover button or not */
+	/**
+	 * Process the menu button draw
+	 * @param data menu settings array
+	 * @param mode flag to know if should draw as a hover button or not
+	 */
 	void drawButton(const int16 *menuSettings, int32 mode);
 	/** Used to run the advanced options menu */
 	int32 advoptionsMenu();
@@ -64,21 +68,23 @@ private:
 	void drawInventoryItems();
 	void drawBehaviourMenu(int32 angle);
 	void drawItem(int32 item);
-	/** Draw the entire button box
-	@param left start width to draw the button
-	@param top start height to draw the button
-	@param right end width to draw the button
-	@param bottom end height to draw the button */
+	/**
+	 * Draw the entire button box
+	 * @param left start width to draw the button
+	 * @param top start height to draw the button
+	 * @param right end width to draw the button
+	 * @param bottom end height to draw the button
+	 */
 	void drawMagicItemsBox(int32 left, int32 top, int32 right, int32 bottom, int32 color);
 
 public:
 	Menu(TwinEEngine *engine);
 
-	int32 currMenuTextIndex;
-	int32 currMenuTextBank;
-	char currMenuTextBuffer[256];
+	int32 currMenuTextIndex = 0;
+	int32 currMenuTextBank = 0;
+	char currMenuTextBuffer[256] = "";
 
-	int16 itemAngle[255]; // objectRotation
+	int16 itemAngle[255]{0}; // objectRotation
 
 	// TODO: these should be const - or the state might not get reset on an engine restart
 	static int16 OptionsMenuSettings[];
@@ -93,18 +99,22 @@ public:
 	ActorMoveStruct moveMenu;
 
 	/** Plasma Effect pointer to file content: RESS.HQR:51 */
-	uint8 *plasmaEffectPtr;
+	uint8 *plasmaEffectPtr = nullptr;
 
-	/** Process the plasma effect
-	@param top top height where the effect will be draw in the front buffer
-	@param color plasma effect start color */
+	/**
+	 * Process the plasma effect
+	 * @param top top height where the effect will be draw in the front buffer
+	 * @param color plasma effect start color
+	 */
 	void processPlasmaEffect(int32 top, int32 color);
 
-	/** Draw the entire button box
-	@param left start width to draw the button
-	@param top start height to draw the button
-	@param right end width to draw the button
-	@param bottom end height to draw the button */
+	/**
+	 * Draw the entire button box
+	 * @param left start width to draw the button
+	 * @param top start height to draw the button
+	 * @param right end width to draw the button
+	 * @param bottom end height to draw the button
+	 */
 	void drawBox(int32 left, int32 top, int32 right, int32 bottom);
 
 	/**

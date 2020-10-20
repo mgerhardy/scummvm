@@ -75,50 +75,50 @@ static const struct TwinELanguage {
 	All the settings with (*) means they are new and only exist in this engine. */
 typedef struct ConfigFile {
 	/** Index into the LanguageTypes array. */
-	int32 LanguageId;
+	int32 LanguageId = 0;
 	/** Index into the LanguageTypes array. */
-	int32 LanguageCDId;
+	int32 LanguageCDId = 0;
 	/** Enable/Disable game dialogues */
-	bool FlagDisplayText;
+	bool FlagDisplayText = false;
 	/** Save voice files on hard disk */
-	bool FlagKeepVoice;
+	bool FlagKeepVoice = false;
 	/** Type of music file to be used */
-	int8 MidiType;
+	int8 MidiType = 0;
 	/** *Game version */
-	int32 Version;
+	int32 Version = 0;
 	/** To allow fullscreen or window mode. */
-	bool FullScreen;
+	bool FullScreen = false;
 	/** If you want to use the LBA CD or not */
-	int32 UseCD;
+	int32 UseCD = 0;
 	/** Allow various sound types */
-	int32 Sound;
+	int32 Sound = 0;
 	/** Allow various movie types */
-	int32 Movie;
+	int32 Movie = 0;
 	/** Use cross fade effect while changing images, or be as the original */
-	int32 CrossFade;
+	int32 CrossFade = 0;
 	/** Flag used to keep the game frames per second */
-	int32 Fps;
+	int32 Fps = 0;
 	/** Flag to display game debug */
-	int32 Debug;
+	int32 Debug = 0;
 	/** Use original autosaving system or save when you want */
-	int32 UseAutoSaving;
+	int32 UseAutoSaving = 0;
 	/** Shadow mode type */
-	int32 ShadowMode;
+	int32 ShadowMode = 0;
 	/** AutoAgressive mode type */
-	int32 AutoAgressive;
+	int32 AutoAgressive = 0;
 	/** SceZoom mode type */
-	int32 SceZoom;
+	int32 SceZoom = 0;
 	/** Flag to quit the game */
-	int32 Quit;
+	int32 Quit = 0;
 	/** Flag to toggle Wall Collision */
-	int32 WallCollision;
+	int32 WallCollision = 0;
 } ConfigFile;
 
 typedef struct MouseStatusStruct {
-	int32 left;
-	int32 right;
-	int32 X;
-	int32 Y;
+	int32 left = 0;
+	int32 right = 0;
+	int32 X = 0;
+	int32 Y = 0;
 } MouseStatusStruct;
 
 class Actor;

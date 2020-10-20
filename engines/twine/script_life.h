@@ -36,7 +36,7 @@ private:
 	TwinEEngine *_engine;
 
 public:
-	ScriptLife(TwinEEngine *engine) : _engine(engine) {}
+	ScriptLife(TwinEEngine *engine);
 
 	/** Process actor life script
 	@param actorIdx Current processed actor index */

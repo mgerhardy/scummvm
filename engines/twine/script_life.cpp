@@ -1595,6 +1595,13 @@ static const ScriptLifeFunction function_map[] = {
     /*0x68*/ MAPFUNC("CLEAR_TEXT", lCLEAR_TEXT),
     /*0x69*/ MAPFUNC("BRUTAL_EXIT", lBRUTAL_EXIT)};
 
+ScriptLife::ScriptLife(TwinEEngine *engine) : _engine(engine) {
+	scriptPtr = nullptr;
+	opcodePtr = nullptr;
+	drawVar1 = 0;
+	textStr[0] = '\0';
+}
+
 void ScriptLife::processLifeScript(int32 actorIdx) {
 	int32 end, scriptOpcode;
 	ActorStruct *actor;

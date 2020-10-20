@@ -109,9 +109,9 @@ private:
 public:
 	Resources(TwinEEngine *engine) : _engine(engine) {}
 	/** Table with all loaded samples */
-	uint8 *inventoryTable[NUM_INVENTORY_ITEMS];
+	uint8 *inventoryTable[NUM_INVENTORY_ITEMS] {nullptr};
 	/** Table with all loaded samples sizes */
-	uint32 inventorySizeTable[NUM_INVENTORY_ITEMS];
+	uint32 inventorySizeTable[NUM_INVENTORY_ITEMS] {0};
 
 	/** Initialize resource pointers */
 	void initResources();

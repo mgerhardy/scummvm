@@ -68,47 +68,47 @@ public:
 
 	/** LBA engine game flags to save quest states */
 	// TODO: why not NUM_GAME_FLAGS?
-	uint8 gameFlags[256];
+	uint8 gameFlags[256]{0};
 
 	/** LBA engine chapter */
-	int16 gameChapter;
+	int16 gameChapter = 0;
 
 	/** Magic ball type index */
-	int16 magicBallIdx;
+	int16 magicBallIdx = 0;
 	/** Magic ball num bounce */
-	int16 magicBallNumBounce;
+	int16 magicBallNumBounce = 0;
 	/** Magic ball auxiliar bounce number */
-	int16 magicBallAuxBounce; // magicBallParam
+	int16 magicBallAuxBounce = 0; // magicBallParam
 	/** Magic level index */
-	int16 magicLevelIdx;
+	int16 magicLevelIdx = 0;
 
 	/** Store the number of inventory keys */
-	int16 inventoryNumKeys;
+	int16 inventoryNumKeys = 0;
 	/** Store the number of inventory kashes */
-	int16 inventoryNumKashes;
+	int16 inventoryNumKashes = 0;
 	/** Store the number of inventory clover leafs boxes */
-	int16 inventoryNumLeafsBox;
+	int16 inventoryNumLeafsBox = 0;
 	/** Store the number of inventory clover leafs */
-	int16 inventoryNumLeafs;
+	int16 inventoryNumLeafs = 0;
 	/** Store the number of inventory magic points */
-	int16 inventoryMagicPoints;
+	int16 inventoryMagicPoints = 0;
 	/** Store the number of gas */
-	int16 inventoryNumGas;
+	int16 inventoryNumGas = 0;
 
 	/** Its using FunFrock Sabre */
-	int16 usingSabre;
+	int16 usingSabre = 0;
 
 	/** Inventory used flags */
-	uint8 inventoryFlags[NUM_INVENTORY_ITEMS];
+	uint8 inventoryFlags[NUM_INVENTORY_ITEMS]{0};
 
-	uint8 holomapFlags[150]; // GV14
+	uint8 holomapFlags[150]{0}; // GV14
 
-	char playerName[30];
+	char playerName[30] = "";
 
-	int32 gameChoices[10];         // inGameMenuData
-	int32 numChoices;              // numOfOptionsInChoice
-	int16 gameChoicesSettings[18]; // choiceTab -  same structure as menu settings
-	int32 choiceAnswer;            // inGameMenuAnswer
+	int32 gameChoices[10]{0};         // inGameMenuData
+	int32 numChoices = 0;             // numOfOptionsInChoice
+	int16 gameChoicesSettings[18]{0}; // choiceTab -  same structure as menu settings
+	int32 choiceAnswer = 0;           // inGameMenuAnswer
 
 	/** Initialize all engine variables */
 	void initEngineVars();

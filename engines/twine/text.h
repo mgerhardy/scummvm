@@ -51,8 +51,8 @@ private:
 	void initProgressiveTextBuffer();
 	void printText8Sub4(int16 a, int16 b, int16 c);
 	struct WordSize {
-		int32 inChar;
-		int32 inPixel;
+		int32 inChar = 0;
+		int32 inPixel = 0;
 	};
 	WordSize getWordSize(const char *arg1, char *arg2);
 	void processTextLine();

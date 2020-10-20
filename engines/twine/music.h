@@ -42,23 +42,31 @@ private:
 public:
 	Music(TwinEEngine *engine) : _engine(engine) {}
 	/** Track number of the current playing music */
-	int32 currentMusic;
+	int32 currentMusic = 0;
 
-	/** Music volume
-	@param current volume number */
+	/**
+	 * Music volume
+	 * @param current volume number
+	 */
 	void musicVolume(int32 volume);
-	/** Play CD music
-	@param track track number to play */
+	/**
+	 * Play CD music
+	 * @param track track number to play
+	 */
 	void playTrackMusicCd(int32 track);
 	/** Stop CD music */
 	void stopTrackMusicCd();
-	/** Generic play music, according with settings it plays CD or high quality sounds instead
-	@param track track number to play*/
+	/**
+	 * Generic play music, according with settings it plays CD or high quality sounds instead
+	 * @param track track number to play
+	 */
 	void playTrackMusic(int32 track);
 	/** Generic stop music according with settings */
 	void stopTrackMusic();
-	/** Play MIDI music
-	@param midiIdx music index under mini_mi_win.hqr*/
+	/**
+	 * Play MIDI music
+	 * @param midiIdx music index under mini_mi_win.hqr
+	 */
 	void playMidiMusic(int32 midiIdx, int32 loop);
 	/** Stop MIDI music */
 	void stopMidiMusic();

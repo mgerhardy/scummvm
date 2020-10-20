@@ -47,15 +47,15 @@ enum ScenePositionType {
 // ZONES
 
 typedef struct ScenePoint {
-	int16 x;
-	int16 y;
-	int16 z;
+	int16 x = 0;
+	int16 y = 0;
+	int16 z = 0;
 } ScenePoint;
 
 typedef struct ZoneStruct {
 	ScenePoint bottomLeft;
 	ScenePoint topRight;
-	int16 type;
+	int16 type = 0;
 	union {
 		struct {
 			int16 newSceneIdx;
@@ -86,7 +86,7 @@ typedef struct ZoneStruct {
 			int16 info3;
 		} generic;
 	} infoData;
-	int16 snap;
+	int16 snap = 0;
 } ZoneStruct;
 
 enum ZoneType {
@@ -116,80 +116,80 @@ private:
 public:
 	Scene(TwinEEngine *engine) : _engine(engine) {}
 
-	uint8 *currentScene;
+	uint8 *currentScene = nullptr;
 
-	int32 needChangeScene;
-	int32 currentSceneIdx;
-	int32 previousSceneIdx;
+	int32 needChangeScene = 0;
+	int32 currentSceneIdx = 0;
+	int32 previousSceneIdx = 0;
 
-	uint8 *spriteShadowPtr;
-	uint8 *spriteBoundingBoxPtr;
+	uint8 *spriteShadowPtr = nullptr;
+	uint8 *spriteBoundingBoxPtr = nullptr;
 
-	int32 currentGameOverScene;
-	int32 alphaLight;
-	int32 betaLight;
+	int32 currentGameOverScene = 0;
+	int32 alphaLight = 0;
+	int32 betaLight = 0;
 
 	/** Timer for the next sample ambience in scene */
-	int32 sampleAmbienceTime;
+	int32 sampleAmbienceTime = 0;
 
-	int16 sampleAmbiance[4];
-	int16 sampleRepeat[4];
-	int16 sampleRound[4];
-	int16 sampleMinDelay;
-	int16 sampleMinDelayRnd;
+	int16 sampleAmbiance[4] {0};
+	int16 sampleRepeat[4] {0};
+	int16 sampleRound[4] {0};
+	int16 sampleMinDelay = 0;
+	int16 sampleMinDelayRnd = 0;
 
-	int16 samplePlayed;
+	int16 samplePlayed = 0;
 
-	int16 sceneMusic;
+	int16 sceneMusic = 0;
 
-	int16 sceneHeroX; // newTwinsenXByScene
-	int16 sceneHeroY; // newTwinsenYByScene
-	int16 sceneHeroZ; // newTwinsenZByScene
+	int16 sceneHeroX = 0; // newTwinsenXByScene
+	int16 sceneHeroY = 0; // newTwinsenYByScene
+	int16 sceneHeroZ = 0; // newTwinsenZByScene
 
-	int16 newHeroX; // newTwinsenX
-	int16 newHeroY; // newTwinsenY
-	int16 newHeroZ; // newTwinsenZ
+	int16 newHeroX = 0; // newTwinsenX
+	int16 newHeroY = 0; // newTwinsenY
+	int16 newHeroZ = 0; // newTwinsenZ
 
-	int16 zoneHeroX; // newTwinsenXByZone
-	int16 zoneHeroY; // newTwinsenYByZone
-	int16 zoneHeroZ; // newTwinsenZByZone
+	int16 zoneHeroX = 0; // newTwinsenXByZone
+	int16 zoneHeroY = 0; // newTwinsenYByZone
+	int16 zoneHeroZ = 0; // newTwinsenZByZone
 
 	/** Hero Y coordinate before fall */
-	int16 heroYBeforeFall;
+	int16 heroYBeforeFall = 0;
 
 	/** Hero type of position in scene */
-	int16 heroPositionType; // twinsenPositionModeInNewCube
+	int16 heroPositionType = 0; // twinsenPositionModeInNewCube
 
 	// ACTORS
-	int32 sceneNumActors;
+	int32 sceneNumActors = 0;
 	// the first actor is the own hero
 	ActorStruct sceneActors[NUM_MAX_ACTORS];
-	ActorStruct *sceneHero;
+	ActorStruct *sceneHero = nullptr;
 
 	/** Meca pinguin actor index */
-	int16 mecaPinguinIdx; // currentPingouin
+	int16 mecaPinguinIdx = 0; // currentPingouin
 
 	/** Current followed actor in scene */
-	int16 currentlyFollowedActor;
+	int16 currentlyFollowedActor = 0;
 	/** Current actor in zone */
-	int16 currentActorInZone; // currentActorInZoneProcess
+	int16 currentActorInZone = 0; // currentActorInZoneProcess
 	/** Current actor manipulated in scripts */
-	int16 currentScriptValue; // manipActorResult
+	int16 currentScriptValue = 0; // manipActorResult
 
-	int16 talkingActor;
+	int16 talkingActor = 0;
 
 	// TRACKS
 
-	int32 sceneNumTracks;
+	int32 sceneNumTracks = 0;
 	ScenePoint sceneTracks[NUM_MAX_TRACKS];
 
 	// TODO: check what is this
-	int16 changeRoomVar10;
-	int16 changeRoomVar11;
+	int16 changeRoomVar10 = 0;
+	int16 changeRoomVar11 = 0;
 
-	uint8 sceneFlags[80]; // cubeFlags
+	uint8 sceneFlags[80] {0}; // cubeFlags
 
-	int32 sceneNumZones;
+	int32 sceneNumZones = 0;
 	ZoneStruct sceneZones[NUM_MAX_ZONES];
 
 	/** Change to another scene */
@@ -198,8 +198,10 @@ public:
 	/** Process scene environment sound */
 	void processEnvironmentSound();
 
-	/** Process actor zones
-	@param actorIdx Process actor index */
+	/**
+	 * Process actor zones
+	 * @param actorIdx Process actor index
+	 */
 	void processActorZones(int32 actorIdx);
 };
 

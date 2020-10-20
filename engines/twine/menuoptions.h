@@ -42,11 +42,11 @@ private:
 public:
 	MenuOptions(TwinEEngine *engine) : _engine(engine) {}
 
-	int32 canShowCredits;
+	int32 canShowCredits = 0;
 
-	int8 playerName[256];
-	int8 enterPlayerNameVar1;
-	int32 enterPlayerNameVar2;
+	int8 playerName[256] = "";
+	int8 enterPlayerNameVar1 = 0;
+	int32 enterPlayerNameVar2 = 0;
 
 	/** Main menu new game options */
 	void newGameMenu();

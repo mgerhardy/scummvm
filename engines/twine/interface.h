@@ -45,40 +45,46 @@ private:
 
 public:
 	Interface(TwinEEngine *engine);
-	int32 textWindowTop;
-	int32 textWindowTopSave;
-	int32 textWindowLeft;
-	int32 textWindowLeftSave;
-	int32 textWindowRight;
-	int32 textWindowRightSave;
-	int32 textWindowBottom;
-	int32 textWindowBottomSave;
+	int32 textWindowTop = 0;
+	int32 textWindowTopSave = 0;
+	int32 textWindowLeft = 0;
+	int32 textWindowLeftSave = 0;
+	int32 textWindowRight = 0;
+	int32 textWindowRightSave = 0;
+	int32 textWindowBottom = 0;
+	int32 textWindowBottomSave = 0;
 
-	/** Draw button line
-	@param startWidth width value where the line starts
-	@param startHeight height value where the line starts
-	@param endWidth width value where the line ends
-	@param endHeight height value where the line ends
-	@param lineColor line color in the current palette */
+	/**
+	 * Draw button line
+	 * @param startWidth width value where the line starts
+	 * @param startHeight height value where the line starts
+	 * @param endWidth width value where the line ends
+	 * @param endHeight height value where the line ends
+	 * @param lineColor line color in the current palette
+	 */
 	void drawLine(int32 startWidth, int32 startHeight, int32 endWidth, int32 endHeight, int32 lineColor);
 
-	/** Blit button box from working buffer to front buffer
-	@param left start width to draw the button
-	@param top start height to draw the button
-	@param right end width to draw the button
-	@param bottom end height to draw the button
-	@source source screen buffer, in this case working buffer
-	@param leftDest start width to draw the button in destination buffer
-	@param topDest start height to draw the button in destination buffer
-	@dest destination screen buffer, in this case front buffer */
+	/**
+	 * Blit button box from working buffer to front buffer
+	 * @param left start width to draw the button
+	 * @param top start height to draw the button
+	 * @param right end width to draw the button
+	 * @param bottom end height to draw the button
+	 * @param source source screen buffer, in this case working buffer
+	 * @param leftDest start width to draw the button in destination buffer
+	 * @param topDest start height to draw the button in destination buffer
+	 * @param dest destination screen buffer, in this case front buffer
+	 */
 	void blitBox(int32 left, int32 top, int32 right, int32 bottom, int8 *source, int32 leftDest, int32 topDest, int8 *dest);
 
-	/** Draws inside buttons transparent area
-	@param left start width to draw the button
-	@param top start height to draw the button
-	@param right end width to draw the button
-	@param bottom end height to draw the button
-	@param colorAdj index to adjust the transparent box color */
+	/**
+	 * Draws inside buttons transparent area
+	 * @param left start width to draw the button
+	 * @param top start height to draw the button
+	 * @param right end width to draw the button
+	 * @param bottom end height to draw the button
+	 * @param colorAdj index to adjust the transparent box color
+	 */
 	void drawTransparentBox(int32 left, int32 top, int32 right, int32 bottom, int32 colorAdj);
 
 	void drawSplittedBox(int32 left, int32 top, int32 right, int32 bottom, uint8 e);

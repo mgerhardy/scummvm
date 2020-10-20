@@ -50,30 +50,30 @@ enum WindowType {
 };
 
 typedef struct DebugButtonStruct {
-	int32 left;
-	int32 top;
-	int32 right;
-	int32 bottom;
-	const char *text;
-	int32 textLeft;
-	int32 textTop;
-	int32 isActive;
-	int32 color;
-	int32 activeColor;
-	int32 submenu;
-	int32 type;
+	int32 left = 0;
+	int32 top = 0;
+	int32 right = 0;
+	int32 bottom = 0;
+	const char *text = "";
+	int32 textLeft = 0;
+	int32 textTop = 0;
+	int32 isActive = 0;
+	int32 color = 0;
+	int32 activeColor = 0;
+	int32 submenu = 0;
+	int32 type = 0;
 } DebugButtonStruct;
 
 typedef struct DebugWindowStruct {
-	int32 left;
-	int32 top;
-	int32 right;
-	int32 bottom;
-	int32 alpha;
-	int32 isActive;
-	int32 numLines;
-	const char *text[20];
-	int32 numButtons;
+	int32 left = 0;
+	int32 top = 0;
+	int32 right = 0;
+	int32 bottom = 0;
+	int32 alpha = 0;
+	int32 isActive = 0;
+	int32 numLines = 0;
+	const char *text[20] {0};
+	int32 numButtons = 0;
 	DebugButtonStruct debugButtons[50];
 } DebugWindowStruct;
 
