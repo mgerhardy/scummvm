@@ -816,6 +816,9 @@ void TwinEEngine::fadeBlackToWhite() {
 }
 
 void TwinEEngine::flip() {
+	if (!frontVideoBuffer) {
+		return;
+	}
 	g_system->copyRectToScreen(frontVideoBuffer, SCREEN_WIDTH, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 	g_system->updateScreen();
 }

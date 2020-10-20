@@ -218,9 +218,9 @@ public:
 	int16 rightMouse;
 
 	/** Work video buffer */
-	uint8 *workVideoBuffer;
+	uint8 *workVideoBuffer = nullptr;
 	/** Main game video buffer */
-	uint8 *frontVideoBuffer;
+	uint8 *frontVideoBuffer = nullptr;
 
 	/** temporary screen table */
 	int32 screenLookupTable[2000];
