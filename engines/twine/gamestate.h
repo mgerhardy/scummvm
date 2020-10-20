@@ -31,20 +31,13 @@ namespace TwinE {
 #define NUM_GAME_FLAGS 255
 #define NUM_INVENTORY_ITEMS 28
 
-#define GAMEFLAG_HAS_HOLOMAP 0
-#define GAMEFLAG_HAS_MAGICBALL 1
-#define GAMEFLAG_HAS_SABRE 2
-#define GAMEFLAG_TUNIC 4
-#define GAMEFLAG_BOOKOFBU 6
-#define GAMEFLAG_PROTOPACK 12
-#define GAMEFLAG_MECA_PINGUIN 14
-#define GAMEFLAG_HAS_CLOVER_LEAF 27
 #define GAMEFLAG_INVENTORY_DISABLED 70
 
 enum InventoryItems {
 	kiHolomap = 0,
 	kiMagicBall = 1,
 	kiUseSabre = 2,
+	kiTunic = 4,
 	kiBookOfBu = 5,
 	kiProtoPack = 12,
 	kiPinguin = 14,

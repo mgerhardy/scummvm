@@ -38,7 +38,6 @@
 #include "twine/debug_grid.h"
 #include "twine/debug_scene.h"
 #include "twine/extra.h"
-#include "twine/filereader.h"
 #include "twine/flamovies.h"
 #include "twine/gamestate.h"
 #include "twine/grid.h"
@@ -436,7 +435,7 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 				_screens->lockPalette = 1;
 			} break;
 			case kiProtoPack:
-				if (_gameState->gameFlags[GAMEFLAG_BOOKOFBU]) {
+				if (_gameState->gameFlags[InventoryItems::kiBookOfBu]) {
 					_scene->sceneHero->body = 0;
 				} else {
 					_scene->sceneHero->body = 1;
@@ -513,7 +512,7 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 
 		// use Proto-Pack
 		if (loopCurrentKey == 0x24 && _gameState->gameFlags[InventoryItems::kiProtoPack] == 1) {
-			if (_gameState->gameFlags[GAMEFLAG_BOOKOFBU]) {
+			if (_gameState->gameFlags[InventoryItems::kiBookOfBu]) {
 				_scene->sceneHero->body = 0;
 			} else {
 				_scene->sceneHero->body = 1;
