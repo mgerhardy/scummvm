@@ -112,26 +112,18 @@ int32 Screens::crossDot(int32 modifier, int32 color, int32 param, int32 intensit
 
 void Screens::adjustPalette(uint8 R, uint8 G, uint8 B, uint8 *pal, int32 intensity) {
 	uint8 localPalette[NUMOFCOLORS * 4];
-	uint8 *newR;
-	uint8 *newG;
-	uint8 *newB;
-	uint8 *newA;
 
-	int32 local;
 	int32 counter = 0;
-	int32 i;
 
-	local = intensity;
+	uint8 *newR = &localPalette[0];
+	uint8 *newG = &localPalette[1];
+	uint8 *newB = &localPalette[2];
+	uint8 *newA = &localPalette[3];
 
-	newR = &localPalette[0];
-	newG = &localPalette[1];
-	newB = &localPalette[2];
-	newA = &localPalette[3];
-
-	for (i = 0; i < NUMOFCOLORS; i++) {
-		*newR = crossDot(R, pal[counter], 100, local);
-		*newG = crossDot(G, pal[counter + 1], 100, local);
-		*newB = crossDot(B, pal[counter + 2], 100, local);
+	for (int32 i = 0; i < NUMOFCOLORS; i++) {
+		*newR = crossDot(R, pal[counter], 100, intensity);
+		*newG = crossDot(G, pal[counter + 1], 100, intensity);
+		*newB = crossDot(B, pal[counter + 2], 100, intensity);
 		*newA = 0;
 
 		newR += 4;
