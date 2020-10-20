@@ -32,13 +32,13 @@ namespace TwinE {
 void Screens::adelineLogo() {
 	_engine->_music->playMidiMusic(31, 0);
 
-	loadImage(RESSHQR_ADELINEIMG, 1);
+	loadImage(RESSHQR_ADELINEIMG);
 	_engine->delaySkip(7000);
 	fadeOut(paletteRGBACustom);
 	palCustom = 1;
 }
 
-void Screens::loadMenuImage(int16 fade_in) {
+void Screens::loadMenuImage(bool fade_in) {
 	_engine->_hqrdepack->hqrGetEntry(_engine->workVideoBuffer, Resources::HQR_RESS_FILE, RESSHQR_MENUIMG);
 	copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 	if (fade_in) {
@@ -55,7 +55,7 @@ void Screens::loadCustomPalette(int32 index) {
 	convertPalToRGBA(palette, paletteRGBACustom);
 }
 
-void Screens::loadImage(int32 index, int16 fade_in) {
+void Screens::loadImage(int32 index, bool fade_in) {
 	_engine->_hqrdepack->hqrGetEntry(_engine->workVideoBuffer, Resources::HQR_RESS_FILE, index);
 	copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 	loadCustomPalette(index + 1);
@@ -69,7 +69,7 @@ void Screens::loadImage(int32 index, int16 fade_in) {
 }
 
 void Screens::loadImageDelay(int32 index, int32 time) {
-	loadImage(index, 1);
+	loadImage(index);
 	_engine->delaySkip(1000 * time);
 	fadeOut(paletteRGBACustom);
 }

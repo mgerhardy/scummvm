@@ -1346,7 +1346,7 @@ static int32 lMESSAGE_SENDELL(TwinEEngine *engine, int32 actorIdx, ActorStruct *
 
 	engine->freezeTime();
 	engine->_screens->fadeToBlack(engine->_screens->paletteRGBA);
-	engine->_screens->loadImage(25, 1);
+	engine->_screens->loadImage(25);
 	engine->_text->textClipFull();
 	engine->_text->setFontCrossColor(15);
 	engine->_text->newGameVar4 = 0;

@@ -136,8 +136,10 @@ TwinEEngine::~TwinEEngine() {
 }
 
 Common::Error TwinEEngine::run() {
+	debug("Starting twine");
 	syncSoundSettings();
 	initGraphics(SCREEN_WIDTH, SCREEN_HEIGHT);
+	allocVideoMemory();
 	initAll();
 	initEngine();
 	_music->stopTrackMusic();
@@ -239,7 +241,6 @@ void TwinEEngine::initEngine() {
 	debug("The original Little Big Adventure game is:");
 	debug("(c)1994 by Adeline Software International, All Rights Reserved.");
 
-	allocVideoMemory();
 	_screens->clearScreen();
 
 	// Toggle fullscreen if Fullscreen flag is set
@@ -269,7 +270,7 @@ void TwinEEngine::initEngine() {
 
 	_flaMovies->playFlaMovie(FLA_DRAGON3);
 
-	_screens->loadMenuImage(1);
+	_screens->loadMenuImage();
 
 	_menu->mainMenu();
 }
@@ -427,7 +428,7 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 				int32 tmpFlagDisplayText;
 
 				_screens->fadeToBlack(_screens->paletteRGBA);
-				_screens->loadImage(RESSHQR_INTROSCREEN1IMG, 1);
+				_screens->loadImage(RESSHQR_INTROSCREEN1IMG);
 				_text->initTextBank(2);
 				_text->newGameVar4 = 0;
 				_text->textClipFull();
@@ -816,9 +817,6 @@ void TwinEEngine::fadeBlackToWhite() {
 }
 
 void TwinEEngine::flip() {
-	if (!frontVideoBuffer) {
-		return;
-	}
 	g_system->copyRectToScreen(frontVideoBuffer, SCREEN_WIDTH, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 	g_system->updateScreen();
 }

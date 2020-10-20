@@ -716,7 +716,7 @@ void Menu::mainMenu() {
 			break;
 		}
 		case kBackground: {
-			_engine->_screens->loadMenuImage(1);
+			_engine->_screens->loadMenuImage();
 		}
 		}
 		_engine->_system->delayMillis(1000 / _engine->cfgfile.Fps);

@@ -51,7 +51,7 @@ void MenuOptions::newGame() {
 	_engine->cfgfile.FlagDisplayText = 1;
 
 	// intro screen 1 - twinsun
-	_engine->_screens->loadImage(RESSHQR_INTROSCREEN1IMG, 1);
+	_engine->_screens->loadImage(RESSHQR_INTROSCREEN1IMG);
 
 	_engine->_text->newGameVar4 = 0;
 	_engine->_text->newGameVar5 = 1;
@@ -65,12 +65,12 @@ void MenuOptions::newGame() {
 
 	if (_engine->_keyboard.skipIntro != 1) {
 		// intro screen 1 - twinsun
-		_engine->_screens->loadImage(RESSHQR_INTROSCREEN2IMG, 1);
+		_engine->_screens->loadImage(RESSHQR_INTROSCREEN2IMG);
 		_engine->_text->drawTextFullscreen(151);
 		_engine->readKeys();
 
 		if (_engine->_keyboard.skipIntro != 1) {
-			_engine->_screens->loadImage(RESSHQR_INTROSCREEN3IMG, 1);
+			_engine->_screens->loadImage(RESSHQR_INTROSCREEN3IMG);
 			_engine->_text->drawTextFullscreen(152);
 		}
 	}

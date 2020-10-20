@@ -71,12 +71,12 @@ public:
 	void loadCustomPalette(int32 index);
 
 	/** Load and display Main Menu image */
-	void loadMenuImage(int16 fade_in);
+	void loadMenuImage(bool fade_in = true);
 
 	/** Load and display a particulary image on \a RESS.HQR file with cross fade effect
 	@param index \a RESS.HQR entry index (starting from 0)
 	@param fade_in if we fade in before using the palette */
-	void loadImage(int32 index, int16 fade_in);
+	void loadImage(int32 index, bool fade_in = true);
 
 	/** Load and display a particulary image on \a RESS.HQR file with cross fade effect and delay
 	@param index \a RESS.HQR entry index (starting from 0)
