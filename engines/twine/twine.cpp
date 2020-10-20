@@ -25,6 +25,7 @@
 #include "common/debug.h"
 #include "common/error.h"
 #include "common/events.h"
+#include "common/keyboard.h"
 #include "common/str.h"
 #include "common/system.h"
 #include "common/textconsole.h"
@@ -511,7 +512,7 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 		}
 
 		// use Proto-Pack
-		if (loopCurrentKey == 0x24 && _gameState->gameFlags[InventoryItems::kiProtoPack] == 1) {
+		if (loopCurrentKey == Keys::UseProtoPack && _gameState->gameFlags[InventoryItems::kiProtoPack] == 1) {
 			if (_gameState->gameFlags[InventoryItems::kiBookOfBu]) {
 				_scene->sceneHero->body = 0;
 			} else {
@@ -912,110 +913,87 @@ void TwinEEngine::readKeys() {
 	_keyboard.skipIntro = 0;
 	int32 localKey = 0;
 
-#if 0
 	Common::Event event;
-
 	while (g_system->getEventManager()->pollEvent(event)) {
 		switch (event.type) {
-		}
-	}
-
-#endif
-
-#if 0
-	while (SDL_PollEvent(&event)) {
-		switch (event.type) {
-		case SDL_QUIT:
-			sdlClose();
-			break;
-		case SDL_MOUSEBUTTONDOWN:
-			switch (event.button.button) {
-			case SDL_BUTTON_RIGHT:
-				rightMouse = 1;
-				break;
-			case SDL_BUTTON_LEFT:
-				leftMouse = 1;
-				break;
-			}
-			break;
-		case SDL_KEYUP:
+		case Common::EVENT_KEYUP:
 			_keyboard.pressedKey = 0;
 			break;
-		case SDL_KEYDOWN:
-			switch (event.key.keysym.sym) {
-			case SDLK_ESCAPE:
+		case Common::EVENT_KEYDOWN: {
+			switch (event.kbd.keycode) {
+			case Common::KEYCODE_ESCAPE:
 				localKey = 0x1;
 				break;
-			case SDLK_SPACE:
-				localKey = 0x39;
+			case Common::KEYCODE_SPACE:
+				localKey = Keys::ExecuteBehaviourAction;
 				break;
-			case SDLK_RETURN:
-			case SDLK_KP_ENTER:
-				localKey = 0x1C;
+			case Common::KEYCODE_RETURN:
+			case Common::KEYCODE_KP_ENTER:
+				localKey = Keys::RecenterScreenOnTwinsen; // TODO: depends on the context
 				break;
-			case SDLK_LSHIFT:
-			case SDLK_RSHIFT:
+			case Common::KEYCODE_LSHIFT:
+			case Common::KEYCODE_RSHIFT:
 				localKey = 0x36;
 				break;
-			case SDLK_LALT:
-			case SDLK_RALT:
+			case Common::KEYCODE_LALT:
+			case Common::KEYCODE_RALT:
 				localKey = 0x38;
 				break;
-			case SDLK_LCTRL:
-			case SDLK_RCTRL:
-				localKey = 0x1D;
+			case Common::KEYCODE_LCTRL:
+			case Common::KEYCODE_RCTRL:
+				localKey = Keys::BehaviourMenu;
 				break;
-			case SDLK_PAGEUP:
+			case Common::KEYCODE_PAGEUP:
 				localKey = 0x49;
 				break;
-			case SDLK_p: // pause
+			case Common::KEYCODE_p: // pause
 				localKey = Keys::Pause;
 				break;
-			case SDLK_h: // holomap
-				localKey = 0x23;
+			case Common::KEYCODE_h: // holomap
+				localKey = Keys::OpenHolomap;
 				break;
-			case SDLK_j:
-				localKey = 0x24;
+			case Common::KEYCODE_j:
+				localKey = Keys::UseProtoPack;
 				break;
-			case SDLK_w: // Especial key to do the action
+			case Common::KEYCODE_w: // Especial key to do the action
 				localKey = 0x11;
 				break;
-			case SDLK_F1:
-				localKey = 0x3B;
+			case Common::KEYCODE_F1:
+				localKey = Keys::QuickBehaviourNormal;
 				break;
-			case SDLK_F2:
-				localKey = 0x3C;
+			case Common::KEYCODE_F2:
+				localKey = Keys::QuickBehaviourAthletic;
 				break;
-			case SDLK_F3:
-				localKey = 0x3D;
+			case Common::KEYCODE_F3:
+				localKey = Keys::QuickBehaviourAggressive;
 				break;
-			case SDLK_F4:
-				localKey = 0x3E;
+			case Common::KEYCODE_F4:
+				localKey = Keys::QuickBehaviourDiscreet;
 				break;
-			case SDLK_F6:
-				localKey = 0x40;
+			case Common::KEYCODE_F6:
+				localKey = Keys::OptionsMenu;
 				break;
-			case SDLK_F12:
+			case Common::KEYCODE_F12:
 				toggleFullscreen();
 				break;
 			default:
 				break;
 			}
-			if (cfgFile.Debug) {
-				switch (event.key.keysym.sym) {
-				case SDLK_r: // next room
+			if (cfgfile.Debug) {
+				switch (event.kbd.keycode) {
+				case Common::KEYCODE_r: // next room
 					localKey = Keys::NextRoom;
 					break;
-				case SDLK_f: // previous room
+				case Common::KEYCODE_f: // previous room
 					localKey = Keys::PreviousRoom;
 					break;
-				case SDLK_t: // apply celling grid
+				case Common::KEYCODE_t: // apply celling grid
 					localKey = Keys::ApplyCellingGrid;
 					break;
-				case SDLK_g: // increase celling grid index
+				case Common::KEYCODE_g: // increase celling grid index
 					localKey = Keys::IncreaseCellingGridIndex;
 					break;
-				case SDLK_b: // decrease celling grid index
+				case Common::KEYCODE_b: // decrease celling grid index
 					localKey = Keys::DecreaseCellingGridIndex;
 					break;
 				default:
@@ -1024,86 +1002,95 @@ void TwinEEngine::readKeys() {
 			}
 			break;
 		}
+		case Common::EVENT_LBUTTONDOWN:
+			leftMouse = 1;
+			break;
+		case Common::EVENT_RBUTTONDOWN:
+			rightMouse = 1;
+			break;
+		default:
+			break;
+		}
 	}
-#endif
-#if 0
-	int32 size;
-	uint8 *keyboard = SDL_GetKeyState(&size);
+
+	int32 size = 0;
+	uint8 *keyboard = nullptr; // TODO: SDL_GetKeyState(&size);
 	for (int32 j = 0; j < size; j++) {
 		if (keyboard[j]) {
 			switch (j) {
-			case SDLK_RETURN:
-			case SDLK_KP_ENTER:
-				localKey = 0x1C;
+			case Common::KEYCODE_RETURN:
+			case Common::KEYCODE_KP_ENTER:
+				localKey = Keys::RecenterScreenOnTwinsen; // TODO: depends on the context
 				break;
-			case SDLK_SPACE:
-				localKey = 0x39;
+			case Common::KEYCODE_SPACE:
+				localKey = Keys::ExecuteBehaviourAction;
 				break;
-			case SDLK_UP:
-			case SDLK_KP8:
-				localKey = 0x48;
+			case Common::KEYCODE_UP:
+			case Common::KEYCODE_KP8:
+				localKey = Keys::MoveForward;
 				break;
-			case SDLK_DOWN:
-			case SDLK_KP2:
-				localKey = 0x50;
+			case Common::KEYCODE_DOWN:
+			case Common::KEYCODE_KP2:
+				localKey = Keys::MoveBackward;
 				break;
-			case SDLK_LEFT:
-			case SDLK_KP4:
-				localKey = 0x4B;
+			case Common::KEYCODE_LEFT:
+			case Common::KEYCODE_KP4:
+				localKey = Keys::TurnLeft;
 				break;
-			case SDLK_RIGHT:
-			case SDLK_KP6:
-				localKey = 0x4D;
+			case Common::KEYCODE_RIGHT:
+			case Common::KEYCODE_KP6:
+				localKey = Keys::TurnRight;
 				break;
-			case SDLK_LCTRL:
-			case SDLK_RCTRL:
-				localKey = 0x1D;
+			case Common::KEYCODE_LCTRL:
+			case Common::KEYCODE_RCTRL:
+				localKey = Keys::BehaviourMenu;
 				break;
-			/*case SDLK_LSHIFT:
-			case SDLK_RSHIFT:
+			/*case Common::KEYCODE_LSHIFT:
+			case Common::KEYCODE_RSHIFT:
 				localKey = 0x36;
 				break;*/
-			case SDLK_LALT:
-			case SDLK_RALT:
+			case Common::KEYCODE_LALT:
+			case Common::KEYCODE_RALT:
 				localKey = 0x38;
 				break;
-			case SDLK_F1:
-				localKey = 0x3B;
+			case Common::KEYCODE_F1:
+				localKey = Keys::QuickBehaviourNormal;
 				break;
-			case SDLK_F2:
-				localKey = 0x3C;
+			case Common::KEYCODE_F2:
+				localKey = Keys::QuickBehaviourAthletic;
 				break;
-			case SDLK_F3:
-				localKey = 0x3D;
+			case Common::KEYCODE_F3:
+				localKey = Keys::QuickBehaviourAggressive;
 				break;
-			case SDLK_F4:
-				localKey = 0x3E;
+			case Common::KEYCODE_F4:
+				localKey = Keys::QuickBehaviourDiscreet;
 				break;
 			default:
 				break;
 			}
-			if (cfgFile.Debug) {
+			if (cfgfile.Debug) {
 				switch (keyboard[j]) {
 				// change grid camera
-				case SDLK_s:
+				case Common::KEYCODE_s:
 					localKey = 0x1F;
 					break;
-				case SDLK_x:
+				case Common::KEYCODE_x:
 					localKey = 0x2D;
 					break;
-				case SDLK_z:
+				case Common::KEYCODE_z:
 					localKey = 0x2C;
 					break;
-				case SDLK_c:
+				case Common::KEYCODE_c:
 					localKey = 0x2E;
 					break;
 				}
 			}
 		}
 
+		int find = 0;
 		bool found = false;
-		for (i = 0; i < 28; i++) {
-			if (_keyboard.pressedKeyMap[i] == localKey) {
+		for (int i = 0; i < 28; i++) {
+			if (pressedKeyMap[i] == localKey) {
 				find = i;
 				found = true;
 				break;
@@ -1132,7 +1119,6 @@ void TwinEEngine::readKeys() {
 		_keyboard.skipIntro = localKey;
 		//}
 	}
-#endif
 }
 
 void TwinEEngine::drawText(int32 x, int32 y, const char *string, int32 center) {
@@ -1157,9 +1143,9 @@ void TwinEEngine::drawText(int32 x, int32 y, const char *string, int32 center) {
 }
 
 void TwinEEngine::getMousePositions(MouseStatusStruct *mouseData) {
-#if 0 // TODO:
-	SDL_GetMouseState(&mouseData->X, &mouseData->Y);
-#endif
+	Common::Point point = g_system->getEventManager()->getMousePos();
+	mouseData->X = point.x;
+	mouseData->Y = point.y;
 	mouseData->left = leftMouse;
 	mouseData->right = rightMouse;
 	leftMouse = 0;

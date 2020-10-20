@@ -40,7 +40,22 @@ enum _Keys {
 	DebugGridCameraPressUp = 0x2E,
 	DebugGridCameraPressDown = 0x2C,
 	DebugGridCameraPressLeft = 0x1F,
-	DebugGridCameraPressRight = 0x2D
+	DebugGridCameraPressRight = 0x2D,
+	QuickBehaviourNormal = 0x3B,
+	QuickBehaviourAthletic = 0x3C,
+	QuickBehaviourAggressive = 0x3D,
+	QuickBehaviourDiscreet = 0x3E,
+	ExecuteBehaviourAction = 0x39,
+	BehaviourMenu = 0x1D,
+	OptionsMenu = 0x40,
+	RecenterScreenOnTwinsen = 0x1C,
+	UseSelectedObject = 0x1C,
+	MoveForward = 0x48,
+	MoveBackward = 0x50,
+	TurnRight = 0x4D,
+	TurnLeft = 0x4B,
+	UseProtoPack = 0x24,
+	OpenHolomap = 0x23
 };
 
 }

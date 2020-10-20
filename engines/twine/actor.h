@@ -228,7 +228,16 @@ public:
 	/** Actor shadow collition type */
 	int8 shadowCollisionType; // shadowVar
 
-	/** Hero behaviour */
+	/** Hero behaviour
+	 * <li> NORMAL: Talk / Read / Search / Use
+	 * <li> ATHLETIC: Jump
+	 * <li> AGGRESSIVE:
+	 * Auto mode   : Fight
+	 * Manual mode : While holding the spacebar down
+	 * 			UP / RIGHT / LEFT will manually select
+	 * 			different punch/kick options
+	 * <li> DISCREET: Kneel down to hide
+	 */
 	int16 heroBehaviour;
 	/** Hero auto agressive mode */
 	int16 autoAgressive;
