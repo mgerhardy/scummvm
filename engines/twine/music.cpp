@@ -43,9 +43,6 @@ namespace TwinE {
 #if 0 // TODO
 /** SDL_Mixer track variable interface */
 Mix_Music *current_track;
-
-/** Auxiliar midi pointer to  */
-uint8 *midiPtr;
 #endif
 
 void Music::musicVolume(int32 volume) {
@@ -112,11 +109,9 @@ void Music::stopTrackMusic() {
 }
 
 void Music::playMidiMusic(int32 midiIdx, int32 loop) {
-#if 0 // TODO
 	uint8 *dos_midi_ptr;
 	int32 midiSize;
 	char filename[256];
-	SDL_RWops *rw;
 
 	if (!_engine->cfgfile.Sound) {
 		return;
@@ -147,13 +142,11 @@ void Music::playMidiMusic(int32 midiIdx, int32 loop) {
 		midiPtr = dos_midi_ptr;
 	}
 
-	rw = SDL_RWFromMem(midiPtr, midiSize);
-
+#if 0
+	SDL_RWops *rw = SDL_RWFromMem(midiPtr, midiSize);
 	current_track = Mix_LoadMUS_RW(rw, 0);
 
 	musicFadeIn(1, FADE_MS);
-
-	musicVolume(_engine->cfgfile.MusicVolume);
 
 	if (Mix_PlayMusic(current_track, loop) == -1)
 		warning("Error while playing music: %d \n", midiIdx);

@@ -36,6 +36,9 @@ private:
 	void musicFadeIn(int32 loops, int32 ms);
 	void musicFadeOut(int32 ms);
 
+	/** Auxiliar midi pointer to  */
+	uint8 *midiPtr = nullptr;
+
 public:
 	Music(TwinEEngine *engine) : _engine(engine) {}
 	/** Track number of the current playing music */
