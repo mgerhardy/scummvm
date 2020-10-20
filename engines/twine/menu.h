@@ -52,7 +52,7 @@ private:
 	/** Process the menu button draw
 	@param data menu settings array
 	@param mode flag to know if should draw as a hover button or not */
-	void drawButton(int16 *menuSettings, int32 mode);
+	void drawButton(const int16 *menuSettings, int32 mode);
 	/** Used to run the advanced options menu */
 	int32 advoptionsMenu();
 	/** Used to run the volume menu */
@@ -80,10 +80,14 @@ public:
 
 	int16 itemAngle[255]; // objectRotation
 
-	/** Options Menu Settings
-
-	Used to create the options menu. */
+	// TODO: these should be const - or the state might not get reset on an engine restart
 	static int16 OptionsMenuSettings[];
+	static int16 GiveUpMenuSettingsWithSave[];
+	static int16 VolumeMenuSettings[];
+	static int16 SaveManageMenuSettings[];
+	static int16 GiveUpMenuSettings[];
+	static int16 MainMenuSettings[];
+	static int16 AdvOptionsMenuSettings[];
 
 	/** Behaviour menu move pointer */
 	ActorMoveStruct moveMenu;
@@ -103,9 +107,11 @@ public:
 	@param bottom end height to draw the button */
 	void drawBox(int32 left, int32 top, int32 right, int32 bottom);
 
-	/** Where the main menu options are processed
-	@param menuSettings menu settings array with the information to build the menu options
-	@return pressed menu button identification */
+	/**
+	 * Where the main menu options are processed
+	 * @param menuSettings menu settings array with the information to build the menu options
+	 * @return pressed menu button identification
+	 */
 	int32 processMenu(int16 *menuSettings);
 
 	/** Used to run the main menu */

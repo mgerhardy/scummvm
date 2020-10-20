@@ -49,12 +49,12 @@ namespace TwinE {
 
 /** Main menu background image number
 	Used when returning from credit sequence to redraw the main menu background image */
-uint32 kPlasmaEffectFilesize = 262176;
+static const uint32 kPlasmaEffectFilesize = 262176;
 
 /** Menu buttons width */
-uint16 kMainMenuButtonWidth = 320;
+static const uint16 kMainMenuButtonWidth = 320;
 /** Used to calculate the spanning between button and screen */
-uint16 kMainMenuButtonSpan = 550;
+static const uint16 kMainMenuButtonSpan = 550;
 
 /** Main menu types */
 enum MainMenuType {
@@ -92,7 +92,7 @@ enum VolumeMenuType {
 /** Main Menu Settings
 
 	Used to create the game main menu. */
-int16 MainMenuSettings[] = {
+int16 Menu::MainMenuSettings[] = {
     0,   // Current loaded button (button number)
     4,   // Num of buttons
     200, // Buttons box height ( is used to calc the height where the first button will appear )
@@ -110,7 +110,7 @@ int16 MainMenuSettings[] = {
 /** Give Up Menu Settings
 
 	Used to create the in-game menu. */
-int16 GiveUpMenuSettings[] = {
+int16 Menu::GiveUpMenuSettings[] = {
     0,   // Current loaded button (button number)
     2,   // Num of buttons
     240, // Buttons box height ( is used to calc the height where the first button will appear )
@@ -124,7 +124,7 @@ int16 GiveUpMenuSettings[] = {
 /** Give Up Menu Settings
 
 	Used to create the in-game menu. This menu have one extra item to save the game */
-int16 GiveUpMenuSettingsWithSave[] = {
+int16 Menu::GiveUpMenuSettingsWithSave[] = {
     0,   // Current loaded button (button number)
     3,   // Num of buttons
     240, // Buttons box height ( is used to calc the height where the first button will appear )
@@ -158,7 +158,7 @@ int16 Menu::OptionsMenuSettings[] = {
 /** Advanced Options Menu Settings
 
 	Used to create the advanced options menu. */
-int16 AdvOptionsMenuSettings[] = {
+int16 Menu::AdvOptionsMenuSettings[] = {
     0, // Current loaded button (button number)
     5, // Num of buttons
     0, // Buttons box height ( is used to calc the height where the first button will appear )
@@ -178,7 +178,7 @@ int16 AdvOptionsMenuSettings[] = {
 /** Save Game Management Menu Settings
 
 	Used to create the save game management menu. */
-int16 SaveManageMenuSettings[] = {
+int16 Menu::SaveManageMenuSettings[] = {
     0, // Current loaded button (button number)
     3, // Num of buttons
     0, // Buttons box height ( is used to calc the height where the first button will appear )
@@ -194,7 +194,7 @@ int16 SaveManageMenuSettings[] = {
 /** Volume Menu Settings
 
 	Used to create the volume menu. */
-int16 VolumeMenuSettings[] = {
+int16 Menu::VolumeMenuSettings[] = {
     0, // Current loaded button (button number)
     7, // Num of buttons
     0, // Buttons box height ( is used to calc the height where the first button will appear )
@@ -372,8 +372,8 @@ void Menu::drawButtonGfx(int32 width, int32 topheight, int32 id, int32 value, in
 	_engine->copyBlockPhys(left, top, right, bottom);
 }
 
-void Menu::drawButton(int16 *menuSettings, int32 mode) {
-	int16 *localData = menuSettings;
+void Menu::drawButton(const int16 *menuSettings, int32 mode) {
+	const int16 *localData = menuSettings;
 
 	int32 buttonNumber = *localData;
 	localData += 1;
@@ -423,12 +423,11 @@ void Menu::drawButton(int16 *menuSettings, int32 mode) {
 
 int32 Menu::processMenu(int16 *menuSettings) {
 	int16 *localData = menuSettings;
-	int16 currentButton;
+	int16 currentButton = 0; // localData[0];
 	int32 buttonReleased = 1;
 	int32 musicChanged = 0;
 	int32 buttonNeedRedraw = 1;
 	int32 numEntry = localData[1];
-	currentButton = 0; // localData[0];
 	int32 localTime = _engine->lbaTime;
 	int32 maxButton = numEntry - 1;
 
