@@ -42,29 +42,24 @@ namespace TwinE {
 #define FLA_EXT ".fla"
 
 void FlaMovies::drawKeyFrame(uint8 *ptr, int32 width, int32 height) {
-	int32 a, b;
 	uint8 *destPtr = (uint8 *)flaBuffer;
 	uint8 *startOfLine = destPtr;
-	int8 flag1;
-	int8 flag2;
 
 	do {
-		flag1 = *(ptr++);
+		int8 flag1 = *(ptr++);
 
-		for (a = 0; a < flag1; a++) {
-			flag2 = *(ptr++);
+		for (int8 a = 0; a < flag1; a++) {
+			int8 flag2 = *(ptr++);
 
 			if (flag2 < 0) {
 				flag2 = -flag2;
-				for (b = 0; b < flag2; b++) {
+				for (int8 b = 0; b < flag2; b++) {
 					*(destPtr++) = *(ptr++);
 				}
 			} else {
-				char colorFill;
+				char colorFill = *(ptr++);
 
-				colorFill = *(ptr++);
-
-				for (b = 0; b < flag2; b++) {
+				for (int8 b = 0; b < flag2; b++) {
 					*(destPtr++) = colorFill;
 				}
 			}
@@ -191,8 +186,8 @@ void FlaMovies::processFrame() {
 			// FLA movies don't use cross fade
 			// fade out tricky
 			if (_fadeOut != 1) {
-				_engine->_screens->convertPalToRGBA(_engine->_screens->palette, _engine->_screens->paletteRGBACustom);
-				_engine->_screens->fadeToBlack(_engine->_screens->paletteRGBACustom);
+				_engine->_screens->copyPal(_engine->_screens->palette, _engine->_screens->paletteRGBCustom);
+				_engine->_screens->fadeToBlack(_engine->_screens->paletteRGBCustom);
 				_fadeOut = 1;
 			}
 			break;
@@ -292,18 +287,18 @@ void FlaMovies::playFlaMovie(const char *flaName) {
 
 			// Only blit to screen if isn't a fade
 			if (_fadeOut == -1) {
-				_engine->_screens->convertPalToRGBA(_engine->_screens->palette, _engine->_screens->paletteRGBACustom);
+				_engine->_screens->copyPal(_engine->_screens->palette, _engine->_screens->paletteRGBCustom);
 				if (!currentFrame) // fade in the first frame
-					_engine->_screens->fadeIn(_engine->_screens->paletteRGBACustom);
+					_engine->_screens->fadeIn(_engine->_screens->paletteRGBCustom);
 				else
-					_engine->setPalette(_engine->_screens->paletteRGBACustom);
+					_engine->setPalette(_engine->_screens->paletteRGBCustom);
 			}
 
 			// TRICKY: fade in tricky
 			if (fadeOutFrames >= 2) {
 				_engine->flip();
-				_engine->_screens->convertPalToRGBA(_engine->_screens->palette, _engine->_screens->paletteRGBACustom);
-				_engine->_screens->fadeToPal(_engine->_screens->paletteRGBACustom);
+				_engine->_screens->copyPal(_engine->_screens->palette, _engine->_screens->paletteRGBCustom);
+				_engine->_screens->fadeToPal(_engine->_screens->paletteRGBCustom);
 				_fadeOut = -1;
 				fadeOutFrames = 0;
 			}
@@ -325,9 +320,9 @@ void FlaMovies::playFlaMovie(const char *flaName) {
 	}
 
 	if (_engine->cfgfile.CrossFade) {
-		_engine->crossFade(_engine->frontVideoBuffer, _engine->_screens->paletteRGBACustom);
+		_engine->crossFade(_engine->frontVideoBuffer, _engine->_screens->paletteRGBCustom);
 	} else {
-		_engine->_screens->fadeToBlack(_engine->_screens->paletteRGBACustom);
+		_engine->_screens->fadeToBlack(_engine->_screens->paletteRGBCustom);
 	}
 
 	_engine->_sound->stopSamples();

@@ -39,11 +39,11 @@ public:
 	/** In-game palette (should not be used, except in special case. otherwise use other images functions instead) */
 	uint8 palette[NUMOFCOLORS * 3];
 
-	/** SDL converted in-game palette */
-	uint8 paletteRGBA[NUMOFCOLORS * 4];
+	/** converted in-game palette */
+	uint8 paletteRGB[NUMOFCOLORS * 3];
 
-	/** SDL converted custom palette */
-	uint8 paletteRGBACustom[NUMOFCOLORS * 4];
+	/** converted custom palette */
+	uint8 paletteRGBCustom[NUMOFCOLORS * 3];
 
 	/** flag to check if a custom palette is in use */
 	int16 palCustom;
@@ -60,11 +60,13 @@ public:
 	/** main game palette */
 	uint8 *mainPalette;
 
-	/** SDL converted in-game palette */
-	uint8 mainPaletteRGBA[NUMOFCOLORS * 4];
+	/** converted in-game palette */
+	uint8 mainPaletteRGB[NUMOFCOLORS * 3];
 
 	/** Load and display Adeline Logo */
 	void adelineLogo();
+
+	void copyPal(const uint8* in, uint8* out);
 
 	/** Load a custom palette
 	@param index \a RESS.HQR entry index (starting from 0) */
@@ -82,11 +84,6 @@ public:
 	@param index \a RESS.HQR entry index (starting from 0)
 	@param time number of seconds to delay */
 	void loadImageDelay(int32 index, int32 time);
-
-	/** Converts in-game palette to SDL palette
-	@param palSource palette source with RGB
-	@param palDest palette destination with RGBA */
-	void convertPalToRGBA(uint8 *palSource, uint8 *palDest);
 
 	/** Fade image in
 	@param palette current palette to fade in */

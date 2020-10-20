@@ -34,7 +34,7 @@ void Screens::adelineLogo() {
 
 	loadImage(RESSHQR_ADELINEIMG);
 	_engine->delaySkip(7000);
-	fadeOut(paletteRGBACustom);
+	fadeOut(paletteRGBCustom);
 	palCustom = 1;
 }
 
@@ -42,9 +42,9 @@ void Screens::loadMenuImage(bool fade_in) {
 	_engine->_hqrdepack->hqrGetEntry(_engine->workVideoBuffer, Resources::HQR_RESS_FILE, RESSHQR_MENUIMG);
 	copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 	if (fade_in) {
-		fadeToPal(paletteRGBA);
+		fadeToPal(paletteRGB);
 	} else {
-		_engine->setPalette(paletteRGBA);
+		_engine->setPalette(paletteRGB);
 	}
 
 	palCustom = 0;
@@ -52,7 +52,11 @@ void Screens::loadMenuImage(bool fade_in) {
 
 void Screens::loadCustomPalette(int32 index) {
 	_engine->_hqrdepack->hqrGetEntry(palette, Resources::HQR_RESS_FILE, index);
-	convertPalToRGBA(palette, paletteRGBACustom);
+	copyPal(palette, paletteRGBCustom);
+}
+
+void Screens::copyPal(const uint8* in, uint8* out) {
+	memcpy(out, in, NUMOFCOLORS * 3);
 }
 
 void Screens::loadImage(int32 index, bool fade_in) {
@@ -60,9 +64,9 @@ void Screens::loadImage(int32 index, bool fade_in) {
 	copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
 	loadCustomPalette(index + 1);
 	if (fade_in) {
-		fadeToPal(paletteRGBACustom);
+		fadeToPal(paletteRGBCustom);
 	} else {
-		_engine->setPalette(paletteRGBACustom);
+		_engine->setPalette(paletteRGBCustom);
 	}
 
 	palCustom = 1;
@@ -71,19 +75,7 @@ void Screens::loadImage(int32 index, bool fade_in) {
 void Screens::loadImageDelay(int32 index, int32 time) {
 	loadImage(index);
 	_engine->delaySkip(1000 * time);
-	fadeOut(paletteRGBACustom);
-}
-
-void Screens::convertPalToRGBA(uint8 *palSource, uint8 *palDest) {
-	int i;
-
-	for (i = 0; i < NUMOFCOLORS; i++) {
-		palDest[0] = palSource[0];
-		palDest[1] = palSource[1];
-		palDest[2] = palSource[2];
-		palDest += 4;
-		palSource += 3;
-	}
+	fadeOut(paletteRGBCustom);
 }
 
 void Screens::fadeIn(uint8 *pal) {
@@ -111,27 +103,24 @@ int32 Screens::crossDot(int32 modifier, int32 color, int32 param, int32 intensit
 }
 
 void Screens::adjustPalette(uint8 R, uint8 G, uint8 B, uint8 *pal, int32 intensity) {
-	uint8 localPalette[NUMOFCOLORS * 4];
+	uint8 localPalette[NUMOFCOLORS * 3];
 
 	int32 counter = 0;
 
 	uint8 *newR = &localPalette[0];
 	uint8 *newG = &localPalette[1];
 	uint8 *newB = &localPalette[2];
-	uint8 *newA = &localPalette[3];
 
 	for (int32 i = 0; i < NUMOFCOLORS; i++) {
 		*newR = crossDot(R, pal[counter], 100, intensity);
 		*newG = crossDot(G, pal[counter + 1], 100, intensity);
 		*newB = crossDot(B, pal[counter + 2], 100, intensity);
-		*newA = 0;
 
-		newR += 4;
-		newG += 4;
-		newB += 4;
-		newA += 4;
+		newR += 3;
+		newG += 3;
+		newB += 3;
 
-		counter += 4;
+		counter += 3;
 	}
 
 	_engine->setPalette(localPalette);
@@ -216,9 +205,9 @@ void Screens::blackToWhite() {
 
 void Screens::setBackPal() {
 	memset(palette, 0, sizeof(palette));
-	memset(paletteRGBA, 0, sizeof(paletteRGBA));
+	memset(paletteRGB, 0, sizeof(paletteRGB));
 
-	_engine->setPalette(paletteRGBA);
+	_engine->setPalette(paletteRGB);
 
 	palReseted = 1;
 }

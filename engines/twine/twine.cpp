@@ -416,7 +416,7 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 			case kiBookOfBu: {
 				int32 tmpFlagDisplayText;
 
-				_screens->fadeToBlack(_screens->paletteRGBA);
+				_screens->fadeToBlack(_screens->paletteRGB);
 				_screens->loadImage(RESSHQR_INTROSCREEN1IMG);
 				_text->initTextBank(2);
 				_text->newGameVar4 = 0;
@@ -429,10 +429,10 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 				_text->textClipSmall();
 				_text->newGameVar4 = 1;
 				_text->initTextBank(_text->currentTextBank + 3);
-				_screens->fadeToBlack(_screens->paletteRGBACustom);
+				_screens->fadeToBlack(_screens->paletteRGBCustom);
 				_screens->clearScreen();
 				flip();
-				setPalette(_screens->paletteRGBA);
+				setPalette(_screens->paletteRGB);
 				_screens->lockPalette = 1;
 			} break;
 			case kiProtoPack:
