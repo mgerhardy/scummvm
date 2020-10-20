@@ -41,6 +41,17 @@ namespace TwinE {
 #define GAMEFLAG_HAS_CLOVER_LEAF 27
 #define GAMEFLAG_INVENTORY_DISABLED 70
 
+enum InventoryItems {
+	kiHolomap = 0,
+	kiMagicBall = 1,
+	kiUseSabre = 2,
+	kiBookOfBu = 5,
+	kiProtoPack = 12,
+	kiPinguin = 14,
+	kiBonusList = 26,
+	kiCloverLeaf = 27
+};
+
 /** Magicball strength*/
 enum MagicballStrengthType {
 	kNoBallStrenght = 2,

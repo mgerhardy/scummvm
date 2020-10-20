@@ -357,7 +357,7 @@ void Movements::processActorMovements(int32 actorIdx) {
 
 			if ((_engine->loopPressedKey & 8) && !_engine->_gameState->gameFlags[GAMEFLAG_INVENTORY_DISABLED]) {
 				if (_engine->_gameState->usingSabre == 0) { // Use Magic Ball
-					if (_engine->_gameState->gameFlags[GAMEFLAG_HAS_MAGICBALL]) {
+					if (_engine->_gameState->gameFlags[InventoryItems::kiMagicBall]) {
 						if (_engine->_gameState->magicBallIdx == -1) {
 							_engine->_animations->initAnim(kThrowBall, 1, 0, actorIdx);
 						}
@@ -366,9 +366,9 @@ void Movements::processActorMovements(int32 actorIdx) {
 						actor->angle = getRealAngle(&actor->move);
 					}
 				} else {
-					if (_engine->_gameState->gameFlags[GAMEFLAG_HAS_SABRE]) {
-						if (actor->body != GAMEFLAG_HAS_SABRE) {
-							_engine->_actor->initModelActor(GAMEFLAG_HAS_SABRE, actorIdx);
+					if (_engine->_gameState->gameFlags[InventoryItems::kiUseSabre]) {
+						if (actor->body != InventoryItems::kiUseSabre) {
+							_engine->_actor->initModelActor(InventoryItems::kiUseSabre, actorIdx);
 						}
 
 						_engine->_animations->initAnim(kSabreAttack, 1, 0, actorIdx);

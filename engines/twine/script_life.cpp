@@ -1119,7 +1119,7 @@ static int32 lSET_HOLO_POS(TwinEEngine *engine, int32 actorIdx, ActorStruct *act
 	static int32 location = *(scriptPtr++);
 
 	engine->_holomap->setHolomapPosition(location);
-	if (engine->_gameState->gameFlags[GAMEFLAG_HAS_HOLOMAP]) {
+	if (engine->_gameState->gameFlags[InventoryItems::kiHolomap]) {
 		engine->_redraw->addOverlay(koInventoryItem, 0, 0, 0, 0, koNormal, 3);
 	}
 

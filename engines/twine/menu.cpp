@@ -1048,7 +1048,7 @@ void Menu::processInventoryMenu() {
 	inventorySelectedColor = 68;
 
 	if (_engine->_gameState->inventoryNumLeafs > 0) {
-		_engine->_gameState->gameFlags[GAMEFLAG_HAS_CLOVER_LEAF] = 1;
+		_engine->_gameState->gameFlags[InventoryItems::kiCloverLeaf] = 1;
 	}
 
 	drawInventoryItems();

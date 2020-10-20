@@ -62,17 +62,6 @@
 
 namespace TwinE {
 
-enum InventoryItems {
-	kiHolomap = 0,
-	kiMagicBall = 1,
-	kiUseSabre = 2,
-	kiBookOfBu = 5,
-	kiProtoPack = 12,
-	kiPinguin = 14,
-	kiBonusList = 26,
-	kiCloverLeaf = 27
-};
-
 /** Engine current version */
 static const char *ENGINE_VERSION = "0.2.0";
 
@@ -414,11 +403,11 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 				_gameState->usingSabre = 0;
 				break;
 			case kiUseSabre:
-				if (_scene->sceneHero->body != GAMEFLAG_HAS_SABRE) {
+				if (_scene->sceneHero->body != InventoryItems::kiUseSabre) {
 					if (_actor->heroBehaviour == kProtoPack) {
 						_actor->setBehaviour(kNormal);
 					}
-					_actor->initModelActor(GAMEFLAG_HAS_SABRE, 0);
+					_actor->initModelActor(InventoryItems::kiUseSabre, 0);
 					_animations->initAnim(kSabreUnknown, 1, 0, 0);
 
 					_gameState->usingSabre = 1;
@@ -476,7 +465,7 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 					pinguin->dynamicFlags.bIsDead = 0; // &= 0xDF
 					pinguin->brickShape = 0;
 					_movements->moveActor(pinguin->angle, pinguin->angle, pinguin->speed, &pinguin->move);
-					_gameState->gameFlags[GAMEFLAG_MECA_PINGUIN] = 0; // byte_50D89 = 0;
+					_gameState->gameFlags[InventoryItems::kiPinguin] = 0; // byte_50D89 = 0;
 					pinguin->info0 = lbaTime + 1500;
 				}
 			} break;
@@ -523,7 +512,7 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 		}
 
 		// use Proto-Pack
-		if (loopCurrentKey == 0x24 && _gameState->gameFlags[GAMEFLAG_PROTOPACK] == 1) {
+		if (loopCurrentKey == 0x24 && _gameState->gameFlags[InventoryItems::kiProtoPack] == 1) {
 			if (_gameState->gameFlags[GAMEFLAG_BOOKOFBU]) {
 				_scene->sceneHero->body = 0;
 			} else {
