@@ -36,28 +36,28 @@ CMakeProvider::CMakeProvider(StringList &global_warnings, std::map<std::string, 
 
 const CMakeProvider::Library *CMakeProvider::getLibraryFromFeature(const char *feature, bool useSDL2) const {
 	static const Library s_libraries[] = {
-		{ "sdl",       kSDLVersion1,   "FindSDL",      "SDL",      "SDL_INCLUDE_DIR",       "SDL_LIBRARY",         0            },
-		{ "sdl",       kSDLVersion2,   0,              "SDL2",     0,                       "SDL2_LIBRARIES",      0            },
-		{ "freetype",  kSDLVersionAny, "FindFreetype", "Freetype", "FREETYPE_INCLUDE_DIRS", "FREETYPE_LIBRARIES",  0            },
-		{ "libz",      kSDLVersionAny, "FindZLIB",     "ZLIB",     "ZLIB_INCLUDE_DIRS",     "ZLIB_LIBRARIES",      0            },
-		{ "png",       kSDLVersionAny, "FindPNG",      "PNG",      "PNG_INCLUDE_DIRS",      "PNG_LIBRARIES",       0            },
-		{ "jpeg",      kSDLVersionAny, "FindJPEG",     "JPEG",     "JPEG_INCLUDE_DIRS",     "JPEG_LIBRARIES",      0            },
-		{ "mpeg2",     kSDLVersionAny, "FindMPEG2",    "MPEG2",    "MPEG2_INCLUDE_DIRS",    "MPEG2_mpeg2_LIBRARY", 0            },
-		{ "flac",      kSDLVersionAny, 0,              0,          0,                       0,                     "FLAC"       },
-		{ "mad",       kSDLVersionAny, 0,              0,          0,                       0,                     "mad"        },
-		{ "ogg",       kSDLVersionAny, 0,              0,          0,                       0,                     "ogg"        },
-		{ "vorbis",    kSDLVersionAny, 0,              0,          0,                       0,                     "vorbisfile vorbis" },
-		{ "tremor",    kSDLVersionAny, 0,              0,          0,                       0,                     "vorbisidec" },
-		{ "theora",    kSDLVersionAny, 0,              0,          0,                       0,                     "theoradec"  },
-		{ "fluidsynth",kSDLVersionAny, 0,              0,          0,                       0,                     "fluidsynth" },
-		{ "faad",      kSDLVersionAny, 0,              0,          0,                       0,                     "faad"       },
-		{ "fribidi",   kSDLVersionAny, 0,              0,          0,                       0,                     "fribidi"    },
-		{ "discord",   kSDLVersionAny, 0,              0,          0,                       0,                     "discord-rpc"},
-		{ "opengl",    kSDLVersionAny, "FindOpenGL",   "OpenGL",   "OPENGL_INCLUDE_DIR",    "OPENGL_gl_LIBRARY",   0            },
-		{ "glew",      kSDLVersionAny, "FindGLEW",     "GLEW",     "GLEW_INCLUDE_DIR",      "GLEW_LIBRARIES",      0            },
-		{ "libcurl",   kSDLVersionAny, "FindCURL",     "CURL",     "CURL_INCLUDE_DIRS",     "CURL_LIBRARIES",      0            },
-		{ "sdlnet",    kSDLVersion1,   "FindSDL_net",  "SDL_net",  "SDL_NET_INCLUDE_DIRS",  "SDL_NET_LIBRARIES",   0            },
-		{ "sdlnet",    kSDLVersion2,   0,              0,          0,                       0,                     "SDL2_net"   }
+		{ "sdl",        "sdl",        kSDLVersion1,   "FindSDL",      "SDL",      "SDL_INCLUDE_DIR",       "SDL_LIBRARY",         0            },
+		{ "sdl",        "sdl2",       kSDLVersion2,   0,              "SDL2",     0,                       "SDL2_LIBRARIES",      0            },
+		{ "freetype",   "freetype2",  kSDLVersionAny, "FindFreetype", "Freetype", "FREETYPE_INCLUDE_DIRS", "FREETYPE_LIBRARIES",  0            },
+		{ "libz",       "zlib",       kSDLVersionAny, "FindZLIB",     "ZLIB",     "ZLIB_INCLUDE_DIRS",     "ZLIB_LIBRARIES",      0            },
+		{ "png",        "libpng",     kSDLVersionAny, "FindPNG",      "PNG",      "PNG_INCLUDE_DIRS",      "PNG_LIBRARIES",       0            },
+		{ "jpeg",       "libjpeg",    kSDLVersionAny, "FindJPEG",     "JPEG",     "JPEG_INCLUDE_DIRS",     "JPEG_LIBRARIES",      0            },
+		{ "mpeg2",      "libmpeg2",   kSDLVersionAny, "FindMPEG2",    "MPEG2",    "MPEG2_INCLUDE_DIRS",    "MPEG2_mpeg2_LIBRARY", 0            },
+		{ "flac",       "flac",       kSDLVersionAny, 0,              0,          0,                       0,                     "FLAC"       },
+		{ "mad",        "mad",        kSDLVersionAny, 0,              0,          0,                       0,                     "mad"        },
+		{ "ogg",        "ogg",        kSDLVersionAny, 0,              0,          0,                       0,                     "ogg"        },
+		{ "vorbis",     "vorbis",     kSDLVersionAny, 0,              0,          0,                       0,                     "vorbisfile vorbis" },
+		{ "tremor",     "vorbisidec", kSDLVersionAny, 0,              0,          0,                       0,                     "vorbisidec" },
+		{ "theora",     "theora",     kSDLVersionAny, 0,              0,          0,                       0,                     "theoradec"  },
+		{ "fluidsynth", "fluidsynth", kSDLVersionAny, 0,              0,          0,                       0,                     "fluidsynth" },
+		{ "faad",       "faad2",      kSDLVersionAny, 0,              0,          0,                       0,                     "faad"       },
+		{ "fribidi",    "fribidi",    kSDLVersionAny, 0,              0,          0,                       0,                     "fribidi"    },
+		{ "discord",    "discord",    kSDLVersionAny, 0,              0,          0,                       0,                     "discord-rpc"},
+		{ "opengl",     nullptr,      kSDLVersionAny, "FindOpenGL",   "OpenGL",   "OPENGL_INCLUDE_DIR",    "OPENGL_gl_LIBRARY",   0            },
+		{ "glew",       "glew",       kSDLVersionAny, "FindGLEW",     "GLEW",     "GLEW_INCLUDE_DIR",      "GLEW_LIBRARIES",      0            },
+		{ "libcurl",    "libcurl",    kSDLVersionAny, "FindCURL",     "CURL",     "CURL_INCLUDE_DIRS",     "CURL_LIBRARIES",      0            },
+		{ "sdlnet",     nullptr,      kSDLVersion1,   "FindSDL_net",  "SDL_net",  "SDL_NET_INCLUDE_DIRS",  "SDL_NET_LIBRARIES",   0            },
+		{ "sdlnet",     nullptr,      kSDLVersion2,   0,              0,          0,                       0,                     "SDL2_net"   }
 	};
 
 	for (unsigned int i = 0; i < sizeof(s_libraries) / sizeof(s_libraries[0]); i++) {
@@ -82,6 +82,8 @@ void CMakeProvider::createWorkspace(const BuildSetup &setup) {
 			"project(" << setup.projectDescription << ")\n\n";
 
 	workspace << "set(CMAKE_EXPORT_COMPILE_COMMANDS ON)\n";
+	workspace << "find_package(PkgConfig QUIET)\n";
+	workspace << "set(SCUMMVM_LIBS)\n";
 
 	workspace << "# Define the engines and subengines\n";
 	writeEngines(setup, workspace);
@@ -123,15 +125,26 @@ void CMakeProvider::createWorkspace(const BuildSetup &setup) {
 void CMakeProvider::writeFeatureLibSearch(const BuildSetup &setup, std::ofstream &workspace, const char *feature) const {
 	const Library *library = getLibraryFromFeature(feature, setup.useSDL2);
 	if (library) {
-		if (library->module) {
-			workspace << "Include(" << library->module << ")\n";
+		if (library->pkgConfig) {
+			workspace << "if (PKG_CONFIG_FOUND)\n";
+			workspace << "  pkg_check_modules(" << library->feature << " REQUIRED " << library->pkgConfig << ")\n";
+			workspace << "  include_directories(${" << library->feature << "_INCLUDE_DIRS})\n";
+			workspace << "  list(APPEND SCUMMVM_LIBS ${" << library->feature << "_LIBRARIES})\n";
+			workspace << "endif(PKG_CONFIG_FOUND)\n";
 		}
+		workspace << "if (NOT " << library->feature << "_FOUND)\n";
 		if (library->package) {
 			workspace << "Find_Package(" << library->package << " REQUIRED)\n";
 		}
 		if (library->includesVar) {
 			workspace << "include_directories(${" << library->includesVar << "})\n";
 		}
+		if (library->librariesVar) {
+			workspace << "list(APPEND SCUMMVM_LIBS ${" << library->librariesVar << "})\n";
+		} else {
+			workspace << "list(APPEND SCUMMVM_LIBS ${" << library->libraries << "})\n";
+		}
+		workspace << "endif(NOT " << library->feature << "_FOUND)\n";
 	}
 }
 
@@ -219,20 +232,8 @@ void CMakeProvider::createProjectFile(const std::string &name, const std::string
 
 		project << "# Libraries\n";
 		const Library *sdlLibrary = getLibraryFromFeature("sdl", setup.useSDL2);
-		project << "target_link_libraries(" << name << " ${" << sdlLibrary->librariesVar << "})\n";
+		project << "target_link_libraries(" << name << " ${" << sdlLibrary->librariesVar << "} ${SCUMMVM_LIBS})\n";
 
-		for (FeatureList::const_iterator i = setup.features.begin(), end = setup.features.end(); i != end; ++i) {
-			if (!i->enable || featureExcluded(i->name)) continue;
-
-			const Library *library = getLibraryFromFeature(i->name, setup.useSDL2);
-			if (!library) continue;
-
-			if (library->librariesVar) {
-				project << "target_link_libraries(" << name << " ${" << library->librariesVar << "})\n";
-			} else {
-				project << "target_link_libraries(" << name << " " << library->libraries << ")\n";
-			}
-		}
 		project << "if (WIN32)\n";
 		project << "    target_sources(" << name << " PUBLIC " << setup.filePrefix << "/dists/" << name << ".rc)\n";
 		project << "    target_link_libraries(" << name << " winmm)\n";
