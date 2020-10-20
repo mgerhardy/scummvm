@@ -67,6 +67,7 @@ public:
 	GameState(TwinEEngine *engine);
 
 	/** LBA engine game flags to save quest states */
+	// TODO: why not NUM_GAME_FLAGS?
 	uint8 gameFlags[256];
 
 	/** LBA engine chapter */
@@ -102,7 +103,7 @@ public:
 
 	uint8 holomapFlags[150]; // GV14
 
-	int8 savePlayerName[30]; // playerName
+	char playerName[30];
 
 	int32 gameChoices[10];         // inGameMenuData
 	int32 numChoices;              // numOfOptionsInChoice
@@ -117,8 +118,8 @@ public:
 
 	void processFoundItem(int32 item);
 
-	void loadGame();
-	void saveGame();
+	bool loadGame();
+	bool saveGame();
 
 	void processGameChoices(int32 choiceIdx);
 

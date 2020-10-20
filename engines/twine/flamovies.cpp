@@ -23,7 +23,6 @@
 #include "twine/flamovies.h"
 #include "common/file.h"
 #include "common/system.h"
-#include "twine/filereader.h"
 #include "twine/grid.h"
 #include "twine/keyboard.h"
 #include "twine/music.h"

@@ -9,7 +9,6 @@ MODULE_OBJS := \
 	debug_scene.o \
 	detection.o \
 	extra.o \
-	filereader.o \
 	flamovies.o \
 	gamestate.o \
 	grid.o \

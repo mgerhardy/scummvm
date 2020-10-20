@@ -21,6 +21,8 @@
  */
 
 #include "twine/gamestate.h"
+#include "common/file.h"
+#include "common/str.h"
 #include "common/system.h"
 #include "common/textconsole.h"
 #include "common/util.h"
@@ -28,7 +30,6 @@
 #include "twine/animations.h"
 #include "twine/collision.h"
 #include "twine/extra.h"
-#include "twine/filereader.h"
 #include "twine/grid.h"
 #include "twine/interface.h"
 #include "twine/keyboard.h"
@@ -162,109 +163,120 @@ void GameState::initEngineVars() { // reinitAll
 	_engine->_actor->previousHeroBehaviour = 0;
 }
 
-void GameState::loadGame() {
-	FileReader fr;
-	uint8 data;
-	int8 *namePtr;
-
-	if (!fropen2(&fr, SAVE_DIR "S9999.LBA", "rb")) {
-		warning("Can't load S9999.LBA saved game!\n");
-		return;
+bool GameState::loadGame() {
+	Common::File file;
+	// TODO: the filename must be handled properly
+	if (!file.open(SAVE_DIR "S9999.LBA")) {
+		warning("Could not load the gamestate");
+		return false;
 	}
 
-	namePtr = savePlayerName;
+	file.skip(1); // skip save game id
 
-	// TODO: use Common::Serializer here
-	frread(&fr, &data, 1); // save game id
-
+	int playerNameIdx = 0;
 	do {
-		frread(&fr, &data, 1); // get save player name characters
-		*(namePtr++) = data;
-	} while (data);
+		const byte c = file.readByte();
+		if (c == '\0') {
+			break;
+		}
+		playerName[playerNameIdx++] = c;
+		if (playerNameIdx >= ARRAYSIZE(playerName)) {
+			warning("Failed to load savegame");
+			return false;
+		}
+	} while (true);
+	playerName[playerNameIdx] = '\0';
 
-	frread(&fr, &data, 1); // number of game flags, always 0xFF
-	frread(&fr, gameFlags, data);
-	frread(&fr, &_engine->_scene->needChangeScene, 1); // scene index
-	frread(&fr, &gameChapter, 1);
+	byte numGameFlags = file.readByte();
+	if (numGameFlags != NUM_GAME_FLAGS) {
+		warning("Failed to load gameflags");
+		return false;
+	}
+	file.read(gameFlags, numGameFlags);
+	_engine->_scene->needChangeScene = file.readByte(); // scene index
+	gameChapter = file.readByte();
 
-	frread(&fr, &_engine->_actor->heroBehaviour, 1);
+	_engine->_actor->heroBehaviour = file.readByte();
 	_engine->_actor->previousHeroBehaviour = _engine->_actor->heroBehaviour;
-	frread(&fr, &_engine->_scene->sceneHero->life, 1);
-	frread(&fr, &inventoryNumKashes, 2);
-	frread(&fr, &magicLevelIdx, 1);
-	frread(&fr, &inventoryMagicPoints, 1);
-	frread(&fr, &inventoryNumLeafsBox, 1);
-	frread(&fr, &_engine->_scene->newHeroX, 2);
-	frread(&fr, &_engine->_scene->newHeroY, 2);
-	frread(&fr, &_engine->_scene->newHeroZ, 2);
-	frread(&fr, &_engine->_scene->sceneHero->angle, 2);
+	_engine->_scene->sceneHero->life = file.readByte();
+	inventoryNumKashes = file.readSint16LE();
+	magicLevelIdx = file.readByte();
+	inventoryMagicPoints = file.readByte();
+	inventoryNumLeafsBox = file.readByte();
+	_engine->_scene->newHeroX = file.readSint16LE();
+	_engine->_scene->newHeroY = file.readSint16LE();
+	_engine->_scene->newHeroZ = file.readSint16LE();
+	_engine->_scene->sceneHero->angle = file.readSint16LE();
 	_engine->_actor->previousHeroAngle = _engine->_scene->sceneHero->angle;
-	frread(&fr, &_engine->_scene->sceneHero->body, 1);
+	_engine->_scene->sceneHero->body = file.readByte();
 
-	frread(&fr, &data, 1); // number of holomap locations, always 150
-	frread(&fr, holomapFlags, data);
+	const byte numHolemapFlags = file.readByte(); // number of holomap locations, always 150
+	if (numHolemapFlags != ARRAYSIZE(holomapFlags)) {
+		warning("Failed to load holomapflags");
+		return false;
+	}
+	file.read(holomapFlags, numHolemapFlags);
 
-	frread(&fr, &inventoryNumGas, 1);
+	inventoryNumGas = file.readByte();
 
-	frread(&fr, &data, 1); // number of used inventory items, always 28
-	frread(&fr, inventoryFlags, data);
+	const byte numInventoryFlags = file.readByte(); // number of used inventory items, always 28
+	if (numInventoryFlags != NUM_INVENTORY_ITEMS) {
+		warning("Failed to load inventoryFlags");
+		return false;
+	}
+	file.read(inventoryFlags, numInventoryFlags);
 
-	frread(&fr, &inventoryNumLeafs, 1);
-	frread(&fr, &usingSabre, 1);
-
-	frclose(&fr);
+	inventoryNumLeafs = file.readByte();
+	usingSabre = file.readByte();
 
 	_engine->_scene->currentSceneIdx = -1;
 	_engine->_scene->heroPositionType = kReborn;
+	return true;
 }
 
-void GameState::saveGame() {
-	FileReader fr;
-	uint8 data;
-
-	if (!fropen2(&fr, SAVE_DIR "S9999.LBA", "wb+")) {
-		warning("Can't save S9999.LBA saved game!\n");
-		return;
+bool GameState::saveGame() {
+	Common::DumpFile file;
+	// TODO: the filename must be handled properly
+	if (!file.open(SAVE_DIR "S9999.LBA")) {
+		warning("Could not save the game");
+		return false;
 	}
 
-	data = 0x03;
-	frwrite(&fr, &data, 1, 1);
+	// TODO: the player name must be handled properly
+	Common::strlcpy(playerName, "TwinEngineSave", sizeof(playerName));
 
-	data = 0x00;
-	frwrite(&fr, "TwinEngineSave", 15, 1);
+	file.writeByte(0x03);
+	file.writeString(playerName);
+	file.writeByte(NUM_GAME_FLAGS);
+	file.write(gameFlags, sizeof(gameFlags));
+	file.writeByte(_engine->_scene->currentSceneIdx);
+	file.writeByte(gameChapter);
+	file.writeByte(_engine->_actor->heroBehaviour);
+	file.writeByte(_engine->_scene->sceneHero->life);
+	file.writeSint16LE(inventoryNumKashes);
+	file.writeByte(magicLevelIdx);
+	file.writeByte(inventoryMagicPoints);
+	file.writeByte(inventoryNumLeafsBox);
+	file.writeSint16LE(_engine->_scene->newHeroX);
+	file.writeSint16LE(_engine->_scene->newHeroY);
+	file.writeSint16LE(_engine->_scene->newHeroZ);
+	file.writeSint16LE(_engine->_scene->sceneHero->angle);
+	file.writeByte(_engine->_scene->sceneHero->body);
 
-	data = 0xFF; // number of game flags
-	frwrite(&fr, &data, 1, 1);
-	frwrite(&fr, gameFlags, 255, 1);
+	// number of holomap locations
+	file.writeByte(ARRAYSIZE(holomapFlags));
+	file.write(holomapFlags, sizeof(holomapFlags));
 
-	frwrite(&fr, &_engine->_scene->currentSceneIdx, 1, 1);
-	frwrite(&fr, &gameChapter, 1, 1);
-	frwrite(&fr, &_engine->_actor->heroBehaviour, 1, 1);
-	frwrite(&fr, &_engine->_scene->sceneHero->life, 1, 1);
-	frwrite(&fr, &inventoryNumKashes, 2, 1);
-	frwrite(&fr, &magicLevelIdx, 1, 1);
-	frwrite(&fr, &inventoryMagicPoints, 1, 1);
-	frwrite(&fr, &inventoryNumLeafsBox, 1, 1);
-	frwrite(&fr, &_engine->_scene->newHeroX, 2, 1);
-	frwrite(&fr, &_engine->_scene->newHeroY, 2, 1);
-	frwrite(&fr, &_engine->_scene->newHeroZ, 2, 1);
-	frwrite(&fr, &_engine->_scene->sceneHero->angle, 2, 1);
-	frwrite(&fr, &_engine->_scene->sceneHero->body, 1, 1);
+	file.writeByte(inventoryNumGas);
 
-	data = ARRAYSIZE(holomapFlags); // number of holomap locations
-	frwrite(&fr, &data, 1, 1);
-	frwrite(&fr, holomapFlags, ARRAYSIZE(holomapFlags), 1);
+	// number of inventory items
+	file.writeByte(ARRAYSIZE(inventoryFlags));
+	file.write(inventoryFlags, sizeof(inventoryFlags));
 
-	frwrite(&fr, &inventoryNumGas, 1, 1);
+	file.writeByte(inventoryNumLeafs);
+	file.writeByte(usingSabre);
 
-	data = ARRAYSIZE(inventoryFlags); // number of inventory items
-	frwrite(&fr, &data, 1, 1);
-	frwrite(&fr, inventoryFlags, ARRAYSIZE(inventoryFlags), 1);
-
-	frwrite(&fr, &inventoryNumLeafs, 1, 1);
-	frwrite(&fr, &usingSabre, 1, 1);
-
-	frclose(&fr);
+	return true;
 }
 
 void GameState::processFoundItem(int32 item) {
