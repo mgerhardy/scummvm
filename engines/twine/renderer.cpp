@@ -314,9 +314,9 @@ void Renderer::processTranslatedElement(int32 *targetMatrix, const uint8 *points
 			dest[i] = baseMatrix[i];
 		}
 	} else { // dependent
-		destX = computedPoints[(elemPtr->basePoint) / 6].x;
-		destY = computedPoints[(elemPtr->basePoint) / 6].y;
-		destZ = computedPoints[(elemPtr->basePoint) / 6].z;
+		destX = computedPoints[(elemPtr->basePoint) / sizeof(pointTab)].x;
+		destY = computedPoints[(elemPtr->basePoint) / sizeof(pointTab)].y;
+		destZ = computedPoints[(elemPtr->basePoint) / sizeof(pointTab)].z;
 
 		const int32 *source = &matricesTable[elemPtr->baseElement / sizeof(int32)];
 		int32 *dest = targetMatrix;
@@ -1396,9 +1396,9 @@ int32 Renderer::renderAnimatedModel(uint8 *bodyPtr, renderTabEntry *renderTabEnt
 			int16 boneType = elemEntryPtr->flag;
 
 			if (boneType == 0) {
-				processRotatedElement(modelMatrix, pointsPtr, elemEntryPtr->rotateX, elemEntryPtr->rotateY, elemEntryPtr->rotateZ, elemEntryPtr); // rotation
+				processRotatedElement(modelMatrix, pointsPtr, elemEntryPtr->rotateX, elemEntryPtr->rotateY, elemEntryPtr->rotateZ, elemEntryPtr);
 			} else if (boneType == 1) {
-				processTranslatedElement(modelMatrix, pointsPtr, elemEntryPtr->rotateX, elemEntryPtr->rotateY, elemEntryPtr->rotateZ, elemEntryPtr); // translation
+				processTranslatedElement(modelMatrix, pointsPtr, elemEntryPtr->rotateX, elemEntryPtr->rotateY, elemEntryPtr->rotateZ, elemEntryPtr);
 			}
 
 			modelMatrix += 9;
@@ -1508,13 +1508,13 @@ int32 Renderer::renderAnimatedModel(uint8 *bodyPtr, renderTabEntry *renderTabEnt
 	shadePtr = (int32 *)(((uint8 *)shadePtr) + 2);
 
 	if (numOfShades) { // process normal data
-		uint8 *currentShadeDestination = (uint8 *)shadeTable;
+		uint16 *currentShadeDestination = (uint16 *)shadeTable;
 		int32 *lightMatrix = matricesTable;
 		const uint8 *pri2Ptr3;
 
 		numOfPrimitives = numOfElements;
 
-		const uint8 *tmpElemPtr = pri2Ptr3 = elementsPtr2 + 18;
+		const uint8 *tmpElemPtr = pri2Ptr3 = elementsPtr2 + 18; // numOfShades offset in elementEntry
 
 		do { // for each element
 			numOfShades = *((const uint16 *)tmpElemPtr);
@@ -1522,17 +1522,17 @@ int32 Renderer::renderAnimatedModel(uint8 *bodyPtr, renderTabEntry *renderTabEnt
 			if (numOfShades) {
 				int32 numShades = numOfShades;
 
-				shadeMatrix[0] = (*lightMatrix) * lightX;
-				shadeMatrix[1] = (*(lightMatrix + 1)) * lightX;
-				shadeMatrix[2] = (*(lightMatrix + 2)) * lightX;
+				shadeMatrix[0] = lightMatrix[0] * lightX;
+				shadeMatrix[1] = lightMatrix[1] * lightX;
+				shadeMatrix[2] = lightMatrix[2] * lightX;
 
-				shadeMatrix[3] = (*(lightMatrix + 3)) * lightY;
-				shadeMatrix[4] = (*(lightMatrix + 4)) * lightY;
-				shadeMatrix[5] = (*(lightMatrix + 5)) * lightY;
+				shadeMatrix[3] = lightMatrix[3] * lightY;
+				shadeMatrix[4] = lightMatrix[4] * lightY;
+				shadeMatrix[5] = lightMatrix[5] * lightY;
 
-				shadeMatrix[6] = (*(lightMatrix + 6)) * lightZ;
-				shadeMatrix[7] = (*(lightMatrix + 7)) * lightZ;
-				shadeMatrix[8] = (*(lightMatrix + 8)) * lightZ;
+				shadeMatrix[6] = lightMatrix[6] * lightZ;
+				shadeMatrix[7] = lightMatrix[7] * lightZ;
+				shadeMatrix[8] = lightMatrix[8] * lightZ;
 
 				do { // for each normal
 					const int16 *colPtr = (const int16 *)shadePtr;
@@ -1550,12 +1550,11 @@ int32 Renderer::renderAnimatedModel(uint8 *bodyPtr, renderTabEntry *renderTabEnt
 					if (color > 0) {
 						color >>= 14;
 						const uint8 *tmpShadePtr = (const uint8 *)shadePtr;
-						color /= *((const uint16 *)(tmpShadePtr + 6));
+						color /= *((const uint16 *)(tmpShadePtr + 6)); // col1, col2 and col3
 						shade = (uint16)color;
 					}
 
-					*((uint16 *)currentShadeDestination) = shade;
-					currentShadeDestination += 2;
+					*currentShadeDestination++ = shade;
 					shadePtr += 2;
 				} while (--numShades);
 			}

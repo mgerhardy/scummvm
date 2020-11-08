@@ -66,12 +66,13 @@ private:
 		int16 rotateZ = 0;
 		int16 rotateY = 0;
 		int16 rotateX = 0;
-		int32 numOfShades = 0; // field_10
-		int32 field_14 = 0;
-		int32 field_18 = 0;
+		int16 field_9 = 0;
+		int16 numOfShades = 0; // field_10
+		int32 field_11 = 0;
+		int32 field_13 = 0;
 		int32 y = 0;
-		int32 field_20 = 0;
-		int16 field_24 = 0;
+		int32 field_17 = 0;
+		int16 field_19 = 0;
 	};
 	#include "common/pack-end.h"
 	static_assert(sizeof(elementEntry) == 38, "Unexpected elementEntry size");
