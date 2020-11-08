@@ -111,20 +111,14 @@ private:
 	};
 	#include "common/pack-end.h"
 
-	struct polyHeader {
-		uint8 renderType = 0; //FillVertic_AType
-		uint8 numOfVertex = 0;
-		int16 colorIndex = 0;
-	};
-	static_assert(sizeof(polyHeader) == 4, "Unexpected polyHeader size");
-
 	#include "common/pack-start.h"
-	struct polyVertexHeader {
-		int16 shadeEntry = 0;
-		int16 dataOffset = 0;
+	struct polygonData {
+		uint8 polyRenderType;
+		uint8 numOfVertex;
+		uint8 color;
+		uint8 padding;
 	};
 	#include "common/pack-end.h"
-	static_assert(sizeof(polyVertexHeader) == 4, "Unexpected polyVertexHeader size");
 
 	#include "common/pack-start.h"
 	struct computedVertex {
@@ -134,6 +128,27 @@ private:
 	};
 	#include "common/pack-end.h"
 	static_assert(sizeof(computedVertex) == 6, "Unexpected computedVertex size");
+
+	struct polyHeader {
+		uint8 renderType = 0; //FillVertic_AType
+		uint8 numOfVertex = 0;
+		int16 colorIndex = 0;
+		// followed by computedVertex * numOfVertex
+	};
+	static_assert(sizeof(polyHeader) == 4, "Unexpected polyHeader size");
+
+	struct Polygons {
+		polyHeader header;
+		computedVertex* vertices;
+	};
+
+	#include "common/pack-start.h"
+	struct polyVertexHeader {
+		int16 shadeEntry = 0;
+		int16 dataOffset = 0;
+	};
+	#include "common/pack-end.h"
+	static_assert(sizeof(polyVertexHeader) == 4, "Unexpected polyVertexHeader size");
 
 	struct bodyHeaderStruct {
 		int16 bodyFlag = 0; // 2nd bit is for animated models
