@@ -1569,11 +1569,7 @@ int32 Renderer::renderAnimatedModel(uint8 *bodyPtr, renderTabEntry *renderTabEnt
 }
 
 void Renderer::prepareIsoModel(uint8 *bodyPtr) { // loadGfxSub
-	bodyHeaderStruct *bodyHeader;
-	int32 bp = 36;
-	int32 bx = sizeof(elementEntry);
-
-	bodyHeader = (bodyHeaderStruct *)bodyPtr;
+	bodyHeaderStruct *bodyHeader = (bodyHeaderStruct *)bodyPtr;
 
 	// This function should only be called ONCE, otherwise it corrupts the model data.
 	// The following code implements an unused flag to indicate that a model was already processed.
@@ -1598,7 +1594,9 @@ void Renderer::prepareIsoModel(uint8 *bodyPtr) { // loadGfxSub
 	uint8 *ptrToKeyData = ptr2 + 2;
 
 	for (int32 i = 0; i < numOfPoint; i++) {
-		ptrToKeyData += sizeof(elementEntry);
+		const int32 bp = 36;
+		const int32 bx = sizeof(elementEntry);
+		ptrToKeyData += bx;
 		*((int16 *)(ptrToKeyData + 6)) = (*((const int16 *)(ptrToKeyData + 6)) * bp) / bx;
 	}
 }
@@ -1657,13 +1655,15 @@ void Renderer::copyActorInternAnim(const uint8 *bodyPtrSrc, uint8 *bodyPtrDest) 
 	*((uint32 *)bodyPtrDest) = *((const uint32 *)bodyPtrSrc);
 	*((uint32 *)(bodyPtrDest + 4)) = *((const uint32 *)(bodyPtrSrc + 4));
 
-	bodyPtrSrc = bodyPtrSrc + *((const int16 *)(bodyPtrSrc - 2));
+	const int32 bodySrcDataOffset = *((const int16 *)(bodyPtrSrc - 2));
+	bodyPtrSrc = bodyPtrSrc + bodySrcDataOffset;
 	const int32 srcNumPoints = *((const int16 *)bodyPtrSrc);
 	// skip vertices
 	bodyPtrSrc = bodyPtrSrc + srcNumPoints * sizeof(pointTab) + 2;
 	int16 cx = *((const int16 *)bodyPtrSrc);
 
-	bodyPtrDest = bodyPtrDest + *((const int16 *)(bodyPtrDest - 2));
+	const int32 bodyDestDataOffset = *((const int16 *)(bodyPtrDest - 2));
+	bodyPtrDest = bodyPtrDest + bodyDestDataOffset;
 	const int32 destNumPoints = *((const int16 *)bodyPtrDest);
 	// skip vertices
 	bodyPtrDest = bodyPtrDest + destNumPoints * sizeof(pointTab) + 2;
