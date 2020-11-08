@@ -78,7 +78,10 @@ private:
 	static_assert(sizeof(elementEntry) == 38, "Unexpected elementEntry size");
 
 	struct lineCoordinates {
-		int32 data = 0;
+		uint8 unk1 = 0;
+		uint8 color = 0;
+		uint8 unk2 = 0;
+		uint8 unk3 = 0;
 		int16 x1 = 0;
 		int16 y1 = 0;
 		int16 x2 = 0;
@@ -86,7 +89,10 @@ private:
 	};
 
 	struct lineData {
-		int32 data = 0;
+		uint8 unk1 = 0;
+		uint8 color = 0;
+		uint8 unk2 = 0;
+		uint8 unk3 = 0;
 		int16 p1 = 0;
 		int16 p2 = 0;
 	};

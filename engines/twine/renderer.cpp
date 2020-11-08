@@ -1196,14 +1196,13 @@ int32 Renderer::renderModelElements(int32 numOfPrimitives, uint8 *pointer, rende
 				error("RENDER ERROR: lineDataPtr reference is malformed!");
 			}
 
-			const int32 point1 = *((const int16 *)&lineDataPtr->p1) / 6;
-			const int32 point2 = *((const int16 *)&lineDataPtr->p2) / 6;
-			const int32 param = *((const int32 *)&lineDataPtr->data);
-			*((int32 *)&lineCoordinatesPtr->data) = param;
-			*((int16 *)&lineCoordinatesPtr->x1) = flattenPoints[point1].x;
-			*((int16 *)&lineCoordinatesPtr->y1) = flattenPoints[point1].y;
-			*((int16 *)&lineCoordinatesPtr->x2) = flattenPoints[point2].x;
-			*((int16 *)&lineCoordinatesPtr->y2) = flattenPoints[point2].y;
+			const int32 point1 = lineDataPtr->p1 / sizeof(pointTab);
+			const int32 point2 = lineDataPtr->p2 / sizeof(pointTab);
+			lineCoordinatesPtr->color = lineDataPtr->color;
+			lineCoordinatesPtr->x1 = flattenPoints[point1].x;
+			lineCoordinatesPtr->y1 = flattenPoints[point1].y;
+			lineCoordinatesPtr->x2 = flattenPoints[point2].x;
+			lineCoordinatesPtr->y2 = flattenPoints[point2].y;
 			bestDepth = flattenPoints[point1].z;
 			int32 depth = flattenPoints[point2].z;
 
@@ -1287,29 +1286,26 @@ int32 Renderer::renderModelElements(int32 numOfPrimitives, uint8 *pointer, rende
 		renderV19 += 8;
 
 		switch (type) {
-		case RENDERTYPE_DRAWLINE: { // draw a line
+		case RENDERTYPE_DRAWLINE: {
 			const lineCoordinates *lineCoordinatesPtr = (const lineCoordinates *)pointer;
-			int16 color = (*((const int32 *)&lineCoordinatesPtr->data) & 0xFF00) >> 8;
-
-			const int32 x1 = *((const int16 *)&lineCoordinatesPtr->x1);
-			const int32 y1 = *((const int16 *)&lineCoordinatesPtr->y1);
-			const int32 x2 = *((const int16 *)&lineCoordinatesPtr->x2);
-			const int32 y2 = *((const int16 *)&lineCoordinatesPtr->y2);
+			const int16 color = lineCoordinatesPtr->color;
+			const int32 x1 = lineCoordinatesPtr->x1;
+			const int32 y1 = lineCoordinatesPtr->y1;
+			const int32 x2 = lineCoordinatesPtr->x2;
+			const int32 y2 = lineCoordinatesPtr->y2;
 
 			_engine->_interface->drawLine(x1, y1, x2, y2, color);
 			break;
 		}
-		case RENDERTYPE_DRAWPOLYGON: { // draw a polygon
-			int32 eax = *((const int *)pointer);
-			pointer += 4;
-
-			int16 polyRenderType = eax & 0xFF;
-			numOfVertex = (eax & 0xFF00) >> 8;
-			int16 color = (eax & 0xFF0000) >> 16;
+		case RENDERTYPE_DRAWPOLYGON: {
+			uint8 polyRenderType = *pointer++;
+			numOfVertex = *pointer++;
+			uint8 color = *pointer++;
+			++pointer;
 
 			uint8 *destPtr = (uint8 *)vertexCoordinates;
 
-			for (int32 i = 0; i < (numOfVertex * 3); i++) {
+			for (int32 i = 0; i < numOfVertex * 3; i++) {
 				*((int16 *)destPtr) = *((const int16 *)pointer);
 				destPtr += 2;
 				pointer += 2;
@@ -1320,38 +1316,38 @@ int32 Renderer::renderModelElements(int32 numOfPrimitives, uint8 *pointer, rende
 			break;
 		}
 		case RENDERTYPE_DRAWSPHERE: { // draw a sphere
-			const int32 circleParam1 = *(const uint8 *)pointer;
-			const int32 circleParam4 = *((const int16 *)(pointer + 1));
-			const int32 circleParam5 = *((const int16 *)(pointer + 3));
-			int32 circleParam3 = *((const int16 *)(pointer + 5));
+			const int32 color = *(const uint8 *)pointer;
+			const int32 circleX = *((const int16 *)(pointer + 1));
+			const int32 circleY = *((const int16 *)(pointer + 3));
+			int32 radius = *((const int16 *)(pointer + 5));
 
 			if (!isUsingOrhoProjection) {
-				circleParam3 = (circleParam3 * cameraPosY) / (cameraPosX + *(const int16 *)pointer);
+				radius = (radius * cameraPosY) / (cameraPosX + *(const int16 *)pointer);
 			} else {
-				circleParam3 = (circleParam3 * 34) >> 9;
+				radius = (radius * 34) >> 9;
 			}
 
-			circleParam3 += 3;
+			radius += 3;
 
-			if (circleParam4 + circleParam3 > _engine->_redraw->renderRight) {
-				_engine->_redraw->renderRight = circleParam4 + circleParam3;
+			if (circleX + radius > _engine->_redraw->renderRight) {
+				_engine->_redraw->renderRight = circleX + radius;
 			}
 
-			if (circleParam4 - circleParam3 < _engine->_redraw->renderLeft) {
-				_engine->_redraw->renderLeft = circleParam4 - circleParam3;
+			if (circleX - radius < _engine->_redraw->renderLeft) {
+				_engine->_redraw->renderLeft = circleX - radius;
 			}
 
-			if (circleParam5 + circleParam3 > _engine->_redraw->renderBottom) {
-				_engine->_redraw->renderBottom = circleParam5 + circleParam3;
+			if (circleY + radius > _engine->_redraw->renderBottom) {
+				_engine->_redraw->renderBottom = circleY + radius;
 			}
 
-			if (circleParam5 - circleParam3 < _engine->_redraw->renderTop) {
-				_engine->_redraw->renderTop = circleParam5 - circleParam3;
+			if (circleY - radius < _engine->_redraw->renderTop) {
+				_engine->_redraw->renderTop = circleY - radius;
 			}
 
-			circleParam3 -= 3;
+			radius -= 3;
 
-			circleFill(circleParam4, circleParam5, circleParam3, circleParam1);
+			circleFill(circleX, circleY, radius, color);
 			break;
 		}
 		default:
