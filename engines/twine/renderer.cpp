@@ -1320,8 +1320,7 @@ int32 Renderer::renderModelElements(int32 numOfPrimitives, uint8 *pointer, rende
 			int32 radius = sphereDataPtr->radius;
 
 			if (!isUsingOrhoProjection) {
-				// TODO: this is wrong - the first byte is the color the second byte is part of the x pos
-				radius = (radius * cameraPosY) / (cameraPosX + *(const int16 *)pointer);
+				radius = (radius * cameraPosY) / (cameraPosX + sphereDataPtr->x);
 			} else {
 				radius = (radius * 34) >> 9;
 			}
