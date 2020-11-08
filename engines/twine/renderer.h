@@ -77,6 +77,7 @@ private:
 	#include "common/pack-end.h"
 	static_assert(sizeof(elementEntry) == 38, "Unexpected elementEntry size");
 
+	#include "common/pack-start.h"
 	struct lineCoordinates {
 		uint8 unk1 = 0;
 		uint8 color = 0;
@@ -87,6 +88,8 @@ private:
 		int16 x2 = 0;
 		int16 y2 = 0;
 	};
+	#include "common/pack-end.h"
+	static_assert(sizeof(lineCoordinates) == 12, "Unexpected lineCoordinates size");
 
 	struct lineData {
 		uint8 unk1 = 0;
@@ -102,17 +105,24 @@ private:
 		uint8 numOfVertex = 0;
 		int16 colorIndex = 0;
 	};
+	static_assert(sizeof(polyHeader) == 4, "Unexpected polyHeader size");
 
+	#include "common/pack-start.h"
 	struct polyVertexHeader {
 		int16 shadeEntry = 0;
 		int16 dataOffset = 0;
 	};
+	#include "common/pack-end.h"
+	static_assert(sizeof(polyVertexHeader) == 4, "Unexpected polyVertexHeader size");
 
+	#include "common/pack-start.h"
 	struct computedVertex {
 		int16 shadeValue = 0;
 		int16 x = 0;
 		int16 y = 0;
 	};
+	#include "common/pack-end.h"
+	static_assert(sizeof(computedVertex) == 6, "Unexpected computedVertex size");
 
 	struct bodyHeaderStruct {
 		int16 bodyFlag = 0; // 2nd bit is for animated models

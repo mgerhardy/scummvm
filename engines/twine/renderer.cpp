@@ -1014,7 +1014,7 @@ int32 Renderer::renderModelElements(int32 numOfPrimitives, uint8 *pointer, rende
 	int16 temp = *((const int16 *)pointer); // we read the number of polygons
 	pointer += 2;
 
-	uint8 *renderV19 = nullptr; // RECHECK THIS
+	uint8 *afterPolyHeader = nullptr; // RECHECK THIS
 
 	if (temp) {
 		int16 primitiveCounter = temp; // the number of primitives = the number of polygons
@@ -1035,29 +1035,27 @@ int32 Renderer::renderModelElements(int32 numOfPrimitives, uint8 *pointer, rende
 				destinationHeader->colorIndex = currentPolyHeader->colorIndex;
 
 				pointer += 2;
-				edi += 4;
+				edi += sizeof(polyHeader);
 
 				counter = destinationHeader->numOfVertex;
 
 				bestDepth = -32000;
-				renderV19 = edi;
+				afterPolyHeader = edi;
 
+				computedVertex *currentComputedVertex = (computedVertex *)edi;
+				const polyVertexHeader *currentPolyVertex = (const polyVertexHeader *)pointer;
 				do {
-					const polyVertexHeader *currentPolyVertex = (const polyVertexHeader *)pointer;
-
 					int16 shadeValue = currentPolyHeader->colorIndex + shadeTable[currentPolyVertex->shadeEntry];
 
-					computedVertex *currentComputedVertex = (computedVertex *)edi;
+					currentVertex = &flattenPoints[currentPolyVertex->dataOffset / sizeof(pointTab)];
 
 					currentComputedVertex->shadeValue = shadeValue;
+					currentComputedVertex->x = currentVertex->x;
+					currentComputedVertex->y = currentVertex->y;
+					++currentComputedVertex;
+					++currentPolyVertex;
 
-					currentVertex = &flattenPoints[currentPolyVertex->dataOffset / sizeof(pointTab)];
-					pointTab *destinationVertex = (pointTab *)(edi + 2);
-
-					destinationVertex->x = currentVertex->x;
-					destinationVertex->y = currentVertex->y;
-
-					edi += sizeof(pointTab);
+					edi += sizeof(computedVertex);
 					pointer += 4;
 
 					currentDepth = currentVertex->z;
@@ -1069,7 +1067,7 @@ int32 Renderer::renderModelElements(int32 numOfPrimitives, uint8 *pointer, rende
 			} else if (polyRenderType >= POLYGONTYPE_GOURAUD) { // only 1 shade value is used
 				polyHeader *destinationHeader = (polyHeader *)edi;
 
-				destinationHeader->renderType = currentPolyHeader->renderType - 7;
+				destinationHeader->renderType = currentPolyHeader->renderType - POLYGONTYPE_GOURAUD;
 				destinationHeader->numOfVertex = currentPolyHeader->numOfVertex;
 
 				int16 color = currentPolyHeader->colorIndex;
@@ -1078,10 +1076,10 @@ int32 Renderer::renderModelElements(int32 numOfPrimitives, uint8 *pointer, rende
 
 				pointer += 4;
 
-				*((int16 *)(edi + 2)) = color + shadeTable[shadeEntry];
+				destinationHeader->colorIndex = color + shadeTable[shadeEntry];
 
-				edi += 4;
-				renderV19 = edi;
+				edi += sizeof(polyHeader);
+				afterPolyHeader = edi;
 				bestDepth = -32000;
 				counter = destinationHeader->numOfVertex;
 
@@ -1091,12 +1089,11 @@ int32 Renderer::renderModelElements(int32 numOfPrimitives, uint8 *pointer, rende
 
 					currentVertex = &flattenPoints[eax / sizeof(pointTab)];
 
-					pointTab *destinationVertex = (pointTab *)(edi + 2);
-
+					computedVertex *destinationVertex = (computedVertex *)edi;
 					destinationVertex->x = currentVertex->x;
 					destinationVertex->y = currentVertex->y;
 
-					edi += sizeof(pointTab);
+					edi += sizeof(computedVertex);
 
 					currentDepth = currentVertex->z;
 
@@ -1112,10 +1109,10 @@ int32 Renderer::renderModelElements(int32 numOfPrimitives, uint8 *pointer, rende
 				destinationHeader->colorIndex = currentPolyHeader->colorIndex;
 
 				pointer += 2;
-				edi += 4;
+				edi += sizeof(polyHeader);
 
 				bestDepth = -32000;
-				renderV19 = edi;
+				afterPolyHeader = edi;
 				int32 eax = 0;
 				counter = currentPolyHeader->numOfVertex;
 
@@ -1125,12 +1122,11 @@ int32 Renderer::renderModelElements(int32 numOfPrimitives, uint8 *pointer, rende
 
 					currentVertex = &flattenPoints[eax / sizeof(pointTab)];
 
-					pointTab *destinationVertex = (pointTab *)(edi + 2);
-
+					computedVertex *destinationVertex = (computedVertex *)edi;
 					destinationVertex->x = currentVertex->x;
 					destinationVertex->y = currentVertex->y;
 
-					edi += sizeof(pointTab);
+					edi += sizeof(computedVertex);
 
 					currentDepth = currentVertex->z;
 
@@ -1141,7 +1137,7 @@ int32 Renderer::renderModelElements(int32 numOfPrimitives, uint8 *pointer, rende
 			}
 
 			uint8 *render24 = edi;
-			edi = renderV19;
+			edi = afterPolyHeader;
 
 			int32 render25 = bestDepth;
 
@@ -1192,7 +1188,7 @@ int32 Renderer::renderModelElements(int32 numOfPrimitives, uint8 *pointer, rende
 			const lineData *lineDataPtr = (const lineData *)pointer;
 			lineCoordinates *lineCoordinatesPtr = (lineCoordinates *)edi;
 
-			if (*((const int16 *)&lineDataPtr->p1) % 6 != 0 || *((const int16 *)&lineDataPtr->p2) % 6 != 0) {
+			if (lineDataPtr->p1 % 6 != 0 || lineDataPtr->p2 % 6 != 0) {
 				error("RENDER ERROR: lineDataPtr reference is malformed!");
 			}
 
@@ -1216,7 +1212,7 @@ int32 Renderer::renderModelElements(int32 numOfPrimitives, uint8 *pointer, rende
 			(*renderTabEntryPtr)++;
 
 			pointer += 8;
-			edi += 12;
+			edi += sizeof(lineCoordinates);
 		} while (--temp);
 	}
 
@@ -1278,12 +1274,12 @@ int32 Renderer::renderModelElements(int32 numOfPrimitives, uint8 *pointer, rende
 	}
 
 	int16 primitiveCounter = numOfPrimitives;
-	renderV19 = pointer;
+	afterPolyHeader = pointer;
 
 	do {
 		type = renderTabEntryPtr2->renderType;
 		pointer = renderTabEntryPtr2->dataPtr;
-		renderV19 += 8;
+		afterPolyHeader += 8;
 
 		switch (type) {
 		case RENDERTYPE_DRAWLINE: {
@@ -1354,7 +1350,7 @@ int32 Renderer::renderModelElements(int32 numOfPrimitives, uint8 *pointer, rende
 			break;
 		}
 
-		pointer = renderV19;
+		pointer = afterPolyHeader;
 		renderTabEntryPtr2++;
 	} while (--primitiveCounter);
 	return 0;
