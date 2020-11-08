@@ -91,6 +91,7 @@ private:
 	#include "common/pack-end.h"
 	static_assert(sizeof(lineCoordinates) == 12, "Unexpected lineCoordinates size");
 
+	#include "common/pack-start.h"
 	struct lineData {
 		uint8 unk1 = 0;
 		uint8 color = 0;
@@ -99,6 +100,16 @@ private:
 		int16 p1 = 0;
 		int16 p2 = 0;
 	};
+	#include "common/pack-end.h"
+
+	#include "common/pack-start.h"
+	struct sphereData {
+		uint8 color = 0;
+		int16 x = 0;
+		int16 y = 0;
+		int16 radius = 0;
+	};
+	#include "common/pack-end.h"
 
 	struct polyHeader {
 		uint8 renderType = 0; //FillVertic_AType

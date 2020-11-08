@@ -1227,10 +1227,11 @@ int32 Renderer::renderModelElements(int32 numOfPrimitives, uint8 *pointer, rende
 			int16 center = *((const uint16 *)(pointer + 6));
 			int16 size = *((const uint16 *)(pointer + 4));
 
-			*(uint8 *)edi = color2;
-			*((int16 *)(edi + 1)) = flattenPoints[center / sizeof(pointTab)].x;
-			*((int16 *)(edi + 3)) = flattenPoints[center / sizeof(pointTab)].y;
-			*((int16 *)(edi + 5)) = size;
+			sphereData* sphereDataPtr = (sphereData*)edi;
+			sphereDataPtr->color = color2;
+			sphereDataPtr->x = flattenPoints[center / sizeof(pointTab)].x;
+			sphereDataPtr->y = flattenPoints[center / sizeof(pointTab)].y;
+			sphereDataPtr->radius = size;
 
 			(*renderTabEntryPtr)->depth = flattenPoints[center / sizeof(pointTab)].z;
 			(*renderTabEntryPtr)->renderType = 2;
@@ -1312,12 +1313,14 @@ int32 Renderer::renderModelElements(int32 numOfPrimitives, uint8 *pointer, rende
 			break;
 		}
 		case RENDERTYPE_DRAWSPHERE: { // draw a sphere
-			const int32 color = *(const uint8 *)pointer;
-			const int32 circleX = *((const int16 *)(pointer + 1));
-			const int32 circleY = *((const int16 *)(pointer + 3));
-			int32 radius = *((const int16 *)(pointer + 5));
+			sphereData* sphereDataPtr = (sphereData*)pointer;
+			const int32 color = sphereDataPtr->color;
+			const int32 circleX = sphereDataPtr->x;
+			const int32 circleY = sphereDataPtr->y;
+			int32 radius = sphereDataPtr->radius;
 
 			if (!isUsingOrhoProjection) {
+				// TODO: this is wrong - the first byte is the color the second byte is part of the x pos
 				radius = (radius * cameraPosY) / (cameraPosX + *(const int16 *)pointer);
 			} else {
 				radius = (radius * 34) >> 9;
