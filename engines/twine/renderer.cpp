@@ -264,7 +264,7 @@ void Renderer::processRotatedElement(int32 *targetMatrix, const uint8 *pointsPtr
 		destY = 0;
 		destZ = 0;
 	} else {
-		int32 pointIdx = (elemPtr->basePoint) / sizeof(pointTab);
+		int32 pointIdx = elemPtr->basePoint / sizeof(pointTab);
 		currentMatrix = &matricesTable[baseElement / sizeof(int32)];
 
 		destX = computedPoints[pointIdx].x;
@@ -314,9 +314,10 @@ void Renderer::processTranslatedElement(int32 *targetMatrix, const uint8 *points
 			dest[i] = baseMatrix[i];
 		}
 	} else { // dependent
-		destX = computedPoints[(elemPtr->basePoint) / sizeof(pointTab)].x;
-		destY = computedPoints[(elemPtr->basePoint) / sizeof(pointTab)].y;
-		destZ = computedPoints[(elemPtr->basePoint) / sizeof(pointTab)].z;
+		const int32 index = elemPtr->basePoint / sizeof(pointTab);
+		destX = computedPoints[index].x;
+		destY = computedPoints[index].y;
+		destZ = computedPoints[index].z;
 
 		const int32 *source = &matricesTable[elemPtr->baseElement / sizeof(int32)];
 		int32 *dest = targetMatrix;
