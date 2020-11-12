@@ -154,8 +154,8 @@ private:
 		int16 bodyFlag = 0; // 2nd bit is for animated models
 		int16 unk0 = 0;
 		int16 unk1 = 0;
-		int16 unk2 = 0;
-		int16 unk3 = 0;
+		int16 bottomleft = 0;
+		int16 topright = 0;
 		int16 unk4 = 0;
 		int16 unk5 = 0;
 		int16 offsetToData = 0; // always 10?
