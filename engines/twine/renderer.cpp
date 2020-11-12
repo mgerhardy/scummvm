@@ -240,17 +240,18 @@ void Renderer::applyPointsRotation(const pointTab *pointsPtr, int32 numPoints, p
 	} while (--numOfPoints2);
 }
 
-void Renderer::processRotatedElement(int32 *targetMatrix, const uint8 *pointsPtr, int32 rotZ, int32 rotY, int32 rotX, const elementEntry *elemPtr) { // unsigned char * elemPtr) // loadPart
-	int32 firstPoint = elemPtr->firstPoint;
+void Renderer::processRotatedElement(int32 *targetMatrix, const pointTab *pointsPtr, int32 rotZ, int32 rotY, int32 rotX, const elementEntry *elemPtr) { // unsigned char * elemPtr) // loadPart
 	int32 numOfPoints2 = elemPtr->numOfPoints;
 
 	renderAngleX = rotX;
 	renderAngleY = rotY;
 	renderAngleZ = rotZ;
 
+	int32 firstPoint = elemPtr->firstPoint;
 	if (firstPoint % sizeof(pointTab)) {
 		error("RENDER ERROR: invalid firstPoint in process_rotated_element func");
 	}
+	firstPoint /= sizeof(pointTab);
 
 	//baseElement = *((unsigned short int*)elemPtr+6);
 	const int16 baseElement = elemPtr->baseElement;
@@ -278,7 +279,7 @@ void Renderer::processRotatedElement(int32 *targetMatrix, const uint8 *pointsPtr
 		warning("RENDER WARNING: No points in this model!");
 	}
 
-	applyPointsRotation((const pointTab*)(pointsPtr + firstPoint), numOfPoints2, &computedPoints[firstPoint / sizeof(pointTab)], targetMatrix);
+	applyPointsRotation(&pointsPtr[firstPoint], numOfPoints2, &computedPoints[firstPoint], targetMatrix);
 }
 
 void Renderer::applyPointsTranslation(const pointTab *pointsPtr, int32 numPoints, pointTab *destPoints, const int32 *translationMatrix) {
@@ -298,7 +299,7 @@ void Renderer::applyPointsTranslation(const pointTab *pointsPtr, int32 numPoints
 	} while (--numOfPoints2);
 }
 
-void Renderer::processTranslatedElement(int32 *targetMatrix, const uint8 *pointsPtr, int32 rotX, int32 rotY, int32 rotZ, const elementEntry *elemPtr) {
+void Renderer::processTranslatedElement(int32 *targetMatrix, const pointTab *pointsPtr, int32 rotX, int32 rotY, int32 rotZ, const elementEntry *elemPtr) {
 	renderAngleX = rotX;
 	renderAngleY = rotY;
 	renderAngleZ = rotZ;
@@ -327,7 +328,12 @@ void Renderer::processTranslatedElement(int32 *targetMatrix, const uint8 *points
 		}
 	}
 
-	applyPointsTranslation((const pointTab*)(pointsPtr + elemPtr->firstPoint), elemPtr->numOfPoints, &computedPoints[elemPtr->firstPoint / sizeof(pointTab)], targetMatrix);
+	int32 firstPoint = elemPtr->firstPoint;
+	if (firstPoint % sizeof(pointTab)) {
+		error("RENDER ERROR: invalid firstPoint in process_rotated_element func");
+	}
+	firstPoint /= sizeof(pointTab);
+	applyPointsTranslation(&pointsPtr[firstPoint], elemPtr->numOfPoints, &computedPoints[firstPoint], targetMatrix);
 }
 
 void Renderer::translateGroup(int16 ax, int16 bx, int16 cx) {
@@ -1355,27 +1361,20 @@ int32 Renderer::renderModelElements(int32 numOfPrimitives, uint8 *pointer, rende
 	return 0;
 }
 
-int32 Renderer::renderAnimatedModel(uint8 *bodyPtr, renderTabEntry *renderTabEntryPtr) {
-	//	int32 *tmpLightMatrix;
-	int32 numOfPoints = *((const uint16 *)bodyPtr);
-	bodyPtr += 2;
-	const uint8 *pointsPtr = bodyPtr;
-
-	bodyPtr += numOfPoints * sizeof(pointTab);
+int32 Renderer::renderAnimatedModel(int32 numOfPoints, pointTab *pointsPtr, renderTabEntry *renderTabEntryPtr) {
+	uint8* bodyPtr = (uint8*)(&pointsPtr[numOfPoints]);
 
 	int32 numOfElements = *((const uint16 *)bodyPtr);
 	bodyPtr += 2;
 
-	uint8 *elementsPtr = bodyPtr;
-	const uint8 *elementsPtr2 = elementsPtr;
+	elementEntry *elementsPtr = (elementEntry*)bodyPtr;
+	const elementEntry *firstEntry = elementsPtr;
 
 	int32 *modelMatrix = matricesTable;
 
-	processRotatedElement(modelMatrix, pointsPtr, renderAngleX, renderAngleY, renderAngleZ, (const elementEntry *)elementsPtr);
+	processRotatedElement(modelMatrix, pointsPtr, renderAngleX, renderAngleY, renderAngleZ, elementsPtr);
 
-	elementsPtr += sizeof(elementEntry);
-
-	const elementEntry *elemEntryPtr = (const elementEntry *)elementsPtr;
+	++elementsPtr;
 
 	int32 numOfPrimitives = 0;
 
@@ -1384,17 +1383,16 @@ int32 Renderer::renderAnimatedModel(uint8 *bodyPtr, renderTabEntry *renderTabEnt
 		modelMatrix = &matricesTable[9];
 
 		do {
-			int16 boneType = elemEntryPtr->flag;
+			int16 boneType = elementsPtr->flag;
 
 			if (boneType == 0) {
-				processRotatedElement(modelMatrix, pointsPtr, elemEntryPtr->rotateX, elemEntryPtr->rotateY, elemEntryPtr->rotateZ, elemEntryPtr);
+				processRotatedElement(modelMatrix, pointsPtr, elementsPtr->rotateX, elementsPtr->rotateY, elementsPtr->rotateZ, elementsPtr);
 			} else if (boneType == 1) {
-				processTranslatedElement(modelMatrix, pointsPtr, elemEntryPtr->rotateX, elemEntryPtr->rotateY, elemEntryPtr->rotateZ, elemEntryPtr);
+				processTranslatedElement(modelMatrix, pointsPtr, elementsPtr->rotateX, elementsPtr->rotateY, elementsPtr->rotateZ, elementsPtr);
 			}
 
 			modelMatrix += 9;
-			elementsPtr += sizeof(elementEntry);
-			elemEntryPtr = (elementEntry *)elementsPtr;
+			++elementsPtr;
 		} while (--numOfPrimitives);
 	}
 
@@ -1501,14 +1499,11 @@ int32 Renderer::renderAnimatedModel(uint8 *bodyPtr, renderTabEntry *renderTabEnt
 	if (numOfShades) { // process normal data
 		uint16 *currentShadeDestination = (uint16 *)shadeTable;
 		int32 *lightMatrix = matricesTable;
-		const uint8 *pri2Ptr3;
 
 		numOfPrimitives = numOfElements;
 
-		const uint8 *tmpElemPtr = pri2Ptr3 = elementsPtr2 + 18; // numOfShades offset in elementEntry
-
 		do { // for each element
-			numOfShades = *((const uint16 *)tmpElemPtr);
+			numOfShades = firstEntry->numOfShades;
 
 			if (numOfShades) {
 				int32 numShades = numOfShades;
@@ -1550,8 +1545,7 @@ int32 Renderer::renderAnimatedModel(uint8 *bodyPtr, renderTabEntry *renderTabEnt
 				} while (--numShades);
 			}
 
-			tmpElemPtr = pri2Ptr3 = pri2Ptr3 + sizeof(elementEntry); // next element
-
+			++firstEntry;
 			/*tmpLightMatrix =*/lightMatrix = lightMatrix + 9;
 		} while (--numOfPrimitives);
 	}
@@ -1615,15 +1609,11 @@ int32 Renderer::renderIsoModel(int32 x, int32 y, int32 z, int32 angleX, int32 an
 		renderZ = destZ - baseRotPosZ;
 	}
 
-	int16 bodyHeader = *((const uint16 *)bodyPtr);
-
-	// jump after the header
-	uint8 *ptr = bodyPtr + 16 + *((const uint16 *)(bodyPtr + 14));
-
-	if (bodyHeader & 2) { // if animated
+	bodyHeaderStruct* header = (bodyHeaderStruct*)bodyPtr;
+	if (header->bodyFlag & 2) { // if animated
 		// the mostly used renderer code
 		// restart at the beginning of the renderTable
-		return renderAnimatedModel(ptr, renderTab);
+		return renderAnimatedModel(header->numPoints, header->points, renderTab);
 	}
 	error("Unsupported unanimated model render!");
 	return 0;

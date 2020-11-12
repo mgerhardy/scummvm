@@ -150,6 +150,7 @@ private:
 	#include "common/pack-end.h"
 	static_assert(sizeof(polyVertexHeader) == 4, "Unexpected polyVertexHeader size");
 
+	#include "common/pack-start.h"
 	struct bodyHeaderStruct {
 		int16 bodyFlag = 0; // 2nd bit is for animated models
 		int16 unk0 = 0;
@@ -158,10 +159,14 @@ private:
 		int16 topright = 0;
 		int16 unk4 = 0;
 		int16 unk5 = 0;
-		int16 offsetToData = 0; // always 10?
-		int8 *ptrToKeyFrame = nullptr;
-		int32 keyFrameTime = 0;
+		int16 offsetToData = 0;
+		int32 unk6;
+		int32 unk7;
+		int16 unk8;
+		uint16 numPoints; // number of vertices
+		pointTab points[1]; // variables sized
 	};
+	#include "common/pack-end.h"
 
 	struct vertexData {
 		uint8 param = 0;
@@ -177,16 +182,16 @@ private:
 		uint16 temp = 0;
 	};
 
-	int32 renderAnimatedModel(uint8 *bodyPtr, renderTabEntry *renderTabEntryPtr);
+	int32 renderAnimatedModel(int32 numPoints, pointTab *pointsPtr, renderTabEntry *renderTabEntryPtr);
 	void circleFill(int32 x, int32 y, int32 radius, int8 color);
 	int32 renderModelElements(int32 numOfPrimitives, uint8 *pointer, renderTabEntry** renderTabEntryPtr);
 	void getBaseRotationPosition(int32 x, int32 y, int32 z);
 	void getCameraAnglePositions(int32 x, int32 y, int32 z);
 	void applyRotation(int32 *targetMatrix, const int32 *currentMatrix);
 	void applyPointsRotation(const pointTab *pointsPtr, int32 numPoints, pointTab *destPoints, const int32 *rotationMatrix);
-	void processRotatedElement(int32 *targetMatrix, const uint8 *pointsPtr, int32 rotZ, int32 rotY, int32 rotX, const elementEntry *elemPtr);
+	void processRotatedElement(int32 *targetMatrix, const pointTab *pointsPtr, int32 rotZ, int32 rotY, int32 rotX, const elementEntry *elemPtr);
 	void applyPointsTranslation(const pointTab *pointsPtr, int32 numPoints, pointTab *destPoints, const int32 *translationMatrix);
-	void processTranslatedElement(int32 *targetMatrix, const uint8 *pointsPtr, int32 rotX, int32 rotY, int32 rotZ, const elementEntry *elemPtr);
+	void processTranslatedElement(int32 *targetMatrix, const pointTab *pointsPtr, int32 rotX, int32 rotY, int32 rotZ, const elementEntry *elemPtr);
 	void translateGroup(int16 ax, int16 bx, int16 cx);
 
 	// ---- variables ----
