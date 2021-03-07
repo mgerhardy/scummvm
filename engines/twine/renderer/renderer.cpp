@@ -147,9 +147,9 @@ void Renderer::baseMatrixTranspose() {
 }
 
 void Renderer::setBaseRotation(int32 x, int32 y, int32 z, bool transpose) {
-	const double Xradians = (double)((ANGLE_90 - x) % ANGLE_360) * 2 * M_PI / ANGLE_360;
-	const double Yradians = (double)((ANGLE_90 - y) % ANGLE_360) * 2 * M_PI / ANGLE_360;
-	const double Zradians = (double)((ANGLE_90 - z) % ANGLE_360) * 2 * M_PI / ANGLE_360;
+	const double Xradians = AngleToRadians(ClampAngle(ANGLE_90 - x));
+	const double Yradians = AngleToRadians(ClampAngle(ANGLE_90 - y));
+	const double Zradians = AngleToRadians(ClampAngle(ANGLE_90 - z));
 
 	baseMatrix.row1[0] = (int32)(sin(Zradians) * sin(Yradians) * SCENE_SIZE_HALFF);
 	baseMatrix.row1[1] = (int32)(-cos(Zradians) * SCENE_SIZE_HALFF);
