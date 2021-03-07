@@ -93,24 +93,23 @@ int32 Renderer::projectPositionOnScreen(int32 cX, int32 cY, int32 cZ) {
 		return 1;
 	}
 
-	cX -= baseRotPos.x;
-	cY -= baseRotPos.y;
-	cZ -= baseRotPos.z;
-
-	if (cZ < 0) {
+	if (baseRotPos.z - cZ < 0) {
 		projPos.x = 0;
 		projPos.y = 0;
 		projPos.z = 0;
 		return 0;
 	}
 
+	cX -= baseRotPos.x;
+	cY -= baseRotPos.y;
+	cZ = baseRotPos.z - cZ;
 	int32 posZ = cZ + cameraDepthOffset;
-	if (posZ < 0) {
+	if (posZ < 0 || 0x7FFF < posZ) {
 		posZ = 0x7FFF;
 	}
 
-	projPos.x = (cX * cameraScaleY) / posZ + orthoProjPos.x;
-	projPos.y = (-cY * cameraScaleZ) / posZ + orthoProjPos.y;
+	projPos.x = ((cX * cameraScaleY) / posZ) + orthoProjPos.x;
+	projPos.y = orthoProjPos.y - ((cY * cameraScaleZ) / posZ);
 	projPos.z = posZ;
 	return -1;
 }
