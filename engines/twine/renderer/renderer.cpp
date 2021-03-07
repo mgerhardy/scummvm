@@ -64,25 +64,26 @@ void Renderer::init(int32 w, int32 h) {
 	_holomap_polytab_1_3_ptr = _holomap_polytab_1_3;
 }
 
-void Renderer::projectXYPositionOnScreen(int32 x, int32 y, int32 z) {
+void Renderer::projectXYPositionOnScreen(int32 cX, int32 cY, int32 cZ) {
 	if (isUsingOrthoProjection == 1) {
-		projPos.x = ((x - z) * 24) / BRICK_SIZE + orthoProjPos.x;
-		projPos.y = y;
+		projPos.x = ((cX - cZ) * 24) / BRICK_SIZE + orthoProjPos.x;
+		projPos.y = (((cX + cZ) * 12) - cY * 30) / BRICK_SIZE + orthoProjPos.y;
 		return;
 	}
-	int32 cz = baseRotPos.z - z;
-	if (-1 < cz) {
-		int32 posZ = cz + cameraDepthOffset;
-		if (posZ < 0) {
-			posZ = 0x7FFF;
-		}
-		projPos.x = (cz * cameraScaleY) / posZ + orthoProjPos.x;
-		projPos.y = y - baseRotPos.y;
+	if (baseRotPos.z - cZ < 0) {
+		projPos.x = 0;
+		projPos.y = 0;
 		return;
 	}
-	projPos.x = 0;
-	projPos.y = 0;
-	return;
+
+	cZ = baseRotPos.z - cZ;
+	int32 posZ = cZ + cameraDepthOffset;
+	if (posZ < 0 || 0x7FFF < posZ) {
+		posZ = 0x7FFF;
+	}
+
+	projPos.x = ((cX * cameraScaleY) / posZ) + orthoProjPos.x;
+	projPos.y = orthoProjPos.y - ((cY * cameraScaleZ) / posZ);
 }
 
 int32 Renderer::projectPositionOnScreen(int32 cX, int32 cY, int32 cZ) {
