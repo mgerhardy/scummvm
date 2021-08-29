@@ -2713,6 +2713,10 @@ case $_host_os in
 		powerpc*)
 			append_var CFLAGS "-mlongcall"
 			append_var CXXFLAGS "-mlongcall"
+			# the included gdb is not recent enough to support the latest dwarf info
+			# so let's restrict it to dwarf-2 to be able to debug binaries created
+			# with more recent versions of gcc
+			append_var CXXFLAGS "-gdwarf-2 -gstrict-dwarf"
 			_optimization_level=-Os
 			;;
 		esac
