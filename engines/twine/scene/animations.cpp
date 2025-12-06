@@ -685,8 +685,10 @@ void Animations::doAnim(int32 actorIdx) {
 			}
 		}
 
+		actor->_processActor = processActor;
 		if (actor->_flags.bComputeCollisionWithObj) {
 			collision->checkObjCol(actorIdx);
+			processActor = actor->_processActor;
 		}
 
 		if (actor->_carryBy != -1 && actor->_workFlags.bIsFalling) {
@@ -708,6 +710,7 @@ void Animations::doAnim(int32 actorIdx) {
 			col1 |= collision->doCornerReajust(actor, actor->_boundingBox.maxs.x, actor->_boundingBox.mins.y, actor->_boundingBox.maxs.z, 4);
 			col1 |= collision->doCornerReajust(actor, actor->_boundingBox.mins.x, actor->_boundingBox.mins.y, actor->_boundingBox.maxs.z, 8);
 		}
+		processActor = actor->_processActor;
 
 		// process wall hit while running
 		if (col1 && !actor->_workFlags.bIsFalling && IS_HERO(actorIdx) && _engine->_actor->_heroBehaviour == HeroBehaviourType::kAthletic && actor->_genAnim == AnimationTypes::kForward) {
