@@ -250,10 +250,6 @@ void Menu::plasmaEffectRenderFrame() {
 }
 
 void Menu::processPlasmaEffect(const Common::Rect &rect, int32 color) {
-	if (_engine->isLBA2()) {
-		// TODO: effects are handled differently here.
-		return;
-	}
 	const int32 max_value = color + 15;
 
 	plasmaEffectRenderFrame();
@@ -318,15 +314,26 @@ void Menu::drawButtonGfx(const MenuSettings *menuSettings, const Common::Rect &r
 			}
 			}
 
-			processPlasmaEffect(rect, COLOR_80);
+			if (_engine->isLBA2()) {
+				processPlasmaEffect(rect, COLOR_64);
+			} else {
+				processPlasmaEffect(rect, COLOR_80);
+			}
 			if (!(_engine->getRandomNumber() % 5)) {
 				_plasmaEffectPtr[(_engine->getRandomNumber() % PLASMA_WIDTH * 10) + 20 * PLASMA_WIDTH] = 255;
 			}
 			_engine->_interface->box(Common::Rect(newWidth, rect.top, rect.right, rect.bottom), COLOR_SELECT_MENU);
 		} else {
-			processPlasmaEffect(rect, COLOR_64);
-			if (!(_engine->getRandomNumber() % 5)) {
-				_plasmaEffectPtr[_engine->getRandomNumber() % PLASMA_WIDTH * 10 + 6400] = 255;
+			if (_engine->isLBA1()) {
+				processPlasmaEffect(rect, COLOR_64);
+				if (!(_engine->getRandomNumber() % 5)) {
+					_plasmaEffectPtr[_engine->getRandomNumber() % PLASMA_WIDTH * 10 + 6400] = 255;
+				}
+			} else {
+				processPlasmaEffect(rect, 192);
+				if (!(_engine->getRandomNumber() % 5)) {
+					_plasmaEffectPtr[_engine->getRandomNumber() % PLASMA_WIDTH * 10 + 6400] = 255;
+				}
 			}
 		}
 	} else {
@@ -359,7 +366,7 @@ int16 Menu::drawButtons(MenuSettings *menuSettings, bool hover) {
 
 	int16 mouseActiveButton = -1;
 
-	for (int16 i = 0; i < maxButton; ++i) {
+	for (int16 i = 0; i < (int16)maxButton; ++i) {
 		if (menuSettings == &_advOptionsMenuState) {
 			int16 id = menuSettings->getButtonState(i);
 			switch (id) {

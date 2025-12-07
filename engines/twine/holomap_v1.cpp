@@ -299,11 +299,10 @@ void HolomapV1::drawTitle(int32 x, int32 y, const char *title) {
 void HolomapV1::drawHoloObj(const IVec3 &angle, int32 alpha, int32 beta, int16 size) {
 	_engine->_renderer->setAngleCamera(alpha, beta, 0);
 	const IVec3 &m = _engine->_renderer->worldRotatePoint(IVec3(0, 0, 1000 + size));
-	_engine->_renderer->setFollowCamera(0, 0, 0, angle.x, angle.y, angle.z, distance(zDistanceTrajectory));
+	_engine->_renderer->setFollowCamera(0, 0, 0, angle.x, angle.y, angle.z, (int32)zDistanceTrajectory);
 	_engine->_interface->unsetClip();
-	const IVec3 &m1 = _engine->_renderer->worldRotatePoint(m);
 	Common::Rect dirtyRect;
-	_engine->_renderer->renderIsoModel(m1, alpha, beta, LBAAngles::ANGLE_0, _engine->_resources->_holomapPointModelPtr, dirtyRect);
+	_engine->_renderer->renderIsoModel(m, alpha, beta, LBAAngles::ANGLE_0, _engine->_resources->_holomapPointModelPtr, dirtyRect);
 	_engine->copyBlockPhys(dirtyRect);
 }
 
@@ -319,8 +318,8 @@ void HolomapV1::renderHolomapVehicle(uint &frameNumber, RealValue &realRot, Anim
 			frameNumber = animData.getLoopFrame();
 		}
 	}
-	_engine->_renderer->setProjection(100, 100 + 300, 128, 900, 900);
-	_engine->_renderer->setFollowCamera(0, 0, 0, 60, 128, 0, distance(30000));
+	_engine->_renderer->setProjection(scale(100), scale(100 + 300), 128, scale(900), scale(900));
+	_engine->_renderer->setFollowCamera(0, 0, 0, 60, 128, 0, scale(30000));
 	_engine->_renderer->setLightVector(-60, 128, 0);
 	// background of the vehicle
 	const Common::Rect rect(0, _engine->height() - 180, 200, _engine->height());
@@ -356,8 +355,8 @@ void HolomapV1::holoTraj(int32 trajectoryIndex) {
 
 	const int32 cameraPosX = _engine->width() / 2 + 80;
 	const int32 cameraPosY = _engine->height() / 2;
-	_engine->_renderer->setProjection(cameraPosX, cameraPosY, 128, 1024, 1024);
-	_engine->_renderer->setFollowCamera(0, 0, 0, data->angle.x, data->angle.y, data->angle.z, distance(zDistanceTrajectory));
+	_engine->_renderer->setProjection(cameraPosX, cameraPosY, 128, scale(1024), scale(1024));
+	_engine->_renderer->setFollowCamera(0, 0, 0, data->angle.x, data->angle.y, data->angle.z, (int32)zDistanceTrajectory);
 
 	constexpr TwineResource holomapImageRes(Resources::HQR_RESS_FILE, RESSHQR_HOLOIMG);
 	uint8 *holomapImagePtr = nullptr;
@@ -401,8 +400,8 @@ void HolomapV1::holoTraj(int32 trajectoryIndex) {
 		renderHolomapVehicle(frameNumber, move, animTimerData, bodyData, animData);
 
 		// now render the holomap path
-		_engine->_renderer->setProjection(cameraPosX, cameraPosY, 128, 1024, 1024);
-		_engine->_renderer->setFollowCamera(0, 0, 0, data->angle.x, data->angle.y, data->angle.z, distance(zDistanceTrajectory));
+		_engine->_renderer->setProjection(cameraPosX, cameraPosY, 128, scale(1024), scale(1024));
+		_engine->_renderer->setFollowCamera(0, 0, 0, data->angle.x, data->angle.y, data->angle.z, (int32)zDistanceTrajectory);
 		_engine->_renderer->setLightVector(data->angle.x, data->angle.y, 0);
 
 		// animate the path from point 1 to point 2 by rendering a point model on each position
@@ -485,7 +484,7 @@ void HolomapV1::drawListPos(int calpha, int cbeta, int cgamma, bool pos) {
 		const IVec3 &m = _engine->_renderer->worldRotatePoint(IVec3(0, 0, 1000 + ptrpos.size));
 		const IVec3 &m1 = _engine->_renderer->worldRotatePoint(IVec3(0, 0, 1500));
 		_engine->_renderer->setInverseAngleCamera(calpha, cbeta, cgamma);
-		_engine->_renderer->setCameraRotation(0, 0, distance(ZOOM_BIG_HOLO));
+		_engine->_renderer->setCameraRotation(0, 0, scale(ZOOM_BIG_HOLO));
 
 		const IVec3 &destPos3 = _engine->_renderer->worldRotatePoint(m);
 		const IVec3 &destPos4 = _engine->_renderer->worldRotatePoint(m1);
@@ -559,7 +558,7 @@ void HolomapV1::holoMap() {
 
 	const int32 cameraPosX = _engine->width() / 2;
 	const int32 cameraPosY = scale(190);
-	_engine->_renderer->setProjection(cameraPosX, cameraPosY, 128, 1024, 1024);
+	_engine->_renderer->setProjection(cameraPosX, cameraPosY, 128, scale(1024), scale(1024));
 
 	_engine->_text->initDial(TextBankId::Inventory_Intro_and_Holomap);
 	_engine->_text->setFontCrossColor(COLOR_9);
@@ -674,7 +673,7 @@ void HolomapV1::holoMap() {
 			_engine->_renderer->setLightVector(_calpha, _cbeta, 0);
 			drawListPos(_calpha, _cbeta, _cgamma, false);
 			_engine->_renderer->setInverseAngleCamera(_calpha, _cbeta, _cgamma);
-			_engine->_renderer->setCameraRotation(0, 0, distance(ZOOM_BIG_HOLO));
+			_engine->_renderer->setCameraRotation(0, 0, scale(ZOOM_BIG_HOLO));
 			drawHoloMap(holomapImagePtr, holomapImageSize);
 			drawListPos(_calpha, _cbeta, _cgamma, true);
 			_engine->_interface->restoreClip();

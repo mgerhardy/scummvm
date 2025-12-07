@@ -26,6 +26,7 @@
 
 #define MAX_OBJECTIF 50
 #define MAX_CUBE 255
+#define MAX_PLANET 7
 
 namespace TwinE {
 
@@ -40,23 +41,69 @@ private:
 
 public:
 	HolomapV2(TwinEEngine *engine) : Super(engine) {}
-	virtual ~HolomapV2() = default;
+	virtual ~HolomapV2();
 
 	struct Location {
-		int32 X = 0; // Position Island X Y Z
-		int32 Y = 0;
-		int32 Z = 0;
-		int32 Alpha = 0; // Position Planet Alpha, Beta and Altitude
-		int32 Beta = 0;
-		int32 Alt = 0;
-		int32 Mess = 0;
-		int8 ObjFix = 0;    // Eventual Obj Inventory 3D (FREE NOT USED!)
-		uint8 FlagHolo = 0u; // Flag for Planet display, active, etc.
-		uint8 Planet = 0u;
-		uint8 Island = 0u;
+		int32 x = 0; // Position Island X Y Z
+		int32 y = 0;
+		int32 z = 0;
+		int32 alpha = 0; // Position Planet Alpha, Beta and Altitude
+		int32 beta = 0;
+		int32 alt = 0;
+		int32 mess = 0;
+		int8 objFix = 0;    // Eventual Obj Inventory 3D (FREE NOT USED!)
+		uint8 flagHolo = 0u; // Flag for Planet display, active, etc.
+		uint8 planet = 0u;
+		uint8 island = 0u;
 	};
 	static_assert(sizeof(Location) == 32, "Invalid Location size");
 	Location _locations[MAX_OBJECTIF + MAX_CUBE];
+
+	uint32 _decalTimerRef[MAX_OBJECTIF + MAX_CUBE];
+
+	int32 _numObjectif = -1;
+	int32 _nextObjectif = -1;
+	int32 _oldObjectif = -2;
+
+	int32 _holoAlpha = 0;
+	int32 _holoBeta = 0;
+	int32 _holoGamma = 0;
+
+	int32 _destAlpha = 0;
+	int32 _destBeta = 0;
+
+	int32 _zoomedIsland = -1;
+	int32 _destination = 0; // P_TWINSUN
+
+	int32 _holoMode = 0; // 0 Globe, 1 Plan
+
+	uint8 _rotPal[(32 + 31) * 3];
+	int16 _rotPalPos = 0;
+
+	uint8 *_ptrMapping = nullptr;
+	uint8 *_ptrGlobe = nullptr;
+	uint16 *_ptrCoorGlobe = nullptr;
+	uint8 *_bufFleche = nullptr;
+	uint8 *_bufLoFleche = nullptr;
+	uint8 *_bufBuggy = nullptr;
+	uint8 *_bufDyno = nullptr;
+
+	struct Planet {
+		int32 xSpace = 0;
+		int32 ySpace = 0;
+		int32 zSpace = 0;
+		int16 rayon = 0;
+		int16 zoom = 0;
+		uint8 *ptrTexture = nullptr; // HMG
+		uint8 *ptrHeightMap = nullptr; // HMT
+	};
+	Planet _tabPlanet[MAX_PLANET];
+
+	void initHoloMalloc();
+	void holoPlan(int32 numplan);
+	void computeCoorGlobe();
+	void drawHolomap();
+	void holoSpace();
 
 	/**
 	 * Set Holomap location position
@@ -81,6 +128,18 @@ public:
 
 	/** Main holomap process loop */
 	void holoMap() override;
+
+	struct HolomapProjectedPos {
+		int16 x, y, z;
+		int16 u, v;
+	};
+	HolomapProjectedPos *_projectedPoints = nullptr;
+
+	struct HolomapPoly {
+		int16 z;
+		int16 p1, p2, p3, p4; // Indices into _projectedPoints
+	};
+	HolomapPoly *_polygons = nullptr;
 };
 
 } // namespace TwinE

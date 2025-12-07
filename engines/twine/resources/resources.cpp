@@ -194,13 +194,13 @@ void Resources::initResources() {
 	_engine->_text->setFontColor(COLOR_14);
 	_engine->_text->setTextCrossColor(136, 143, 2);
 
+	if (!_spriteBoundingBox.loadFromHQR(TwineResource(Resources::HQR_RESS_FILE, RESSHQR_SPRITEBOXDATA), _engine->isLBA1())) {
+		error("Failed to load sprite bounding box data");
+	}
+
 	if (_engine->isLBA1()) {
 		if (!_spriteShadowPtr.loadFromHQR(TwineResource(Resources::HQR_RESS_FILE, RESSHQR_SPRITESHADOW), _engine->isLBA1())) {
 			error("Failed to load shadow sprites");
-		}
-
-		if (!_spriteBoundingBox.loadFromHQR(TwineResource(Resources::HQR_RESS_FILE, RESSHQR_SPRITEBOXDATA), _engine->isLBA1())) {
-			error("Failed to load sprite bounding box data");
 		}
 
 		if (!_holomapTwinsenModelPtr.loadFromHQR(TwineResource(Resources::HQR_RESS_FILE, RESSHQR_HOLOTWINMDL), _engine->isLBA1())) {
@@ -307,6 +307,7 @@ void Resources::loadMovieInfo() {
 		} else {
 			Common::Array<int32> info(1);
 			info[0] = videoIndex;
+			line.trim();
 			line.toLowercase();
 			if (line.hasSuffix(".smk")) {
 				line = line.substr(0, line.size() - 4);

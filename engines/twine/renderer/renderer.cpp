@@ -1617,12 +1617,13 @@ void Renderer::animModel(ModelData *modelData, const BodyData &bodyData, RenderC
 		} while (--numOfPrimitives);
 	} else {
 		do {
-			int32 coZ = _kFactor - (pointPtr->z + poswr.z);
+			const IVec3 &rotP = rot(_matrixWorld, pointPtr->x, pointPtr->y, pointPtr->z);
+			int32 coZ = _kFactor - (rotP.z + poswr.z);
 			if (coZ <= 0) {
 				coZ = 0x7FFFFFFF;
 			}
 
-			int32 coX = (((pointPtr->x + poswr.x) * _lFactorX) / coZ) + _projectionCenter.x;
+			int32 coX = (((rotP.x + poswr.x) * _lFactorX) / coZ) + _projectionCenter.x;
 			if (coX > 0xFFFF) {
 				coX = 0x7FFF;
 			}
@@ -1634,7 +1635,7 @@ void Renderer::animModel(ModelData *modelData, const BodyData &bodyData, RenderC
 				modelRect.right = pointPtrDest->x;
 			}
 
-			int32 coY = _projectionCenter.y - (((pointPtr->y + poswr.y) * _lFactorY) / coZ);
+			int32 coY = _projectionCenter.y - (((rotP.y + poswr.y) * _lFactorY) / coZ);
 			if (coY > 0xFFFF) {
 				coY = 0x7FFF;
 			}
