@@ -799,7 +799,7 @@ Common::String parseCommandLine(Common::StringMap &settings, int argc, const cha
 #endif
 
 #ifdef ENABLE_EVENTRECORDER
-			DO_LONG_OPTION_INT("disable-display")
+			DO_LONG_OPTION_BOOL("disable-display")
 			END_OPTION
 
 			DO_LONG_OPTION("record-mode")
