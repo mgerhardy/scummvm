@@ -1488,8 +1488,11 @@ Common::Error Macs2Engine::run() {
 		loadTranslation();
 	}
 
-	// Initialize 320x200 paletted graphics mode
-	initGraphics(320, 200);
+	// SCUMM-style UI option
+	_scummUIEnabled = ConfMan.getBool("scumm_ui");
+
+	// Initialize graphics mode
+	initGraphics(320, _scummUIEnabled ? 256 : 200);
 
 	// Initialize Adlib
 	_adlib->init();

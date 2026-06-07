@@ -97,6 +97,12 @@ void View1::openInventory(GameObject *newInventorySource) {
 	}
 
 	setInventorySource(newInventorySource);
+
+	// ScummUI: protagonist's inventory is always visible in strip, don't show modal panel
+	// But external inventories (containers, other characters) still open modal
+	if (_scummUI && newInventorySource == GameObjects::instance().getProtagonistObject())
+		return;
+
 	_isShowingInventory = true;
 	_inventoryPage = 0;
 	_activeInventoryItem = nullptr;
@@ -248,6 +254,12 @@ View1::View1() : UIElement("View1") {
 	// inventoryItems.push_back(GameObjects::instance().Objects[0x8 - 1]);
 
 	_inventoryButtonLocations.resize(6);
+
+	if (g_engine->_scummUIEnabled) {
+		_scummUI = new ScummUI(this);
+		// Populate inventory items for the strip
+		setInventorySource(_inventorySource);
+	}
 }
 
 AnimFrame *View1::getInventoryIcon(GameObject *gameObject) {
@@ -359,6 +371,30 @@ void View1::renderString(uint16 x, uint16 y, Common::String s) {
 
 void View1::renderString(const Common::Point pos, const Common::String &s) {
 	renderString(pos.x, pos.y, s);
+}
+
+void View1::renderStringTo(uint16 x, uint16 y, const Common::String &s, Graphics::ManagedSurface &surf) {
+	uint16 currentX = x;
+	uint16 currentY = y;
+
+	uint16 widestGlyph = 1;
+	for (auto iter = s.begin(); iter != s.end(); iter++) {
+		GlyphData data;
+		if (g_engine->findGlyph(*iter, data)) {
+			widestGlyph = MAX(widestGlyph, data._width);
+		}
+	}
+
+	for (auto iter = s.begin(); iter != s.end(); iter++) {
+		GlyphData data;
+		bool found = g_engine->findGlyph(*iter, data);
+		if (found) {
+			drawSprite(currentX, currentY, data._width, data._height, data._data, surf, false);
+			currentX += data._width + 1;
+		} else {
+			currentX += widestGlyph;
+		}
+	}
 }
 
 int View1::measureStringWithFont(const Common::String &s, const GlyphData *glyphs, uint16 numGlyphs) {
@@ -531,6 +567,9 @@ void View1::drawPath(Graphics::ManagedSurface &s) {
 }
 
 void View1::openMainMenu(Common::Point clickedPosition) {
+	if (_scummUI)
+		return;
+
 	_isShowingMainMenu = true;
 	// Calculate button size from actual icon dimensions (matching original)
 	uint16 maxW = 0, maxH = 0;
@@ -792,6 +831,22 @@ bool View1::msgFocus(const FocusMessage &msg) {
 }
 
 bool View1::msgMouseDown(const MouseDownMessage &msg) {
+	// ScummUI: intercept clicks in verb/inventory area
+	if (_scummUI && _scummUI->isPointInUI(msg._pos)) {
+		if (msg._button == MouseMessage::MB_LEFT) {
+			_scummUI->handleClick(msg._pos);
+			redraw();
+		}
+		return true;
+	}
+
+	// ScummUI: right-click in game area cycles verb instead of opening popup
+	if (_scummUI && msg._button == MouseMessage::MB_RIGHT) {
+		g_engine->nextCursorMode();
+		updateCursor();
+		return true;
+	}
+
 	if (msg._button == MouseMessage::MB_LEFT) {
 		// Map mode (depth-based scene preview) from handleInput (1008:e8bf).
 		// When currentMode == VM_MAP, clicking on the depth map previews scenes.
@@ -941,6 +996,16 @@ bool View1::msgMouseDown(const MouseDownMessage &msg) {
 
 			// Check if we hit an inventory item
 			GameObject *clickedObject = getClickedInventoryItem(msg._pos);
+
+			// ScummUI: in external inventory with Use mode, click = take item immediately
+			if (_scummUI && clickedObject != nullptr && !isInventorySourceProtagonist()
+				&& g_engine->_scriptExecutor->_mouseMode == Script::MouseMode::Use) {
+				transferInventoryItem(clickedObject, GameObjects::instance().getProtagonistObject());
+				_activeInventoryItem = nullptr;
+				g_engine->_scriptExecutor->_inventoryActionFlag = true;
+				setInventorySource(_inventorySource);
+				return true;
+			}
 
 			if (clickedObject != nullptr && g_engine->_scriptExecutor->_mouseMode == Script::MouseMode::Look) {
 				// Look at item: object ID uses 0x400 prefix (confirmed from original handleInventoryClick)
@@ -1208,6 +1273,25 @@ bool View1::msgMouseDown(const MouseDownMessage &msg) {
 }
 
 bool View1::msgMouseMove(const MouseMoveMessage &msg) {
+	// ScummUI: handle hover in UI area and update sentence line for game objects
+	if (_scummUI) {
+		if (_scummUI->isPointInUI(msg._pos)) {
+			_scummUI->handleMouseMove(msg._pos);
+			_scummUI->clearSentenceObject();
+		} else {
+			_scummUI->handleMouseMove(Common::Point(-1, -1));
+			// Update sentence with hovered object name
+			uint16 hitObj = getHitObjectID(msg._pos);
+			if (hitObj == 0)
+				hitObj = g_engine->getHotspotAtPoint(msg._pos);
+			if (hitObj > 0 && hitObj < (uint16)GameObjects::instance()._objectNames.size()) {
+				_scummUI->updateSentenceLine(GameObjects::instance()._objectNames[hitObj]);
+			} else {
+				_scummUI->clearSentenceObject();
+			}
+		}
+	}
+
 	_hoverAreaId = g_engine->_scriptExecutor->getAreaAtPoint(msg._pos.x, msg._pos.y);
 	_hoverHotspotId = g_engine->getHotspotAtPoint(msg._pos);
 	return true;
@@ -1354,6 +1438,13 @@ void View1::draw() {
 				renderString(mousePos.x + 20, mousePos.y + 20, Common::String::format("%2.x", hoveredObject->_index));
 			}
 		}
+	}
+
+	// Draw SCUMM-style UI below game area (needs full screen, not clipped surface)
+	if (_scummUI) {
+		Common::Rect fullBounds(0, 0, g_events->getScreen()->w, g_events->getScreen()->h);
+		Graphics::ManagedSurface fullScreen(*g_events->getScreen(), fullBounds);
+		_scummUI->draw(fullScreen);
 	}
 }
 
@@ -1537,6 +1628,12 @@ void View1::drawInventory(Graphics::ManagedSurface &s) {
 
 	// Draw the buttons at the bottom
 	for (int i = 0; i < 6; i++) {
+		// ScummUI: hide Drop button in external inventory (Use-click takes directly)
+		if (_scummUI && i == (int)InventoryButtonIndex::Drop && !isInventorySourceProtagonist()) {
+			_inventoryButtonLocations[i] = Common::Rect();
+			buttonX += buttonW + 4;
+			continue;
+		}
 		uint16 index = g_engine->inventoryIconIndices[i];
 		AnimFrame &currentFrame = g_engine->_imageResources[index - 1];
 		drawPressedBorderOuterHighlights(Common::Point(buttonX, buttonY), Common::Point(buttonW, buttonH), s);

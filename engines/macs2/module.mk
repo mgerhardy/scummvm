@@ -8,6 +8,7 @@ MODULE_OBJS = \
 	messages.o \
 	metaengine.o \
 	view1.o \
+	scummui.o \
 	gameobjects.o \
 	adlib.o \
 	script/scriptexecutor.o

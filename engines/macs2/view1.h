@@ -24,6 +24,7 @@
 
 #include "macs2/events.h"
 #include "macs2/macs2.h"
+#include "macs2/scummui.h"
 
 namespace Macs2 {
 
@@ -259,6 +260,7 @@ public:
 
 	void renderString(uint16 x, uint16 y, Common::String s);
 	void renderString(const Common::Point pos, const Common::String &s);
+	void renderStringTo(uint16 x, uint16 y, const Common::String &s, Graphics::ManagedSurface &surf);
 	void renderStringWithFont(uint16 x, uint16 y, const Common::String &s, const GlyphData *glyphs, uint16 numGlyphs);
 	int measureStringWithFont(const Common::String &s, const GlyphData *glyphs, uint16 numGlyphs);
 
@@ -283,7 +285,7 @@ public:
 
 public:
 	View1();
-	virtual ~View1() {}
+	virtual ~View1() { delete _scummUI; }
 
 	bool _started = false;
 
@@ -468,6 +470,9 @@ public:
 	Common::Array<Common::Rect> _mainMenuButtonLocations;
 
 	uint16 _inventoryPage = 0;
+
+	// SCUMM-style verb/inventory UI (owned, created when option enabled)
+	ScummUI *_scummUI = nullptr;
 };
 
 } // namespace Macs2

@@ -346,6 +346,9 @@ public:
 	// Is required for example after a scene change
 	bool _scheduledRunIsInitScene = false;
 
+	// SCUMM-style verb/inventory UI (activated via game option)
+	bool _scummUIEnabled = false;
+
 	// Game speed mode from original binary (g_wGameSpeedMode at 1020:0214).
 	// Cycled by Ctrl+T: 0=normal, 1=fast (no frame wait), 2=slow (wait for tick>=0x12).
 	uint16 _gameSpeedMode = 0;

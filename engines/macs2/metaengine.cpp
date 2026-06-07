@@ -49,6 +49,13 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 	  0,
 	  0}},
 #endif
+	{GAMEOPTION_SCUMM_UI,
+	 {_s("Use SCUMM-style verb interface"),
+	  _s("Adds a permanent verb bar and inventory strip below the game area (requires restart)"),
+	  "scumm_ui",
+	  false,
+	  0,
+	  0}},
 	AD_EXTRA_GUI_OPTIONS_TERMINATOR};
 
 } // End of namespace Macs2
