@@ -416,9 +416,14 @@ public:
 		_scriptExecutor.run(firstRun);
 	}
 
+	// Deferred script execution scheduling.
+	// The binary's gameTick (1008:e556) calls runScriptExecutor() (1008:e3e7) directly
+	// when wait conditions clear. runScriptExecutor takes no parameters - it checks
+	// g_wScriptIsExecuting internally: if 0, loads scene script fresh (init run);
+	// if non-zero, resumes from current position.
+	// ScummVM defers this to next tick via _runScheduled, and makes the init-vs-resume
+	// distinction explicit via _scheduledRunIsInitScene (firstRun parameter to run()).
 	bool _runScheduled = false;
-	// TODO: Feels like this should be more elegantly solved, also check how the game does this
-	// Is required for example after a scene change
 	bool _scheduledRunIsInitScene = false;
 
 	// Game speed mode from original binary (g_wGameSpeedMode at 1020:0214).
@@ -447,7 +452,9 @@ public:
 	Common::Array<uint8> _currentSoundData;
 	Audio::SoundHandle _currentSoundHandle;
 
-	// Schedules a run of the script the next time the executor is ticked
+	// Schedules runScriptExecutor for the next tick.
+	// initScene=true: fresh scene script execution (binary: g_wScriptIsExecuting==0 path).
+	// initScene=false: resume after wait/callback (binary: g_wScriptIsExecuting!=0 path).
 	void scheduleRun(bool initScene = false);
 
 	uint16 getWalkabilityAt(const Common::Point &p);
