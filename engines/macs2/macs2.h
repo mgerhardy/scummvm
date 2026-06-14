@@ -234,7 +234,7 @@ private:
 	const ADGameDescription *_gameDescription;
 	Common::RandomSource _randomSource;
 
-	Adlib *_adlib;
+	Adlib *_adlib = nullptr;
 
 protected:
 	// Engine APIs
@@ -248,6 +248,9 @@ protected:
 	}
 
 public:
+	Macs2Engine(OSystem *osystem, const ADGameDescription *gameDesc);
+	~Macs2Engine() override;
+
 	Graphics::ManagedSurface readRLEImage(int64 offs, Common::MemoryReadStream *stream);
 
 	void readResourceFile();
@@ -261,10 +264,6 @@ public:
 
 	// Assumes that the stream is at the start of the right section
 	void readImageResources(Common::MemoryReadStream *stream);
-
-public:
-	Macs2Engine(OSystem *osystem, const ADGameDescription *gameDesc);
-	~Macs2Engine() override;
 
 	void changeScene(uint32 newSceneIndex, bool executeScript = true);
 
@@ -351,7 +350,7 @@ public:
 	Common::Array<BackgroundAnimation> _backgroundAnimations;
 	Common::Array<BackgroundAnimationBlob> _backgroundAnimationsBlobs;
 
-	Common::MemoryReadStream *_fileStream;
+	Common::MemoryReadStream *_fileStream = nullptr;
 
 	void setCursorMode(Script::MouseMode newMode);
 
@@ -383,7 +382,6 @@ public:
 	void loadAnimationFromSceneData(uint16 objectIndex, uint16 slotIndex, uint8 arrayIndex, bool shouldMirror = false);
 	void loadSceneObjects(GameObject *obj);
 
-	// TODO: Arguments
 	void loadSongFromSceneData(uint8 dataIndex);
 	Adlib *getAdlib() const { return _adlib; }
 	// Returns the Adlib volume (0-63) scaled by the user's music_volume setting

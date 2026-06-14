@@ -402,6 +402,8 @@ Macs2Engine::~Macs2Engine() {
 	stopInputRecording();
 	clearCurrentSoundData();
 	_adlib->deinit();
+	delete _adlib;
+	delete _fileStream;
 }
 
 void Macs2Engine::sayText(const Common::String &text, Common::TextToSpeechManager::Action action) const {
@@ -1500,7 +1502,6 @@ void Macs2Engine::loadSceneObjects(GameObject *obj) {
 }
 
 void Macs2Engine::loadSongFromSceneData(uint8 dataIndex) {
-
 	uint32 address = _sceneResourceOffsets[dataIndex - 1];
 	_fileStream->seek(address);
 	uint32 size = _fileStream->readUint32LE();
