@@ -39,7 +39,7 @@
 #include "engines/advancedDetector.h"
 #include "engines/engine.h"
 #include "macs2/events.h"
-#include "macs2/script/scriptexecutor.h"
+#include "macs2/scriptexecutor.h"
 
 namespace Macs2 {
 

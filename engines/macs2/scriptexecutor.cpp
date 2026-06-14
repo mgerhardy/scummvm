@@ -19,7 +19,7 @@
  *
  */
 
-#include "macs2/script/scriptexecutor.h"
+#include "macs2/scriptexecutor.h"
 #include "common/debug.h"
 #include "common/memstream.h"
 #include "macs2/adlib.h"
