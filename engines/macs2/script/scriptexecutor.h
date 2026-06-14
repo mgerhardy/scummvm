@@ -380,9 +380,8 @@ public:
 	ExecutionResult executeOpcodes();
 
 	// Will execute the script and any object scripts until execution should be stopped
-	// TODO: Consider if we should let the executor also figure out where to get the
-	// first script from
-	void run(bool firstRun = false);
+	// Binary runScriptExecutor (1008:e3e7): no params, checks g_wScriptIsExecuting internally.
+	void run();
 
 	void setScript(Common::MemoryReadStream *stream);
 

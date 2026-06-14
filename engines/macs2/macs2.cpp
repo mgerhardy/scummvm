@@ -678,7 +678,7 @@ void Macs2Engine::changeScene(uint32 newSceneIndex, bool executeScript) {
 
 	if (executeScript) {
 		// Start the execution
-		_scriptExecutor.run(true);
+		_scriptExecutor.run();
 	}
 }
 
@@ -1128,11 +1128,6 @@ uint16 Macs2Engine::getHotspotAtPoint(const Common::Point &p) {
 		i++;
 	} while (i <= numHotspots);
 	return 0;
-}
-
-void Macs2Engine::scheduleRun(bool initScene) {
-	_runScheduled = true;
-	_scheduledRunIsInitScene = initScene;
 }
 
 void Macs2Engine::startInputRecording(const Common::Path &filename) {
@@ -1603,13 +1598,7 @@ Common::Error Macs2Engine::loadGameState(int slot) {
 
 bool Macs2Engine::tick() {
 	_scriptExecutor.tick();
-	if (_runScheduled) {
-		_runScheduled = false;
-		bool shouldRunInit = _scheduledRunIsInitScene;
-		_scheduledRunIsInitScene = false;
-		_scriptExecutor._isRepeatRun = true;
-		_scriptExecutor.run(shouldRunInit);
-	}
+	_scriptExecutor.run();
 	return Events::tick();
 }
 

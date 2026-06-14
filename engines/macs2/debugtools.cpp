@@ -2055,7 +2055,7 @@ void onImGuiRender() {
 			}
 			ImGui::Separator();
 			if (ImGui::MenuItem("Run Script Executor"))
-				g_engine->runScriptExecutor(true);
+				g_engine->runScriptExecutor();
 			if (ImGui::MenuItem("Reset Background + Fade")) {
 				View1 *view = (View1 *)g_engine->findView("View1");
 				if (view) {

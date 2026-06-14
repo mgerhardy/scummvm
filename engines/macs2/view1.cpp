@@ -948,7 +948,7 @@ bool View1::handleInventoryClick(const MouseDownMessage &msg) {
 	if (clickedObject != nullptr && g_engine->_scriptExecutor._cursorMode == Script::MouseMode::Look) {
 		g_engine->_scriptExecutor._interactedObjectID = 0x400 + clickedObject->_index;
 		g_engine->_scriptExecutor._interactedInventoryItemId = 0;
-		g_engine->runScriptExecutor(false);
+		g_engine->runScriptExecutor();
 		return true;
 	}
 	if (clickedObject != nullptr && g_engine->_scriptExecutor._cursorMode == Script::MouseMode::Use) {
@@ -975,7 +975,7 @@ bool View1::handleInventoryClick(const MouseDownMessage &msg) {
 		// Panel state stays at 2 (inventory) — draw cycle hides panel when text shows.
 		g_engine->_scriptExecutor._interactedObjectID = 0x400 + _activeInventoryItem->_index;
 		g_engine->_scriptExecutor._interactedInventoryItemId = 0x400 + clickedObject->_index;
-		g_engine->runScriptExecutor(false);
+		g_engine->runScriptExecutor();
 	}
 
 	return true;
@@ -1050,7 +1050,7 @@ bool View1::handleContainerInventoryClick(const MouseDownMessage &msg) {
 		// (g_wPendingPanelRequest = 1 path in original)
 		g_engine->_scriptExecutor._interactedObjectID = 0x400 + clickedObject->_index;
 		g_engine->_scriptExecutor._interactedInventoryItemId = 0;
-		g_engine->runScriptExecutor(false);
+		g_engine->runScriptExecutor();
 		return true;
 	}
 	if (clickedObject != nullptr && g_engine->_scriptExecutor._cursorMode == Script::MouseMode::Use) {
@@ -1352,7 +1352,7 @@ bool View1::handleInput(const MouseDownMessage &msg) {
 			// Binary: runScriptExecutor() - internally rewinds scene script when
 			// g_wScriptIsExecuting==0 (which it is here, since we're in the
 			// "not executing" branch of handleInput).
-			g_engine->runScriptExecutor(false);
+			g_engine->runScriptExecutor();
 
 			// Binary: only g_wInteractedObjectId is cleared after runScriptExecutor.
 			g_engine->_scriptExecutor._interactedObjectID = 0;
@@ -1751,8 +1751,6 @@ bool View1::tick() {
 				if (pos.x == c->_pathFinalDestination.x && pos.y == c->_pathFinalDestination.y) {
 					if (!g_engine->_scriptExecutor._pickupInProgress) {
 						g_engine->_scriptExecutor._walkTargetObjectIndex = 0;
-						g_engine->_scriptExecutor._isRepeatRun = true;
-						g_engine->scheduleRun();
 					}
 				}
 			}
@@ -1773,9 +1771,7 @@ void View1::drawAllCharacters() {
 	// run the script executor with g_wIsRepeatRun=1 so the scene script can check
 	// getAreaAtPoint (case 0x27) and trigger scene transitions.
 	if (g_engine->_movementFinishedFlag) {
-		g_engine->_scriptExecutor._isRepeatRun = true;
 		g_engine->runScriptExecutor();
-		g_engine->_scriptExecutor._isRepeatRun = false;
 	}
 }
 
@@ -3027,8 +3023,6 @@ void Character::update() {
 				g_engine->_scriptExecutor._interactedInventoryItemId = 0x0000;
 				if (_executeScriptOnFinishLerp) {
 					_executeScriptOnFinishLerp = false;
-					g_engine->_scriptExecutor._isRepeatRun = true;
-					g_engine->scheduleRun();
 				}
 				return;
 			}

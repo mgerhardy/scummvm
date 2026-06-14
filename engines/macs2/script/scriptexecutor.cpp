@@ -858,8 +858,8 @@ ExecutionResult Script::ScriptExecutor::scriptChangeScene() {
 	_interactedObjectID = 0;
 	_interactedInventoryItemId = 0;
 	_requestCallback = false;
-	g_engine->scheduleRun(true);
-	_isAwaitingCallback = true;
+	// Binary: clears g_wScriptIsExecuting so next gameTick's runScriptExecutor() starts fresh
+	_state = ExecutorState::Idle;
 	// NOTE: EndTimer prevents race conditions from overlapping waits
 
 	endTimer();
@@ -2395,8 +2395,8 @@ ExecutionResult Script::ScriptExecutor::executeOpcodes() {
 	return ExecutionResult::ScriptFinished;
 }
 
-void ScriptExecutor::run(bool firstRun) {
-	// Binary runScriptExecutor (1008:e50c) entry guard:
+void ScriptExecutor::run() {
+	// Binary runScriptExecutor (1008:e3e7) entry guard:
 	// Returns immediately if ANY wait condition is active.
 	if (_frameWaitTicksRemaining != 0 || _walkTargetObjectIndex != 0 ||
 		_waitForPcmSound || _waitForMusicControl || _waitForAdlibReady ||
@@ -2408,16 +2408,14 @@ void ScriptExecutor::run(bool firstRun) {
 		return;
 	}
 
-	const bool resumingAfterCallback = (_state == ExecutorState::WaitingForCallback) && !firstRun;
-	if (!resumingAfterCallback) {
-		// TODO: Not sure if this is the right place and condition to reset this
-		// variable. Context here is that we might have an object that triggers several
-		// description strings in a row, and we would disable the executing object
-		// if we always reset this object
-		// TODO: Watch out for issues caused by this
+	// Binary: if g_wScriptIsExecuting == 0, start fresh from scene script
+	if (!isExecuting()) {
 		_executingScriptObjectId = 0;
 		_repeatRunFlag = false;
-		_isSceneInitRun = firstRun;
+		_isSceneInitRun = true;
+		_isRepeatRun = false;
+	} else {
+		_isRepeatRun = true;
 	}
 	_state = ExecutorState::Executing;
 	step();
