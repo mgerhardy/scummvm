@@ -705,7 +705,7 @@ bool scriptDebuggerShouldPause() {
 		return true; // stay paused
 
 	// Check breakpoints against current script position
-	Script::ScriptExecutor *exec = g_engine->_scriptExecutor;
+	Script::ScriptExecutor *exec = &g_engine->_scriptExecutor;
 	uint32 pos = exec->getScriptPosition();
 	if (hasEnabledBreakpoint(pos)) {
 		_scriptDebugPaused = true;
@@ -719,7 +719,7 @@ static void showScriptWindow() {
 		return;
 	ImGui::SetNextWindowSize(ImVec2(700, 500), ImGuiCond_FirstUseEver);
 	if (ImGui::Begin("Scene Script", &_showScript)) {
-		Script::ScriptExecutor *exec = g_engine->_scriptExecutor;
+		Script::ScriptExecutor *exec = &g_engine->_scriptExecutor;
 		int currentScene = Scenes::instance()._currentSceneIndex;
 
 		// --- Debugger toolbar ---
@@ -885,7 +885,7 @@ static void showVariablesWindow() {
 		return;
 	ImGui::SetNextWindowSize(ImVec2(400, 500), ImGuiCond_FirstUseEver);
 	if (ImGui::Begin("Script Variables", &_showVariables)) {
-		Script::ScriptExecutor *exec = g_engine->_scriptExecutor;
+		Script::ScriptExecutor *exec = &g_engine->_scriptExecutor;
 		if (ImGui::CollapsingHeader("Internal State", ImGuiTreeNodeFlags_DefaultOpen)) {
 			ImGui::Text("Mouse Mode: 0x%x", (int)exec->_cursorMode);
 			ImGui::Text("Interacted Object: 0x%x", exec->_interactedObjectID);
@@ -933,21 +933,21 @@ static void showVariablesWindow() {
 				ImGui::Text("Mouse: (%d,%d) | Hovered: %d", mousePos.x, mousePos.y, hoveredChoice);
 				ImGui::Text("LineHeight: %d | FirstLineY: %d", lineHeight, firstLineY);
 				for (uint i = 0; i < view->_dialogueChoiceLineCounts.size(); i++) {
-					uint16 scriptIdx = (i < g_engine->_scriptExecutor->_dialogueChoiceScriptIndices.size())
-						? g_engine->_scriptExecutor->_dialogueChoiceScriptIndices[i] : 0;
+					uint16 scriptIdx = (i < g_engine->_scriptExecutor._dialogueChoiceScriptIndices.size())
+						? g_engine->_scriptExecutor._dialogueChoiceScriptIndices[i] : 0;
 					ImGui::Text("  Choice %u: %u lines, scriptIndex=%u", i + 1, view->_dialogueChoiceLineCounts[i], scriptIdx);
 				}
 				ImGui::Separator();
-				for (uint i = 0; i < g_engine->_scriptExecutor->_dialogueChoices.size(); i++) {
+				for (uint i = 0; i < g_engine->_scriptExecutor._dialogueChoices.size(); i++) {
 					ImGui::Text("  Choice %u:", i + 1);
-					for (uint j = 0; j < g_engine->_scriptExecutor->_dialogueChoices[i].size(); j++) {
-						ImGui::Text("    [%u] \"%s\"", j, g_engine->_scriptExecutor->_dialogueChoices[i][j].c_str());
+					for (uint j = 0; j < g_engine->_scriptExecutor._dialogueChoices[i].size(); j++) {
+						ImGui::Text("    [%u] \"%s\"", j, g_engine->_scriptExecutor._dialogueChoices[i][j].c_str());
 					}
 				}
 			} else {
 				ImGui::TextUnformatted("Showing: N");
 			}
-			ImGui::Text("chosenDialogueOption (FF:0D): %d", g_engine->_scriptExecutor->_chosenDialogueOption);
+			ImGui::Text("chosenDialogueOption (FF:0D): %d", g_engine->_scriptExecutor._chosenDialogueOption);
 		}
 	}
 	ImGui::End();
@@ -1885,7 +1885,7 @@ static void showObjectScriptsWindow() {
 	ImGui::SetNextWindowSize(ImVec2(700, 500), ImGuiCond_FirstUseEver);
 	if (ImGui::Begin("Object Scripts", &_showObjectScripts)) {
 		uint16 sceneIdx = (uint16)Scenes::instance()._currentSceneIndex;
-		Script::ScriptExecutor *exec = g_engine->_scriptExecutor;
+		Script::ScriptExecutor *exec = &g_engine->_scriptExecutor;
 
 		static int selectedObj = -1;
 		static Common::Array<DecompiledLine> objDecompile;

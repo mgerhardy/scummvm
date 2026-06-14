@@ -108,8 +108,8 @@ void View1::openInventory(GameObject *newInventorySource) {
 		? kUiPanelInventory : kUiPanelContainerInventory;
 	_inventoryScrollOffset = 0;
 	_activeInventoryItem = nullptr;
-	g_engine->_scriptExecutor->_inventoryActionFlag = false;
-	g_engine->_scriptExecutor->_inventoryCombineFlag = false;
+	g_engine->_scriptExecutor._inventoryActionFlag = false;
+	g_engine->_scriptExecutor._inventoryCombineFlag = false;
 	// Binary drawProtagonistInventoryPanel (1008:45aa): unconditionally calls setCursorMode(0x15)
 	g_engine->setCursorMode(Script::MouseMode::Use);
 	updateCursor();
@@ -124,8 +124,8 @@ void View1::closeInventory() {
 	_uiPanelState = kUiPanelNone;
 	_inventoryScrollOffset = 0;
 	_activeInventoryItem = nullptr;
-	g_engine->_scriptExecutor->_inventoryActionFlag = false;
-	g_engine->_scriptExecutor->_inventoryCombineFlag = false;
+	g_engine->_scriptExecutor._inventoryActionFlag = false;
+	g_engine->_scriptExecutor._inventoryCombineFlag = false;
 
 	if (!isInventorySourceProtagonist()) {
 		setInventorySource(GameObjects::instance().getProtagonistObject());
@@ -139,17 +139,17 @@ void View1::closeInventory() {
 		// script context saved by scriptOpenInventory (g_wScriptIsExecuting = 1),
 		// then runScriptExecutor resumes right after the openInventory opcode.
 		// TODO: this is not yet matching the binary 1:1
-		g_engine->setCursorMode(g_engine->_scriptExecutor->_savedExternalInventoryMouseMode);
+		g_engine->setCursorMode(g_engine->_scriptExecutor._savedExternalInventoryMouseMode);
 		updateCursor();
 		setInventorySource(GameObjects::instance().getProtagonistObject());
-		g_engine->_scriptExecutor->_hasPendingExternalInventoryResume = false;
-		g_engine->_scriptExecutor->_externalInventorySourceObjectID = 0;
+		g_engine->_scriptExecutor._hasPendingExternalInventoryResume = false;
+		g_engine->_scriptExecutor._externalInventorySourceObjectID = 0;
 		// Restore script click state (original: handleInput restores from saved values)
-		g_engine->_scriptExecutor->_scriptClickFlag = g_engine->_scriptExecutor->_savedScriptClickFlag;
-		g_engine->_scriptExecutor->_scriptClickX = g_engine->_scriptExecutor->_savedScriptClickX;
-		g_engine->_scriptExecutor->_scriptClickY = g_engine->_scriptExecutor->_savedScriptClickY;
-		g_engine->_scriptExecutor->_scriptClickResult = g_engine->_scriptExecutor->_savedScriptClickResult;
-		g_engine->_scriptExecutor->setCurrentSceneScriptAt(g_engine->_scriptExecutor->_secondaryInventoryLocation);
+		g_engine->_scriptExecutor._scriptClickFlag = g_engine->_scriptExecutor._savedScriptClickFlag;
+		g_engine->_scriptExecutor._scriptClickX = g_engine->_scriptExecutor._savedScriptClickX;
+		g_engine->_scriptExecutor._scriptClickY = g_engine->_scriptExecutor._savedScriptClickY;
+		g_engine->_scriptExecutor._scriptClickResult = g_engine->_scriptExecutor._savedScriptClickResult;
+		g_engine->_scriptExecutor.setCurrentSceneScriptAt(g_engine->_scriptExecutor._secondaryInventoryLocation);
 		g_engine->runScriptExecutor();
 	}
 }
@@ -203,7 +203,7 @@ void View1::updateCursor(const byte *palette) {
 
 	// Original indexes cursor array as: base + mode * 16 - 16, i.e. 0-based index = mode - 1.
 	// The array has 33 entries (indices 0-32). Cursor modes 0x13-0x1A map to entries 18-25.
-	int mode = (int)g_engine->_scriptExecutor->_cursorMode - 1;
+	int mode = (int)g_engine->_scriptExecutor._cursorMode - 1;
 	if (mode < 0 || mode >= kNumLoadedCursors) {
 		warning("Invalid cursor mode %d, falling back to Walk cursor", mode);
 		mode = (int)Script::MouseMode::Walk - 1;
@@ -548,7 +548,7 @@ void View1::drawPath(Graphics::ManagedSurface &s) {
 void View1::openMainMenu(Common::Point clickedPosition) {
 	_uiPanelState = kUiPanelActionBar;
 	// Binary handleInput: save cursor and set to PanelCursor (0x19)
-	_savedCursorMode = g_engine->_scriptExecutor->_cursorMode;
+	_savedCursorMode = g_engine->_scriptExecutor._cursorMode;
 	g_engine->setCursorMode(Script::MouseMode::PanelCursor);
 	// Calculate button size from actual icon dimensions (matching original)
 	uint16 maxW = 0, maxH = 0;
@@ -633,7 +633,7 @@ void View1::setStringBox(const Common::StringArray &sa) {
 	// Binary: if (g_wCursorMode == 0x1a) setCursorMode(0x16);
 	// When cursor is Disabled (hourglass/hidden during script wait), restore to Walk (crosshair)
 	// so the player can click to dismiss the text box or select a dialogue choice.
-	if (g_engine->_scriptExecutor->_cursorMode == Script::MouseMode::Disabled) {
+	if (g_engine->_scriptExecutor._cursorMode == Script::MouseMode::Disabled) {
 		g_engine->setCursorMode(Script::MouseMode::Walk);
 		updateCursor();
 	}
@@ -877,7 +877,7 @@ bool View1::handleInventoryClick(const MouseDownMessage &msg) {
 			case InventoryButtonIndex::Drop: {
 				// Binary handleInventoryClick button 5 / handleDialogueClick button 5.
 				// Only active when mode == 0x17 (UseInventory) and an item is held.
-				if (g_engine->_scriptExecutor->_cursorMode == Script::MouseMode::UseInventory && _activeInventoryItem != nullptr) {
+				if (g_engine->_scriptExecutor._cursorMode == Script::MouseMode::UseInventory && _activeInventoryItem != nullptr) {
 					if (isInventorySourceProtagonist()) {
 						// Protagonist's inventory: find a container in the current scene.
 						// Binary iterates objects 1..0x200, finds first with:
@@ -902,7 +902,7 @@ bool View1::handleInventoryClick(const MouseDownMessage &msg) {
 							_activeInventoryItem = nullptr;
 							g_engine->setCursorMode(Script::MouseMode::Use);
 							updateCursor();
-							g_engine->_scriptExecutor->_inventoryCombineFlag = true;
+							g_engine->_scriptExecutor._inventoryCombineFlag = true;
 							setInventorySource(_inventorySource);
 						}
 					} else {
@@ -912,7 +912,7 @@ bool View1::handleInventoryClick(const MouseDownMessage &msg) {
 						_activeInventoryItem = nullptr;
 						g_engine->setCursorMode(Script::MouseMode::Use);
 						updateCursor();
-						g_engine->_scriptExecutor->_inventoryActionFlag = true;
+						g_engine->_scriptExecutor._inventoryActionFlag = true;
 						setInventorySource(_inventorySource);
 					}
 				}
@@ -920,18 +920,18 @@ bool View1::handleInventoryClick(const MouseDownMessage &msg) {
 			}
 			case InventoryButtonIndex::Close: {
 				// Binary handleInventoryClick (1008:4d07) button 6:
-				if (g_engine->_scriptExecutor->_cursorMode == Script::MouseMode::UseInventory) {
+				if (g_engine->_scriptExecutor._cursorMode == Script::MouseMode::UseInventory) {
 					// mode == 0x17: g_wSavedCursorMode = 0x17, persist item
 					_savedCursorMode = Script::MouseMode::UseInventory;
-					g_engine->_scriptExecutor->_interactedInventoryItemId = 0x400 + _activeInventoryItem->_index;
+					g_engine->_scriptExecutor._interactedInventoryItemId = 0x400 + _activeInventoryItem->_index;
 				} else {
 					// mode != 0x17: if savedCursorMode was 0x17, reset to 0x15
 					if (_savedCursorMode == Script::MouseMode::UseInventory) {
 						_savedCursorMode = Script::MouseMode::Use;
 					}
-					g_engine->_scriptExecutor->_interactedInventoryItemId = 0;
+					g_engine->_scriptExecutor._interactedInventoryItemId = 0;
 				}
-				g_engine->_scriptExecutor->_interactedObjectID = 0;
+				g_engine->_scriptExecutor._interactedObjectID = 0;
 				_uiPanelState = kUiPanelNone;
 				_inventoryScrollOffset = 0;
 				g_engine->setCursorMode(_savedCursorMode);
@@ -945,15 +945,15 @@ bool View1::handleInventoryClick(const MouseDownMessage &msg) {
 	// Check if we hit an inventory item
 	GameObject *clickedObject = getClickedInventoryItem(msg._pos);
 
-	if (clickedObject != nullptr && g_engine->_scriptExecutor->_cursorMode == Script::MouseMode::Look) {
-		g_engine->_scriptExecutor->_interactedObjectID = 0x400 + clickedObject->_index;
-		g_engine->_scriptExecutor->_interactedInventoryItemId = 0;
+	if (clickedObject != nullptr && g_engine->_scriptExecutor._cursorMode == Script::MouseMode::Look) {
+		g_engine->_scriptExecutor._interactedObjectID = 0x400 + clickedObject->_index;
+		g_engine->_scriptExecutor._interactedInventoryItemId = 0;
 		g_engine->runScriptExecutor(false);
 		return true;
 	}
-	if (clickedObject != nullptr && g_engine->_scriptExecutor->_cursorMode == Script::MouseMode::Use) {
+	if (clickedObject != nullptr && g_engine->_scriptExecutor._cursorMode == Script::MouseMode::Use) {
 		_activeInventoryItem = clickedObject;
-		g_engine->_scriptExecutor->_interactedObjectID = 0x400 + clickedObject->_index;
+		g_engine->_scriptExecutor._interactedObjectID = 0x400 + clickedObject->_index;
 		AnimFrame *icon = getInventoryIcon(_activeInventoryItem);
 		if (icon != nullptr) {
 			// Original copies item icon frame into cursor array slot 0x17 (UseInventory)
@@ -973,8 +973,8 @@ bool View1::handleInventoryClick(const MouseDownMessage &msg) {
 		// then triggers runScriptExecutor via g_wHasSavedUiBackground. Does NOT set
 		// g_wInventoryCombineFlag here (that's only in the Drop button path).
 		// Panel state stays at 2 (inventory) — draw cycle hides panel when text shows.
-		g_engine->_scriptExecutor->_interactedObjectID = 0x400 + _activeInventoryItem->_index;
-		g_engine->_scriptExecutor->_interactedInventoryItemId = 0x400 + clickedObject->_index;
+		g_engine->_scriptExecutor._interactedObjectID = 0x400 + _activeInventoryItem->_index;
+		g_engine->_scriptExecutor._interactedInventoryItemId = 0x400 + clickedObject->_index;
 		g_engine->runScriptExecutor(false);
 	}
 
@@ -1019,12 +1019,12 @@ bool View1::handleContainerInventoryClick(const MouseDownMessage &msg) {
 			case InventoryButtonIndex::Drop: {
 				// Binary button 5 (Take): transfers held item to protagonist.
 				// Only active when mode == UseInventory (0x17) and an item is held.
-				if (g_engine->_scriptExecutor->_cursorMode == Script::MouseMode::UseInventory && _activeInventoryItem != nullptr) {
+				if (g_engine->_scriptExecutor._cursorMode == Script::MouseMode::UseInventory && _activeInventoryItem != nullptr) {
 					transferInventoryItem(_activeInventoryItem, GameObjects::instance().getProtagonistObject());
 					_activeInventoryItem = nullptr;
 					g_engine->setCursorMode(Script::MouseMode::Use);
 					updateCursor();
-					g_engine->_scriptExecutor->_inventoryActionFlag = true;
+					g_engine->_scriptExecutor._inventoryActionFlag = true;
 					setInventorySource(_inventorySource);
 				}
 				break;
@@ -1033,8 +1033,8 @@ bool View1::handleContainerInventoryClick(const MouseDownMessage &msg) {
 				// Binary button 6: clears interaction IDs and closes panel.
 				// The actual script resume happens via closeInventory() which restores
 				// saved script state (binary handleInput state==3, button==6 path).
-				g_engine->_scriptExecutor->_interactedInventoryItemId = 0;
-				g_engine->_scriptExecutor->_interactedObjectID = 0;
+				g_engine->_scriptExecutor._interactedInventoryItemId = 0;
+				g_engine->_scriptExecutor._interactedObjectID = 0;
 				closeInventory();
 				return true;
 			}
@@ -1045,18 +1045,18 @@ bool View1::handleContainerInventoryClick(const MouseDownMessage &msg) {
 	// Item click handling — container has Look and Use but NO combine path.
 	GameObject *clickedObject = getClickedInventoryItem(msg._pos);
 
-	if (clickedObject != nullptr && g_engine->_scriptExecutor->_cursorMode == Script::MouseMode::Look) {
+	if (clickedObject != nullptr && g_engine->_scriptExecutor._cursorMode == Script::MouseMode::Look) {
 		// Binary: Look on container item triggers runScriptExecutor immediately
 		// (g_wPendingPanelRequest = 1 path in original)
-		g_engine->_scriptExecutor->_interactedObjectID = 0x400 + clickedObject->_index;
-		g_engine->_scriptExecutor->_interactedInventoryItemId = 0;
+		g_engine->_scriptExecutor._interactedObjectID = 0x400 + clickedObject->_index;
+		g_engine->_scriptExecutor._interactedInventoryItemId = 0;
 		g_engine->runScriptExecutor(false);
 		return true;
 	}
-	if (clickedObject != nullptr && g_engine->_scriptExecutor->_cursorMode == Script::MouseMode::Use) {
+	if (clickedObject != nullptr && g_engine->_scriptExecutor._cursorMode == Script::MouseMode::Use) {
 		// Binary: Use on container item picks up item as UseInventory cursor
 		_activeInventoryItem = clickedObject;
-		g_engine->_scriptExecutor->_interactedObjectID = 0x400 + clickedObject->_index;
+		g_engine->_scriptExecutor._interactedObjectID = 0x400 + clickedObject->_index;
 		AnimFrame *icon = getInventoryIcon(_activeInventoryItem);
 		if (icon != nullptr) {
 			int cursorSlot = (int)Script::MouseMode::UseInventory - 1;
@@ -1111,7 +1111,7 @@ bool View1::handleActionBarClick(const MouseDownMessage &msg) {
 				_uiPanelState = kUiPanelNone;
 				if (_activeInventoryItem != nullptr) {
 					g_engine->setCursorMode(Script::MouseMode::UseInventory);
-					g_engine->_scriptExecutor->_interactedObjectID = 0x400 + _activeInventoryItem->_index;
+					g_engine->_scriptExecutor._interactedObjectID = 0x400 + _activeInventoryItem->_index;
 				} else {
 					g_engine->setCursorMode(_savedCursorMode);
 				}
@@ -1228,19 +1228,19 @@ bool View1::handleInput(const MouseDownMessage &msg) {
 		// text-box-dismiss gate before the interaction check. The text box (if any)
 		// is cleared as a side-effect of the script rerunning. Clear it here so the
 		// UI updates immediately, but do NOT consume the click.
-		if (_isShowingTextBox && !g_engine->_scriptExecutor->isExecuting()) {
+		if (_isShowingTextBox && !g_engine->_scriptExecutor.isExecuting()) {
 			handleTextBoxInput();
 		}
 
-		if (_uiPanelState == kUiPanelInventory && !g_engine->_scriptExecutor->isExecuting()) {
+		if (_uiPanelState == kUiPanelInventory && !g_engine->_scriptExecutor.isExecuting()) {
 			return handleInventoryClick(msg);
 		}
 
-		if (_uiPanelState == kUiPanelContainerInventory && !g_engine->_scriptExecutor->isExecuting()) {
+		if (_uiPanelState == kUiPanelContainerInventory && !g_engine->_scriptExecutor.isExecuting()) {
 			return handleContainerInventoryClick(msg);
 		}
 
-		if (_uiPanelState == kUiPanelActionBar && !g_engine->_scriptExecutor->isExecuting()) {
+		if (_uiPanelState == kUiPanelActionBar && !g_engine->_scriptExecutor.isExecuting()) {
 			return handleActionBarClick(msg);
 		}
 
@@ -1248,8 +1248,8 @@ bool View1::handleInput(const MouseDownMessage &msg) {
 		// From handleInput (1008:f1d4): clicks during script execution are ONLY processed
 		// if cursor is not Disabled (0x1A). When cursor is Disabled (walk/wait in progress),
 		// clicks are completely ignored.
-		if (g_engine->_scriptExecutor->isExecuting() &&
-			g_engine->_scriptExecutor->_cursorMode != Script::MouseMode::Disabled) {
+		if (g_engine->_scriptExecutor.isExecuting() &&
+			g_engine->_scriptExecutor._cursorMode != Script::MouseMode::Disabled) {
 			// Binary handleInput (1008:f1d4-f225):
 			// 1. handleTextBoxInput() clears text box visual
 			// 2. dismissDialoguePanel() clears g_wIsShowingDialoguePanel visual
@@ -1270,15 +1270,15 @@ bool View1::handleInput(const MouseDownMessage &msg) {
 				}
 			}
 			// Set script click state (original: g_wScriptClickFlag=0, X=mouseX, Y=mouseY, Result=1)
-			g_engine->_scriptExecutor->_scriptClickFlag = 0;
-			g_engine->_scriptExecutor->_scriptClickX = (uint16)msg._pos.x;
-			g_engine->_scriptExecutor->_scriptClickY = (uint16)msg._pos.y;
-			g_engine->_scriptExecutor->_scriptClickResult = 1;
+			g_engine->_scriptExecutor._scriptClickFlag = 0;
+			g_engine->_scriptExecutor._scriptClickX = (uint16)msg._pos.x;
+			g_engine->_scriptExecutor._scriptClickY = (uint16)msg._pos.y;
+			g_engine->_scriptExecutor._scriptClickResult = 1;
 			g_engine->runScriptExecutor();
 			return true;
 		}
 
-		if (g_engine->_scriptExecutor->_cursorMode == Script::MouseMode::Walk) {
+		if (g_engine->_scriptExecutor._cursorMode == Script::MouseMode::Walk) {
 			Character *protagonist = getCharacterByIndex(Scenes::instance()._currentActorIndex);
 			if (protagonist == nullptr) {
 				debugC(kDebugScript, "Ignoring walk click without active actor character in the scene");
@@ -1342,12 +1342,12 @@ bool View1::handleInput(const MouseDownMessage &msg) {
 
 			// Binary (handleInput 1008:ef8f): if mode != 0x17, clear inventory item ID.
 			// Note: the binary does NOT touch g_wInventoryActionFlag here.
-			if (g_engine->_scriptExecutor->_cursorMode != Script::MouseMode::UseInventory) {
-				g_engine->_scriptExecutor->_interactedInventoryItemId = 0;
+			if (g_engine->_scriptExecutor._cursorMode != Script::MouseMode::UseInventory) {
+				g_engine->_scriptExecutor._interactedInventoryItemId = 0;
 				_activeInventoryItem = nullptr;
 			}
 
-			g_engine->_scriptExecutor->_interactedObjectID = index;
+			g_engine->_scriptExecutor._interactedObjectID = index;
 
 			// Binary: runScriptExecutor() - internally rewinds scene script when
 			// g_wScriptIsExecuting==0 (which it is here, since we're in the
@@ -1355,7 +1355,7 @@ bool View1::handleInput(const MouseDownMessage &msg) {
 			g_engine->runScriptExecutor(false);
 
 			// Binary: only g_wInteractedObjectId is cleared after runScriptExecutor.
-			g_engine->_scriptExecutor->_interactedObjectID = 0;
+			g_engine->_scriptExecutor._interactedObjectID = 0;
 		}
 		return true;
 	} else if (msg._button == MouseMessage::MB_RIGHT) {
@@ -1364,19 +1364,19 @@ bool View1::handleInput(const MouseDownMessage &msg) {
 			return true;
 		}
 		// Handle no other interactions during a script
-		if (g_engine->_scriptExecutor->isExecuting()) {
+		if (g_engine->_scriptExecutor.isExecuting()) {
 			// From handleInput: right-click during script execution opens the
 			// map/save panel ONLY if none of these are active:
 			// - IsSceneInitRun, text box, dialogue, overlay, sound/music waits
 			if (!_isShowingTextBox && !_isShowingDialogueChoicePanel &&
-				!g_engine->_scriptExecutor->_overlayTextStageActive &&
-				!g_engine->_scriptExecutor->_waitForPcmSound &&
-				!g_engine->_scriptExecutor->_waitForMusicControl &&
-				!g_engine->_scriptExecutor->_waitForAdlibReady &&
-				g_engine->_scriptExecutor->canOpenSaveMenu()) {
+				!g_engine->_scriptExecutor._overlayTextStageActive &&
+				!g_engine->_scriptExecutor._waitForPcmSound &&
+				!g_engine->_scriptExecutor._waitForMusicControl &&
+				!g_engine->_scriptExecutor._waitForAdlibReady &&
+				g_engine->_scriptExecutor.canOpenSaveMenu()) {
 				if (ConfMan.getBool("original_menus")) {
 					// Binary handleInput (1008:f2af): saves cursor mode before opening panel
-					_savedCursorMode = g_engine->_scriptExecutor->_cursorMode;
+					_savedCursorMode = g_engine->_scriptExecutor._cursorMode;
 					openOriginalSaveLoadPanel();
 				} else {
 					g_engine->openMainMenuDialog();
@@ -1403,7 +1403,7 @@ bool View1::msgMouseDown(const MouseDownMessage &msg) {
 }
 
 bool View1::msgMouseMove(const MouseMoveMessage &msg) {
-	_hoverAreaId = g_engine->_scriptExecutor->getAreaAtPoint(msg._pos.x, msg._pos.y);
+	_hoverAreaId = g_engine->_scriptExecutor.getAreaAtPoint(msg._pos.x, msg._pos.y);
 	_hoverHotspotId = g_engine->getHotspotAtPoint(msg._pos);
 	return true;
 }
@@ -1443,10 +1443,10 @@ bool View1::msgKeypress(const KeypressMessage &msg) {
 	// ESC during a skippable script section fast-forwards through opcodes
 	// until opcode 0x1D is found (which clears the skippable flag).
 	if (msg.keycode == Common::KEYCODE_ESCAPE &&
-		g_engine->_scriptExecutor->_scriptSkippable &&
-		g_engine->_scriptExecutor->isExecuting()) {
-		if (g_engine->_scriptExecutor->skipToEndOfSkippableSection()) {
-			g_engine->_scriptExecutor->run();
+		g_engine->_scriptExecutor._scriptSkippable &&
+		g_engine->_scriptExecutor.isExecuting()) {
+		if (g_engine->_scriptExecutor.skipToEndOfSkippableSection()) {
+			g_engine->_scriptExecutor.run();
 		}
 		return true;
 	}
@@ -1458,7 +1458,7 @@ bool View1::msgKeypress(const KeypressMessage &msg) {
 	}
 
 	// Binary (handleInput 1008:edff): UI panels only open when not executing and cursor != Disabled.
-	if (!g_engine->_scriptExecutor->isExecuting() && g_engine->_scriptExecutor->_cursorMode != Script::MouseMode::Disabled) {
+	if (!g_engine->_scriptExecutor.isExecuting() && g_engine->_scriptExecutor._cursorMode != Script::MouseMode::Disabled) {
 		if (msg.ascii == (uint16)'i') {
 			if (_uiPanelState != kUiPanelInventory) {
 				openInventory(GameObjects::instance().getProtagonistObject());
@@ -1479,8 +1479,8 @@ bool View1::msgKeypress(const KeypressMessage &msg) {
 			handleTextBoxInput();
 			_isShowingDialogueChoicePanel = false;
 			triggerDialogueChoice(numberPressed);
-			g_engine->_scriptExecutor->_scriptClickFlag = 0;
-			g_engine->_scriptExecutor->_scriptClickResult = 1;
+			g_engine->_scriptExecutor._scriptClickFlag = 0;
+			g_engine->_scriptExecutor._scriptClickResult = 1;
 			g_engine->runScriptExecutor();
 		}
 	}
@@ -1619,7 +1619,7 @@ bool View1::tick() {
 
 	// Music fade tick from gameTick (1008:e556).
 	// Processes volume fade in/out each frame when active.
-	Script::ScriptExecutor *se = g_engine->_scriptExecutor;
+	Script::ScriptExecutor *se = &g_engine->_scriptExecutor;
 	if (se->_activeMusicSlot != 0 && se->_musicControlMode != 0) {
 		if (se->_musicControlMode == 1) {
 			// Fade out: volume -= step
@@ -1741,7 +1741,7 @@ bool View1::tick() {
 		// Binary gameTick (1008:e752) walk-wait polling:
 		// When g_wWalkTargetObjectIndex > 0, check each frame if the character
 		// has reached its target position. Only resume script when arrived.
-		uint16 walkTarget = g_engine->_scriptExecutor->_walkTargetObjectIndex;
+		uint16 walkTarget = g_engine->_scriptExecutor._walkTargetObjectIndex;
 		if (walkTarget > 0) {
 			Character *c = getCharacterByIndex(walkTarget);
 			if (c != nullptr) {
@@ -1749,9 +1749,9 @@ bool View1::tick() {
 				// Binary checks: charPos == runtime.target (offset 8,10)
 				// In ScummVM, _endPosition is the immediate walk target.
 				if (pos.x == c->_pathFinalDestination.x && pos.y == c->_pathFinalDestination.y) {
-					if (!g_engine->_scriptExecutor->_pickupInProgress) {
-						g_engine->_scriptExecutor->_walkTargetObjectIndex = 0;
-						g_engine->_scriptExecutor->_isRepeatRun = true;
+					if (!g_engine->_scriptExecutor._pickupInProgress) {
+						g_engine->_scriptExecutor._walkTargetObjectIndex = 0;
+						g_engine->_scriptExecutor._isRepeatRun = true;
 						g_engine->scheduleRun();
 					}
 				}
@@ -1773,9 +1773,9 @@ void View1::drawAllCharacters() {
 	// run the script executor with g_wIsRepeatRun=1 so the scene script can check
 	// getAreaAtPoint (case 0x27) and trigger scene transitions.
 	if (g_engine->_movementFinishedFlag) {
-		g_engine->_scriptExecutor->_isRepeatRun = true;
+		g_engine->_scriptExecutor._isRepeatRun = true;
 		g_engine->runScriptExecutor();
-		g_engine->_scriptExecutor->_isRepeatRun = false;
+		g_engine->_scriptExecutor._isRepeatRun = false;
 	}
 }
 
@@ -2493,12 +2493,12 @@ void View1::triggerDialogueChoice(uint8 index) {
 	// from the choice entry (scene+0x5351+choice*6), NOT the 1-based array position.
 	// It does NOT resume the script — that happens in handleInput after setting click state.
 	uint16 scriptIndex = index;
-	if ((uint)(index - 1) < g_engine->_scriptExecutor->_dialogueChoiceScriptIndices.size()) {
-		scriptIndex = g_engine->_scriptExecutor->_dialogueChoiceScriptIndices[index - 1];
+	if ((uint)(index - 1) < g_engine->_scriptExecutor._dialogueChoiceScriptIndices.size()) {
+		scriptIndex = g_engine->_scriptExecutor._dialogueChoiceScriptIndices[index - 1];
 	}
-	g_engine->_scriptExecutor->setVariableValue(0x0d, scriptIndex, 0);
-	g_engine->_scriptExecutor->_chosenDialogueOption = scriptIndex;
-	debug("triggerDialogueChoice: index=%u scriptIndex=%u executing=%d", index, scriptIndex, g_engine->_scriptExecutor->isExecuting() ? 1 : 0);
+	g_engine->_scriptExecutor.setVariableValue(0x0d, scriptIndex, 0);
+	g_engine->_scriptExecutor._chosenDialogueOption = scriptIndex;
+	debug("triggerDialogueChoice: index=%u scriptIndex=%u executing=%d", index, scriptIndex, g_engine->_scriptExecutor.isExecuting() ? 1 : 0);
 }
 
 uint16 View1::calculateCharacterScaling(uint16 characterY, bool updateDebugValues) {
@@ -2570,7 +2570,7 @@ bool Character::HandleWalkability(Character *c) {
 	if (c->_gameObject->_index != 1) {
 		return false;
 	}
-	if (g_engine->_scriptExecutor->isExecuting()) {
+	if (g_engine->_scriptExecutor.isExecuting()) {
 		return false;
 	}
 
@@ -3014,20 +3014,20 @@ void Character::update() {
 			// At _pickupFrameEnd: end pickup animation
 			if (_pickupFrameCounter == _gameObject->_pickupFrameEnd) {
 				_gameObject->_orientation = _previousOrientation;
-				if (g_engine->_scriptExecutor->_pickupInProgress) {
-					g_engine->_scriptExecutor->_pickupInProgress = false;
-					g_engine->_scriptExecutor->_pickupActorObjectID = 0;
-					g_engine->_scriptExecutor->_pickupTargetObjectID = 0;
-					g_engine->setCursorMode(g_engine->_scriptExecutor->_cursorModeBeforeWait);
+				if (g_engine->_scriptExecutor._pickupInProgress) {
+					g_engine->_scriptExecutor._pickupInProgress = false;
+					g_engine->_scriptExecutor._pickupActorObjectID = 0;
+					g_engine->_scriptExecutor._pickupTargetObjectID = 0;
+					g_engine->setCursorMode(g_engine->_scriptExecutor._cursorModeBeforeWait);
 					currentView->updateCursor();
 				}
-				g_engine->_scriptExecutor->_walkTargetObjectIndex = 0;
+				g_engine->_scriptExecutor._walkTargetObjectIndex = 0;
 				_pickedUpObject = nullptr;
-				g_engine->_scriptExecutor->_interactedObjectID = 0x0000;
-				g_engine->_scriptExecutor->_interactedInventoryItemId = 0x0000;
+				g_engine->_scriptExecutor._interactedObjectID = 0x0000;
+				g_engine->_scriptExecutor._interactedInventoryItemId = 0x0000;
 				if (_executeScriptOnFinishLerp) {
 					_executeScriptOnFinishLerp = false;
-					g_engine->_scriptExecutor->_isRepeatRun = true;
+					g_engine->_scriptExecutor._isRepeatRun = true;
 					g_engine->scheduleRun();
 				}
 				return;
@@ -3329,8 +3329,8 @@ void View1::openOriginalSaveLoadPanel() {
 	_loadConfirmArmed = false;
 
 	// if (g_wMusicEnabled && sceneData[g_wActiveMusicSlot] != 0) adlibStopMusic()
-	if (g_engine->_scriptExecutor->_musicEnabled &&
-		g_engine->_scriptExecutor->_activeMusicSlot != 0) {
+	if (g_engine->_scriptExecutor._musicEnabled &&
+		g_engine->_scriptExecutor._activeMusicSlot != 0) {
 		g_engine->getAdlib()->stopMusic();
 	}
 
@@ -3463,7 +3463,7 @@ void View1::drawOriginalSaveLoadPanel(Graphics::ManagedSurface &s) {
 		AnimFrame *iconFrame = &frame;
 
 		// Button 3 with sound off: use alternate icon at index 0x1B0/0x10 = 27
-		if (i == 3 && !g_engine->_scriptExecutor->_soundSystemActive) {
+		if (i == 3 && !g_engine->_scriptExecutor._soundSystemActive) {
 			if (kAltMusicIconIdx < (int)g_engine->_imageResources.size()) {
 				AnimFrame &altFrame = g_engine->_imageResources[kAltMusicIconIdx];
 				if (!altFrame._data.empty() && altFrame._width > 0) {
@@ -3614,8 +3614,8 @@ void View1::handleOriginalSaveLoadClick(const Common::Point &pos) {
 			// Process button action
 			if (i == 3) {
 				// Toggle music, reset clickedButton, redraw
-				g_engine->_scriptExecutor->_soundSystemActive =
-					!g_engine->_scriptExecutor->_soundSystemActive;
+				g_engine->_scriptExecutor._soundSystemActive =
+					!g_engine->_scriptExecutor._soundSystemActive;
 				_clickedButtonIndex = 0;
 				redraw();
 			} else if (i == 4) {
@@ -3644,15 +3644,15 @@ void View1::handleOriginalSaveLoadClick(const Common::Point &pos) {
 				}
 			} else if (i == 7) {
 				// Binary: if music enabled AND sound active, play active music
-				if (g_engine->_scriptExecutor->_musicEnabled &&
-					g_engine->_scriptExecutor->_soundSystemActive) {
-					uint16 slot = g_engine->_scriptExecutor->_activeMusicSlot;
-					if (slot != 0 && !g_engine->_scriptExecutor->_musicSlots[slot - 1].empty()) {
-						g_engine->getAdlib()->playSongData(g_engine->_scriptExecutor->_musicSlots[slot - 1]);
+				if (g_engine->_scriptExecutor._musicEnabled &&
+					g_engine->_scriptExecutor._soundSystemActive) {
+					uint16 slot = g_engine->_scriptExecutor._activeMusicSlot;
+					if (slot != 0 && !g_engine->_scriptExecutor._musicSlots[slot - 1].empty()) {
+						g_engine->getAdlib()->playSongData(g_engine->_scriptExecutor._musicSlots[slot - 1]);
 						// Original's adlibTickHandler resets g_bAdlibMasterVolume=0 (full volume).
 						// ScummVM layers user volume on top via scaledMusicVolume, so re-apply it.
-						g_engine->_scriptExecutor->_musicControlMode = 0;
-						g_engine->_scriptExecutor->_musicControlVolume = 0;
+						g_engine->_scriptExecutor._musicControlMode = 0;
+						g_engine->_scriptExecutor._musicControlVolume = 0;
 						g_engine->getAdlib()->setVolume(g_engine->scaledMusicVolume(0));
 					}
 				}

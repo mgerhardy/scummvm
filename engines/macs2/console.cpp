@@ -155,7 +155,7 @@ bool Console::set(int argc, const char **argv) {
 	int index = parseHexArg(argv[1]);
 	int v1 = parseHexArg(argv[2]);
 	int v2 = parseHexArg(argv[3]);
-	g_engine->_scriptExecutor->setVariableValue(index, v1, v2);
+	g_engine->_scriptExecutor.setVariableValue(index, v1, v2);
 	return true;
 }
 

@@ -445,7 +445,7 @@ void ScriptExecutor::step() {
 	}
 	_scriptExecutionState = ScriptExecutionState::ExecutingSceneScript;
 	_state = ExecutorState::Idle;
-	g_engine->_scriptExecutor->_isRepeatRun = false;
+	g_engine->_scriptExecutor._isRepeatRun = false;
 	// Original: restore cursor from Disabled when all scripts finish
 	if (_cursorMode == MouseMode::Disabled) {
 		_engine->setCursorMode(_cursorModeBeforeWait);

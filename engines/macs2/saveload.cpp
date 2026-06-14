@@ -64,75 +64,75 @@ Common::Error Macs2Engine::syncGame(Common::Serializer &s) {
 	}
 
 	// --- Script variables: 0x2000 bytes (2048 vars x 2 uint16) ---
-	for (uint i = 0; i < _scriptExecutor->_variables.size(); i++) {
-		s.syncAsUint16LE(_scriptExecutor->_variables[i].a);
-		s.syncAsUint16LE(_scriptExecutor->_variables[i].b);
+	for (uint i = 0; i < _scriptExecutor._variables.size(); i++) {
+		s.syncAsUint16LE(_scriptExecutor._variables[i].a);
+		s.syncAsUint16LE(_scriptExecutor._variables[i].b);
 	}
 
 	// --- g_wSoundSystemActive: 2 bytes [0x1f4c] ---
-	uint16 soundSystemActive = _scriptExecutor->_soundSystemActive ? 1 : 0;
+	uint16 soundSystemActive = _scriptExecutor._soundSystemActive ? 1 : 0;
 	s.syncAsUint16LE(soundSystemActive);
 	if (s.isLoading())
-		_scriptExecutor->_soundSystemActive = soundSystemActive != 0;
+		_scriptExecutor._soundSystemActive = soundSystemActive != 0;
 
 	// --- Script execution state ---
 	// g_wScriptIsExecuting [0xf88]: 1 byte
-	uint8 scriptIsExecuting = _scriptExecutor->isExecuting() ? 1 : 0;
+	uint8 scriptIsExecuting = _scriptExecutor.isExecuting() ? 1 : 0;
 	s.syncAsByte(scriptIsExecuting);
 
 	// g_wScriptPosition [0xf8a]: 2 bytes
-	uint16 scriptPosition = (uint16)_scriptExecutor->getScriptPosition();
+	uint16 scriptPosition = (uint16)_scriptExecutor.getScriptPosition();
 	s.syncAsUint16LE(scriptPosition);
 
 	// g_wScriptEndPosition [0xf90]: 2 bytes
-	uint16 scriptEndPosition = (uint16)_scriptExecutor->getScriptEndPosition();
+	uint16 scriptEndPosition = (uint16)_scriptExecutor.getScriptEndPosition();
 	s.syncAsUint16LE(scriptEndPosition);
 
 	// g_wExecutingScriptObjectId [0xf92]: 2 bytes
-	uint16 executingObjectId = _scriptExecutor->getExecutingObjectId();
+	uint16 executingObjectId = _scriptExecutor.getExecutingObjectId();
 	s.syncAsUint16LE(executingObjectId);
 
 	if (s.isLoading()) {
 		// Restore script execution state - set the stream position
 		if (scriptIsExecuting && executingObjectId == 0) {
-			_scriptExecutor->setCurrentSceneScriptAt(scriptPosition);
+			_scriptExecutor.setCurrentSceneScriptAt(scriptPosition);
 		}
-		_scriptExecutor->setExecutingObjectId(executingObjectId);
+		_scriptExecutor.setExecutingObjectId(executingObjectId);
 	}
 
 	// g_wScriptClickFlag [0xf94]: 2 bytes
-	s.syncAsUint16LE(_scriptExecutor->_scriptClickFlag);
+	s.syncAsUint16LE(_scriptExecutor._scriptClickFlag);
 
 	// g_wScriptClickX [0xf96]: 2 bytes
-	s.syncAsUint16LE(_scriptExecutor->_scriptClickX);
+	s.syncAsUint16LE(_scriptExecutor._scriptClickX);
 
 	// g_wScriptClickY [0xf98]: 2 bytes
-	s.syncAsUint16LE(_scriptExecutor->_scriptClickY);
+	s.syncAsUint16LE(_scriptExecutor._scriptClickY);
 
 	// g_wScriptClickResult [0xf9a]: 2 bytes
-	s.syncAsUint16LE(_scriptExecutor->_scriptClickResult);
+	s.syncAsUint16LE(_scriptExecutor._scriptClickResult);
 
 	// --- Game state globals ---
 	// g_wRepeatRunFlag [0x1012]: 1 byte
-	uint8 repeatRunFlag = _scriptExecutor->getRepeatRunFlag() ? 1 : 0;
+	uint8 repeatRunFlag = _scriptExecutor.getRepeatRunFlag() ? 1 : 0;
 	s.syncAsByte(repeatRunFlag);
 	if (s.isLoading())
-		_scriptExecutor->setRepeatRunFlag(repeatRunFlag != 0);
+		_scriptExecutor.setRepeatRunFlag(repeatRunFlag != 0);
 
 	// g_wFrameWaitCounter [0x100a]: 2 bytes
-	uint16 frameWaitCounter = _scriptExecutor->getFrameWaitCounter();
+	uint16 frameWaitCounter = _scriptExecutor.getFrameWaitCounter();
 	s.syncAsUint16LE(frameWaitCounter);
 	if (s.isLoading())
-		_scriptExecutor->setFrameWaitCounter(frameWaitCounter);
+		_scriptExecutor.setFrameWaitCounter(frameWaitCounter);
 
 	// g_wWalkTargetObjectIndex [0x1016]: 2 bytes
-	s.syncAsUint16LE(_scriptExecutor->_walkTargetObjectIndex);
+	s.syncAsUint16LE(_scriptExecutor._walkTargetObjectIndex);
 
 	// g_wPickupInProgress [0x1030]: 2 bytes
-	uint16 pickupInProgress = _scriptExecutor->_pickupInProgress ? 1 : 0;
+	uint16 pickupInProgress = _scriptExecutor._pickupInProgress ? 1 : 0;
 	s.syncAsUint16LE(pickupInProgress);
 	if (s.isLoading())
-		_scriptExecutor->_pickupInProgress = pickupInProgress != 0;
+		_scriptExecutor._pickupInProgress = pickupInProgress != 0;
 
 	// g_wActiveInventoryItemId [0xfd0]: 2 bytes
 	uint16 activeInventoryItemId = 0;
@@ -164,10 +164,10 @@ Common::Error Macs2Engine::syncGame(Common::Serializer &s) {
 		_clipRectDirty = clipRectDirty != 0;
 
 	// g_wWalkTargetObjectIndex (duplicate) [0x1016]: 2 bytes
-	s.syncAsUint16LE(_scriptExecutor->_walkTargetObjectIndex);
+	s.syncAsUint16LE(_scriptExecutor._walkTargetObjectIndex);
 
 	// PTR_LOOP_1020_1018 [0x1018]: 2 bytes - mouse mode
-	uint16 mouseMode = (uint16)_scriptExecutor->_cursorMode;
+	uint16 mouseMode = (uint16)_scriptExecutor._cursorMode;
 	s.syncAsUint16LE(mouseMode);
 	if (s.isLoading())
 		setCursorMode((Script::MouseMode)mouseMode);
@@ -193,52 +193,52 @@ Common::Error Macs2Engine::syncGame(Common::Serializer &s) {
 		_movementFinishedFlag = (movementFinishedFlag != 0);
 
 	// g_wInteractedObjectId [0x1024]: 2 bytes
-	s.syncAsUint16LE(_scriptExecutor->_interactedObjectID);
+	s.syncAsUint16LE(_scriptExecutor._interactedObjectID);
 
 	// g_wInteractedInventoryItemId [0x1026]: 2 bytes
-	s.syncAsUint16LE(_scriptExecutor->_interactedInventoryItemId);
+	s.syncAsUint16LE(_scriptExecutor._interactedInventoryItemId);
 
 	// g_wScriptSkippable [0x102a]: 1 byte
-	uint8 scriptSkippable = _scriptExecutor->_scriptSkippable ? 1 : 0;
+	uint8 scriptSkippable = _scriptExecutor._scriptSkippable ? 1 : 0;
 	s.syncAsByte(scriptSkippable);
 	if (s.isLoading())
-		_scriptExecutor->_scriptSkippable = scriptSkippable != 0;
+		_scriptExecutor._scriptSkippable = scriptSkippable != 0;
 
 	// g_wPickupActorObjectId [0x102c]: 2 bytes
-	s.syncAsUint16LE(_scriptExecutor->_pickupActorObjectID);
+	s.syncAsUint16LE(_scriptExecutor._pickupActorObjectID);
 
 	// g_wPickupTargetObjectId [0x102e]: 2 bytes
-	s.syncAsUint16LE(_scriptExecutor->_pickupTargetObjectID);
+	s.syncAsUint16LE(_scriptExecutor._pickupTargetObjectID);
 
 	// g_wIsRepeatRun [0x1032]: 2 bytes
-	uint16 isRepeatRun16 = _scriptExecutor->_isRepeatRun ? 1 : 0;
+	uint16 isRepeatRun16 = _scriptExecutor._isRepeatRun ? 1 : 0;
 	s.syncAsUint16LE(isRepeatRun16);
 	if (s.isLoading())
-		_scriptExecutor->_isRepeatRun = isRepeatRun16 != 0;
+		_scriptExecutor._isRepeatRun = isRepeatRun16 != 0;
 
 	// g_wInventoryCheckResult [0x103c]: 1 byte
-	uint8 inventoryCheckResult = _scriptExecutor->_inventoryCheckResult ? 1 : 0;
+	uint8 inventoryCheckResult = _scriptExecutor._inventoryCheckResult ? 1 : 0;
 	s.syncAsByte(inventoryCheckResult);
 	if (s.isLoading())
-		_scriptExecutor->_inventoryCheckResult = inventoryCheckResult != 0;
+		_scriptExecutor._inventoryCheckResult = inventoryCheckResult != 0;
 
 	// g_wAnimBlobRangeTestResult [0x103e]: 1 byte
-	uint8 animBlobRangeTestResult = _scriptExecutor->_animBlobRangeTestResult ? 1 : 0;
+	uint8 animBlobRangeTestResult = _scriptExecutor._animBlobRangeTestResult ? 1 : 0;
 	s.syncAsByte(animBlobRangeTestResult);
 	if (s.isLoading())
-		_scriptExecutor->_animBlobRangeTestResult = animBlobRangeTestResult != 0;
+		_scriptExecutor._animBlobRangeTestResult = animBlobRangeTestResult != 0;
 
 	// g_wInventoryActionFlag [0x1040]: 1 byte
-	uint8 inventoryActionFlag = _scriptExecutor->_inventoryActionFlag ? 1 : 0;
+	uint8 inventoryActionFlag = _scriptExecutor._inventoryActionFlag ? 1 : 0;
 	s.syncAsByte(inventoryActionFlag);
 	if (s.isLoading())
-		_scriptExecutor->_inventoryActionFlag = inventoryActionFlag != 0;
+		_scriptExecutor._inventoryActionFlag = inventoryActionFlag != 0;
 
 	// g_wInventoryCombineFlag [0x1042]: 1 byte
-	uint8 inventoryCombineFlag = _scriptExecutor->_inventoryCombineFlag ? 1 : 0;
+	uint8 inventoryCombineFlag = _scriptExecutor._inventoryCombineFlag ? 1 : 0;
 	s.syncAsByte(inventoryCombineFlag);
 	if (s.isLoading())
-		_scriptExecutor->_inventoryCombineFlag = inventoryCombineFlag != 0;
+		_scriptExecutor._inventoryCombineFlag = inventoryCombineFlag != 0;
 
 	// g_wInventoryObjectCount [0x222a]: 2 bytes - number of items in inventory list
 	uint16 inventoryObjectCount = (uint16)view1->_inventoryItems.size();
@@ -342,20 +342,20 @@ Common::Error Macs2Engine::syncGame(Common::Serializer &s) {
 	}
 
 	// --- Active music slot (2 bytes) ---
-	s.syncAsUint16LE(_scriptExecutor->_activeMusicSlot);
+	s.syncAsUint16LE(_scriptExecutor._activeMusicSlot);
 
 	// --- Music slot buffers (slots 1-2): size (2 bytes) + data each ---
 	for (int slot = 0; slot < 2; slot++) {
 		uint16 musicSize = 0;
 		if (s.isSaving())
-			musicSize = (uint16)_scriptExecutor->_musicSlots[slot].size();
+			musicSize = (uint16)_scriptExecutor._musicSlots[slot].size();
 		s.syncAsUint16LE(musicSize);
 		if (musicSize > 0) {
 			if (s.isLoading())
-				_scriptExecutor->_musicSlots[slot].resize(musicSize);
-			s.syncBytes(_scriptExecutor->_musicSlots[slot].data(), musicSize);
+				_scriptExecutor._musicSlots[slot].resize(musicSize);
+			s.syncBytes(_scriptExecutor._musicSlots[slot].data(), musicSize);
 		} else if (s.isLoading()) {
-			_scriptExecutor->_musicSlots[slot].clear();
+			_scriptExecutor._musicSlots[slot].clear();
 		}
 	}
 
@@ -739,7 +739,7 @@ Common::Error Macs2Engine::syncGame(Common::Serializer &s) {
 		// Restore UseInventory cursor image after load.
 		// The cursor slot is only populated when clicking an inventory item in the panel;
 		// after loading a save with mouseMode==UseInventory, the slot is empty.
-		if (_scriptExecutor->_cursorMode == Script::MouseMode::UseInventory && view1->_activeInventoryItem != nullptr) {
+		if (_scriptExecutor._cursorMode == Script::MouseMode::UseInventory && view1->_activeInventoryItem != nullptr) {
 			AnimFrame *icon = view1->getInventoryIcon(view1->_activeInventoryItem);
 			if (icon != nullptr) {
 				int cursorSlot = (int)Script::MouseMode::UseInventory - 1;
@@ -753,13 +753,13 @@ Common::Error Macs2Engine::syncGame(Common::Serializer &s) {
 		// Reconstruct walk-wait callback state from _walkTargetObjectIndex.
 		// In the original, gameTick polls this each frame to detect walk arrival.
 		// In ScummVM, we use WaitingForCallback + _executeScriptOnFinishLerp.
-		if (_scriptExecutor->_walkTargetObjectIndex != 0) {
-			Character *walkChar = view1->getCharacterByIndex(_scriptExecutor->_walkTargetObjectIndex);
+		if (_scriptExecutor._walkTargetObjectIndex != 0) {
+			Character *walkChar = view1->getCharacterByIndex(_scriptExecutor._walkTargetObjectIndex);
 			if (walkChar) {
 				walkChar->registerWaitForMovementFinishedEvent();
-				_scriptExecutor->_requestCallback = false;
-				_scriptExecutor->_isAwaitingCallback = true;
-				_scriptExecutor->setWaitingForCallback();
+				_scriptExecutor._requestCallback = false;
+				_scriptExecutor._isAwaitingCallback = true;
+				_scriptExecutor.setWaitingForCallback();
 			}
 		}
 	}

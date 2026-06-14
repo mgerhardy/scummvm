@@ -181,7 +181,7 @@ void Macs2Engine::readResourceFile() {
 	Scenes::instance()._currentSceneScript = Scenes::instance().readSceneScript(firstSceneIndex, _fileStream);
 	Scenes::instance()._currentSceneStrings = Scenes::instance().readSceneStrings(firstSceneIndex, _fileStream);
 	Scenes::instance()._currentSceneSpecialAnimOffsets = Scenes::instance().readSpecialAnimsOffsets(firstSceneIndex, _fileStream);
-	_scriptExecutor->setScript(Scenes::instance()._currentSceneScript);
+	_scriptExecutor.setScript(Scenes::instance()._currentSceneScript);
 
 	// Load object data (512 entries max, matching original loadResourceFile)
 	// Original allocates all 512 slots, then frees unused ones. We pre-fill with nullptr.
@@ -384,8 +384,7 @@ void Macs2Engine::readImageResources(Common::MemoryReadStream *stream) {
 Macs2Engine::Macs2Engine(OSystem *syst, const ADGameDescription *gameDesc) : Engine(syst),
 																			 _gameDescription(gameDesc), _randomSource("Macs2") {
 	g_engine = this;
-	_scriptExecutor = new Script::ScriptExecutor();
-	_scriptExecutor->_engine = this;
+	_scriptExecutor._engine = this;
 	_adlib = new Adlib();
 
 	// We have a fixed 0x10 number of entries
@@ -417,13 +416,13 @@ void Macs2Engine::sayText(const Common::String &text, Common::TextToSpeechManage
 void Macs2Engine::syncSoundSettings() {
 	Engine::syncSoundSettings();
 
-	if (_adlib && _scriptExecutor) {
+	if (_adlib) {
 		int musicVolume = ConfMan.getInt("music_volume");
 		// OPL emulator is registered as kPlainSoundType; mute it at mixer level
 		// when user sets music volume to 0 (OPL attenuation 0x3F is not true silence).
 		_mixer->muteSoundType(Audio::Mixer::kPlainSoundType,
 			(musicVolume == 0) || (ConfMan.hasKey("mute") && ConfMan.getBool("mute")));
-		_adlib->setVolume(scaledMusicVolume(_scriptExecutor->_musicControlVolume));
+		_adlib->setVolume(scaledMusicVolume(_scriptExecutor._musicControlVolume));
 	}
 }
 
@@ -628,8 +627,8 @@ void Macs2Engine::changeScene(uint32 newSceneIndex, bool executeScript) {
 	currentView->_activeInventoryItem = nullptr;
 	currentView->_uiPanelState = View1::kUiPanelNone;
 	currentView->clearOverlayTextEntries();
-	_scriptExecutor->_inventoryActionFlag = false;
-	_scriptExecutor->_inventoryCombineFlag = false;
+	_scriptExecutor._inventoryActionFlag = false;
+	_scriptExecutor._inventoryCombineFlag = false;
 
 	// Stop all characters from sending leftover events
 	for (auto currentCharacter : currentView->_characters) {
@@ -663,7 +662,7 @@ void Macs2Engine::changeScene(uint32 newSceneIndex, bool executeScript) {
 	Scenes::instance()._currentSceneScript = Scenes::instance().readSceneScript(newSceneIndex, _fileStream);
 	Scenes::instance()._currentSceneStrings = Scenes::instance().readSceneStrings(newSceneIndex, _fileStream);
 	Scenes::instance()._currentSceneSpecialAnimOffsets = Scenes::instance().readSpecialAnimsOffsets(newSceneIndex, _fileStream);
-	_scriptExecutor->setScript(Scenes::instance()._currentSceneScript);
+	_scriptExecutor.setScript(Scenes::instance()._currentSceneScript);
 
 	// Reset overrides before running the new scene's script (original placement:
 	// memsetBytes(0, 200, sceneData+0x528D) and memsetBytes(0xffff, 0x20, sceneData+0x5BD3)
@@ -677,7 +676,7 @@ void Macs2Engine::changeScene(uint32 newSceneIndex, bool executeScript) {
 
 	if (executeScript) {
 		// Start the execution
-		_scriptExecutor->run(true);
+		_scriptExecutor.run(true);
 	}
 }
 
@@ -1093,7 +1092,7 @@ void Macs2Engine::setCursorMode(Script::MouseMode newMode) {
 		   newMode == Script::MouseMode::PanelUse ? "PanelUse" :
 		   newMode == Script::MouseMode::PanelCursor ? "PanelCursor" :
 		   newMode == Script::MouseMode::Disabled ? "Disabled" : "Unknown");
-	_scriptExecutor->_cursorMode = newMode;
+	_scriptExecutor._cursorMode = newMode;
 }
 
 uint16 Macs2Engine::getHotspotAtPoint(const Common::Point &p) {
@@ -1602,13 +1601,13 @@ Common::Error Macs2Engine::loadGameState(int slot) {
 }
 
 bool Macs2Engine::tick() {
-	_scriptExecutor->tick();
+	_scriptExecutor.tick();
 	if (_runScheduled) {
 		_runScheduled = false;
 		bool shouldRunInit = _scheduledRunIsInitScene;
 		_scheduledRunIsInitScene = false;
-		_scriptExecutor->_isRepeatRun = true;
-		_scriptExecutor->run(shouldRunInit);
+		_scriptExecutor._isRepeatRun = true;
+		_scriptExecutor.run(shouldRunInit);
 	}
 	return Events::tick();
 }

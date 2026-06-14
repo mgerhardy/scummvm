@@ -93,7 +93,6 @@ public:
 
 struct Macs2GameDescription;
 
-// enum class CursorMode { Talk = 0, Look = 1, Touch = 2, Walk = 3};
 class Adlib;
 
 struct GlyphData {
@@ -269,7 +268,7 @@ public:
 
 	void changeScene(uint32 newSceneIndex, bool executeScript = true);
 
-	Script::ScriptExecutor *_scriptExecutor; // TODO: no pointer - memleak
+	Script::ScriptExecutor _scriptExecutor;
 	Graphics::ManagedSurface _sceneBackground;
 	Graphics::ManagedSurface _hotspotMap;
 
@@ -416,7 +415,7 @@ public:
 	Common::Array<uint16> containerInventoryIconIndices;
 
 	void runScriptExecutor(bool firstRun = false) {
-		_scriptExecutor->run(firstRun);
+		_scriptExecutor.run(firstRun);
 	}
 
 	bool _runScheduled = false;
