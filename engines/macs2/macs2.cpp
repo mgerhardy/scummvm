@@ -152,7 +152,7 @@ void Macs2Engine::readResourceFile() {
 	uint16 font1GlyphCount = _fileStream->readUint16LE();
 	maxGlyphHeight = 0;
 	for (uint i = 0; i < font1GlyphCount; i++) {
-		_glyphs[i].readFromMemory(_fileStream);
+		_glyphs[i].readFromStream(_fileStream);
 		maxGlyphHeight = MAX(_glyphs[i]._height, maxGlyphHeight);
 	}
 	numGlyphs = font1GlyphCount;
@@ -163,7 +163,7 @@ void Macs2Engine::readResourceFile() {
 	uint16 font2GlyphCount = _fileStream->readUint16LE();
 	maxPanelGlyphHeight = 0;
 	for (uint i = 0; i < font2GlyphCount && i < 256; i++) {
-		_panelGlyphs[i].readFromMemory(_fileStream);
+		_panelGlyphs[i].readFromStream(_fileStream);
 		maxPanelGlyphHeight = MAX(maxPanelGlyphHeight, _panelGlyphs[i]._height);
 	}
 	numPanelGlyphs = font2GlyphCount;
@@ -346,9 +346,9 @@ void Macs2Engine::readBackgroundAnimations(Common::MemoryReadStream *stream) {
 		// Parse frames for the legacy BackgroundAnimation struct
 		AnimBlobView blobView(currentBlob._blob);
 		// Original uses sequence length (blob[0xA]+1) as numFrames for background animations
-		current._numFrames = blobView.sequenceLength();
+		uint16 numFrames = blobView.sequenceLength();
 		current._frameIndex = 0;
-		current._frames.resize(current._numFrames);
+		current._frames.resize(numFrames);
 		uint16 actualFrameCount = blobView.frameCount();
 		for (int j = 0; j < (int)actualFrameCount; j++) {
 			AnimBlobView::FrameInfo fi;
@@ -360,7 +360,7 @@ void Macs2Engine::readBackgroundAnimations(Common::MemoryReadStream *stream) {
 		}
 
 		// Initialize the blob frame pointer (original calls advanceAnimFrame with mode 0x64+numFrames)
-		BackgroundAnimationBlob::advanceAnimFrame(currentBlob._blob, true, 0x64 + current._numFrames);
+		BackgroundAnimationBlob::advanceAnimFrame(currentBlob._blob, true, 0x64 + numFrames);
 	}
 }
 
@@ -723,7 +723,7 @@ bool Macs2Engine::loadOverlayFont(uint8 resourceIndex, uint16 executingObjectID)
 	numOverlayGlyphs = glyphCount;
 	maxOverlayGlyphHeight = 0;
 	for (uint i = 0; i < glyphCount; i++) {
-		_overlayGlyphs[i].readFromMemory(_fileStream);
+		_overlayGlyphs[i].readFromStream(_fileStream);
 		maxOverlayGlyphHeight = MAX(maxOverlayGlyphHeight, _overlayGlyphs[i]._height);
 	}
 	_fileStream->seek(oldPos, SEEK_SET);
@@ -1613,20 +1613,20 @@ bool Macs2Engine::tick() {
 	return Events::tick();
 }
 
-void GlyphData::readFromeFile(Common::File &file) {
+void GlyphData::readFromFile(Common::File &file) {
 	_ascii = file.readByte();
 	_width = file.readUint16LE();
 	_height = file.readUint16LE();
-	_data = new byte[_width * _height];
-	file.read(_data, _width * _height);
+	_data.resize(_width * _height);
+	file.read(_data.data(), _width * _height);
 }
 
-void GlyphData::readFromMemory(Common::MemoryReadStream *stream) {
+void GlyphData::readFromStream(Common::MemoryReadStream *stream) {
 	_ascii = stream->readByte();
 	_width = stream->readUint16LE();
 	_height = stream->readUint16LE();
-	_data = new byte[_width * _height];
-	stream->read(_data, _width * _height);
+	_data.resize(_width * _height);
+	stream->read(_data.data(), _width * _height);
 }
 
 void AnimFrame::readFromFile(Common::File &file) {

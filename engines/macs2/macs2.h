@@ -97,13 +97,15 @@ struct Macs2GameDescription;
 class Adlib;
 
 struct GlyphData {
-	byte *_data; // TODO: Common::Array<uint8>
-	char _ascii;
-	uint16 _width;
-	uint16 _height;
+	Common::Array<uint8> _data;
+	char _ascii = 0;
+	uint16 _width = 0;
+	uint16 _height = 0;
 
-	void readFromeFile(Common::File &file);
-	void readFromMemory(Common::MemoryReadStream *stream);
+	void readFromFile(Common::File &file);
+	void readFromStream(Common::MemoryReadStream *stream);
+
+	const uint8 *data() const { return _data.data(); }
 };
 
 struct AnimFrame {
@@ -119,7 +121,6 @@ struct AnimFrame {
 };
 
 struct BackgroundAnimation {
-	uint16 _numFrames; // TODO: remove me - given by _frames.size()
 	uint16 _x;
 	uint16 _y;
 	Common::Array<AnimFrame> _frames;
@@ -268,7 +269,7 @@ public:
 
 	void changeScene(uint32 newSceneIndex, bool executeScript = true);
 
-	Script::ScriptExecutor *_scriptExecutor;
+	Script::ScriptExecutor *_scriptExecutor; // TODO: no pointer - memleak
 	Graphics::ManagedSurface _sceneBackground;
 	Graphics::ManagedSurface _hotspotMap;
 
@@ -492,7 +493,7 @@ public:
 			   (f == kSupportsSavingDuringRuntime) ||
 			   (f == kSupportsReturnToLauncher) ||
 			   (f == kSupportsChangingOptionsDuringRuntime);
-	};
+	}
 
 	void syncSoundSettings() override;
 
@@ -516,6 +517,7 @@ public:
 		Common::Serializer s(nullptr, stream);
 		return syncGame(s);
 	}
+
 	Common::Error loadGameStream(Common::SeekableReadStream *stream) override {
 		Common::Serializer s(stream, nullptr);
 		return syncGame(s);
