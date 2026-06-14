@@ -97,7 +97,7 @@ struct Macs2GameDescription;
 class Adlib;
 
 struct GlyphData {
-	byte *_data;
+	byte *_data; // TODO: Common::Array<uint8>
 	char _ascii;
 	uint16 _width;
 	uint16 _height;
@@ -106,35 +106,27 @@ struct GlyphData {
 	void readFromMemory(Common::MemoryReadStream *stream);
 };
 
-struct Sprite {
-	uint16 _width;
-	uint16 _height;
-	Common::Array<uint8> _data;
-};
-
 struct AnimFrame {
-	byte *_data;
-	uint16 _width;
-	uint16 _height;
+	uint16 _width = 0;
+	uint16 _height = 0;
+	Common::Array<uint8> _data;
 
-	void readFromeFile(Common::File &file);
+	void readFromFile(Common::File &file);
 	void readFromStream(Common::MemoryReadStream *stream);
-	bool pixelHit(const Common::Point &point) const;
 	Common::Point getBottomMiddleOffset(uint16 scale = 100) const;
-	Sprite asSprite();
+
+	const uint8 *data() const { return _data.data(); }
 };
 
 struct BackgroundAnimation {
-	uint16 _numFrames;
+	uint16 _numFrames; // TODO: remove me - given by _frames.size()
 	uint16 _x;
 	uint16 _y;
-	AnimFrame *_frames;
+	Common::Array<AnimFrame> _frames;
 	uint32 _frameIndex;
 };
 
 struct BackgroundAnimationBlob {
-	uint16 _x;
-	uint16 _y;
 	Common::Array<uint8> _blob;
 	uint32 _frameIndex;
 	uint16 _unknown0C = 0; // +0x50F3: purpose unknown (word, read from file, not used at runtime)

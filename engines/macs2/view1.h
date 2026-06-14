@@ -444,15 +444,15 @@ public:
 	void startFadeToBlack(uint16 speed = 4);
 	void startFadingWithSpeed(uint16 speed);
 
-	void drawSprite(int16 x, int16 y, uint16 width, uint16 height, byte *data, Graphics::ManagedSurface &s, bool mirrored, bool useDepth = false, uint8 depth = 0);
-	void drawSprite(const Common::Point &pos, uint16 width, uint16 height, byte *data, Graphics::ManagedSurface &s, bool mirrored, bool useDepth = false, uint8 depth = 0);
-	void drawSpriteClipped(uint16 x, uint16 y, Common::Rect &clippingRect, uint16 width, uint16 height, const byte *const data, Graphics::ManagedSurface &s);
-	void drawSpriteClipped(uint16 x, uint16 y, Common::Rect &clippingRect, const Sprite &sprite, Graphics::ManagedSurface &s);
-	void drawSpriteAdvanced(uint16 x, uint16 y, uint16 width, uint16 height, uint16 scaling, const byte *data, Graphics::ManagedSurface &s);
-	void drawSpriteAdvanced(const Common::Point &pos, uint16 width, uint16 height, uint16 scaling, const Sprite &sprite, Graphics::ManagedSurface &s);
+	void drawSprite(int16 x, int16 y, uint16 width, uint16 height, const uint8 *data, Graphics::ManagedSurface &s, bool mirrored, bool useDepth = false, uint8 depth = 0);
+	void drawSprite(const Common::Point &pos, uint16 width, uint16 height, const uint8 *data, Graphics::ManagedSurface &s, bool mirrored, bool useDepth = false, uint8 depth = 0);
+	void drawSpriteClipped(uint16 x, uint16 y, Common::Rect &clippingRect, uint16 width, uint16 height, const uint8 *data, Graphics::ManagedSurface &s);
+	void drawSpriteClipped(uint16 x, uint16 y, Common::Rect &clippingRect, const AnimFrame &frame, Graphics::ManagedSurface &s);
+	void drawSpriteAdvanced(uint16 x, uint16 y, uint16 width, uint16 height, uint16 scaling, const uint8 *data, Graphics::ManagedSurface &s);
+	void drawSpriteAdvanced(const Common::Point &pos, uint16 scaling, const AnimFrame &frame, Graphics::ManagedSurface &s);
 
 	// The definitive version that can do everything
-	void drawSpriteSuperAdvanced(const Common::Point &pos, const Sprite &sprite, uint16 scaling, bool mirrored, bool useDepth, uint8 depth, Graphics::ManagedSurface &s, uint8 shadowIntensity = 0);
+	void drawSpriteSuperAdvanced(const Common::Point &pos, const AnimFrame &frame, uint16 scaling, bool mirrored, bool useDepth, uint8 depth, Graphics::ManagedSurface &s, uint8 shadowIntensity = 0);
 
 	void drawCharacters(Graphics::ManagedSurface &s);
 	void drawAllCharacters();
