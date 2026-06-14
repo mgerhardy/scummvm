@@ -858,14 +858,20 @@ ExecutionResult Script::ScriptExecutor::scriptChangeScene() {
 	_interactedObjectID = 0;
 	_interactedInventoryItemId = 0;
 	_requestCallback = false;
-	// Binary: clears g_wScriptIsExecuting so next gameTick's runScriptExecutor() starts fresh
-	_state = ExecutorState::Idle;
-	// NOTE: EndTimer prevents race conditions from overlapping waits
+	// Binary: changeScene sets g_wScriptIsExecuting=0, g_wExecutingScriptObjectId=0,
+	// g_wScriptPosition=0. Then runScriptExecutor's do-while loop re-evaluates and
+	// starts executing the new scene's script fresh (init pass then repeat pass).
+	// In ScummVM's architecture, we achieve the same by resetting to init state
+	// and letting step()'s loop continue with the new script.
+	_executingScriptObjectId = 0;
+	_repeatRunFlag = false;
+	_isSceneInitRun = true;
+	_isRepeatRun = false;
 
 	endTimer();
 	endFrameWait();
 	endBuffering(_lastOpcodeTriggeredSkip);
-	return ExecutionResult::WaitingForCallback;
+	return ExecutionResult::ScriptFinished;
 }
 
 ExecutionResult Script::ScriptExecutor::scriptShowDialogue() {
@@ -2413,7 +2419,7 @@ void ScriptExecutor::run() {
 		_executingScriptObjectId = 0;
 		_repeatRunFlag = false;
 		_isSceneInitRun = true;
-		_isRepeatRun = false;
+		_isRepeatRun = true;
 	} else {
 		_isRepeatRun = true;
 	}
@@ -2431,15 +2437,20 @@ void ScriptExecutor::setCurrentSceneScriptAt(uint32 offset) {
 }
 
 void ScriptExecutor::tick() {
+	// === Binary gameTick (1008:e556) ===
+
+	// 1. Music fade in/out handling
 	if (_musicControlMode != 0 && _activeMusicSlot != 0) {
 		const uint16 step = MAX<uint16>(_musicControlStep, 1);
 		if (_musicControlMode == 1) {
+			// Fade out
 			_musicControlVolume = (_musicControlVolume > step) ? _musicControlVolume - step : 0;
 			_engine->getAdlib()->setVolume(_engine->scaledMusicVolume(_musicControlVolume));
 			if (_musicControlVolume == 0) {
 				_musicControlMode = 0;
 			}
 		} else {
+			// Fade in
 			const uint16 nextVolume = MIN<uint16>(_musicControlVolume + step, 0x3F);
 			_musicControlVolume = nextVolume;
 			if (_musicControlVolume < 0x3F) {
@@ -2452,61 +2463,73 @@ void ScriptExecutor::tick() {
 		}
 	}
 
-	if (_waitForPcmSound) {
-		if (!_engine->isCurrentSoundPlaying()) {
-			_waitForPcmSound = false;
-			run();
+	// 2-4. Background animation timing, clip rect, UI panel state machine
+	// are handled by View1::tick() in ScummVM
+
+	// 5. Main script execution block
+	// Binary: if (g_wUiPanelState == 0 && !g_wIsShowingDialoguePanel)
+	View1 *view = (View1 *)_engine->findView("View1");
+	const bool uiBlocking = view && (view->_uiPanelState != View1::kUiPanelNone);
+	const bool dialogueBlocking = view && (view->_isShowingTextBox || view->_isShowingDialogueChoicePanel);
+
+	if (!uiBlocking && !dialogueBlocking) {
+		if (_frameWaitTicksRemaining == 0) {
+			if (_walkTargetObjectIndex < 1) {
+				// No walk active — check sound/music/adlib waits
+				if (!_waitForPcmSound) {
+					if (!_waitForMusicControl) {
+						if (_waitForAdlibReady) {
+							if (_engine->getAdlib()->isPlaybackReady()) {
+								_waitForAdlibReady = false;
+								run();
+							}
+						}
+					} else {
+						if (_musicControlMode == 0) {
+							_waitForMusicControl = false;
+							run();
+						}
+					}
+				} else {
+					if (!_engine->isCurrentSoundPlaying()) {
+						_waitForPcmSound = false;
+						run();
+					}
+				}
+			}
+			// Walk arrival (walkTargetObjectIndex >= 1) is polled in View1::tick()
+			// AFTER drawAllCharacters() — matching binary's drawScene(1) then position check.
 		} else {
-			debugC(kDebugScript, "Waiting for sound playback to finish (handle active)");
+			// Frame wait active: decrement, resume when 0
+			--_frameWaitTicksRemaining;
+			if (_frameWaitTicksRemaining == 0) {
+				_isFrameWaitActive = false;
+				run();
+			}
 		}
-		return;
+
+		// Binary: if (!g_wScriptIsExecuting) drawScene(1)
+		// In ScummVM, rendering is handled by the view's draw cycle
 	}
 
-	if (_waitForMusicControl) {
-		if (_musicControlMode == 0) {
-			_waitForMusicControl = false;
+	// 6. Dialogue/portrait animation is handled by View1
+
+	// Timer (ScummVM-specific, maps to scene+0x53B9 timer callback in binary)
+	if (_isTimerActive) {
+		if (g_engine->currentMillis > _timerEndMillis) {
+			_isTimerActive = false;
 			run();
 		}
-		return;
 	}
 
-	if (_waitForAdlibReady) {
-		if (_engine->getAdlib()->isPlaybackReady()) {
-			_waitForAdlibReady = false;
-			run();
-		}
-		return;
-	}
-
+	// Debug support (ScummVM-only, not in binary)
 	if (_debugPaused) {
 #ifdef USE_IMGUI
 		if (!_scriptDebugPaused || _scriptDebugStepRequested) {
 			_debugPaused = false;
 			run();
 		}
-#else
-		_debugPaused = false;
 #endif
-		return;
-	}
-
-	if (_isFrameWaitActive) {
-		if (_frameWaitTicksRemaining > 0) {
-			--_frameWaitTicksRemaining;
-		}
-		if (_frameWaitTicksRemaining == 0) {
-			_isFrameWaitActive = false;
-			run();
-		}
-	}
-
-	if (_isTimerActive) {
-		if (g_engine->currentMillis > _timerEndMillis) {
-			_isTimerActive = false;
-			// TODO: Think about if this is the right way of executing it, or maybe we rather need
-			// to use Execute
-			run();
-		}
 	}
 }
 

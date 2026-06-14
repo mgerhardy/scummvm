@@ -1738,19 +1738,23 @@ bool View1::tick() {
 	if (_uiPanelState == kUiPanelNone) {
 		drawAllCharacters();
 
-		// Binary gameTick (1008:e752) walk-wait polling:
-		// When g_wWalkTargetObjectIndex > 0, check each frame if the character
-		// has reached its target position. Only resume script when arrived.
+		// Binary gameTick (1008:e556) walk-wait polling:
+		// After drawScene(1), checks if walked object reached final destination.
+		// Position check + vertical offset check, then clears index and calls runScriptExecutor.
 		uint16 walkTarget = g_engine->_scriptExecutor._walkTargetObjectIndex;
 		if (walkTarget > 0) {
 			Character *c = getCharacterByIndex(walkTarget);
 			if (c != nullptr) {
 				Common::Point pos = c->getPosition();
-				// Binary checks: charPos == runtime.target (offset 8,10)
-				// In ScummVM, _endPosition is the immediate walk target.
 				if (pos.x == c->_pathFinalDestination.x && pos.y == c->_pathFinalDestination.y) {
-					if (!g_engine->_scriptExecutor._pickupInProgress) {
-						g_engine->_scriptExecutor._walkTargetObjectIndex = 0;
+					int16 motionTarget = (int16)c->_motionTargetVerticalOffset;
+					if (motionTarget < 0 || c->_gameObject->_verticalOffsetScale == (uint16)motionTarget) {
+						if (!g_engine->_scriptExecutor._pickupInProgress) {
+							g_engine->_scriptExecutor._walkTargetObjectIndex = 0;
+							g_engine->runScriptExecutor();
+						} else if (c->_gameObject->_orientation != 0x11) {
+							c->_gameObject->_orientation = 0x11;
+						}
 					}
 				}
 			}
@@ -1766,12 +1770,15 @@ void View1::drawAllCharacters() {
 	for (auto currentCharacter : _characters) {
 		currentCharacter->update();
 	}
-	// Binary drawAllCharacters (1008:90a2): after all characters walked,
-	// if g_bMovementFinishedFlag is set (a walking character arrived at final dest),
-	// run the script executor with g_wIsRepeatRun=1 so the scene script can check
-	// getAreaAtPoint (case 0x27) and trigger scene transitions.
+	// Binary drawAllCharacters (1008:90a2): g_bMovementFinishedFlag triggers
+	// scene script re-run for area-based transitions (getAreaAtPoint check).
+	// waitForWalk completion is handled by ScriptExecutor::tick() polling.
 	if (g_engine->_movementFinishedFlag) {
-		g_engine->runScriptExecutor();
+		if (_uiPanelState == kUiPanelNone && !_isShowingTextBox && !_isShowingDialogueChoicePanel) {
+			if (g_engine->_scriptExecutor._walkTargetObjectIndex == 0) {
+				g_engine->runScriptExecutor();
+			}
+		}
 	}
 }
 

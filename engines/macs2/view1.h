@@ -134,7 +134,7 @@ public:
 
 	// TODO: Handle properly
 	uint8 _animationIndex = 1;
-	uint16 _motionTargetVerticalOffset = 0;
+	uint16 _motionTargetVerticalOffset = 0xFFFF; // -1 as int16: no vertical motion active
 	uint16 _motionVerticalOffsetDelta = 0;
 	uint16 _motionDistanceUnits = 0;
 	uint16 _motionProgress = 0;

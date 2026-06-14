@@ -1598,7 +1598,6 @@ Common::Error Macs2Engine::loadGameState(int slot) {
 
 bool Macs2Engine::tick() {
 	_scriptExecutor.tick();
-	_scriptExecutor.run();
 	return Events::tick();
 }
 
