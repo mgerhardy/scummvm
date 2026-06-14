@@ -25,8 +25,6 @@
 #include "macs2/macs2.h"
 #include "macs2/view1.h"
 
-#include <cstdlib>
-
 namespace Macs2 {
 
 static int parseHexArg(const char *arg) {

@@ -19,11 +19,13 @@
  *
  */
 
-#include "adlib.h"
+// TODO: check this against audio/adlib.cpp and try to use that one
+
+#include "macs2/adlib.h"
 #include "audio/fmopl.h"
 #include "audio/mixer.h"
 #include "common/debug.h"
-#include <common/memstream.h>
+#include "common/memstream.h"
 
 #define CALLBACKS_PER_SECOND 120
 

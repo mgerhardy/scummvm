@@ -23,7 +23,6 @@
 #include "common/config-manager.h"
 #include "engines/enhancements.h"
 #include "gui/widget.h"
-
 #include "macs2/dialogs.h"
 
 namespace Macs2 {

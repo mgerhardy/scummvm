@@ -22,25 +22,24 @@
 #ifndef MACS2_MACS2_H
 #define MACS2_MACS2_H
 
-#include "advancedDetector.h"
+#include "audio/audiostream.h"
 #include "audio/mixer.h"
 #include "common/array.h"
 #include "common/error.h"
 #include "common/file.h"
 #include "common/fs.h"
 #include "common/hashmap.h"
+#include "common/memstream.h"
 #include "common/random.h"
 #include "common/scummsys.h"
 #include "common/serializer.h"
 #include "common/system.h"
 #include "common/text-to-speech.h"
 #include "common/util.h"
+#include "engines/advancedDetector.h"
 #include "engines/engine.h"
-
-#include "audio/audiostream.h"
 #include "macs2/events.h"
 #include "macs2/script/scriptexecutor.h"
-#include <common/memstream.h>
 
 namespace Macs2 {
 
