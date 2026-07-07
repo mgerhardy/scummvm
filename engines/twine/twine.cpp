@@ -701,6 +701,10 @@ void TwinEEngine::initAll() {
 
 	_resources->initResources();
 
+	if (isLBA2()) {
+		_dart->InitDarts();
+	}
+
 	extInitSvga();
 
 	_screens->clearScreen();
@@ -1132,6 +1136,12 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 
 		if (actor->_flags.bCheckZone) {
 			_scene->checkZoneSce(a);
+		}
+
+		if (IS_HERO(a) && isLBA2()) {
+			actor->_workFlags.bFLY_JETPACK = 0;
+			actor->_workFlags.bCHECK_FALLING = 0;
+			_dart->CheckDartCol(actor);
 		}
 
 		if (actor->_offsetLife != -1) {

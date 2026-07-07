@@ -22,13 +22,20 @@
 #ifndef TWINE_SCENE_DART_H
 #define TWINE_SCENE_DART_H
 
+#include "twine/parser/body.h"
 #include "twine/scene/actor.h"
+#include "twine/scene/extra.h"
 #include "twine/twine.h"
 
 #define MAX_DARTS 3
 #define BODY_3D_DART 61
+#define DEGATS_DART 8
 // dart flags
 #define DART_TAKEN (1 << 0)
+
+// lba2 (COMMON.H)
+#define SAMPLE_BONUS_TROUVE 2
+#define SPRITE_DART 2
 
 namespace TwinE {
 
@@ -55,6 +62,7 @@ public:
 		int32 ZMax = 0;
 	};
 	T_DART ListDart[MAX_DARTS];
+	BodyData _dartBody;
 
 	Dart(TwinEEngine *engine) : _engine(engine) {}
 
@@ -62,6 +70,9 @@ public:
 	int32 GetDart();
 	void TakeAllDarts();
 	void CheckDartCol(ActorStruct *ptrobj);
+	int32 throwDart(int32 x, int32 y, int32 z, int32 alpha, int32 beta, int32 speed, int32 weight);
+	void placeDartFromExtra(const ExtraListStruct *extra, int32 oldX, int32 oldY, int32 oldZ);
+	const BodyData &getDartBody() const { return _dartBody; }
 };
 
 } // namespace TwinE

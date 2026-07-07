@@ -1059,9 +1059,9 @@ int32 ScriptLifeV2::lINVERSE_BETA(TwinEEngine *engine, LifeScriptContext &ctx) {
 
 		// SizeSHit contains the number of the brick under the wagon hack
 		// test front axle position
-		engine->_wagon->AdjustEssieuWagonAvant(ctx.actor->SizeSHit);
+		engine->_wagon->AdjustEssieuWagonAvant(ctx.actor, ctx.actor->SizeSHit);
 		// test rear axle position
-		engine->_wagon->AdjustEssieuWagonArriere(ctx.actor->SizeSHit);
+		engine->_wagon->AdjustEssieuWagonArriere(ctx.actor, ctx.actor->SizeSHit);
 	}
 
 	// To tell an object that it is no longer being carried by me

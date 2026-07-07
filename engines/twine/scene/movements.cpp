@@ -30,6 +30,7 @@
 #include "twine/scene/gamestate.h"
 #include "twine/scene/grid.h"
 #include "twine/scene/scene.h"
+#include "twine/scene/wagon.h"
 #include "twine/text.h"
 #include "twine/twine.h"
 
@@ -504,6 +505,11 @@ void Movements::doDir(int32 actorIdx) {
 	case ControlMode::kSameXZ:
 		// TODO: see lSET_DIRMODE and lSET_DIRMODE_OBJ opcodes
 		processSameXZAction(actorIdx);
+		break;
+	case ControlMode::kWagon:
+		if (_engine->isLBA2()) {
+			_engine->_wagon->DoDirWagon(actor);
+		}
 		break;
 	/**
 	 * The Actor's Track Script is stopped. Track Script execution may be started with Life Script of

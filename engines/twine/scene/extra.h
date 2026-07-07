@@ -42,7 +42,7 @@ struct ExtraShape {
 	const ShapeData *data;
 };
 
-enum ExtraType {
+enum ExtraType : uint32 {
 	TIME_OUT = 1 << 0,        // 0x0001
 	FLY = 1 << 1,             // 0x0002
 	END_OBJ = 1 << 2,         // 0x0004
@@ -58,7 +58,8 @@ enum ExtraType {
 	EXPLOSION = 1 << 12,      // 0x1000 EXTRA_EXPLO
 	WAIT_NO_COL = 1 << 13,    // 0x2000 EXTRA_WAIT_NO_COL
 	WAIT_SOME_TIME = 1 << 14, // 0x4000
-	COMPUTE_TRAJ = 1 << 15    // 0x8000 used in dotemu enhanced to render the magic ball trajectories
+	COMPUTE_TRAJ = 1 << 15,   // 0x8000 used in dotemu enhanced to render the magic ball trajectories
+	DART = 1u << 16           // EXTRA_DART
 };
 
 struct ExtraListStruct {
@@ -69,8 +70,12 @@ struct ExtraListStruct {
 
 	RealValue trackActorMove;
 
-	uint16 type = 0; /**< ExtraType bitmask */
+	uint32 type = 0; /**< ExtraType bitmask */
 	int16 angle = 0; // weight
+	int16 bodyIndex = -1;
+	int16 timeOut = 0; // alpharot for 3D thrown objects
+	int32 extraAlpha = 0;
+	int32 extraBeta = 0;
 	int32 spawnTime = 0; // memo timer 50hz
 	union payload { // field_ 1C
 		int16 lifeTime;
@@ -123,6 +128,7 @@ public:
 	}
 
 	int32 throwExtra(int32 actorIdx, int32 x, int32 y, int32 z, int32 spriteIdx, int32 xAngle, int32 yAngle, int32 xRotPoint, int32 extraAngle, int32 strengthOfHit);
+	int32 throwExtraObj(int32 owner, int32 x, int32 y, int32 z, int32 bodyIndex, int32 alpha, int32 beta, int32 speed, int16 alpharot, int32 weight, int32 hitforce);
 	int32 addExtraAiming(int32 actorIdx, int32 x, int32 y, int32 z, int32 spriteIdx, int32 targetActorIdx, int32 finalAngle, int32 strengthOfHit);
 	void addExtraThrowMagicball(int32 x, int32 y, int32 z, int32 xAngle, int32 yAngle, int32 xRotPoint, int32 extraAngle);
 

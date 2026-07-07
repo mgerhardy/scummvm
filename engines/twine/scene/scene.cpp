@@ -777,6 +777,7 @@ void Scene::checkZoneSce(int32 actorIdx) {
 	int32 currentZ = actor->_posObj.z;
 
 	actor->_zoneSce = -1;
+	actor->_railZoneIdx = -1;
 	bool flaggrm = false;
 
 	if (IS_HERO(actorIdx)) {
@@ -850,6 +851,11 @@ void Scene::checkZoneSce(int32 actorIdx) {
 					_engine->_text->drawTextProgressive((TextId)zone->num);
 					_engine->restoreTimer();
 					_engine->_redraw->drawScene(true);
+				}
+				break;
+			case ZoneType::kRail:
+				if (actor->_move == ControlMode::kWagon) {
+					actor->_railZoneIdx = z;
 				}
 				break;
 			case ZoneType::kLadder:

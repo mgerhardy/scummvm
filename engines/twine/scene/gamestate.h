@@ -148,6 +148,14 @@ public:
 		setGameFlag(InventoryItems::kiDart, old);
 	}
 
+	void subtractDart() {
+		int16 old = _listFlagGame[InventoryItems::kiDart];
+		if (old > 0) {
+			--old;
+		}
+		setGameFlag(InventoryItems::kiDart, old);
+	}
+
 	inline bool inventoryDisabled() const {
 		return hasGameFlag(GAMEFLAG_INVENTORY_DISABLED) != 0;
 	}

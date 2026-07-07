@@ -29,16 +29,16 @@ namespace TwinE {
 
 class Wagon {
 private:
-	//TwinEEngine *_engine;
+	TwinEEngine *_engine;
 
 public:
-	Wagon(TwinEEngine *engine) /* : _engine(engine) */ {}
+	Wagon(TwinEEngine *engine) : _engine(engine) {}
 
-	void DoAnimWagon();
+	void DoAnimWagon(ActorStruct *ptrobj);
 	void DoDirWagon(ActorStruct *ptrobj);
 	int32 GetNumBrickWagon(int32 brick);
-	void AdjustEssieuWagonAvant(int32 brickw);
-	void AdjustEssieuWagonArriere(int32 brickw);
+	void AdjustEssieuWagonAvant(ActorStruct *ptrobj, int32 brickw);
+	void AdjustEssieuWagonArriere(ActorStruct *ptrobj, int32 brickw);
 };
 
 } // namespace TwinE

@@ -39,6 +39,7 @@
 #include "twine/scene/actor.h"
 #include "twine/scene/animations.h"
 #include "twine/scene/collision.h"
+#include "twine/scene/dart.h"
 #include "twine/scene/extra.h"
 #include "twine/scene/grid.h"
 #include "twine/scene/movements.h"
@@ -191,6 +192,10 @@ void Redraw::posObjIncrust(OverlayListStruct *ptrdisp, int32 num) {
 }
 
 int32 Redraw::addOverlay(OverlayType type, int16 info0, int16 x, int16 y, int16 info1, OverlayPosType posType, int16 lifeTime) { // InitIncrustDisp
+	return addOverlay(type, info0, x, y, info1, posType, lifeTime, false);
+}
+
+int32 Redraw::addOverlay(OverlayType type, int16 info0, int16 x, int16 y, int16 info1, OverlayPosType posType, int16 lifeTime, bool yClip) { // InitIncrustDisp
 	for (int32 i = 0; i < ARRAYSIZE(overlayList); i++) {
 		OverlayListStruct *overlay = &overlayList[i];
 		if (_engine->isLBA1()) {
@@ -370,6 +375,31 @@ int32 Redraw::fillExtraDrawingList(DrawListStruct *drawList, int32 drawListPos) 
 	return drawListPos;
 }
 
+int32 Redraw::fillDartDrawingList(DrawListStruct *drawList, int32 drawListPos) {
+	if (!_engine->isLBA2()) {
+		return drawListPos;
+	}
+
+	for (int32 n = 0; n < MAX_DARTS; ++n) {
+		Dart::T_DART *ptrd = &_engine->_dart->ListDart[n];
+		if (ptrd->NumCube != _engine->_scene->_numCube || (ptrd->Flags & DART_TAKEN)) {
+			continue;
+		}
+
+		const IVec3 worldPos(ptrd->PosX, ptrd->PosY, ptrd->PosZ);
+		const IVec3 &projPos = _engine->_renderer->projectPoint(worldPos - _engine->_grid->_worldCube);
+		if (projPos.x <= VIEW_X0 || projPos.x >= VIEW_X1(_engine) || projPos.y <= VIEW_Y0 || projPos.y >= VIEW_Y1(_engine)) {
+			continue;
+		}
+
+		drawList[drawListPos].type = DrawListType::DrawDarts;
+		drawList[drawListPos].numObj = n;
+		drawList[drawListPos].z = worldPos.x - _engine->_grid->_worldCube.x + worldPos.z - _engine->_grid->_worldCube.z;
+		drawListPos++;
+	}
+	return drawListPos;
+}
+
 void Redraw::processDrawListShadows(const DrawListStruct &drawCmd) {
 	// get actor position on screen
 	const IVec3 &projPos = _engine->_renderer->projectPoint(drawCmd.xw - _engine->_grid->_worldCube.x, drawCmd.yw - _engine->_grid->_worldCube.y, drawCmd.zw - _engine->_grid->_worldCube.z);
@@ -510,9 +540,25 @@ void Redraw::processDrawListExtras(const DrawListStruct &drawCmd) {
 	int32 extraIdx = drawCmd.numObj;
 	ExtraListStruct *extra = &_engine->_extra->_extraList[extraIdx];
 
-	const IVec3 &projPos = _engine->_renderer->projectPoint(extra->pos - _engine->_grid->_worldCube);
-
+	const IVec3 worldDelta = extra->pos - _engine->_grid->_worldCube;
 	Common::Rect renderRect;
+
+	if ((extra->sprite & EXTRA_SPECIAL_MASK) && (extra->sprite & (EXTRA_SPECIAL_MASK - 1)) == (int16)ExtraSpecialType::kObject3D) {
+		if (_engine->_renderer->affObjetIso(worldDelta.x, worldDelta.y, worldDelta.z, extra->extraAlpha, extra->extraBeta, LBAAngles::ANGLE_0, _engine->_dart->getDartBody(), renderRect)) {
+			if (_engine->_interface->setClip(renderRect)) {
+				const int32 xm = (extra->pos.x + DEMI_BRICK_XZ) / SIZE_BRICK_XZ;
+				const int32 ym = extra->pos.y / SIZE_BRICK_Y;
+				const int32 zm = (extra->pos.z + DEMI_BRICK_XZ) / SIZE_BRICK_XZ;
+				_engine->_grid->drawOverBrick(xm, ym, zm);
+				addPhysBox(_engine->_interface->_clip);
+				_engine->_interface->unsetClip();
+			}
+		}
+		return;
+	}
+
+	const IVec3 &projPos = _engine->_renderer->projectPoint(worldDelta);
+
 	if (extra->sprite & EXTRA_SPECIAL_MASK) {
 		_engine->_extra->affSpecial(extraIdx, projPos.x, projPos.y, renderRect);
 	} else {
@@ -540,6 +586,30 @@ void Redraw::processDrawListExtras(const DrawListStruct &drawCmd) {
 
 		// show clipping area
 		//drawRectBorders(renderRect);
+		_engine->_interface->unsetClip();
+	}
+}
+
+void Redraw::processDrawListDarts(const DrawListStruct &drawCmd) {
+	Dart::T_DART *ptrd = &_engine->_dart->ListDart[drawCmd.numObj];
+	IVec3 worldPos(ptrd->PosX, ptrd->PosY, ptrd->PosZ);
+
+	if (_engine->_grid->worldColBrick(ptrd->PosX, worldPos.y, ptrd->PosZ) > ShapeType::kSolid) {
+		worldPos.y += SIZE_BRICK_Y;
+	}
+
+	const IVec3 delta = worldPos - _engine->_grid->_worldCube;
+	Common::Rect renderRect;
+	if (!_engine->_renderer->affObjetIso(delta.x, delta.y, delta.z, ptrd->Alpha, ptrd->Beta, LBAAngles::ANGLE_0, _engine->_dart->getDartBody(), renderRect)) {
+		return;
+	}
+
+	if (_engine->_interface->setClip(renderRect)) {
+		const int32 xm = (worldPos.x + DEMI_BRICK_XZ) / SIZE_BRICK_XZ;
+		const int32 ym = worldPos.y / SIZE_BRICK_Y;
+		const int32 zm = (worldPos.z + DEMI_BRICK_XZ) / SIZE_BRICK_XZ;
+		_engine->_grid->drawOverBrick(xm, ym, zm);
+		addPhysBox(_engine->_interface->_clip);
 		_engine->_interface->unsetClip();
 	}
 }
@@ -689,6 +759,8 @@ void Redraw::processDrawList(DrawListStruct *drawList, int32 drawListPos, bool b
 			processDrawListActorSprites(drawCmd, bgRedraw);
 		} else if (flags == DrawListType::DrawExtras) {
 			processDrawListExtras(drawCmd);
+		} else if (flags == DrawListType::DrawDarts) {
+			processDrawListDarts(drawCmd);
 		}
 
 		_engine->_interface->unsetClip();
@@ -909,6 +981,7 @@ void Redraw::drawScene(bool flagflip) { // AffScene
 	DrawListStruct drawList[NUM_MAX_ACTORS + EXTRA_MAX_ENTRIES]; // ListTri[MAX_OBJECTS + MAX_EXTRAS]
 	int32 drawListPos = fillActorDrawingList(drawList, flagflip);
 	drawListPos = fillExtraDrawingList(drawList, drawListPos);
+	drawListPos = fillDartDrawingList(drawList, drawListPos);
 
 	_nbPhysBox = 0;
 	sortDrawingList(drawList, drawListPos);

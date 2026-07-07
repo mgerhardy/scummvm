@@ -20,6 +20,7 @@
  */
 
 #include "twine/scene/extra.h"
+#include "twine/scene/dart.h"
 #include "common/util.h"
 #include "twine/audio/sound.h"
 #include "twine/input.h"
@@ -126,6 +127,10 @@ void Extra::clearExtra() {
 		ExtraListStruct *extra = &_extraList[i];
 		extra->sprite = -1;
 		extra->info1 = 1;
+		extra->bodyIndex = -1;
+		extra->timeOut = 0;
+		extra->extraAlpha = 0;
+		extra->extraBeta = 0;
 	}
 }
 
@@ -266,6 +271,36 @@ int32 Extra::throwExtra(int32 actorIdx, int32 x, int32 y, int32 z, int32 spriteI
 		extra->spawnTime = _engine->timerRef;
 		extra->payload.actorIdx = actorIdx;
 		extra->info1 = 0;
+
+		return i;
+	}
+
+	return -1;
+}
+
+int32 Extra::throwExtraObj(int32 owner, int32 x, int32 y, int32 z, int32 bodyIndex, int32 alpha, int32 beta, int32 speed, int16 alpharot, int32 weight, int32 hitforce) {
+	for (int32 i = 0; i < EXTRA_MAX_ENTRIES; i++) {
+		ExtraListStruct *extra = &_extraList[i];
+		if (extra->sprite != -1) {
+			continue;
+		}
+
+		extra->bodyIndex = (int16)bodyIndex;
+		extra->sprite = (int16)(EXTRA_SPECIAL_MASK | (int16)ExtraSpecialType::kObject3D);
+		extra->extraAlpha = 0;
+		extra->extraBeta = ClampAngle(beta);
+		extra->type = ExtraType::END_OBJ | ExtraType::END_COL | ExtraType::IMPACT | ExtraType::FLY;
+		extra->pos.x = x;
+		extra->pos.y = y;
+		extra->pos.z = z;
+
+		initFly(extra, alpha, beta, speed, weight);
+
+		extra->strengthOfHit = hitforce;
+		extra->payload.actorIdx = owner;
+		extra->spawnTime = _engine->timerRef;
+		extra->info1 = 0;
+		extra->timeOut = alpharot > 0 ? (int16)(alpharot / 20) : alpharot;
 
 		return i;
 	}
@@ -452,6 +487,8 @@ void Extra::affSpecial(int32 extraIdx, int32 x, int32 y, Common::Rect &renderRec
 	}
 	case ExtraSpecialType::kFountain:
 		break;
+	case ExtraSpecialType::kObject3D:
+		break;
 	}
 }
 
@@ -517,6 +554,18 @@ void Extra::gereExtras() {
 			extra->pos.y = currentExtraSpeedY + extra->lastPos.y - ABS(extra->angle * deltaT * deltaT / 16);
 
 			extra->pos.z = extra->destPos.z * deltaT + extra->lastPos.z;
+
+			if ((extra->sprite & EXTRA_SPECIAL_MASK) && (extra->sprite & (EXTRA_SPECIAL_MASK - 1)) == (int16)ExtraSpecialType::kObject3D) {
+				if (extra->timeOut > 0) {
+					extra->extraAlpha = ((LBAAngles::ANGLE_360 * deltaT) / extra->timeOut) & LBAAngles::ANGLE_360;
+				} else if (extra->timeOut < 0) {
+					const int32 horizDist = getDistance2D(0, 0, extra->destPos.x * 5, extra->destPos.z * 5);
+					const int32 vert = -extra->destPos.y * 5 + (extra->angle * 10 * deltaT + 25) / 16;
+					extra->extraAlpha = LBAAngles::ANGLE_90 - _engine->_movements->getAngle(horizDist, 0, vert, MAX(horizDist, ABS(vert)));
+				} else {
+					extra->extraAlpha = 0;
+				}
+			}
 
 			// check if extra is out of scene
 			if (extra->pos.y < 0 || extra->pos.x < 0 || extra->pos.x > SCENE_SIZE_MAX || extra->pos.z < 0 || extra->pos.z > SCENE_SIZE_MAX) {
@@ -678,7 +727,21 @@ void Extra::gereExtras() {
 		}
 		// process extra collision with actors
 		if (extra->type & ExtraType::END_OBJ) {
-			if (_engine->_collision->extraCheckObjCol(extra, extra->payload.actorIdx) != -1) {
+			const int32 hitActor = _engine->_collision->extraCheckObjCol(extra, extra->payload.actorIdx);
+			if (hitActor != -1) {
+				if (extra->type & ExtraType::DART) {
+					const ActorStruct *actor = _engine->_scene->getActor(hitActor);
+					if (actor != nullptr && !actor->_flags.bIsInvisible) {
+						extra->destPos.x = 0;
+						extra->destPos.z = 0;
+						extra->angle <<= 1;
+						extra->type &= ~ExtraType::END_OBJ;
+						extra->spawnTime = _engine->timerRef;
+						extra->lastPos = extra->pos;
+						continue;
+					}
+				}
+
 				// if extra is Magic Ball
 				if (i == _engine->_gameState->_magicBall) {
 					int32 spriteIdx = SPRITEHQR_MAGICBALL_YELLOW_TRANS;
@@ -760,6 +823,22 @@ void Extra::gereExtras() {
 						}
 						bounceExtra(extra, currentExtraX, currentExtraY, currentExtraZ);
 					}
+				} else if (extra->type & ExtraType::DART) {
+					if (_engine->_scene->_modeLabyrinthe &&
+					    _engine->_grid->worldColBrick(currentExtraX, extra->pos.y - 1, currentExtraZ) == ShapeType::kNone) {
+						extra->pos.x = currentExtraX;
+						extra->pos.z = currentExtraZ;
+						extra->destPos.x = 0;
+						extra->destPos.z = 0;
+						extra->angle <<= 1;
+						extra->type &= ~ExtraType::END_OBJ;
+						extra->spawnTime = _engine->timerRef;
+						extra->lastPos = extra->pos;
+						continue;
+					}
+					extra->sprite = -1;
+					_engine->_dart->placeDartFromExtra(extra, currentExtraX, currentExtraY, currentExtraZ);
+					continue;
 				} else {
 					extra->sprite = -1;
 					continue;

@@ -28,11 +28,13 @@
 #include "twine/renderer/renderer.h"
 #include "twine/resources/resources.h"
 #include "twine/scene/collision.h"
+#include "twine/scene/dart.h"
 #include "twine/scene/extra.h"
 #include "twine/scene/gamestate.h"
 #include "twine/scene/grid.h"
 #include "twine/scene/movements.h"
 #include "twine/scene/scene.h"
+#include "twine/scene/wagon.h"
 #include "twine/shared.h"
 
 namespace TwinE {
@@ -400,6 +402,12 @@ void Animations::processAnimActions(int32 actorIdx) { // GereAnimAction
 				_engine->_extra->addExtraThrowMagicball(x, y, z, action.xAngle, actor->_beta, action.yAngle, action.finalAngle);
 			}
 			break;
+		case ActionType::ACTION_THROW_DART:
+			if (_engine->isLBA2() && action.animFrame == actor->_frame) {
+				_engine->_dart->throwDart(actor->_posObj.x, actor->_posObj.y + action.distanceY, actor->_posObj.z,
+				                          action.xAngle, actor->_beta, action.speed, action.weight);
+			}
+			break;
 		case ActionType::ACTION_ZV:
 		default:
 			break;
@@ -605,7 +613,12 @@ void Animations::doAnim(int32 actorIdx) {
 			_animStep.x = destPos.x;
 			_animStep.z = destPos.y;
 
-			processActor = actor->posObj() + _animStep - actor->_animStep;
+			if (_engine->isLBA2() && actor->_move == ControlMode::kWagon) {
+				processActor = actor->posObj();
+				_engine->_wagon->DoAnimWagon(actor);
+			} else {
+				processActor = actor->posObj() + _animStep - actor->_animStep;
+			}
 
 			actor->_animStep = _animStep;
 

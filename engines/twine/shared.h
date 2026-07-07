@@ -411,7 +411,8 @@ enum class BodyType {
 enum class ExtraSpecialType {
 	kHitStars = 0,
 	kExplodeCloud = 1,
-	kFountain = 2
+	kFountain = 2,
+	kObject3D = 3
 };
 
 enum class ZoneType {

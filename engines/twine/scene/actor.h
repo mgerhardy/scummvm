@@ -30,6 +30,19 @@
 
 namespace TwinE {
 
+// LIB386/3D/MOVE.H - used by wagon rail movement (BoundAngle)
+struct MoveStruct {
+	int32 acc = 0;
+	int32 speed = 0;
+	uint32 lastTimer = 0;
+};
+
+struct BoundMoveStruct {
+	MoveStruct move;
+	int32 cur = 0;
+	int32 end = 0;
+};
+
 /** Total number of sprites allowed in the game */
 #define NUM_SPRITES 425 // 200 for lba1
 
@@ -226,6 +239,7 @@ public:
 	 */
 	int32 _carryBy = -1;
 	int32 _zoneSce = -1;
+	int32 _railZoneIdx = -1; // lba2 PtrZoneRail
 
 	int32 _animStepBeta = 0;
 	IVec3 _animStep;
@@ -238,7 +252,10 @@ public:
 	int32 SampleAlways = 0; // lba2
 	uint8 SampleVolume = 0; // lba2
 	// SizeSHit contains the number of the brick under the wagon - hack
-	int16 SizeSHit; // lba2 - always square
+	int16 SizeSHit = 0; // lba2 - always square
+	int16 _wagonHitX = 0; // lba2 Coord.SHit.SHitX
+	int16 _wagonHitZ = 0; // lba2 Coord.SHit.SHitZ
+	BoundMoveStruct _boundAngle; // lba2 BoundAngle
 
 	// T_OBJ_3D Obj; // lba2
 	// T_GROUP_INFO CurrentFrame[30]; // lba2

@@ -1436,6 +1436,13 @@ int32 ScriptLife::lPOS_POINT(TwinEEngine *engine, LifeScriptContext &ctx) {
 		}
 	}
 	ctx.actor->_posObj = engine->_scene->_sceneTracks[trackIdx];
+	if (engine->isLBA2() && ctx.actor->_move == ControlMode::kWagon) {
+		ctx.actor->_sprite = 0;
+		ctx.actor->_delayInMillis = 0;
+		ctx.actor->_cropTop = 0;
+		ctx.actor->_cropRight = 0;
+		ctx.actor->_cropBottom = 0;
+	}
 	return 0;
 }
 

@@ -55,6 +55,9 @@
 namespace TwinE {
 
 static const uint32 kPlasmaEffectFilesize = 262176;
+static const uint8 kLba2MenuSelectColor = 166;
+static const uint8 kLba2MenuTextColor = 15;
+static const uint8 kLba2MenuTextDisabledColor = 59;
 
 #define HEIGHT_STANDARD 50
 #define MENU_SPACE 6

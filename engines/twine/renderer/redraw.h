@@ -101,7 +101,8 @@ private:
 		DrawActorSprites = (4 << TYPE_OBJ_SHIFT), // TYPE_OBJ_SPRITE
 		DrawZoneDec = (5 << TYPE_OBJ_SHIFT),
 		DrawExtras = (6 << TYPE_OBJ_SHIFT), // TYPE_EXTRA
-		DrawPrimitive = (7 << TYPE_OBJ_SHIFT)
+		DrawPrimitive = (7 << TYPE_OBJ_SHIFT),
+		DrawDarts = (8 << TYPE_OBJ_SHIFT) // TYPE_DART
 	};
 
 	Common::Rect _currentRedrawList[300];
@@ -133,9 +134,11 @@ private:
 	void processDrawListActors(const DrawListStruct& drawCmd, bool bgRedraw);
 	void processDrawListActorSprites(const DrawListStruct& drawCmd, bool bgRedraw);
 	void processDrawListExtras(const DrawListStruct& drawCmd);
+	void processDrawListDarts(const DrawListStruct& drawCmd);
 
 	int32 fillActorDrawingList(DrawListStruct *drawList, bool bgRedraw);
 	int32 fillExtraDrawingList(DrawListStruct *drawList, int32 drawListPos);
+	int32 fillDartDrawingList(DrawListStruct *drawList, int32 drawListPos);
 	void correctZLevels(DrawListStruct *drawList, int32 drawListPos);
 	void processDrawList(DrawListStruct *drawList, int32 drawListPos, bool bgRedraw);
 	void renderOverlays();
@@ -167,6 +170,7 @@ public:
 
 	// InitIncrustDisp
 	int32 addOverlay(OverlayType type, int16 info0, int16 x, int16 y, int16 info1, OverlayPosType posType, int16 lifeTime);
+	int32 addOverlay(OverlayType type, int16 info0, int16 x, int16 y, int16 info1, OverlayPosType posType, int16 lifeTime, bool yClip);
 	void posObjIncrust(OverlayListStruct *ptrdisp, int32 num); // lba2
 
 	/**

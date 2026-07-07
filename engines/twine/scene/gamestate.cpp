@@ -38,6 +38,7 @@
 #include "twine/scene/actor.h"
 #include "twine/scene/animations.h"
 #include "twine/scene/collision.h"
+#include "twine/scene/dart.h"
 #include "twine/scene/extra.h"
 #include "twine/scene/grid.h"
 #include "twine/scene/scene.h"
@@ -460,6 +461,10 @@ void GameState::doFoundObj(InventoryItems item) {
 		if (_engine->shouldQuit() || _engine->_input->toggleAbortAction()) {
 			break;
 		}
+	}
+
+	if (_engine->isLBA2() && item == InventoryItems::kiDart) {
+		_engine->_dart->TakeAllDarts();
 	}
 
 	init3DGame();

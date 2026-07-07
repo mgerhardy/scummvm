@@ -21,36 +21,29 @@
 
 #include "twine/scene/dart.h"
 #include "twine/audio/sound.h"
+#include "twine/parser/body.h"
 #include "twine/renderer/redraw.h"
+#include "twine/resources/resources.h"
+#include "twine/scene/collision.h"
+#include "twine/scene/extra.h"
 #include "twine/scene/gamestate.h"
+#include "twine/scene/grid.h"
 #include "twine/scene/scene.h"
 
 namespace TwinE {
 
 void Dart::InitDarts() {
-	int32 x0, x1, y0, y1, z0, z1;
-#if 0
-	uint8 *ptrbody;
-	T_BODY_HEADER *ptr;
-
-	ptrbody = (uint8 *)GivePtrObjFix(BODY_3D_DART);
-	if (!ptrbody) {
-		char tmpFilePath[ADELINE_MAX_PATH];
-		GetResPath(tmpFilePath, ADELINE_MAX_PATH, OBJFIX_HQR_NAME);
-		TheEndCheckFile(tmpFilePath);
+	int32 x0 = -64, x1 = 64, y0 = -64, y1 = 64, z0 = -64, z1 = 64;
+	if (_dartBody.loadFromHQR(TwineResource(Resources::HQR_BODY_FILE, BODY_3D_DART), false)) {
+		x0 = _dartBody.bbox.mins.x;
+		x1 = _dartBody.bbox.maxs.x;
+		y0 = _dartBody.bbox.mins.y;
+		y1 = _dartBody.bbox.maxs.y;
+		z0 = _dartBody.bbox.mins.z;
+		z1 = _dartBody.bbox.maxs.z;
+	} else {
+		warning("Failed to load dart body bounds for index %i", BODY_3D_DART);
 	}
-	// Calcule ZV des flechettes
-	ptr = (T_BODY_HEADER *)ptrbody;
-
-	x0 = ptr->XMin;
-	x1 = ptr->XMax;
-	y0 = ptr->YMin;
-	y1 = ptr->YMax;
-	z0 = ptr->ZMin;
-	z1 = ptr->ZMax;
-#else
-	x0 = x1 = y0 = y1 = z0 = z1 = 0;
-#endif
 
 	// Average
 	int32 size = ((x1 - x0) + (z1 - z0)) / 4;
@@ -132,18 +125,50 @@ void Dart::CheckDartCol(ActorStruct *ptrobj) {
 
 				_engine->_gameState->addDart();
 
-#if 0
-				_engine->_sound->playSample(SAMPLE_BONUS_TROUVE, 0x1000, 0, 1,
-											ptrd->PosX, ptrd->PosY, ptrd->PosZ);
+				const IVec3 dartPos(ptrd->PosX, ptrd->PosY, ptrd->PosZ);
+				_engine->_sound->mixSample3D(SAMPLE_BONUS_TROUVE, 0x1000, 1, dartPos, -1);
 
-				_engine->_redraw->addOverlay(OverlayType::koSprite | INCRUST_YCLIP,
-											 SPRITE_DART,
-											 15, 30,
-											 0, 0, 2);
-#endif
+				_engine->_redraw->addOverlay(OverlayType::koSprite, SPRITE_DART, 15, 30, 0, OverlayPosType::koNormal, 2, true);
 			}
 		}
 	}
+}
+
+int32 Dart::throwDart(int32 x, int32 y, int32 z, int32 alpha, int32 beta, int32 speed, int32 weight) {
+	const int32 extraIdx = _engine->_extra->throwExtraObj(OWN_ACTOR_SCENE_INDEX, x, y, z, BODY_3D_DART, alpha, beta, speed, -1, weight, DEGATS_DART);
+	if (extraIdx != -1) {
+		ExtraListStruct *extra = &_engine->_extra->_extraList[extraIdx];
+		extra->type |= ExtraType::DART;
+		if (_engine->_gameState->hasItem(InventoryItems::kiDart)) {
+			_engine->_gameState->subtractDart();
+		}
+	}
+	return extraIdx;
+}
+
+void Dart::placeDartFromExtra(const ExtraListStruct *extra, int32 oldX, int32 oldY, int32 oldZ) {
+	const int32 dartIdx = GetDart();
+	if (dartIdx == -1 || extra == nullptr) {
+		return;
+	}
+
+	T_DART *ptrd = &ListDart[dartIdx];
+	IVec3 pos = extra->pos;
+
+	if (_engine->_grid->worldColBrick(oldX, extra->pos.y - 1, oldZ) != ShapeType::kNone) {
+		const ShapeType col = _engine->_grid->worldColBrick(pos.x, pos.y - SIZE_BRICK_Y, pos.z);
+		if (col != ShapeType::kNone && col != ShapeType::kSolid) {
+			_engine->_collision->reajustPos(pos, col);
+		}
+	}
+
+	ptrd->Flags &= ~DART_TAKEN;
+	ptrd->NumCube = _engine->_scene->_numCube;
+	ptrd->PosX = pos.x;
+	ptrd->PosY = pos.y;
+	ptrd->PosZ = pos.z;
+	ptrd->Beta = extra->extraBeta;
+	ptrd->Alpha = extra->extraAlpha;
 }
 
 } // namespace TwinE
