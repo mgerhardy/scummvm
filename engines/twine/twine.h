@@ -252,6 +252,10 @@ public:
 	int32 toSeconds(int x) const;
 	void wipeSaveSlot(int slot);
 	SaveStateList getSaveSlots() const;
+	/** True when no saved games exist yet (classic IsFirstGameLaunched). */
+	bool isFirstGameLaunched() const;
+	/** LBA2 first-boot path: INTRO cinematic then scene 0, no main menu. */
+	bool startLBA2NewGameDirect();
 	void autoSave();
 
 	void pushMouseCursorVisible();

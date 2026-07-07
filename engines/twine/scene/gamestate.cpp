@@ -47,6 +47,8 @@
 #include "twine/twine.h"
 
 #define SIZE_FOUND_OBJ 130
+#define LBA2_SAVE_VERSION 0x22
+#define LBA2_SAVE_END_MARKER 0x5A
 
 namespace TwinE {
 
@@ -117,7 +119,7 @@ void GameState::initEngineVars() {
 	_engine->_scene->_sceneStart.z = 16 * SIZE_BRICK_XZ;
 
 	_engine->_scene->_numCube = SCENE_CEILING_GRID_FADE_1;
-	_engine->_scene->_newCube = LBA1SceneId::Citadel_Island_Prison;
+	_engine->_scene->_newCube = _engine->isLBA1() ? (int32)LBA1SceneId::Citadel_Island_Prison : 0;
 	_engine->_sceneLoopState = SceneLoopState::Continue;
 	_engine->_scene->_mecaPenguinIdx = -1;
 	_engine->_menuOptions->flagCredits = false;
@@ -149,13 +151,31 @@ bool GameState::loadGame(Common::SeekableReadStream *file) {
 		return false;
 	}
 
-	if (!_engine->isLBA1()) {
-		warning("Loading not implemented for lba2");
-		return false;
+	const byte saveFileVersion = file->readByte();
+	file->seek(-1, SEEK_CUR);
+
+	if (saveFileVersion == 3 || saveFileVersion == 4) {
+		if (!_engine->isLBA1()) {
+			warning("LBA1 savegame loaded in LBA2 mode");
+			return false;
+		}
+		return loadGameLBA1(file, saveFileVersion);
 	}
 
-	debug(2, "Load game");
-	const byte saveFileVersion = file->readByte();
+	if (saveFileVersion == LBA2_SAVE_VERSION) {
+		if (!_engine->isLBA2()) {
+			warning("LBA2 savegame loaded in LBA1 mode");
+			return false;
+		}
+		return loadGameLBA2(file);
+	}
+
+	warning("Could not load savegame - unknown version %u", saveFileVersion);
+	return false;
+}
+
+bool GameState::loadGameLBA1(Common::SeekableReadStream *file, byte saveFileVersion) {
+	debug(2, "Load LBA1 game");
 	// 4 is dotemu enhanced version of lba1
 	if (saveFileVersion != 3 && saveFileVersion != 4) {
 		warning("Could not load savegame - wrong magic byte");
@@ -232,12 +252,115 @@ bool GameState::loadGame(Common::SeekableReadStream *file) {
 	return true;
 }
 
-bool GameState::saveGame(Common::WriteStream *file) {
-	debug(2, "Save game");
-	if (!_engine->isLBA1()) {
-		warning("Saving not implemented for lba2");
+bool GameState::loadGameLBA2(Common::SeekableReadStream *file) {
+	debug(2, "Load LBA2 game");
+
+	initEngineVars();
+	_loadingSave = false;
+	_hasPendingCubeFlags = false;
+	_hasPendingStartCube = false;
+
+	int playerNameIdx = 0;
+	do {
+		const byte c = file->readByte();
+		_engine->_menuOptions->_saveGameName[playerNameIdx++] = c;
+		if (c == '\0') {
+			break;
+		}
+		if (playerNameIdx >= ARRAYSIZE(_engine->_menuOptions->_saveGameName)) {
+			warning("Failed to load LBA2 savegame. Invalid playername.");
+			return false;
+		}
+	} while (true);
+
+	_engine->_scene->_newCube = file->readSint32LE();
+
+	for (uint16 i = 0; i < NUM_GAME_FLAGS; ++i) {
+		setGameFlag(i, file->readSint16LE());
+	}
+
+	if (file->read(_pendingCubeFlags, NUM_SCENES_FLAGS) != NUM_SCENES_FLAGS) {
+		warning("Failed to load LBA2 cube flags");
 		return false;
 	}
+	_hasPendingCubeFlags = true;
+
+	_engine->_actor->_heroBehaviour = (HeroBehaviourType)file->readByte();
+	setKashes(file->readSint16LE());
+	setZlitos(file->readSint16LE());
+	_magicLevelIdx = file->readByte();
+	setMagicPoints(file->readByte());
+	setKeys(file->readByte());
+	setLeafBoxes(file->readSint16LE());
+
+	_engine->_scene->_sceneStart.x = file->readSint32LE();
+	_engine->_scene->_sceneStart.y = file->readSint32LE();
+	_engine->_scene->_sceneStart.z = file->readSint32LE();
+
+	_pendingStartCube.x = file->readSint32LE();
+	_pendingStartCube.y = file->readSint32LE();
+	_pendingStartCube.z = file->readSint32LE();
+	_hasPendingStartCube = true;
+
+	_weapon = file->readByte() != 0;
+	_engine->timerRef = file->readSint32LE();
+	_engine->_scene->_numObjFollow = file->readByte();
+	_engine->_actor->_previousHeroBehaviour = (HeroBehaviourType)file->readByte();
+	file->readByte(); // SaveBodyHero - hero body is restored from the snapshot below
+
+	if (file->read(_holomapFlags, MAX_HOLO_POS_2) != MAX_HOLO_POS_2) {
+		warning("Failed to load LBA2 holomap flags");
+		return false;
+	}
+
+	const byte numInventoryFlags = file->readByte();
+	if (numInventoryFlags != NUM_INVENTORY_ITEMS) {
+		warning("Failed to load LBA2 inventoryFlags. Got %u, expected %i", numInventoryFlags, NUM_INVENTORY_ITEMS);
+		return false;
+	}
+	file->read(_inventoryFlags, NUM_INVENTORY_ITEMS);
+
+	setGas(file->readByte());
+	setLeafs(file->readByte());
+
+	_magicBall = file->readSint32LE();
+	_magicBallType = file->readByte();
+	_magicBallCount = file->readByte();
+
+	_pendingHeroPos.x = file->readSint32LE();
+	_pendingHeroPos.y = file->readSint32LE();
+	_pendingHeroPos.z = file->readSint32LE();
+	_pendingHeroBeta = ToAngle(file->readSint16LE());
+	_pendingHeroLife = file->readByte();
+	_pendingHeroBody = (BodyType)file->readByte();
+
+	_engine->_dart->InitDarts();
+	if (!_engine->_dart->loadState(file)) {
+		warning("Failed to load LBA2 darts");
+		return false;
+	}
+
+	const byte endMarker = file->readByte();
+	if (endMarker != LBA2_SAVE_END_MARKER) {
+		warning("Failed to load LBA2 savegame - invalid end marker %u", endMarker);
+		return false;
+	}
+
+	_engine->_scene->_numCube = SCENE_CEILING_GRID_FADE_1;
+	_engine->_scene->_flagChgCube = ScenePositionType::kNoPosition;
+	_loadingSave = true;
+	return true;
+}
+
+bool GameState::saveGame(Common::WriteStream *file) {
+	debug(2, "Save game");
+	if (_engine->isLBA1()) {
+		return saveGameLBA1(file);
+	}
+	return saveGameLBA2(file);
+}
+
+bool GameState::saveGameLBA1(Common::WriteStream *file) {
 	if (_engine->_menuOptions->_saveGameName[0] == '\0') {
 		Common::strlcpy(_engine->_menuOptions->_saveGameName, "TwinEngineSave", sizeof(_engine->_menuOptions->_saveGameName));
 	}
@@ -286,6 +409,71 @@ bool GameState::saveGame(Common::WriteStream *file) {
 	file->writeByte(_inventoryNumLeafs);
 	file->writeByte(_weapon ? 1 : 0);
 	file->writeByte(0);
+
+	return true;
+}
+
+bool GameState::saveGameLBA2(Common::WriteStream *file) {
+	if (_engine->_menuOptions->_saveGameName[0] == '\0') {
+		Common::strlcpy(_engine->_menuOptions->_saveGameName, "TwinEngineSave", sizeof(_engine->_menuOptions->_saveGameName));
+	}
+
+	file->writeByte(LBA2_SAVE_VERSION);
+	file->writeString(_engine->_menuOptions->_saveGameName);
+	file->writeByte('\0');
+
+	file->writeSint32LE(_engine->_scene->_numCube);
+
+	for (uint16 i = 0; i < NUM_GAME_FLAGS; ++i) {
+		file->writeSint16LE(_listFlagGame[i]);
+	}
+
+	file->write(_engine->_scene->_listFlagCube, NUM_SCENES_FLAGS);
+
+	file->writeByte((byte)_engine->_actor->_heroBehaviour);
+	file->writeSint16LE(_goldPieces);
+	file->writeSint16LE(_zlitosPieces);
+	file->writeByte(_magicLevelIdx);
+	file->writeByte(_magicPoint);
+	file->writeByte(_nbLittleKeys);
+	file->writeSint16LE(_inventoryNumLeafsBox);
+
+	file->writeSint32LE(_engine->_scene->_sceneStart.x);
+	file->writeSint32LE(_engine->_scene->_sceneStart.y);
+	file->writeSint32LE(_engine->_scene->_sceneStart.z);
+
+	file->writeSint32LE(_engine->_grid->_startCube.x);
+	file->writeSint32LE(_engine->_grid->_startCube.y);
+	file->writeSint32LE(_engine->_grid->_startCube.z);
+
+	file->writeByte(_weapon ? 1 : 0);
+	file->writeSint32LE(_engine->timerRef);
+	file->writeByte(_engine->_scene->_numObjFollow);
+	file->writeByte((byte)_engine->_actor->_previousHeroBehaviour);
+	file->writeByte((byte)_engine->_scene->_sceneHero->_genBody);
+
+	file->write(_holomapFlags, MAX_HOLO_POS_2);
+
+	file->writeByte(NUM_INVENTORY_ITEMS);
+	file->write(_inventoryFlags, NUM_INVENTORY_ITEMS);
+
+	file->writeByte(_inventoryNumGas);
+	file->writeByte(_inventoryNumLeafs);
+
+	file->writeSint32LE(_magicBall);
+	file->writeByte(_magicBallType);
+	file->writeByte(_magicBallCount);
+
+	file->writeSint32LE(_engine->_scene->_sceneHero->_posObj.x);
+	file->writeSint32LE(_engine->_scene->_sceneHero->_posObj.y);
+	file->writeSint32LE(_engine->_scene->_sceneHero->_posObj.z);
+	file->writeSint16LE(FromAngle(_engine->_scene->_sceneHero->_beta));
+	file->writeByte(_engine->_scene->_sceneHero->_lifePoint);
+	file->writeByte((byte)_engine->_scene->_sceneHero->_genBody);
+
+	_engine->_dart->saveState(file);
+
+	file->writeByte(LBA2_SAVE_END_MARKER);
 
 	return true;
 }

@@ -27,6 +27,11 @@
 #include "twine/scene/extra.h"
 #include "twine/twine.h"
 
+namespace Common {
+class SeekableReadStream;
+class WriteStream;
+}
+
 #define MAX_DARTS 3
 #define BODY_3D_DART 61
 #define DEGATS_DART 8
@@ -73,6 +78,9 @@ public:
 	int32 throwDart(int32 x, int32 y, int32 z, int32 alpha, int32 beta, int32 speed, int32 weight);
 	void placeDartFromExtra(const ExtraListStruct *extra, int32 oldX, int32 oldY, int32 oldZ);
 	const BodyData &getDartBody() const { return _dartBody; }
+
+	void saveState(Common::WriteStream *stream) const;
+	bool loadState(Common::SeekableReadStream *stream);
 };
 
 } // namespace TwinE

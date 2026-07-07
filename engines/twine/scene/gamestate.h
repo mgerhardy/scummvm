@@ -24,6 +24,8 @@
 
 #include "common/scummsys.h"
 #include "twine/menu/menu.h"
+#include "twine/scene/actor.h"
+#include "twine/scene/scene.h"
 #include "twine/shared.h"
 
 namespace TwinE {
@@ -45,6 +47,11 @@ private:
 
 	void initGameStateVars();
 	void initHeroVars();
+
+	bool loadGameLBA1(Common::SeekableReadStream *file, byte saveFileVersion);
+	bool saveGameLBA1(Common::WriteStream *file);
+	bool loadGameLBA2(Common::SeekableReadStream *file);
+	bool saveGameLBA2(Common::WriteStream *file);
 
 	MenuSettings _gameChoicesSettings;
 
@@ -133,6 +140,17 @@ public:
 	uint8 _holomapFlags[MAX_HOLO_POS_2];
 
 	char _sceneName[30] {};
+
+	/** Set while changeCube() restores a loaded game snapshot */
+	bool _loadingSave = false;
+	uint8 _pendingCubeFlags[NUM_SCENES_FLAGS]{};
+	bool _hasPendingCubeFlags = false;
+	IVec3 _pendingStartCube{};
+	bool _hasPendingStartCube = false;
+	IVec3 _pendingHeroPos{};
+	int16 _pendingHeroBeta = 0;
+	int16 _pendingHeroLife = 0;
+	BodyType _pendingHeroBody = BodyType::btNormal;
 
 	TextId _gameListChoice[10];  // inGameMenuData
 	int32 _gameNbChoices = 0;   // numOfOptionsInChoice

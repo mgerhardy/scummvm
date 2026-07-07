@@ -576,6 +576,12 @@ void Scene::changeCube() {
 	_engine->_sound->stopSamples();
 
 	clearScene();
+
+	if (_engine->_gameState->_hasPendingCubeFlags) {
+		Common::copy(_engine->_gameState->_pendingCubeFlags, _engine->_gameState->_pendingCubeFlags + NUM_SCENES_FLAGS, _listFlagCube);
+		_engine->_gameState->_hasPendingCubeFlags = false;
+	}
+
 	_engine->_actor->loadHeroEntities();
 
 	_sceneHero->_move = ControlMode::kManual;
@@ -621,7 +627,11 @@ void Scene::changeCube() {
 	if (_flagChgCube == ScenePositionType::kZone) {
 		_sceneStart = _zoneHeroPos;
 	} else if (_flagChgCube == ScenePositionType::kScene || _flagChgCube == ScenePositionType::kNoPosition) {
-		_sceneStart = _sceneHeroPos;
+		if (_engine->_gameState->_loadingSave) {
+			_sceneStart = _engine->_gameState->_pendingHeroPos;
+		} else {
+			_sceneStart = _sceneHeroPos;
+		}
 	}
 
 	_sceneHero->_posObj = _sceneStart;
@@ -642,8 +652,10 @@ void Scene::changeCube() {
 		_engine->_actor->startInitObj(a);
 	}
 
-	_engine->_gameState->_nbLittleKeys = 0;
-	_engine->_gameState->_magicBall = -1;
+	if (!_engine->_gameState->_loadingSave) {
+		_engine->_gameState->_nbLittleKeys = 0;
+		_engine->_gameState->_magicBall = -1;
+	}
 	_engine->_movements->_lastJoyFlag = true;
 	_engine->_grid->_zoneGrm = -1;
 	_engine->_grid->_indexGrm = -1;
@@ -657,6 +669,12 @@ void Scene::changeCube() {
 	_timerNextAmbiance = 0;
 
 	ActorStruct *followedActor = getActor(_numObjFollow);
+
+	if (_engine->_gameState->_hasPendingStartCube) {
+		_engine->_grid->_startCube = _engine->_gameState->_pendingStartCube;
+		_engine->_gameState->_hasPendingStartCube = false;
+	}
+
 	_engine->_grid->centerOnActor(followedActor);
 
 	_engine->_screens->_flagFade = true;
@@ -670,6 +688,15 @@ void Scene::changeCube() {
 	}
 
 	_engine->_gameState->handleLateGameItems();
+
+	if (_engine->_gameState->_loadingSave) {
+		_sceneHero->_beta = _engine->_gameState->_pendingHeroBeta;
+		_engine->_actor->_previousHeroAngle = _sceneHero->_beta;
+		_sceneHero->setLife(_engine->_gameState->_pendingHeroLife);
+		_sceneHero->_genBody = _engine->_gameState->_pendingHeroBody;
+		_startYFalling = _sceneHero->_posObj.y;
+		_engine->_gameState->_loadingSave = false;
+	}
 }
 
 ActorStruct *Scene::getActor(int32 actorIdx) {

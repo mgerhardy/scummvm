@@ -369,6 +369,11 @@ Common::Error TwinEEngine::run() {
 		}
 	}
 
+	if (isLBA2() && _state == EngineState::Menu && isFirstGameLaunched()) {
+		startLBA2NewGameDirect();
+		_state = EngineState::GameLoop;
+	}
+
 	bool quitGame = false;
 	while (!quitGame && !shouldQuit()) {
 		readKeys();
@@ -450,6 +455,22 @@ bool TwinEEngine::hasFeature(EngineFeature f) const {
 
 SaveStateList TwinEEngine::getSaveSlots() const {
 	return getMetaEngine()->listSaves(_targetName.c_str());
+}
+
+bool TwinEEngine::isFirstGameLaunched() const {
+	return getSaveSlots().empty();
+}
+
+bool TwinEEngine::startLBA2NewGameDirect() {
+	_menuOptions->_saveGameName[0] = '\0';
+	_gameState->initEngineVars();
+	_scene->_newCube = 0;
+	_scene->_flagChgCube = ScenePositionType::kNoPosition;
+	_text->_renderTextTriangle = false;
+	_text->normalWinDial();
+	_text->_flagMessageShade = true;
+	_menuOptions->newGame();
+	return true;
 }
 
 void TwinEEngine::wipeSaveSlot(int slot) {
@@ -617,8 +638,10 @@ void TwinEEngine::introduction() {
 	bool abort = false;
 
 	if (isLBA2()) {
-		// abort |= _screens->loadImageDelay(_resources->activisionLogo(), 7);
 		abort |= _screens->loadImageDelay(_resources->eaLogo(), 7);
+		if (!abort && !isFirstGameLaunched()) {
+			abort |= _screens->adelineLogo();
+		}
 	}
 
 	if (isLba1Classic()) {
@@ -660,8 +683,6 @@ void TwinEEngine::introduction() {
 
 	if (isLBA1()) {
 		_movie->playMovie(FLA_DRAGON3);
-	} else {
-		_movie->playMovie("INTRO");
 	}
 }
 

@@ -20,6 +20,7 @@
  */
 
 #include "twine/scene/dart.h"
+#include "common/stream.h"
 #include "twine/audio/sound.h"
 #include "twine/parser/body.h"
 #include "twine/renderer/redraw.h"
@@ -169,6 +170,33 @@ void Dart::placeDartFromExtra(const ExtraListStruct *extra, int32 oldX, int32 ol
 	ptrd->PosZ = pos.z;
 	ptrd->Beta = extra->extraBeta;
 	ptrd->Alpha = extra->extraAlpha;
+}
+
+void Dart::saveState(Common::WriteStream *stream) const {
+	for (uint32 i = 0; i < MAX_DARTS; ++i) {
+		const T_DART &dart = ListDart[i];
+		stream->writeSint32LE(dart.PosX);
+		stream->writeSint32LE(dart.PosY);
+		stream->writeSint32LE(dart.PosZ);
+		stream->writeSint32LE(dart.Alpha);
+		stream->writeSint32LE(dart.Beta);
+		stream->writeSint32LE(dart.NumCube);
+		stream->writeUint32LE(dart.Flags);
+	}
+}
+
+bool Dart::loadState(Common::SeekableReadStream *stream) {
+	for (uint32 i = 0; i < MAX_DARTS; ++i) {
+		T_DART &dart = ListDart[i];
+		dart.PosX = stream->readSint32LE();
+		dart.PosY = stream->readSint32LE();
+		dart.PosZ = stream->readSint32LE();
+		dart.Alpha = stream->readSint32LE();
+		dart.Beta = stream->readSint32LE();
+		dart.NumCube = stream->readSint32LE();
+		dart.Flags = stream->readUint32LE();
+	}
+	return !stream->err();
 }
 
 } // namespace TwinE
