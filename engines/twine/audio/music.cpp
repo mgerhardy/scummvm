@@ -325,7 +325,7 @@ void Music::playAllMusic(int num) {
 }
 
 bool Music::isMidiPlaying() const {
-	if (_engine->isDotEmuEnhanced() || _engine->isLba1Classic()) {
+	if (_engine->isDotEmuEnhanced() || _engine->isLba1Classic() || _engine->isLba2Classic()) {
 		return _engine->_system->getMixer()->isSoundHandleActive(_midiHandle);
 	}
 

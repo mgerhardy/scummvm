@@ -430,6 +430,11 @@ static const ADGameDescription twineGameDescriptions[] = {
 	// June 2nd, 1997
 	TWINE_DETECTION_ENTRY("lba2", "Playable Demo Version", AD_ENTRY1s("text.hqr", "63bfc42fb50a041f953db923b9397d00", 231241), Common::kPlatformDOS, ADGF_UNSUPPORTED | ADGF_DEMO),
 
+	// Little Big Adventure 2 - GOG.com Classic Version
+	// TLBA2C.exe
+	// 24 May 2026
+	TWINE_DETECTION_ENTRY("lba2", "GOG.com Classic Version", AD_ENTRY1s("TLBA2C.exe", "dc703bdb7aca317a6effeaa39f154289", 4763648), Common::kPlatformWindows, ADGF_UNSTABLE | TwinE::TF_LBA2_CLASSIC),
+
 	AD_TABLE_END_MARKER
 };
 

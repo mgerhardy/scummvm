@@ -156,28 +156,38 @@ int32 ruleThree32(int32 val1, int32 val2, int32 nbstep, int32 step) {  // RegleT
 	return (((val2 - val1) * step) / nbstep) + val1;
 }
 
+static void addClassicEditionSearchPaths(const Common::FSNode &gameDataDir, bool lba2) {
+	SearchMan.addSubDirectoryMatching(gameDataDir, "common");
+	SearchMan.addSubDirectoryMatching(gameDataDir, "commonclassic");
+	SearchMan.addSubDirectoryMatching(gameDataDir, "common/vox");
+	SearchMan.addSubDirectoryMatching(gameDataDir, "commonclassic/images");
+	SearchMan.addSubDirectoryMatching(gameDataDir, "commonclassic/voices/de_voice");
+	SearchMan.addSubDirectoryMatching(gameDataDir, "commonclassic/voices/en_voice");
+	SearchMan.addSubDirectoryMatching(gameDataDir, "commonclassic/voices/fr_voice");
+	if (lba2) {
+		SearchMan.addSubDirectoryMatching(gameDataDir, "common/video");
+		SearchMan.addSubDirectoryMatching(gameDataDir, "common/music");
+	} else {
+		SearchMan.addSubDirectoryMatching(gameDataDir, "common/fla");
+		SearchMan.addSubDirectoryMatching(gameDataDir, "common/music");
+		SearchMan.addSubDirectoryMatching(gameDataDir, "common/midi");
+	}
+}
+
 TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flags, Common::Platform platform, TwineGameType gameType)
 	: Engine(system), _gameType(gameType), _gameLang(language), _frontVideoBuffer(this), _gameFlags(flags), _platform(platform), _rnd("twine") {
 	// Add default file directories
 	const Common::FSNode gameDataDir(ConfMan.getPath("path"));
 	SearchMan.addSubDirectoryMatching(gameDataDir, "fla");
 	SearchMan.addSubDirectoryMatching(gameDataDir, "vox");
-	if (isLBA2()) {
-		SearchMan.addSubDirectoryMatching(gameDataDir, "video");
-		SearchMan.addSubDirectoryMatching(gameDataDir, "music");
-	}
 
 	if (isLba1Classic()) {
-		SearchMan.addSubDirectoryMatching(gameDataDir, "common");
-		SearchMan.addSubDirectoryMatching(gameDataDir, "commonclassic");
-		SearchMan.addSubDirectoryMatching(gameDataDir, "common/fla");
-		SearchMan.addSubDirectoryMatching(gameDataDir, "common/vox");
-		SearchMan.addSubDirectoryMatching(gameDataDir, "common/music");
-		SearchMan.addSubDirectoryMatching(gameDataDir, "common/midi");
-		SearchMan.addSubDirectoryMatching(gameDataDir, "commonclassic/images");
-		SearchMan.addSubDirectoryMatching(gameDataDir, "commonclassic/voices/de_voice");
-		SearchMan.addSubDirectoryMatching(gameDataDir, "commonclassic/voices/en_voice");
-		SearchMan.addSubDirectoryMatching(gameDataDir, "commonclassic/voices/fr_voice");
+		addClassicEditionSearchPaths(gameDataDir, false);
+	} else if (isLba2Classic()) {
+		addClassicEditionSearchPaths(gameDataDir, true);
+	} else if (isLBA2()) {
+		SearchMan.addSubDirectoryMatching(gameDataDir, "video");
+		SearchMan.addSubDirectoryMatching(gameDataDir, "music");
 	}
 
 	if (isDotEmuEnhanced()) {

@@ -269,6 +269,7 @@ public:
 	bool isMod() const { return (_gameFlags & TwinE::TF_MOD) != 0; }
 	bool isDotEmuEnhanced() const { return (_gameFlags & TwinE::TF_DOTEMU_ENHANCED) != 0; }
 	bool isLba1Classic() const { return (_gameFlags & TwinE::TF_LBA1_CLASSIC) != 0; }
+	bool isLba2Classic() const { return (_gameFlags & TwinE::TF_LBA2_CLASSIC) != 0; }
 	bool isDemo() const { return (_gameFlags & ADGF_DEMO) != 0; };
 	bool isAndroid() const { return _platform == Common::Platform::kPlatformAndroid; };
 	const char *getGameId() const;

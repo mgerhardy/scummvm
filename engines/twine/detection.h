@@ -39,7 +39,8 @@ enum TwineFeatureFlags {
 	TF_DOTEMU_ENHANCED = (1 << 4),
 	TF_LBA1_CLASSIC = (1 << 5),
 	TF_MOD = (1 << 6),
-	TF_PREVIEW = (1 << 7)
+	TF_PREVIEW = (1 << 7),
+	TF_LBA2_CLASSIC = (1 << 8)
 };
 
 #define GAMEOPTION_WALL_COLLISION GUIO_GAMEOPTIONS1
