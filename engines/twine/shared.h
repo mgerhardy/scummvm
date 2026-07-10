@@ -85,6 +85,9 @@
 
 #define GAMEFLAG_ESC 249
 
+// FLAG_TUNIQUE - tunic/mage variant selector in LBA2
+#define FLAG_TUNIQUE InventoryItems::kiTunic
+
 // lba2 Kashes or Zlitos
 #define GAMEFLAG_MONEY 8
 // FLAG_ARDOISE
@@ -318,6 +321,13 @@ enum class AnimationTypes {
 	kSabreAttack = 23,  // GEN_ANIM_SABRE
 	kSabreUnknown = 24, // GEN_ANIM_DEGAINE
 	kPush = 27,         // GEN_ANIM_POUSSE
+	kDart = 29,         // GEN_ANIM_DART (lba2)
+	kFlying = 32,       // GEN_ANIM_ARRIMAGE (lba2 jetpack)
+	kTalk = 28,         // GEN_ANIM_PARLE
+	kDodgeRight = 40,   // GEN_ANIM_ESQUIVE_DROITE (lba2)
+	kDodgeLeft = 41,    // GEN_ANIM_ESQUIVE_GAUCHE (lba2)
+	kDodgeForward = 42, // GEN_ANIM_ESQUIVE_AVANT (lba2)
+	kDodgeBackward = 43, // GEN_ANIM_ESQUIVE_ARRIERE (lba2)
 	kCarStarting = 303,
 	kCarDriving = 304,
 	kCarDrivingBackwards = 305,
@@ -357,23 +367,37 @@ enum class HeroBehaviourType {
 	kAggressive = 2, // C_AGRESSIF
 	kDiscrete = 3,   // C_DISCRET
 	kProtoPack = 4,  // C_PROTOPACK
-#if 0
-	kDOUBLE = 5,          // C_DOUBLE Twinsen + Zoé
-	kCONQUE = 6,          // C_CONQUE Conque
-	kSCAPH_INT_NORM = 7,  // C_SCAPH_INT_NORM Scaphandre Interieur Normal
-	kJETPACK = 8,         // C_JETPACK SuperJetPack
-	kSCAPH_INT_SPOR = 9,  // C_SCAPH_INT_SPOR Scaphandre Interieur Sportif
-	kSCAPH_EXT_NORM = 10, // C_SCAPH_EXT_NORM Scaphandre Exterieur Normal
-	kSCAPH_EXT_SPOR = 11, // C_SCAPH_EXT_SPOR Scaphandre Exterieur Sportif
-	kBUGGY = 12,          // C_BUGGY Conduite du buggy
-	kSKELETON = 13,       // C_SKELETON Squelette Electrique
-#endif
+	kConch = 6,      // C_CONQUE (lba2)
+	kJetPack = 8,    // C_JETPACK (lba2)
+	kBUGGY = 12,     // C_BUGGY Conduite du buggy
 	kMax
 };
+
+#define TEMPO_PROTO_AUTO 500 // lba2 auto-forward delay for protopack/jetpack (ms)
+
+// lba2 exterior camera defaults (VAR_EXT.CPP / COMMON.H)
+#define LBA2_CLIP_NEAR 3000
+#define LBA2_CHAMP_X 600
+#define LBA2_CHAMP_Z 600
+#define LBA2_VUE_DISTANCE 30000
+#define LBA2_DISTANCE_VISEE 2500
+#define LBA2_DEFAULT_ALPHA_CAM 240 // 60 * 4
 
 // lba2
 #define CUBE_INTERIEUR 0
 #define CUBE_EXTERIEUR 1
+
+#define CJ_WATER 1
+#define CJ_FOOT_WATER 12
+#define CJ_ESCALATOR_OUEST 3
+#define CJ_ESCALATOR_EST 4
+#define CJ_ESCALATOR_NORD 5
+#define CJ_ESCALATOR_SUD 6
+
+#define CARRY_BY_DECORS 1024
+
+#define DEC_INVISIBLE (1 << 16)
+#define DEC_DRAWN (1 << 17)
 
 /**
  * 0: tunic + medallion
@@ -691,7 +715,13 @@ enum InventoryItems {
 	kiBonusList = 26,          // lba1
 	kiCloverLeaf = 27,         // lba1
 	MaxInventoryItems = 28,    // lba1
-	MaxInventoryItemsLba2 = 40 // lba2
+	MaxInventoryItemsLba2 = 40, // lba2
+	// lba2 items at shared inventory indices
+	kiPistolLaser = 9,  // FLAG_PISTOLASER (lba1: kBlueCard)
+	kiSabreLba2 = 10,   // FLAG_SABRE (lba1: kIDCard)
+	kiGlove = 11,       // FLAG_GANT (lba1: kMrMiesPass)
+	kiConch = 22,       // FLAG_CONQUE (lba1: kiEmptyBottle)
+	kiBlowpipe = 23     // FLAG_SARBACANE (lba1: kiFerryTicket)
 };
 
 struct TwineResource {
@@ -757,8 +787,7 @@ inline int32 NormalizeAngle(int32 angle) {
  * @param[in] angle The angle as input from game data
  * @return The value as it is used at runtime
  */
-inline constexpr int32 ToAngle(int32 angle) {
-	// TODO: lba2 handling of factor 4
+inline int32 ToAngle(int32 angle) {
 	return angle;
 }
 
@@ -766,7 +795,7 @@ inline constexpr int32 ToAngle(int32 angle) {
  * @param[in] angle The angle as used at runtime
  * @return The value as it should be used for storing in game data
  */
-inline constexpr int32 FromAngle(int32 angle) {
+inline int32 FromAngle(int32 angle) {
 	return angle;
 }
 
@@ -780,6 +809,11 @@ inline int DegreeToAngle(double degree) {
 
 inline int32 ClampAngle(int32 angle) {
 	return angle & (LBAAngles::ANGLE_360 - 1);
+}
+
+/** Sign-extend a 12-bit signed angle (LBA2 anim step / bone delta format). */
+inline int16 SignExt12(int16 angle) {
+	return (int16)((angle << 20) >> 20);
 }
 
 template<typename T>

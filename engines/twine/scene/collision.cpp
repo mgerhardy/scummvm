@@ -21,12 +21,14 @@
 
 #include "twine/scene/collision.h"
 #include "common/util.h"
+#include "twine/audio/sound.h"
 #include "twine/debugger/debug_state.h"
 #include "twine/renderer/renderer.h"
 #include "twine/resources/resources.h"
 #include "twine/scene/actor.h"
 #include "twine/scene/animations.h"
 #include "twine/scene/extra.h"
+#include "twine/scene/flow.h"
 #include "twine/scene/grid.h"
 #include "twine/scene/movements.h"
 #include "twine/scene/scene.h"
@@ -518,7 +520,167 @@ int32 Collision::extraCheckExtraCol(ExtraListStruct *extra, int32 extraIdx) cons
 
 void Collision::doImpact(int32 num, int32 x, int32 y, int32 z, int32 owner) {
 	debugC(3, kDebugLevels::kDebugCollision, "Collision::doImpact(%i, %i, %i, %i, %i)", num, x, y, z, owner);
-	// TODO: Implement me
+	const uint8 *ptr = _engine->_resources->getImpactScript(num);
+	if (ptr == nullptr) {
+		warning("Collision::doImpact(%i): impact script not found", num);
+		return;
+	}
+
+	int32 beta = 0;
+	if (owner != 255) {
+		if (ActorStruct *actor = _engine->_scene->getActor(owner)) {
+			beta = actor->_beta;
+		}
+	}
+
+	enum {
+		IMP_END = 0,
+		IMP_REM = 1,
+		IMP_SAMPLE = 2,
+		IMP_FLOW = 3,
+		IMP_THROW = 4,
+		IMP_THROW_POF = 5,
+		IMP_THROW_OBJ = 6,
+		IMP_SPRITE = 7,
+		IMP_FLOW_SPRITE = 8,
+		IMP_FLOW_OBJ = 9,
+		IMP_FLOW_POF = 10
+	};
+
+	uint8 command;
+	while ((command = *ptr++) != IMP_END) {
+		switch (command) {
+		case IMP_REM:
+			break;
+		case IMP_SAMPLE: {
+			const int16 sample = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			const int16 freq = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			const int16 offset = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			const uint8 volume = *ptr++;
+			_engine->_sound->_parmSampleVolume = volume;
+			_engine->_sound->mixSample3D(sample, freq, 1, IVec3(x, y, z), owner);
+			(void)offset;
+			break;
+		}
+		case IMP_THROW: {
+			const int16 sprite = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			const int16 alpha = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			int16 throwBeta = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			const int16 speed = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			const int16 weight = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			const uint8 force = *ptr++;
+			throwBeta = (int16)ClampAngle(throwBeta + beta);
+			_engine->_extra->throwExtra(owner, x, y, z, sprite, alpha, throwBeta, speed, weight, force);
+			break;
+		}
+		case IMP_THROW_OBJ: {
+			const int16 bodyIndex = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			const int16 alpha = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			int16 throwBeta = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			const int16 speed = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			const int16 weight = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			const int16 alpharot = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			const uint8 force = *ptr++;
+			throwBeta = (int16)ClampAngle(throwBeta + beta);
+			_engine->_extra->throwExtraObj(owner, x, y, z, bodyIndex, alpha, throwBeta, speed, alpharot, weight, force);
+			break;
+		}
+		case IMP_FLOW: {
+			const uint8 flowIdx = *ptr++;
+			_engine->_flow->createParticleFlow(0, owner, 0, x, y, z, beta, flowIdx);
+			break;
+		}
+		case IMP_THROW_POF: {
+			const int16 numPof = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			const int16 alpha = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			int16 throwBeta = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			const int16 speed = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			const int16 weight = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			const int32 scale = (int32)READ_LE_UINT32(ptr);
+			ptr += 4;
+			throwBeta = (int16)ClampAngle(throwBeta + beta);
+			_engine->_extra->initExtraPof(x, y, z, numPof, alpha, throwBeta, speed, weight, scale, scale, 0, 0, 0);
+			break;
+		}
+		case IMP_SPRITE: {
+			const int16 spriteDeb = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			const int16 spriteFin = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			const int32 tempo = (int32)READ_LE_UINT32(ptr);
+			ptr += 4;
+			const int32 scale = (int32)READ_LE_UINT32(ptr);
+			ptr += 4;
+			const uint8 transparent = *ptr++;
+			const uint8 force = *ptr++;
+			_engine->_extra->initExtraAnimSprite(owner, x, y, z, spriteDeb, spriteFin, tempo, scale, transparent, force);
+			break;
+		}
+		case IMP_FLOW_SPRITE: {
+			const uint8 flowIdx = *ptr++;
+			const int16 spriteDeb = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			const int16 spriteFin = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			const int32 tempo = (int32)READ_LE_UINT32(ptr);
+			ptr += 4;
+			const int32 scale = (int32)READ_LE_UINT32(ptr);
+			ptr += 4;
+			const uint8 transparent = *ptr++;
+			const uint8 force = *ptr++;
+			_engine->_flow->createExtraParticleFlow(FLOW_EXTRA_SPRITE, owner, spriteDeb, spriteFin,
+			                                         x, y, z, beta, flowIdx, force, scale, transparent, tempo);
+			break;
+		}
+		case IMP_FLOW_OBJ: {
+			const uint8 flowIdx = *ptr++;
+			const int16 bodyIndex = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			const uint8 force = *ptr++;
+			_engine->_flow->createExtraParticleFlow(FLOW_EXTRA_OBJ, owner, bodyIndex, 0,
+			                                         x, y, z, beta, flowIdx, force, 0, 0, 0);
+			break;
+		}
+		case IMP_FLOW_POF: {
+			const uint8 flowIdx = *ptr++;
+			const int16 numPof = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			const int32 scaleDeb = (int32)READ_LE_UINT32(ptr);
+			ptr += 4;
+			const int32 scaleFin = (int32)READ_LE_UINT32(ptr);
+			ptr += 4;
+			const int32 tempo = (int32)READ_LE_UINT32(ptr);
+			ptr += 4;
+			const int16 speedRot = (int16)READ_LE_UINT16(ptr);
+			ptr += 2;
+			_engine->_flow->createExtraParticleFlow(FLOW_EXTRA_POF, owner, numPof, speedRot,
+			                                         x, y, z, beta, flowIdx, 0, scaleDeb, scaleFin, tempo);
+			break;
+		}
+		default:
+			warning("Collision::doImpact: unknown command %u in impact %i", command, num);
+			return;
+		}
+	}
 }
 
 } // namespace TwinE

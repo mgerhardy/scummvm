@@ -86,7 +86,7 @@ bool EntityData::loadAnim(Common::SeekableReadStream &stream, bool lba1) {
 		if (recordSize > 0) {
 			recordSize += 2;
 		} else {
-			recordSize = 5;
+			recordSize = 6;
 		}
 	}
 	anim.animIndex = stream.readSint16LE();
@@ -290,7 +290,10 @@ bool EntityData::loadAnim(Common::SeekableReadStream &stream, bool lba1) {
 				action.strength = stream.readByte();
 				break;
 			case ActionType::ACTION_FLOW_3D:
-				stream.skip(7);
+				action.distanceX = stream.readSint16LE();
+				action.distanceY = stream.readSint16LE();
+				action.distanceZ = stream.readSint16LE();
+				action.strength = stream.readSByte();
 				break;
 			case ActionType::ACTION_THROW_DART:
 				action.distanceY = stream.readSint16LE();
@@ -371,6 +374,11 @@ bool EntityData::loadFromStream(Common::SeekableReadStream &stream, bool lba1) {
 			}
 		} else if (opcode == 0xFF) {
 			break;
+		} else {
+			// Match FICHE.CPP default: skip unknown record types
+			stream.readByte(); // gen
+			const uint8 skip = stream.readByte();
+			stream.skip(skip);
 		}
 	} while (!stream.eos() && !stream.err());
 

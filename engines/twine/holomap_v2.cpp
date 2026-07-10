@@ -20,17 +20,22 @@
  */
 
 #include "twine/holomap_v2.h"
+#include "twine/holoplan_v2.h"
 #include "common/algorithm.h"
 #include "common/debug.h"
 #include "common/memstream.h"
 #include "common/stream.h"
 #include "twine/audio/sound.h"
 #include "twine/menu/interface.h"
+#include "twine/parser/anim3ds.h"
 #include "twine/renderer/renderer.h"
 #include "twine/renderer/screens.h"
 #include "twine/resources/hqr.h"
 #include "twine/resources/resources.h"
+#include "twine/scene/actor.h"
+#include "twine/scene/animations.h"
 #include "twine/scene/gamestate.h"
+#include "twine/scene/movements.h"
 #include "twine/scene/scene.h"
 #include "twine/shared.h"
 #include "twine/text.h"
@@ -78,11 +83,40 @@ void HolomapV2::clrHoloPos(int32 locationIdx) {
 }
 
 bool HolomapV2::loadLocations() {
-	return HQR::getEntry((uint8 *)_locations, Resources::HQR_HOLOMAP_FILE, RESSHQR_ARROWBIN) != 0;
+	if (HQR::getEntry((uint8 *)_locations, Resources::HQR_HOLOMAP_FILE, RESSHQR_ARROWBIN) == 0) {
+		return false;
+	}
+
+	_engine->_text->initDial(TextBankId::Inventory_Intro_and_Holomap);
+	for (int32 i = 0; i < HOLO_MAX_CUBE; ++i) {
+		const Location &loc = _locations[HOLO_MAX_OBJECTIF + i];
+		if (!_engine->_text->getMenuText((TextId)loc.Mess, _locationNames[i], sizeof(_locationNames[i]))) {
+			_locationNames[i][0] = '\0';
+		}
+	}
+	return true;
 }
 
 const char *HolomapV2::getLocationName(int index) const {
+	if (index >= 0 && index < HOLO_MAX_CUBE && _locationNames[index][0] != '\0') {
+		return _locationNames[index];
+	}
 	return "";
+}
+
+uint8 HolomapV2::getIslandPlanet(int32 island) const {
+	if (island >= 0 && island < HOLO_MAX_OBJECTIF) {
+		return _locations[island].Planet;
+	}
+	return 0;
+}
+
+const HolomapV2::Location &HolomapV2::getLocation(int32 index) const {
+	static const Location kEmpty{};
+	if (index >= 0 && index < HOLO_MAX_ARROW) {
+		return _locations[index];
+	}
+	return kEmpty;
 }
 
 void HolomapV2::computeCoorMapping() {
@@ -296,8 +330,116 @@ void HolomapV2::initHoloDatas() {
 }
 
 void HolomapV2::holoTraj(int32 trajectoryIndex) {
-	// TODO: implement trajectory animation for LBA2
-	warning("HolomapV2::holoTraj(%d) not yet implemented", trajectoryIndex);
+	if (_engine->isDemo()) {
+		return;
+	}
+
+	const Trajectory *data = _engine->_resources->giveTrajPtr(trajectoryIndex);
+	if (data == nullptr) {
+		warning("HolomapV2::holoTraj(%d): trajectory not found", trajectoryIndex);
+		return;
+	}
+
+	_engine->saveTimer(false);
+	_engine->_screens->fadeToBlack(_engine->_screens->_ptrPal);
+	_engine->_interface->unsetClip();
+	_engine->_screens->clearScreen();
+
+	initHoloDatas();
+
+	const int32 cameraPosX = _engine->width() / 2;
+	const int32 cameraPosY = scale(220);
+	_engine->_renderer->setProjection(cameraPosX, cameraPosY, 128, 1024, 1024);
+	_engine->_renderer->setFollowCamera(0, 0, 0, data->angle.x, data->angle.y, data->angle.z, distance(5300.0f));
+
+	_holomapImagePtr = nullptr;
+	_holomapImageSize = HQR::getAllocEntry(&_holomapImagePtr,
+		TwineResource(Resources::HQR_HOLOMAP_FILE, HQR_TWINSUN_HMG));
+	if (_holomapImageSize == 0) {
+		error("Failed to load holomap image for LBA2 trajectory");
+	}
+
+	const Location &loc = _locations[HOLO_MAX_OBJECTIF + data->locationIdx];
+	_holoAlpha = loc.Alpha & (LBAAngles::ANGLE_360 - 1);
+	_holoBeta = loc.Beta & (LBAAngles::ANGLE_360 - 1);
+	_holoGamma = 0;
+	_zoomPlanet = HOLO_ZOOM_PLANET;
+
+	AnimTimerDataStruct animTimerData;
+	AnimData animData;
+	animData.loadFromHQR(Resources::HQR_RESS_FILE, data->getAnimation(), false);
+	BodyData bodyData;
+	bodyData.loadFromHQR(Resources::HQR_RESS_FILE, data->getModel(), false);
+	uint frameNumber = 0;
+	int32 frameTime = _engine->timerRef;
+	int16 trajAnimFrameIdx = 0;
+	RealValue move;
+
+	bool flagpal = true;
+	_engine->_input->enableKeyMap(holomapKeyMapId);
+	for (;;) {
+		FrameMarker frame(_engine, 50);
+		_engine->readKeys();
+		if (_engine->shouldQuit() || _engine->_input->toggleAbortAction()) {
+			break;
+		}
+
+		const Common::Rect rect(0, 0, _engine->width() - 1, _engine->height() - 1);
+		_engine->_interface->box(rect, COLOR_BLACK);
+
+		_engine->_renderer->setInverseAngleCamera(_holoAlpha, _holoBeta, _holoGamma);
+		_engine->_renderer->setLightVector(_holoAlpha, _holoBeta, 0);
+		_engine->_renderer->setCameraRotation(0, 0, distance((float)_zoomPlanet));
+		drawHoloMap();
+		drawListHoloGlobe(true);
+
+		_engine->_renderer->setFollowCamera(0, 0, 0, data->angle.x, data->angle.y, data->angle.z, distance(5300.0f));
+		if (_engine->_animations->setInterAnimObjet(frameNumber, animData, bodyData, &animTimerData)) {
+			frameNumber++;
+			if (frameNumber >= animData.getNbFramesAnim()) {
+				frameNumber = animData.getLoopFrame();
+			}
+		}
+		Common::Rect vehicleRect(0, _engine->height() - 180, 200, _engine->height());
+		_engine->_interface->box(vehicleRect, COLOR_BLACK);
+		Common::Rect dummy;
+		_engine->_renderer->affObjetIso(0, 0, 0, LBAAngles::ANGLE_0, -LBAAngles::ANGLE_90, LBAAngles::ANGLE_0, bodyData, dummy);
+		_engine->copyBlockPhys(vehicleRect);
+
+		if (frameTime + 40 <= _engine->timerRef) {
+			frameTime = _engine->timerRef;
+			int32 alpha;
+			int32 beta;
+			if (trajAnimFrameIdx < data->numAnimFrames) {
+				alpha = data->positions[trajAnimFrameIdx].x;
+				beta = data->positions[trajAnimFrameIdx].y;
+			} else {
+				if (data->numAnimFrames < trajAnimFrameIdx) {
+					break;
+				}
+				alpha = loc.Alpha;
+				beta = loc.Beta;
+			}
+			_engine->_renderer->setAngleCamera(alpha, beta, 0);
+			const IVec3 &m = _engine->_renderer->worldRotatePoint(IVec3(0, 0, HOLO_RAYON_PLANET + loc.Alt));
+			_engine->_renderer->setFollowCamera(0, 0, 0, data->angle.x, data->angle.y, data->angle.z, distance(5300.0f));
+			_engine->_renderer->renderIsoModel(m, alpha, beta, LBAAngles::ANGLE_0, _engine->_resources->_holomapPointModelPtr, dummy);
+			++trajAnimFrameIdx;
+		}
+
+		_engine->copyBlockPhys(rect);
+
+		if (flagpal) {
+			flagpal = false;
+			_engine->_screens->fadeToPal(_engine->_screens->_ptrPal);
+		}
+		++_engine->timerRef;
+	}
+
+	_engine->_screens->fadeToBlack(_engine->_screens->_ptrPal);
+	_engine->_gameState->init3DGame();
+	_engine->_input->enableKeyMap(mainKeyMapId);
+	_engine->restoreTimer();
 }
 
 void HolomapV2::holoMap() {
@@ -379,6 +521,7 @@ void HolomapV2::holoMap() {
 			// search prev active arrow
 			for (int n = HOLO_MAX_OBJECTIF; n < HOLO_MAX_ARROW; ++n) {
 				if (_locations[n].FlagHolo & HOLO_FLAG_ACTIVE) {
+					_numObjectif = n;
 					_destAlpha = _locations[n].Alpha & (LBAAngles::ANGLE_360 - 1);
 					_destBeta = _locations[n].Beta & (LBAAngles::ANGLE_360 - 1);
 					_moveTimer = _engine->timerRef;
@@ -391,6 +534,7 @@ void HolomapV2::holoMap() {
 			// search next active arrow
 			for (int n = HOLO_MAX_ARROW - 1; n >= HOLO_MAX_OBJECTIF; --n) {
 				if (_locations[n].FlagHolo & HOLO_FLAG_ACTIVE) {
+					_numObjectif = n;
 					_destAlpha = _locations[n].Alpha & (LBAAngles::ANGLE_360 - 1);
 					_destBeta = _locations[n].Beta & (LBAAngles::ANGLE_360 - 1);
 					_moveTimer = _engine->timerRef;
@@ -398,6 +542,13 @@ void HolomapV2::holoMap() {
 					_flagRedraw = true;
 					break;
 				}
+			}
+		} else if (_engine->_input->toggleActionIfActive(TwinEActionType::UIEnter)) {
+			if (_numObjectif >= 0 && _numObjectif < HOLO_MAX_OBJECTIF) {
+				_engine->_screens->fadeToBlack(_engine->_screens->_palettePcx);
+				_engine->_holoPlan->holoPlan(_numObjectif);
+				_flagRedraw = true;
+				_flagPal = true;
 			}
 		}
 

@@ -137,6 +137,7 @@ void Buggy::takeBuggy() {
 	ptrobj->_flags.bHasZBuffer = true;
 
 	// TODO: _engine->_actor->setBehaviour(HeroBehaviourType::kBUGGY);
+	_engine->_actor->setBehaviour(HeroBehaviourType::kBUGGY);
 
 	// Switch Buggy Scenario to NoBody.
 	_engine->_actor->initBody(BodyType::btNone, NUM_BUGGY);
@@ -525,7 +526,7 @@ void Buggy::moveBuggy(ActorStruct *ptrobj) {
 
 	if ((Input & I_THROW) && (PtrComportement->Flags & CF_WEAPON)) {
 		// Are we in mage?
-		if (TabInv[FLAG_TUNIQUE].IdObj3D == 0) {
+		if (_engine->_gameState->getInventoryObj3D(FLAG_TUNIQUE) == 0) {
 			_engine->_actor->initBody(BodyType::btTunicTir, OWN_ACTOR_SCENE_INDEX);
 		} else {
 			_engine->_actor->initBody(BodyType::btMageTir, OWN_ACTOR_SCENE_INDEX);

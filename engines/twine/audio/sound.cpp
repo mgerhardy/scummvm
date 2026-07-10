@@ -32,6 +32,7 @@
 #include "common/util.h"
 #include "twine/parser/text.h"
 #include "twine/scene/collision.h"
+#include "twine/scene/rain.h"
 #include "twine/movies.h"
 #include "twine/scene/grid.h"
 #include "twine/resources/hqr.h"
@@ -51,22 +52,13 @@ Sound::~Sound() {
 }
 
 void Sound::startRainSample() {
-	if (!_engine->_cfgfile.Sound) {
+	if (!_engine->_cfgfile.Sound || !_engine->_rain->shouldRender()) {
 		return;
 	}
-#if 0
 	const int sample = SAMPLE_RAIN;
-	if (CubeMode == CUBE_EXTERIEUR && !TEMPETE_FINIE && !isSamplePlaying(sample)) {
-		const int rate = 0x1000;
-		const int offset = 300;
-		const int repeat = 0;
-		const int panning = 64;
-		const int volumeRain = 70;
-		// TODO: mixSample(sample, rate, offset, repeat, panning, volumeRain);
+	if (!_engine->_sound->isSamplePlaying(sample)) {
+		_engine->_sound->mixSample(sample, 0x1000, 0, 70, 70);
 	}
-
-	RestartRainSample = false;
-#endif
 }
 
 void Sound::setChannelRate(int32 channelIdx, uint32 rate) {

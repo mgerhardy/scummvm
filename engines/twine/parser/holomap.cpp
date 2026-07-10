@@ -32,7 +32,8 @@ void TrajectoryData::reset() {
 bool TrajectoryData::loadFromStream(Common::SeekableReadStream &stream, bool lba1) {
 	reset();
 	_trajectories.reserve(100); // this is the lba1 amount of trajectories
-	while (stream.pos() < stream.size()) {
+	const uint32 recordHeaderSize = 7 * sizeof(int16);
+	while (stream.pos() + recordHeaderSize <= stream.size()) {
 		Trajectory data;
 		data.locationIdx = stream.readSint16LE();
 		data.trajLocationIdx = stream.readSint16LE();
@@ -41,7 +42,23 @@ bool TrajectoryData::loadFromStream(Common::SeekableReadStream &stream, bool lba
 		data.angle.y = stream.readSint16LE();
 		data.angle.z = stream.readSint16LE();
 		data.numAnimFrames = stream.readSint16LE();
-		assert(data.numAnimFrames < ARRAYSIZE(data.positions));
+
+		if (data.numAnimFrames <= 0) {
+			_trajectories.push_back(data);
+			continue;
+		}
+
+		if (data.numAnimFrames >= ARRAYSIZE(data.positions)) {
+			warning("TrajectoryData: invalid frame count %d at offset %u", data.numAnimFrames, (uint)stream.pos());
+			return false;
+		}
+
+		const uint32 framesSize = (uint32)data.numAnimFrames * 2 * sizeof(int16);
+		if (stream.pos() + framesSize > stream.size()) {
+			warning("TrajectoryData: truncated trajectory data at offset %u", (uint)stream.pos());
+			return false;
+		}
+
 		for (int32 i = 0; i < data.numAnimFrames; ++i) {
 			data.positions[i].x = stream.readSint16LE();
 			data.positions[i].y = stream.readSint16LE();

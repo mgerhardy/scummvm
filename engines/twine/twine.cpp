@@ -60,13 +60,17 @@
 #include "twine/scene/buggy.h"
 #include "twine/scene/collision.h"
 #include "twine/scene/dart.h"
+#include "twine/scene/exterior.h"
+#include "twine/scene/pof.h"
 #include "twine/scene/extra.h"
+#include "twine/scene/flow.h"
 #include "twine/scene/gamestate.h"
 #include "twine/scene/grid.h"
 #include "twine/scene/movements.h"
 #include "twine/scene/rain.h"
 #include "twine/scene/scene.h"
 #include "twine/scene/wagon.h"
+#include "twine/holoplan_v2.h"
 #include "twine/script/script_life_v1.h"
 #include "twine/script/script_life_v2.h"
 #include "twine/script/script_move_v1.h"
@@ -241,17 +245,25 @@ TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flag
 		_scriptMove = new ScriptMoveV1(this);
 		_buggy = nullptr;
 		_dart = nullptr;
+		_exterior = nullptr;
+		_flow = nullptr;
+		_pof = nullptr;
 		_rain = nullptr;
 		_wagon = nullptr;
+		_holoPlan = nullptr;
 		_holomap = new HolomapV1(this);
 	} else {
 		_scriptLife = new ScriptLifeV2(this);
 		_scriptMove = new ScriptMoveV2(this);
 		_buggy = new Buggy(this);
 		_dart = new Dart(this);
+		_exterior = new Exterior(this);
+		_flow = new Flow(this);
+		_pof = new Pof(this);
 		_rain = new Rain(this);
 		_wagon = new Wagon(this);
 		_holomap = new HolomapV2(this);
+		_holoPlan = new HoloPlanV2(this, static_cast<HolomapV2 *>(_holomap));
 	}
 	_sound = new Sound(this);
 	_text = new Text(this);
@@ -283,8 +295,12 @@ TwinEEngine::~TwinEEngine() {
 	delete _scriptMove;
 	delete _buggy;
 	delete _dart;
+	delete _exterior;
+	delete _flow;
+	delete _pof;
 	delete _rain;
 	delete _wagon;
+	delete _holoPlan;
 	delete _holomap;
 	delete _sound;
 	delete _text;
@@ -740,6 +756,9 @@ void TwinEEngine::initAll() {
 
 	if (isLBA2()) {
 		_dart->InitDarts();
+		_exterior->init();
+		_flow->init();
+		_pof->init();
 	}
 
 	extInitSvga();
@@ -818,6 +837,119 @@ void TwinEEngine::processBonusList() {
 	_text->initSceneTextBank();
 }
 
+bool TwinEEngine::heroCanUsePlayerMenus() const {
+	const ActorStruct *hero = _scene->_sceneHero;
+	if (!hero || hero->_body == -1 || hero->_workFlags.bSKATING) {
+		return false;
+	}
+	if (isLBA2()) {
+		return hero->_move == ControlMode::kManual || hero->_move == ControlMode::kBuggyManual;
+	}
+	return hero->_move == ControlMode::kManual;
+}
+
+void TwinEEngine::throwMecaPenguin() {
+	if (!heroCanUsePlayerMenus() || !_gameState->hasItem(InventoryItems::kiPenguin)) {
+		return;
+	}
+
+	ActorStruct *penguin = _scene->getActor(_scene->_mecaPenguinIdx);
+	if (!penguin) {
+		return;
+	}
+
+	const IVec2 &destPos = _renderer->rotate(0, 800, _scene->_sceneHero->_beta);
+
+	penguin->_posObj = _scene->_sceneHero->posObj();
+	penguin->_posObj.x += destPos.x;
+	penguin->_posObj.z += destPos.y;
+	penguin->_workFlags.bIsFalling = 0;
+	penguin->_beta = _scene->_sceneHero->_beta;
+
+	if (_collision->checkValidObjPos(_scene->_mecaPenguinIdx)) {
+		penguin->setLife(getMaxLife());
+		penguin->_genBody = BodyType::btNone;
+		_actor->initBody(BodyType::btNormal, _scene->_mecaPenguinIdx);
+		penguin->_workFlags.bIsDead = 0;
+		penguin->setCollision(ShapeType::kNone);
+		_movements->initRealAngleConst(penguin->_beta, penguin->_beta, penguin->_srot, &penguin->realAngle);
+		_gameState->removeItem(InventoryItems::kiPenguin);
+		penguin->_delayInMillis = timerRef + toSeconds(30);
+	}
+}
+
+void TwinEEngine::processLba2WeaponSelect(InventoryItems weapon) {
+	if (!heroCanUsePlayerMenus()) {
+		return;
+	}
+
+	auto resetBehaviourIfNeeded = [&]() {
+		if ((int)_actor->_heroBehaviour > (int)HeroBehaviourType::kDiscrete) {
+			_actor->setBehaviour(HeroBehaviourType::kNormal);
+		}
+	};
+
+	switch (weapon) {
+	case InventoryItems::kiMagicBall:
+		if (_gameState->hasItem(InventoryItems::kiMagicBall)) {
+			_gameState->setActiveWeapon(InventoryItems::kiMagicBall);
+			resetBehaviourIfNeeded();
+			_actor->initBody(BodyType::btTunic, OWN_ACTOR_SCENE_INDEX);
+		}
+		break;
+	case InventoryItems::kiDart:
+		if (_gameState->hasItem(InventoryItems::kiDart)) {
+			_gameState->setActiveWeapon(InventoryItems::kiDart);
+			resetBehaviourIfNeeded();
+			_actor->initBody(BodyType::btTunic, OWN_ACTOR_SCENE_INDEX);
+		}
+		break;
+	case InventoryItems::kiBlowpipe:
+		if (_gameState->hasItem(InventoryItems::kiBlowpipe)) {
+			_gameState->setActiveWeapon(InventoryItems::kiBlowpipe);
+			resetBehaviourIfNeeded();
+			_actor->initBody(BodyType::btTunic, OWN_ACTOR_SCENE_INDEX);
+		}
+		break;
+	case InventoryItems::kiConch:
+		if (_gameState->hasItem(InventoryItems::kiConch)) {
+			if (_actor->_heroBehaviour == HeroBehaviourType::kConch) {
+				_actor->setBehaviour(HeroBehaviourType::kNormal);
+			} else {
+				_actor->setBehaviour(HeroBehaviourType::kConch);
+			}
+		}
+		break;
+	case InventoryItems::kiGlove:
+		if (_gameState->hasItem(InventoryItems::kiGlove)) {
+			_gameState->setActiveWeapon(InventoryItems::kiGlove);
+			resetBehaviourIfNeeded();
+			_actor->initBody(BodyType::btTunic, OWN_ACTOR_SCENE_INDEX);
+		}
+		break;
+	case InventoryItems::kiPistolLaser:
+		if (_gameState->hasItem(InventoryItems::kiPistolLaser) && _gameState->getInventoryObj3D(InventoryItems::kiPistolLaser) == 2) {
+			_gameState->setActiveWeapon(InventoryItems::kiPistolLaser);
+			resetBehaviourIfNeeded();
+			_actor->initBody(BodyType::btTunic, OWN_ACTOR_SCENE_INDEX);
+		}
+		break;
+	case InventoryItems::kiSabreLba2:
+		if (_gameState->hasItem(InventoryItems::kiSabreLba2)) {
+			const bool wasSabre = _gameState->isSabreWeaponActive();
+			_gameState->setActiveWeapon(InventoryItems::kiSabreLba2);
+			resetBehaviourIfNeeded();
+			_actor->initBody(BodyType::btTunic, OWN_ACTOR_SCENE_INDEX);
+			if (!wasSabre) {
+				_animations->initAnim(AnimationTypes::kSabreUnknown, AnimType::kAnimationThen, AnimationTypes::kStanding, OWN_ACTOR_SCENE_INDEX);
+			}
+		}
+		break;
+	default:
+		break;
+	}
+}
+
 void TwinEEngine::processInventoryAction() {
 	saveTimer(false);
 	testRestoreModeSVGA(true) ;
@@ -856,42 +988,23 @@ void TwinEEngine::processInventoryAction() {
 			_scene->_sceneHero->_genBody = BodyType::btTunic;
 		}
 
-		if (_actor->_heroBehaviour == HeroBehaviourType::kProtoPack) {
+		if (isLBA2()) {
+			_scene->_sceneHero->_genBody = BodyType::btTunic;
+			const HeroBehaviourType packBehaviour = _gameState->getInventoryObj3D(InventoryItems::kiProtoPack) == 1 ? HeroBehaviourType::kJetPack : HeroBehaviourType::kProtoPack;
+			if (_actor->_heroBehaviour == packBehaviour) {
+				_actor->setBehaviour(HeroBehaviourType::kNormal);
+			} else {
+				_actor->setBehaviour(packBehaviour);
+			}
+		} else if (_actor->_heroBehaviour == HeroBehaviourType::kProtoPack) {
 			_actor->setBehaviour(HeroBehaviourType::kNormal);
 		} else {
 			_actor->setBehaviour(HeroBehaviourType::kProtoPack);
 		}
 		break;
-	case kiPenguin: {
-		ActorStruct *penguin = _scene->getActor(_scene->_mecaPenguinIdx);
-
-		const IVec2 &destPos = _renderer->rotate(0, 800, _scene->_sceneHero->_beta);
-
-		penguin->_posObj = _scene->_sceneHero->posObj();
-		penguin->_posObj.x += destPos.x;
-		penguin->_posObj.z += destPos.y;
-		// TODO: HACK for https://bugs.scummvm.org/ticket/13731
-		// The movement of the meca penguin is different from dos version
-		// the problem is that the value set to 1 even if the penguin is not yet spawned
-		// this might either be a problem with initObject() not being called for the penguin
-		// or some other flaw that doesn't ignore the penguin until spawned
-		penguin->_workFlags.bIsFalling = 0;
-
-		penguin->_beta = _scene->_sceneHero->_beta;
-		debug("penguin angle: %i", penguin->_beta);
-
-		if (_collision->checkValidObjPos(_scene->_mecaPenguinIdx)) {
-			penguin->setLife(getMaxLife());
-			penguin->_genBody = BodyType::btNone;
-			_actor->initBody(BodyType::btNormal, _scene->_mecaPenguinIdx);
-			penguin->_workFlags.bIsDead = 0;
-			penguin->setCollision(ShapeType::kNone);
-			_movements->initRealAngleConst(penguin->_beta, penguin->_beta, penguin->_srot, &penguin->realAngle);
-			_gameState->removeItem(InventoryItems::kiPenguin);
-			penguin->_delayInMillis = timerRef + toSeconds(30);
-		}
+	case kiPenguin:
+		throwMecaPenguin();
 		break;
-	}
 	case kiBonusList: {
 		restoreTimer();
 		_redraw->drawScene(true);
@@ -1003,18 +1116,42 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 
 		// inventory menu
 		_loopInventoryItem = -1;
-		if (_input->isActionActive(TwinEActionType::InventoryMenu) && _scene->_sceneHero->_body != -1 && _scene->_sceneHero->_move == ControlMode::kManual) {
+		if (_input->isActionActive(TwinEActionType::InventoryMenu) && heroCanUsePlayerMenus()) {
 			processInventoryAction();
 		}
 
-		if (_input->toggleActionIfActive(TwinEActionType::ChangeBehaviourNormal)) {
-			_actor->setBehaviour(HeroBehaviourType::kNormal);
-		} else if (_input->toggleActionIfActive(TwinEActionType::ChangeBehaviourAthletic)) {
-			_actor->setBehaviour(HeroBehaviourType::kAthletic);
-		} else if (_input->toggleActionIfActive(TwinEActionType::ChangeBehaviourAggressive)) {
-			_actor->setBehaviour(HeroBehaviourType::kAggressive);
-		} else if (_input->toggleActionIfActive(TwinEActionType::ChangeBehaviourDiscreet)) {
-			_actor->setBehaviour(HeroBehaviourType::kDiscrete);
+		if (!isLBA2()) {
+			if (_input->toggleActionIfActive(TwinEActionType::ChangeBehaviourNormal)) {
+				_actor->setBehaviour(HeroBehaviourType::kNormal);
+			} else if (_input->toggleActionIfActive(TwinEActionType::ChangeBehaviourAthletic)) {
+				_actor->setBehaviour(HeroBehaviourType::kAthletic);
+			} else if (_input->toggleActionIfActive(TwinEActionType::ChangeBehaviourAggressive)) {
+				_actor->setBehaviour(HeroBehaviourType::kAggressive);
+			} else if (_input->toggleActionIfActive(TwinEActionType::ChangeBehaviourDiscreet)) {
+				_actor->setBehaviour(HeroBehaviourType::kDiscrete);
+			}
+		} else {
+			if (_input->toggleActionIfActive(TwinEActionType::WeaponMagicBall)) {
+				processLba2WeaponSelect(InventoryItems::kiMagicBall);
+			} else if (_input->toggleActionIfActive(TwinEActionType::WeaponDart)) {
+				processLba2WeaponSelect(InventoryItems::kiDart);
+			} else if (_input->toggleActionIfActive(TwinEActionType::WeaponBlowpipe)) {
+				processLba2WeaponSelect(InventoryItems::kiBlowpipe);
+			} else if (_input->toggleActionIfActive(TwinEActionType::WeaponConch)) {
+				processLba2WeaponSelect(InventoryItems::kiConch);
+			} else if (_input->toggleActionIfActive(TwinEActionType::WeaponGlove)) {
+				processLba2WeaponSelect(InventoryItems::kiGlove);
+			} else if (_input->toggleActionIfActive(TwinEActionType::WeaponLaser)) {
+				processLba2WeaponSelect(InventoryItems::kiPistolLaser);
+			} else if (_input->toggleActionIfActive(TwinEActionType::WeaponSabre)) {
+				processLba2WeaponSelect(InventoryItems::kiSabreLba2);
+			}
+
+			if (_input->toggleActionIfActive(TwinEActionType::UsePenguin)) {
+				saveTimer(false);
+				throwMecaPenguin();
+				restoreTimer();
+			}
 		}
 
 		// Process behaviour menu
@@ -1024,7 +1161,7 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 			 _input->isActionActive(TwinEActionType::QuickBehaviourAthletic, false) ||
 			 _input->isActionActive(TwinEActionType::QuickBehaviourAggressive, false) ||
 			 _input->isActionActive(TwinEActionType::QuickBehaviourDiscreet, false)) &&
-			_scene->_sceneHero->_body != -1 && _scene->_sceneHero->_move == ControlMode::kManual) {
+			heroCanUsePlayerMenus()) {
 			if (_input->isActionActive(TwinEActionType::QuickBehaviourNormal, false)) {
 				_actor->_heroBehaviour = HeroBehaviourType::kNormal;
 			} else if (_input->isActionActive(TwinEActionType::QuickBehaviourAthletic, false)) {
@@ -1041,25 +1178,36 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 			_redraw->drawScene(true);
 		}
 
-		// use Proto-Pack
+		// use Proto-Pack / Jetpack
 		if (_input->toggleActionIfActive(TwinEActionType::UseProtoPack) && _gameState->hasItem(InventoryItems::kiProtoPack)) {
-			if (_gameState->hasItem(InventoryItems::kiBookOfBu)) {
-				_scene->_sceneHero->_genBody = BodyType::btNormal;
-			} else {
+			if (isLBA2()) {
 				_scene->_sceneHero->_genBody = BodyType::btTunic;
-			}
-
-			if (_actor->_heroBehaviour == HeroBehaviourType::kProtoPack) {
-				_actor->setBehaviour(HeroBehaviourType::kNormal);
+				const HeroBehaviourType packBehaviour = _gameState->getInventoryObj3D(InventoryItems::kiProtoPack) == 1 ? HeroBehaviourType::kJetPack : HeroBehaviourType::kProtoPack;
+				if (_actor->_heroBehaviour == packBehaviour) {
+					_actor->setBehaviour(HeroBehaviourType::kNormal);
+				} else {
+					_actor->setBehaviour(packBehaviour);
+					_movements->setProtoTimer(timerRef + TEMPO_PROTO_AUTO);
+				}
 			} else {
-				_actor->setBehaviour(HeroBehaviourType::kProtoPack);
+				if (_gameState->hasItem(InventoryItems::kiBookOfBu)) {
+					_scene->_sceneHero->_genBody = BodyType::btNormal;
+				} else {
+					_scene->_sceneHero->_genBody = BodyType::btTunic;
+				}
+
+				if (_actor->_heroBehaviour == HeroBehaviourType::kProtoPack) {
+					_actor->setBehaviour(HeroBehaviourType::kNormal);
+				} else {
+					_actor->setBehaviour(HeroBehaviourType::kProtoPack);
+				}
 			}
 		}
 
 		// Recenter Screen
 		if (_input->toggleActionIfActive(TwinEActionType::RecenterScreenOnTwinsen) && !_cameraZone) {
 			const ActorStruct *currentlyFollowedActor = _scene->getActor(_scene->_numObjFollow);
-			_grid->centerOnActor(currentlyFollowedActor);
+			_grid->centerOnActor(currentlyFollowedActor, true);
 		}
 
 		// Draw holomap
@@ -1125,6 +1273,10 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 	}
 
 	_extra->gereExtras();
+
+	if (isLBA2()) {
+		_flow->animAll();
+	}
 
 	for (int32 a = 0; a < _scene->_nbObjets; a++) {
 		ActorStruct *actor = _scene->getActor(a);
@@ -1291,7 +1443,9 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 	_redraw->drawScene(_redraw->_firstTime);
 
 	if (isLBA2()) {
-		_rain->AffRain();
+		if (_rain->shouldRender()) {
+			_rain->AffRain();
+		}
 	}
 
 	// workaround to fix hero redraw after drowning

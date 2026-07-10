@@ -21,6 +21,7 @@
 
 #include "twine/scene/scene.h"
 #include "twine/scene/rain.h"
+#include "twine/scene/exterior.h"
 #include "common/config-manager.h"
 #include "common/file.h"
 #include "common/memstream.h"
@@ -201,6 +202,7 @@ bool Scene::loadSceneLBA2() {
 	_shadowLevel = stream.readByte();
 	_modeLabyrinthe = stream.readByte();
 	_isOutsideScene = stream.readByte();
+	_planet = _engine->_holomap->getIslandPlanet(_island);
 
 	/*uint8 n =*/ stream.readByte();
 
@@ -622,6 +624,11 @@ void Scene::changeCube() {
 		error("Failed to load scene grid %i", _newCube);
 	}
 
+	if (_engine->isLBA2() && _engine->_exterior->isActive()) {
+		_engine->_exterior->initGrid();
+		_engine->_grid->updateExteriorCamera(true);
+	}
+
 	// LBA2: load per-island palette from XPL data
 	if (_engine->isLBA2()) {
 		_engine->_screens->choicePalette();
@@ -639,6 +646,20 @@ void Scene::changeCube() {
 
 	_sceneHero->_posObj = _sceneStart;
 	_startYFalling = _sceneStart.y;
+
+	// LBA2 OBJECT.CPP: snap hero to ground height on scene entry (FlagReajustPosTwinsen)
+	if (!_engine->_gameState->_loadingSave && _engine->isLBA2()) {
+		ActorStruct *hero = _sceneHero;
+		if (!hero->_workFlags.bANIM_MASTER_GRAVITY && hero->_carryBy == -1) {
+			if (_engine->_exterior->isActive()) {
+				hero->_posObj.y = _engine->_exterior->getAltitude(hero->_posObj.x, hero->_posObj.z, 0);
+			} else {
+				const IVec3 groundPos = _engine->_movements->getShadow(hero->_posObj);
+				hero->_posObj = groundPos;
+			}
+			hero->_oldPos = hero->_posObj;
+		}
+	}
 
 	_engine->_renderer->setLightVector(_alphaLight, _betaLight, LBAAngles::ANGLE_0);
 
@@ -664,6 +685,7 @@ void Scene::changeCube() {
 	_engine->_grid->_indexGrm = -1;
 	_engine->_redraw->_firstTime = true;
 	_engine->_cameraZone = false;
+	const bool recenterCamera = (_flagChgCube == ScenePositionType::kZone);
 	_newCube = SCENE_CEILING_GRID_FADE_1;
 	_flagChgCube = ScenePositionType::kNoPosition;
 	_flagRenderGrid = true;
@@ -678,7 +700,7 @@ void Scene::changeCube() {
 		_engine->_gameState->_hasPendingStartCube = false;
 	}
 
-	_engine->_grid->centerOnActor(followedActor);
+	_engine->_grid->centerOnActor(followedActor, recenterCamera);
 
 	_engine->_screens->_flagFade = true;
 	_engine->_renderer->setLightVector(_alphaLight, _betaLight, LBAAngles::ANGLE_0);
@@ -822,9 +844,6 @@ void Scene::checkZoneSce(int32 actorIdx) {
 		    (currentY >= zone->mins.y && currentY <= zone->maxs.y) &&
 		    (currentZ >= zone->mins.z && currentZ <= zone->maxs.z)) {
 			switch (zone->type) {
-			default:
-				warning("lba2 zone types not yet implemented");
-				break;
 			case ZoneType::kFunFrockFix:
 				break;
 			case ZoneType::kCube:
@@ -904,6 +923,37 @@ void Scene::checkZoneSce(int32 actorIdx) {
 							}
 						}
 					}
+				}
+				break;
+			case ZoneType::kEscalator:
+				if (zone->infoData.generic.info1 && actor->_carryBy == -1) {
+					actor->_workFlags.bDONT_PICK_CODE_JEU = true;
+					switch (zone->infoData.generic.info2) {
+					case 1:
+						actor->_brickSound = (CJ_ESCALATOR_NORD << 4);
+						break;
+					case 2:
+						actor->_brickSound = (CJ_ESCALATOR_SUD << 4);
+						break;
+					case 4:
+						actor->_brickSound = (CJ_ESCALATOR_EST << 4);
+						break;
+					case 8:
+						actor->_brickSound = (CJ_ESCALATOR_OUEST << 4);
+						break;
+					default:
+						break;
+					}
+				}
+				break;
+			case ZoneType::kHit:
+				if (!zone->infoData.generic.info3 && zone->infoData.generic.info1) {
+					if (actor->_lifePoint > 0) {
+						_engine->_actor->hitObj(actorIdx, actorIdx, zone->infoData.generic.info1, actor->_beta);
+					}
+					zone->infoData.generic.info3 = zone->infoData.generic.info2 * 5 * 20 + _engine->timerRef;
+				} else if (_engine->timerRef >= zone->infoData.generic.info3) {
+					zone->infoData.generic.info3 = 0;
 				}
 				break;
 			}

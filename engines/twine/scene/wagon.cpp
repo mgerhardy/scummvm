@@ -20,6 +20,7 @@
  */
 
 #include "twine/scene/wagon.h"
+#include "twine/scene/move3d.h"
 #include "twine/parser/anim.h"
 #include "twine/parser/body.h"
 #include "twine/renderer/renderer.h"
@@ -86,112 +87,6 @@ static bool isSwitchZoneOn(const TwinEEngine *engine, const ActorStruct *actor) 
 	return zone.infoData.generic.info1 != 0;
 }
 
-// LIB386/3D/MOVE.CPP - timer-based distance/angle stepping for wagon rails
-int32 getDeltaAccMove(int32 *acc) {
-	if (*acc >= 1000 || *acc <= -1000) {
-		const int32 quot = *acc / 1000;
-		*acc -= quot * 1000;
-		return quot;
-	}
-	return 0;
-}
-
-int32 adjustSpeedAngle(int32 speed, int32 start, int32 end) {
-	int32 diff = (end & 4095) - (start & 4095);
-	if (diff == 0) {
-		return 0;
-	}
-
-	if (diff < 0) {
-		diff = -diff;
-		speed = -speed;
-	}
-
-	return (diff < 2048) ? speed : -speed;
-}
-
-void changeSpeedMove(TwinEEngine *engine, MoveStruct *move, int32 speed) {
-	const uint32 timer = engine->timerRef;
-	const uint32 delta = timer - move->lastTimer;
-
-	if (delta || move->speed) {
-		move->acc += (int32)(timer - move->lastTimer) * move->speed;
-		move->lastTimer = timer;
-	}
-
-	move->speed = speed;
-}
-
-void restartMove(TwinEEngine *engine, MoveStruct *move) {
-	move->acc = 500;
-	move->lastTimer = engine->timerRef;
-}
-
-void initMove(TwinEEngine *engine, MoveStruct *move, int32 speed) {
-	restartMove(engine, move);
-	changeSpeedMove(engine, move, speed);
-}
-
-int32 getDeltaMove(TwinEEngine *engine, MoveStruct *move) {
-	const uint32 timer = engine->timerRef;
-	const uint32 delta = timer - move->lastTimer;
-
-	if (delta || move->speed) {
-		move->acc += (int32)(timer - move->lastTimer) * move->speed;
-		move->lastTimer = timer;
-		return getDeltaAccMove(&move->acc);
-	}
-
-	return 0;
-}
-
-void initBoundAngleMove(TwinEEngine *engine, BoundMoveStruct *bound, int32 speed, int32 start, int32 end) {
-	changeSpeedMove(engine, &bound->move, adjustSpeedAngle(speed, start, end));
-	bound->cur = start & 4095;  // TODO: LBAAngles
-	bound->end = end & 4095;  // TODO: LBAAngles
-}
-
-int32 getBoundAngleMove(TwinEEngine *engine, BoundMoveStruct *bound) {
-	const int32 temp = getDeltaMove(engine, &bound->move);
-	int32 cur = bound->cur;
-
-	if (temp) {
-		int32 end = bound->end;
-
-		if (bound->move.speed > 0) {
-			if (cur > end) {
-				end += 4096; // TODO: LBAAngles
-			}
-
-			cur += temp;
-
-			if (cur >= end) {
-				cur = end;
-				bound->move.speed = 0;
-			}
-		} else {
-			if (cur < end) {
-				end -= 4096; // TODO: LBAAngles
-			}
-
-			cur += temp;
-
-			if (cur <= end) {
-				cur = end;
-				bound->move.speed = 0;
-			}
-		}
-
-		cur &= 4095; // TODO: LBAAngles
-		bound->cur = cur;
-	}
-
-	return cur;
-}
-
-int32 getSpeedMove(const MoveStruct *move) {
-	return move->speed;
-}
 } // namespace
 
 void Wagon::DoAnimWagon(ActorStruct *ptrobj) {

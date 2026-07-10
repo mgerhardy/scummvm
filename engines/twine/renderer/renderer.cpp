@@ -21,6 +21,7 @@
 
 #include "twine/renderer/renderer.h"
 #include "common/util.h"
+#include <cmath>
 #include "twine/menu/interface.h"
 #include "twine/parser/body.h"
 #include "twine/parser/anim.h"
@@ -51,6 +52,12 @@ Renderer::~Renderer() {
 	free(_tabMapV0);
 	free(_tabMapU1);
 	free(_tabMapV1);
+	free(_tabPerspW0);
+	free(_tabPerspW1);
+	free(_tabPerspUW0);
+	free(_tabPerspUW1);
+	free(_tabPerspVW0);
+	free(_tabPerspVW1);
 }
 
 void Renderer::init(int32 w, int32 h) {
@@ -72,6 +79,19 @@ void Renderer::init(int32 w, int32 h) {
 	memset(_tabMapU1, 0, size);
 	_tabMapV1 = (int16 *)malloc(size);
 	memset(_tabMapV1, 0, size);
+	const size_t size32 = _engine->height() * sizeof(int32);
+	_tabPerspW0 = (int32 *)malloc(size32);
+	memset(_tabPerspW0, 0, size32);
+	_tabPerspW1 = (int32 *)malloc(size32);
+	memset(_tabPerspW1, 0, size32);
+	_tabPerspUW0 = (int32 *)malloc(size32);
+	memset(_tabPerspUW0, 0, size32);
+	_tabPerspUW1 = (int32 *)malloc(size32);
+	memset(_tabPerspUW1, 0, size32);
+	_tabPerspVW0 = (int32 *)malloc(size32);
+	memset(_tabPerspVW0, 0, size32);
+	_tabPerspVW1 = (int32 *)malloc(size32);
+	memset(_tabPerspVW1, 0, size32);
 
 	_tabx0 = _tabMapU0;
 	_tabx1 = _tabMapU1;
@@ -81,6 +101,25 @@ void Renderer::projIso(IVec3 &pos, int32 x, int32 y, int32 z) {
 	pos.x = (int16)((((x - z) * 24) / ISO_SCALE) + _projectionCenter.x);
 	pos.y = (int16)(((((x + z) * 12) - (y * 30)) / ISO_SCALE) + _projectionCenter.y);
 	pos.z = 0;
+}
+
+bool Renderer::longProjectPoint(const IVec3 &rotatedWorld, IVec3 &proj) {
+	if (_typeProj == TYPE_ISO) {
+		projIso(proj, rotatedWorld.x, rotatedWorld.y, rotatedWorld.z);
+		return true;
+	}
+	if (_cameraRot.z - rotatedWorld.z <= 0) {
+		proj.x = 0;
+		proj.y = 0;
+		proj.z = 0;
+		return false;
+	}
+	proj = projectPoint(rotatedWorld);
+	return true;
+}
+
+void Renderer::drawTexturedGroundTriangle(const ComputedVertex screenCoords[3], const ComputedVertex texCoords[3], uint8 renderType, const uint8 *texture, int16 flatShade, uint16 repMask) {
+	renderTexturedTriangle(screenCoords, texCoords, renderType, texture, flatShade, repMask);
 }
 
 IVec3 Renderer::projectPoint(int32 cX, int32 cY, int32 cZ) { // ProjettePoint
@@ -137,6 +176,37 @@ void Renderer::setIsoProjection(int32 x, int32 y, int32 scale) {
 	_typeProj = TYPE_ISO;
 }
 
+void Renderer::clearPolySpans(int32 yMin, int32 yMax) {
+	if (yMin < 0) {
+		yMin = 0;
+	}
+	const int32 maxY = _engine->height() - 1;
+	if (yMax > maxY) {
+		yMax = maxY;
+	}
+	if (yMin > yMax) {
+		return;
+	}
+
+	const int32 count = yMax - yMin + 1;
+	memset(&_tabVerticG[yMin], 0x7F, count * sizeof(int16));
+	memset(&_tabVerticD[yMin], 0x80, count * sizeof(int16));
+	memset(&_tabCoulG[yMin], 0, count * sizeof(int16));
+	memset(&_tabCoulD[yMin], 0, count * sizeof(int16));
+	memset(&_tabMapU0[yMin], 0, count * sizeof(int16));
+	memset(&_tabMapV0[yMin], 0, count * sizeof(int16));
+	memset(&_tabMapU1[yMin], 0, count * sizeof(int16));
+	memset(&_tabMapV1[yMin], 0, count * sizeof(int16));
+	if (_tabPerspUW0) {
+		memset(&_tabPerspUW0[yMin], 0, count * sizeof(int32));
+		memset(&_tabPerspVW0[yMin], 0, count * sizeof(int32));
+		memset(&_tabPerspW0[yMin], 0, count * sizeof(int32));
+		memset(&_tabPerspUW1[yMin], 0, count * sizeof(int32));
+		memset(&_tabPerspVW1[yMin], 0, count * sizeof(int32));
+		memset(&_tabPerspW1[yMin], 0, count * sizeof(int32));
+	}
+}
+
 void Renderer::flipMatrix() { // FlipMatrice
 	SWAP(_matrixWorld.row1.y, _matrixWorld.row2.x);
 	SWAP(_matrixWorld.row1.z, _matrixWorld.row3.x);
@@ -151,14 +221,11 @@ IVec3 Renderer::setInverseAngleCamera(int32 alpha, int32 beta, int32 gamma) {
 }
 
 IVec3 Renderer::setAngleCamera(int32 alpha, int32 beta, int32 gamma) {
-	const int32 cAlpha = ClampAngle(alpha);
-	const int32 cAlpha2 = ClampAngle(alpha + LBAAngles::ANGLE_90);
-	const int32 nSin = sinTab[cAlpha];
-	const int32 nCos = sinTab[cAlpha2];
-	const int32 cGamma = ClampAngle(gamma);
-	const int32 cGamma2 = ClampAngle(gamma + LBAAngles::ANGLE_90);
-	int32 nSin2 = sinTab[cGamma];
-	int32 nCos2 = sinTab[cGamma2];
+	const bool lba2 = _engine->isLBA2();
+	const int32 nSin = trigSin(alpha, lba2);
+	const int32 nCos = trigCos(alpha, lba2);
+	int32 nSin2 = trigSin(gamma, lba2);
+	int32 nCos2 = trigCos(gamma, lba2);
 
 	_matrixWorld.row1.x = nCos2;
 	_matrixWorld.row1.y = -nSin2;
@@ -167,10 +234,8 @@ IVec3 Renderer::setAngleCamera(int32 alpha, int32 beta, int32 gamma) {
 	_matrixWorld.row3.x = (nSin2 * nSin) >> 14;
 	_matrixWorld.row3.y = (nCos2 * nSin) >> 14;
 
-	const int32 cBeta = ClampAngle(beta);
-	const int32 cBeta2 = ClampAngle(beta + LBAAngles::ANGLE_90);
-	nSin2 = sinTab[cBeta];
-	nCos2 = sinTab[cBeta2];
+	nSin2 = trigSin(beta, lba2);
+	nCos2 = trigCos(beta, lba2);
 
 	int32 h = _matrixWorld.row1.x;
 	_matrixWorld.row1.x = (nCos2 * h) >> 14;
@@ -185,6 +250,10 @@ IVec3 Renderer::setAngleCamera(int32 alpha, int32 beta, int32 gamma) {
 	_matrixWorld.row3.z = ((nCos2 * nCos) + (nSin2 * h)) >> 14;
 
 	_cameraRot = longWorldRot(_cameraPos.x, _cameraPos.y, _cameraPos.z);
+
+	if (_engine->isLBA2()) {
+		recomputeLight();
+	}
 
 	return _cameraRot;
 }
@@ -210,6 +279,27 @@ IVec3 Renderer::longInverseRot(int32 x, int32 y, int32 z) {
 	return IVec3((int32)vx, (int32)vy, (int32)vz);
 }
 
+IVec3 Renderer::rotateRootAnimStep(int32 alpha, int32 beta, int32 gamma, int32 x, int32 y, int32 z) {
+	IMatrix3x3 identity;
+	identity.row1 = IVec3(16384, 0, 0);
+	identity.row2 = IVec3(0, 16384, 0);
+	identity.row3 = IVec3(0, 0, 16384);
+	IMatrix3x3 stepMatrix;
+	rotMatIndex2(&stepMatrix, &identity, IVec3(alpha, beta, gamma));
+	return rot(stepMatrix, x, y, z);
+}
+
+IVec3 Renderer::inverseRotPoint(const IMatrix3x3 &matrix, int32 x, int32 y, int32 z) {
+	const int64 vx = ((int64)matrix.row1.x * (int64)x + (int64)matrix.row2.x * (int64)y + (int64)matrix.row3.x * (int64)z) >> 14;
+	const int64 vy = ((int64)matrix.row1.y * (int64)x + (int64)matrix.row2.y * (int64)y + (int64)matrix.row3.y * (int64)z) >> 14;
+	const int64 vz = ((int64)matrix.row1.z * (int64)x + (int64)matrix.row2.z * (int64)y + (int64)matrix.row3.z * (int64)z) >> 14;
+	return IVec3((int32)vx, (int32)vy, (int32)vz);
+}
+
+void Renderer::recomputeLight() {
+	_normalLight = rot(_matrixWorld, _normalLightLocal.x, _normalLightLocal.y, _normalLightLocal.z);
+}
+
 IVec3 Renderer::rot(const IMatrix3x3 &matrix, int32 x, int32 y, int32 z) {
 	const int32 vx = (matrix.row1.x * x + matrix.row1.y * y + matrix.row1.z * z) >> 14;
 	const int32 vy = (matrix.row2.x * x + matrix.row2.y * y + matrix.row2.z * z) >> 14;
@@ -230,8 +320,9 @@ void Renderer::setFollowCamera(int32 targetX, int32 targetY, int32 targetZ, int3
 
 IVec2 Renderer::rotate(int32 side, int32 forward, int32 angle) const {
 	if (angle) {
-		const int32 nSin = sinTab[ClampAngle(angle)];
-		const int32 nCos = sinTab[ClampAngle((angle + LBAAngles::ANGLE_90))];
+		const bool lba2 = _engine->isLBA2();
+		const int32 nSin = trigSin(angle, lba2);
+		const int32 nCos = trigCos(angle, lba2);
 
 		const int32 x0 = ((side * nCos) + (forward * nSin)) >> 14;
 		const int32 y0 = ((forward * nCos) - (side * nSin)) >> 14;
@@ -245,10 +336,11 @@ void Renderer::rotMatIndex2(IMatrix3x3 *pDest, const IMatrix3x3 *pSrc, const IVe
 	const int32 lAlpha = angleVec.x;
 	const int32 lBeta = angleVec.y;
 	const int32 lGamma = angleVec.z;
+	const bool lba2 = _engine->isLBA2();
 
 	if (lAlpha) {
-		int32 nSin = sinTab[ClampAngle(lAlpha)];
-		int32 nCos = sinTab[ClampAngle(lAlpha + LBAAngles::ANGLE_90)];
+		int32 nSin = trigSin(lAlpha, lba2);
+		int32 nCos = trigCos(lAlpha, lba2);
 
 		pDest->row1.x = pSrc->row1.x;
 		pDest->row2.x = pSrc->row2.x;
@@ -264,8 +356,8 @@ void Renderer::rotMatIndex2(IMatrix3x3 *pDest, const IMatrix3x3 *pSrc, const IVe
 	}
 
 	if (lGamma) {
-		int32 nSin = sinTab[ClampAngle(lGamma)];
-		int32 nCos = sinTab[ClampAngle(lGamma + LBAAngles::ANGLE_90)];
+		int32 nSin = trigSin(lGamma, lba2);
+		int32 nCos = trigCos(lGamma, lba2);
 
 		tmp.row1.z = pSrc->row1.z;
 		tmp.row2.z = pSrc->row2.z;
@@ -282,8 +374,8 @@ void Renderer::rotMatIndex2(IMatrix3x3 *pDest, const IMatrix3x3 *pSrc, const IVe
 	}
 
 	if (lBeta) {
-		int32 nSin = sinTab[ClampAngle(lBeta)];
-		int32 nCos = sinTab[ClampAngle(lBeta + LBAAngles::ANGLE_90)];
+		int32 nSin = trigSin(lBeta, lba2);
+		int32 nCos = trigCos(lBeta, lba2);
 
 		if (pSrc == pDest) {
 			tmp.row1.x = pSrc->row1.x;
@@ -344,15 +436,48 @@ void Renderer::rotList(const Common::Array<BodyVertex> &vertices, int32 firstPoi
 	}
 }
 
+// LBA2 RotTransList: matrix rotation plus InitMatrixTrans offset (AFF_OBJ.CPP)
+void Renderer::rotTransList(const Common::Array<BodyVertex> &vertices, int32 firstPoint, int32 numPoints, I16Vec3 *destPoints, const IMatrix3x3 *matrix, const IVec3 &trans) {
+	for (int32 i = 0; i < numPoints; ++i) {
+		const BodyVertex &vertex = vertices[i + firstPoint];
+		destPoints->x = (int16)(((matrix->row1.x * vertex.x + matrix->row1.y * vertex.y + matrix->row1.z * vertex.z) >> 14) + trans.x);
+		destPoints->y = (int16)(((matrix->row2.x * vertex.x + matrix->row2.y * vertex.y + matrix->row2.z * vertex.z) >> 14) + trans.y);
+		destPoints->z = (int16)(((matrix->row3.x * vertex.x + matrix->row3.y * vertex.y + matrix->row3.z * vertex.z) >> 14) + trans.z);
+
+		destPoints++;
+	}
+}
+
 // RotateGroupe
-void Renderer::processRotatedElement(IMatrix3x3 *targetMatrix, const Common::Array<BodyVertex> &vertices, int32 alpha, int32 beta, int32 gamma, const BodyBone &bone, ModelData *modelData) {
+void Renderer::processRotatedElement(IMatrix3x3 *targetMatrix, int32 boneIdx, const Common::Array<BodyVertex> &vertices, int32 alpha, int32 beta, int32 gamma, const BodyBone &bone, ModelData *modelData) {
 	const int32 firstPoint = bone.firstVertex;
 	const int32 numOfPoints = bone.numVertices;
-	const IVec3 renderAngle(alpha, beta, gamma);
+	const IVec3 renderAngle(ClampAngle(alpha), ClampAngle(beta), ClampAngle(gamma));
+
+	if (!numOfPoints) {
+		warning("RENDER WARNING: No points in this model!");
+	}
+
+	if (_engine->isLBA2()) {
+		// AFF_OBJ.CPP: RotateMatrix + InitMatrixTrans + RotTransList
+		const IMatrix3x3 *parentMatrix;
+		IVec3 trans(0, 0, 0);
+		if (boneIdx == 0) {
+			parentMatrix = &_matrixWorld;
+		} else {
+			assert(bone.parent < ARRAYSIZE(_matricesTable));
+			parentMatrix = &_matricesTable[bone.parent];
+			const I16Vec3 &pivot = modelData->computedPoints[bone.vertex];
+			trans = IVec3(pivot.x, pivot.y, pivot.z);
+		}
+
+		rotMatIndex2(targetMatrix, parentMatrix, renderAngle);
+		rotTransList(vertices, firstPoint, numOfPoints, &modelData->computedPoints[firstPoint], targetMatrix, trans);
+		return;
+	}
 
 	const IMatrix3x3 *currentMatrix;
 	IVec3 destPos;
-	// if its the first point
 	if (bone.isRoot()) {
 		currentMatrix = &_matrixWorld;
 	} else {
@@ -365,11 +490,6 @@ void Renderer::processRotatedElement(IMatrix3x3 *targetMatrix, const Common::Arr
 	}
 
 	rotMatIndex2(targetMatrix, currentMatrix, renderAngle);
-
-	if (!numOfPoints) {
-		warning("RENDER WARNING: No points in this model!");
-	}
-
 	rotList(vertices, firstPoint, numOfPoints, &modelData->computedPoints[firstPoint], targetMatrix, destPos);
 }
 
@@ -389,42 +509,72 @@ void Renderer::transRotList(const Common::Array<BodyVertex> &vertices, int32 fir
 }
 
 // TranslateGroupe
-void Renderer::translateGroup(IMatrix3x3 *targetMatrix, const Common::Array<BodyVertex> &vertices, int32 rotX, int32 rotY, int32 rotZ, const BodyBone &bone, ModelData *modelData) {
+void Renderer::translateGroup(IMatrix3x3 *targetMatrix, int32 boneIdx, const Common::Array<BodyVertex> &vertices, int32 rotX, int32 rotY, int32 rotZ, const BodyBone &bone, ModelData *modelData) {
 	const IVec3 renderAngle(rotX, rotY, rotZ);
 	IVec3 destPos;
 
-	const IMatrix3x3 *parentMatrix;
-	if (bone.isRoot()) {
-		parentMatrix = &_matrixWorld;
-	} else {
-		destPos = modelData->computedPoints[bone.vertex];
-		const int32 matrixIndex = bone.parent;
-		assert(matrixIndex >= 0 && matrixIndex < ARRAYSIZE(_matricesTable));
-		parentMatrix = &_matricesTable[matrixIndex];
+	if (_engine->isLBA2()) {
+		// AFF_OBJ.CPP: RotatePoint(mat, stepX, stepY, stepZ) + CopyMatrix + InitMatrixTrans + RotTransList
+		const IMatrix3x3 *parentMatrix;
+		IVec3 pivot(0, 0, 0);
+		if (boneIdx == 0) {
+			parentMatrix = &_matrixWorld;
+		} else {
+			assert(bone.parent < ARRAYSIZE(_matricesTable));
+			parentMatrix = &_matricesTable[bone.parent];
+			const I16Vec3 &p = modelData->computedPoints[bone.vertex];
+			pivot = IVec3(p.x, p.y, p.z);
+		}
+
+		const IVec3 animOffset = rot(*parentMatrix, rotX, rotY, rotZ);
+		*targetMatrix = *parentMatrix;
+		const IVec3 trans(pivot.x + animOffset.x, pivot.y + animOffset.y, pivot.z + animOffset.z);
+		rotTransList(vertices, bone.firstVertex, bone.numVertices, &modelData->computedPoints[bone.firstVertex], targetMatrix, trans);
+		return;
 	}
 
-	if (_engine->isLBA2()) {
-		// AFF_OBJ.CPP: RotatePoint + CopyMatrix + InitMatrixTrans + RotTransList
-		IMatrix3x3 rotMat;
-		rotMatIndex2(&rotMat, parentMatrix, renderAngle);
-		const IVec3 animOffset = rot(rotMat, 0, 0, 16384);
-		*targetMatrix = *parentMatrix;
-		destPos.x += animOffset.x;
-		destPos.y += animOffset.y;
-		destPos.z += animOffset.z;
-		rotList(vertices, bone.firstVertex, bone.numVertices, &modelData->computedPoints[bone.firstVertex], targetMatrix, destPos);
+	if (bone.isRoot()) {
+		*targetMatrix = _matrixWorld;
 	} else {
-		if (bone.isRoot()) {
-			*targetMatrix = _matrixWorld;
-		} else {
-			*targetMatrix = _matricesTable[bone.parent];
-		}
-		transRotList(vertices, bone.firstVertex, bone.numVertices, &modelData->computedPoints[bone.firstVertex], targetMatrix, renderAngle, destPos);
+		destPos = modelData->computedPoints[bone.vertex];
+		*targetMatrix = _matricesTable[bone.parent];
+	}
+	transRotList(vertices, bone.firstVertex, bone.numVertices, &modelData->computedPoints[bone.firstVertex], targetMatrix, renderAngle, destPos);
+}
+
+void Renderer::zoomGroup(IMatrix3x3 *targetMatrix, int32 boneIdx, const BodyBone &bone, const BoneFrame *boneData, ModelData *modelData) {
+	const int32 zoomX = (int32)(uint8)((int16)boneData->x + 256);
+	const int32 zoomY = (int32)(uint8)((int16)boneData->y + 256);
+	const int32 zoomZ = (int32)(uint8)((int16)boneData->z + 256);
+
+	I16Vec3 *pt = &modelData->computedPoints[bone.firstVertex];
+	for (int32 i = 0; i < bone.numVertices; ++i, ++pt) {
+		pt->x = (int16)((pt->x * zoomX) >> 8);
+		pt->y = (int16)((pt->y * zoomY) >> 8);
+		pt->z = (int16)((pt->z * zoomZ) >> 8);
+	}
+
+	if (boneIdx == 0) {
+		*targetMatrix = _matrixWorld;
+	} else {
+		*targetMatrix = _matricesTable[bone.parent];
 	}
 }
 
 void Renderer::setLightVector(int32 angleX, int32 angleY, int32 angleZ) {
-	const int32 normalUnit = 64;
+	const int32 normalUnit = _engine->isLBA2() ? 15360 : 64; // LIB_NORMAL_UNIT vs LBA1
+	if (_engine->isLBA2()) {
+		IMatrix3x3 identity;
+		identity.row1 = IVec3(16384, 0, 0);
+		identity.row2 = IVec3(0, 16384, 0);
+		identity.row3 = IVec3(0, 0, 16384);
+		IMatrix3x3 lightMatrix;
+		rotMatIndex2(&lightMatrix, &identity, IVec3(angleX, angleY, 0));
+		_normalLightLocal = inverseRotPoint(lightMatrix, 0, 0, normalUnit);
+		recomputeLight();
+		return;
+	}
+
 	const IVec3 renderAngle(angleX, angleY, angleZ);
 	IMatrix3x3 rotationMatrix;
 	rotMatIndex2(&rotationMatrix, &_matrixWorld, renderAngle);
@@ -434,28 +584,77 @@ void Renderer::setLightVector(int32 angleX, int32 angleY, int32 angleZ) {
 namespace {
 
 bool usesGouraudShade(int16 polyRenderType) {
-	if (polyRenderType == POLYGONTYPE_TEXTURE || polyRenderType == POLYGONTYPE_TEXTURE_FLAT) {
+	const int16 baseType = polyRenderType >= POLYGONTYPE_TEXTURE_PERSP ? (int16)(polyRenderType - 3) : polyRenderType;
+	if (baseType == POLYGONTYPE_TEXTURE || baseType == POLYGONTYPE_TEXTURE_FLAT) {
 		return false;
 	}
-	return polyRenderType >= POLYGONTYPE_GOURAUD;
+	return baseType >= POLYGONTYPE_GOURAUD;
+}
+
+bool usesPerspectiveTexture(int16 polyRenderType) {
+	return polyRenderType >= POLYGONTYPE_TEXTURE_PERSP && polyRenderType <= POLYGONTYPE_TEXTURE_FLAT_PERSP;
+}
+
+int16 baseTextureRenderType(int16 polyRenderType) {
+	if (polyRenderType == POLYGONTYPE_TEXTURE_PERSP) {
+		return POLYGONTYPE_TEXTURE;
+	}
+	if (polyRenderType == POLYGONTYPE_TEXTURE_GOURAUD_PERSP) {
+		return POLYGONTYPE_TEXTURE_GOURAUD;
+	}
+	if (polyRenderType == POLYGONTYPE_TEXTURE_FLAT_PERSP) {
+		return POLYGONTYPE_TEXTURE_FLAT;
+	}
+	return polyRenderType;
 }
 
 uint8 mapLba2TextureRenderType(uint8 polyType) {
+	const bool persp = polyType >= 16;
 	switch (polyType) {
 	case 8:
 	case 12:
-		return POLYGONTYPE_TEXTURE;
+	case 16:
+	case 20:
+		return persp ? POLYGONTYPE_TEXTURE_PERSP : POLYGONTYPE_TEXTURE;
 	case 9:
 	case 13:
-		return POLYGONTYPE_TEXTURE_FLAT;
+	case 17:
+	case 21:
+		return persp ? POLYGONTYPE_TEXTURE_FLAT_PERSP : POLYGONTYPE_TEXTURE_FLAT;
 	default:
-		return POLYGONTYPE_TEXTURE_GOURAUD;
+		return persp ? POLYGONTYPE_TEXTURE_GOURAUD_PERSP : POLYGONTYPE_TEXTURE_GOURAUD;
 	}
 }
 
-void mapBodyTextureUV(int16 &mapU, int16 &mapV, uint8 u, uint8 v) {
-	mapU = (int16)((uint16)u << 8);
-	mapV = (int16)((uint16)v << 8);
+int32 computePerspectiveW(int32 rotatedZ, int32 posZWr) {
+	int32 z = rotatedZ + posZWr;
+	if (z <= 0) {
+		z = 1;
+	}
+	return (int32)((int64)W_NORM / z);
+}
+
+void mapBodyTextureUV(int16 &mapU, int16 &mapV, uint16 u, uint16 v, bool lba2) {
+	if (lba2) {
+		mapU = (int16)u;
+		mapV = (int16)v;
+	} else {
+		mapU = (int16)((uint16)u << 8);
+		mapV = (int16)((uint16)v << 8);
+	}
+}
+
+uint32 buildEnvMappedUv(const IVec3 &rotated, uint16 scale) {
+	const int32 scaleX = (int32)(scale & 0xFFu);
+	const int32 scaleY = (int32)((uint32)scale >> 8);
+	const int32 mapU = ((int32)(uint16)(rotated.x + 0x4000) * scaleX) >> 4;
+	const uint32 packedMapV = (((uint32)((int32)(uint16)(rotated.y + 0x4000) * scaleY)) << 12) & 0xFFFF0000u;
+	return (uint32)mapU | packedMapV;
+}
+
+void mapEnvTextureUV(int16 &mapU, int16 &mapV, uint32 packedUv) {
+	mapU = (int16)(packedUv & 0xFFFF);
+	mapV = (int16)(packedUv >> 16);
 }
 
 byte shadeTexturedPixel(byte texel, int16 light) {
@@ -466,28 +665,40 @@ byte shadeTexturedPixel(byte texel, int16 light) {
 	return (byte)((texel & 0xF0) | shade);
 }
 
-uint16 computeNormalLight(const BodyNormal &normal, const IMatrix3x3 &matrix, bool lba2Format) {
+uint16 computeNormalLight(const BodyNormal &normal, const IMatrix3x3 &matrix, const IVec3 &cameraLight, bool lba2Format) {
 	const int32 x = (int32)normal.x;
 	const int32 y = (int32)normal.y;
 	const int32 z = (int32)normal.z;
 
 	int32 intensity = 0;
-	intensity += matrix.row1.x * x + matrix.row1.y * y + matrix.row1.z * z;
-	intensity += matrix.row2.x * x + matrix.row2.y * y + matrix.row2.z * z;
-	intensity += matrix.row3.x * x + matrix.row3.y * y + matrix.row3.z * z;
-
-	if (intensity > 0) {
-		intensity >>= 14;
-		// LBA2 stores bone group in the 4th normal field, not a scale divisor.
-		if (!lba2Format && normal.prenormalizedRange != 0) {
-			intensity /= normal.prenormalizedRange;
+	if (lba2Format) {
+		// LightListF: inverse-rotate camera light into bone space, then dot with normal.
+		const int32 lx = (matrix.row1.x * cameraLight.x + matrix.row2.x * cameraLight.y + matrix.row3.x * cameraLight.z) >> 14;
+		const int32 ly = (matrix.row1.y * cameraLight.x + matrix.row2.y * cameraLight.y + matrix.row3.y * cameraLight.z) >> 14;
+		const int32 lz = (matrix.row1.z * cameraLight.x + matrix.row2.z * cameraLight.y + matrix.row3.z * cameraLight.z) >> 14;
+		intensity = (int32)(((int64)lx * x + (int64)ly * y + (int64)lz * z) >> 16);
+		if (intensity < 0) {
+			intensity = 0;
 		}
 	} else {
+		intensity += matrix.row1.x * x + matrix.row1.y * y + matrix.row1.z * z;
+		intensity += matrix.row2.x * x + matrix.row2.y * y + matrix.row2.z * z;
+		intensity += matrix.row3.x * x + matrix.row3.y * y + matrix.row3.z * z;
+		if (intensity > 0) {
+			intensity >>= 14;
+			if (normal.prenormalizedRange != 0) {
+				intensity /= normal.prenormalizedRange;
+			}
+		} else {
+			intensity = 0;
+		}
+	}
+
+	if (intensity < 0) {
 		intensity = 0;
 	}
 
 	if (lba2Format) {
-		// AFF_OBJ ListLights[] values are consumed with >> 8 in the colour path.
 		return (uint16)(MIN<int32>(intensity, 255) << 8);
 	}
 	return (uint16)intensity;
@@ -1409,6 +1620,7 @@ void Renderer::renderPolygons(const CmdRenderPolygon &polygon, ComputedVertex *v
 	int16 vtop, vbottom;
 	uint8 renderType = polygon.renderType;
 	if (computePoly(renderType, vertices, polygon.numVertices, vtop, vbottom)) {
+		clearPolySpans(vtop, vbottom);
 		fillVertices(vtop, vbottom, renderType, polygon.colorIndex);
 	}
 }
@@ -1484,27 +1696,40 @@ bool Renderer::computeTexturedPoly(int16 polyRenderType, const ComputedVertex *s
 	return true;
 }
 
-void Renderer::renderTexturedTriangle(const ComputedVertex screenCoords[3], const ComputedVertex texCoords[3], uint8 renderType, const uint8 *texture, int16 flatShade, uint16 repMask) {
+void Renderer::renderTexturedTriangle(const ComputedVertex screenCoords[3], const ComputedVertex texCoords[3], uint8 renderType, const uint8 *texture, int16 flatShade, uint16 repMask, const int32 perspW[3]) {
+	const bool perspective = perspW != nullptr && usesPerspectiveTexture(renderType);
+	const int16 baseRenderType = baseTextureRenderType(renderType);
+
 	int16 vtop = 0;
 	int16 vbottom = 0;
 	ComputedVertex *screenVerts = nullptr;
 	ComputedVertex *texVerts = nullptr;
 	int32 clippedCount = 0;
-	if (!computeTexturedPoly(renderType, screenCoords, texCoords, 3, vtop, vbottom, screenVerts, texVerts, clippedCount)) {
+	if (!computeTexturedPoly(baseRenderType, screenCoords, texCoords, 3, vtop, vbottom, screenVerts, texVerts, clippedCount)) {
 		return;
 	}
 
 	int32 lymin = vtop;
 	int32 lymax = vbottom;
 
+	if (perspective && clippedCount == 3) {
+		clearPolySpans(lymin, lymax);
+		for (int32 i = 0; i < clippedCount; ++i) {
+			fillHolomapTrianglesPersp(screenVerts[i], screenVerts[i + 1], texVerts[i], texVerts[i + 1], perspW[i], perspW[i + 1], lymin, lymax);
+		}
+		fillBodyTextPolyNoClip(lymin, lymax, texture, baseRenderType, flatShade, repMask, true);
+		return;
+	}
+
+	clearPolySpans(lymin, lymax);
 	for (int32 i = 0; i < clippedCount; ++i) {
 		fillHolomapTriangles(screenVerts[i], screenVerts[i + 1], texVerts[i], texVerts[i + 1], lymin, lymax);
 	}
 
-	fillBodyTextPolyNoClip(lymin, lymax, texture, renderType, flatShade, repMask);
+	fillBodyTextPolyNoClip(lymin, lymax, texture, baseRenderType, flatShade, repMask, false);
 }
 
-void Renderer::renderTexturedPolygons(const CmdRenderTexturedPolygon &polygon, ComputedVertex *screenVerts, ComputedVertex *texVerts) {
+void Renderer::renderTexturedPolygons(const CmdRenderTexturedPolygon &polygon, ComputedVertex *screenVerts, ComputedVertex *texVerts, const int32 *perspW) {
 	const uint8 *texture = _engine->_resources->getBodyTexture().getAtOffset(polygon.textureOffset);
 	if (!texture) {
 		texture = _engine->_resources->getBodyTexture().getPage(0);
@@ -1514,11 +1739,24 @@ void Renderer::renderTexturedPolygons(const CmdRenderTexturedPolygon &polygon, C
 	}
 
 	if (polygon.numVertices == 3) {
-		renderTexturedTriangle(screenVerts, texVerts, polygon.renderType, texture, polygon.pad, polygon.repMask);
+		renderTexturedTriangle(screenVerts, texVerts, polygon.renderType, texture, polygon.pad, polygon.repMask, perspW);
+	} else if (polygon.numVertices == 4) {
+		const int32 w0 = perspW ? perspW[0] : 0;
+		const int32 w1 = perspW ? perspW[1] : 0;
+		const int32 w2 = perspW ? perspW[2] : 0;
+		const int32 w3 = perspW ? perspW[3] : 0;
+		const int32 tri0W[3] = {w0, w1, w2};
+		const int32 tri1W[3] = {w0, w2, w3};
+		const ComputedVertex tri0Screen[3] = {screenVerts[0], screenVerts[1], screenVerts[2]};
+		const ComputedVertex tri1Screen[3] = {screenVerts[0], screenVerts[2], screenVerts[3]};
+		const ComputedVertex tri0Tex[3] = {texVerts[0], texVerts[1], texVerts[2]};
+		const ComputedVertex tri1Tex[3] = {texVerts[0], texVerts[2], texVerts[3]};
+		renderTexturedTriangle(tri0Screen, tri0Tex, polygon.renderType, texture, polygon.pad, polygon.repMask, perspW ? tri0W : nullptr);
+		renderTexturedTriangle(tri1Screen, tri1Tex, polygon.renderType, texture, polygon.pad, polygon.repMask, perspW ? tri1W : nullptr);
 	}
 }
 
-void Renderer::fillBodyTextPolyNoClip(int32 yMin, int32 yMax, const uint8 *texture, uint8 renderType, int16 flatShade, uint16 repMask) {
+void Renderer::fillBodyTextPolyNoClip(int32 yMin, int32 yMax, const uint8 *texture, uint8 renderType, int16 flatShade, uint16 repMask, bool perspective) {
 	if (yMin < 0 || yMin >= _engine->_frontVideoBuffer.h) {
 		return;
 	}
@@ -1535,6 +1773,78 @@ void Renderer::fillBodyTextPolyNoClip(int32 yMin, int32 yMax, const uint8 *textu
 	const int16 *pCoulD = &_tabCoulD[yMin];
 	const bool gouraud = renderType == POLYGONTYPE_TEXTURE_GOURAUD;
 	const bool flat = renderType == POLYGONTYPE_TEXTURE_FLAT;
+
+	if (perspective) {
+		const int32 *pUw0 = &_tabPerspUW0[yMin];
+		const int32 *pVw0 = &_tabPerspVW0[yMin];
+		const int32 *pW0 = &_tabPerspW0[yMin];
+		const int32 *pUw1 = &_tabPerspUW1[yMin];
+		const int32 *pVw1 = &_tabPerspVW1[yMin];
+		const int32 *pW1 = &_tabPerspW1[yMin];
+
+		yMax -= yMin;
+		for (; yMax >= 0; yMax--) {
+			int16 xMin = *pVerticG++;
+			int16 xMax = *pVerticD++;
+			xMax -= xMin;
+
+			int64 uw = *pUw0++;
+			int64 vw = *pVw0++;
+			int64 w = *pW0++;
+			const int64 uw1 = *pUw1++;
+			const int64 vw1 = *pVw1++;
+			const int64 w1 = *pW1++;
+			int32 light = flat ? (flatShade << 8) : (gouraud ? *pCoulG++ : 0);
+			int32 lightEnd = gouraud ? *pCoulD++ : light;
+
+			if (xMax > 0) {
+				byte *pDest = pDestLine + xMin;
+				int64 uwstep = (uw1 - uw + xMax / 2) / xMax;
+				int64 vwstep = (vw1 - vw + xMax / 2) / xMax;
+				int64 wstep = (w1 - w + xMax / 2) / xMax;
+				int32 lightStep = gouraud ? (lightEnd - light) / xMax : 0;
+
+				for (; xMax > 0; xMax--) {
+					if (w != 0) {
+						const int32 u = (int32)(uw / w);
+						const int32 v = (int32)(vw / w);
+						const uint32 idx = ((u >> 8) & (repMask & 0xFF)) | (v & ((repMask >> 8) << 8));
+						const byte texel = texture[idx];
+						if (texel != 0) {
+							if (renderType == POLYGONTYPE_TEXTURE) {
+								*pDest = texel;
+							} else {
+								*pDest = shadeTexturedPixel(texel, (int16)light);
+							}
+						}
+					}
+					++pDest;
+					uw += uwstep;
+					vw += vwstep;
+					w += wstep;
+					light += lightStep;
+				}
+			} else if (xMax == 0) {
+				byte *pDest = pDestLine + xMin;
+				if (w != 0) {
+					const int32 u = (int32)(uw / w);
+					const int32 v = (int32)(vw / w);
+					const uint32 idx = ((u >> 8) & (repMask & 0xFF)) | (v & ((repMask >> 8) << 8));
+					const byte texel = texture[idx];
+					if (texel != 0) {
+						if (renderType == POLYGONTYPE_TEXTURE) {
+							*pDest = texel;
+						} else {
+							*pDest = shadeTexturedPixel(texel, (int16)light);
+						}
+					}
+				}
+			}
+
+			pDestLine += screenWidth;
+		}
+		return;
+	}
 
 	yMax -= yMin;
 
@@ -1760,61 +2070,186 @@ uint8 *Renderer::prepareSpheres(const Common::Array<BodySphere> &spheres, int32 
 }
 
 uint8 *Renderer::prepareLines(const Common::Array<BodyLine> &lines, int32 &numOfPrimitives, RenderCommand **renderCmds, uint8 *renderBufferPtr, ModelData *modelData) {
+	const uint8 *const bufferEnd = _renderCoordinatesBuffer + sizeof(_renderCoordinatesBuffer);
+	const Common::Rect &clip = _engine->_interface->_clip;
+
 	for (const BodyLine &line : lines) {
-		CmdRenderLine *cmd = (CmdRenderLine *)(void*)renderBufferPtr;
-		cmd->colorIndex = line.color;
 		const int32 point1Index = line.vertex1;
 		const int32 point2Index = line.vertex2;
-		cmd->x1 = modelData->flattenPoints[point1Index].x;
-		cmd->y1 = modelData->flattenPoints[point1Index].y;
-		cmd->x2 = modelData->flattenPoints[point2Index].x;
-		cmd->y2 = modelData->flattenPoints[point2Index].y;
-		(*renderCmds)->depth = MAX(modelData->flattenPoints[point1Index].z, modelData->flattenPoints[point2Index].z);
+		if (point1Index < 0 || point2Index < 0 || point1Index >= 800 || point2Index >= 800) {
+			continue;
+		}
+
+		const I16Vec3 &p1 = modelData->flattenPoints[point1Index];
+		const I16Vec3 &p2 = modelData->flattenPoints[point2Index];
+
+		// Skip degenerate or off-screen lines (behind-camera verts project to -32768)
+		if (p1.x <= -30000 || p1.y <= -30000 || p2.x <= -30000 || p2.y <= -30000) {
+			continue;
+		}
+		if (p1.x < clip.left - 200 && p2.x < clip.left - 200) {
+			continue;
+		}
+		if (p1.x > clip.right + 200 && p2.x > clip.right + 200) {
+			continue;
+		}
+		if (p1.y < clip.top - 200 && p2.y < clip.top - 200) {
+			continue;
+		}
+		if (p1.y > clip.bottom + 200 && p2.y > clip.bottom + 200) {
+			continue;
+		}
+
+		if (renderBufferPtr + (int32)sizeof(CmdRenderLine) > bufferEnd) {
+			break;
+		}
+
+		if (numOfPrimitives >= (int32)ARRAYSIZE(_renderCmds)) {
+			break;
+		}
+
+		CmdRenderLine *cmd = (CmdRenderLine *)(void*)renderBufferPtr;
+		cmd->colorIndex = line.color;
+		cmd->x1 = p1.x;
+		cmd->y1 = p1.y;
+		cmd->x2 = p2.x;
+		cmd->y2 = p2.y;
+		(*renderCmds)->depth = MAX(p1.z, p2.z);
 		(*renderCmds)->renderType = RENDERTYPE_DRAWLINE;
 		(*renderCmds)->dataPtr = renderBufferPtr;
 		(*renderCmds)++;
 
 		renderBufferPtr += sizeof(CmdRenderLine);
+		numOfPrimitives++;
 	}
-	numOfPrimitives += lines.size();
 	return renderBufferPtr;
 }
 
 uint8 *Renderer::preparePolygons(const BodyData &bodyData, int32 &numOfPrimitives, RenderCommand **renderCmds, uint8 *renderBufferPtr, ModelData *modelData) {
 	const Common::Array<BodyPolygon> &polygons = bodyData.getPolygons();
 	const bool hasBodyTexture = _engine->_resources->getBodyTexture().pageCount() > 0;
+	const uint8 *const bufferEnd = _renderCoordinatesBuffer + sizeof(_renderCoordinatesBuffer);
+	const bool usePerspectiveW = _typeProj == TYPE_3D;
 
 	for (const BodyPolygon &polygon : polygons) {
-		const uint8 materialType = polygon.materialType;
+		uint8 materialType = polygon.materialType;
+		if (materialType == MAT_TEXTURE && polygon.hasTexture && !hasBodyTexture) {
+			materialType = MAT_GOURAUD;
+		}
 		const uint8 numVertices = polygon.indices.size();
 		assert(numVertices <= 16);
 
-		if (materialType == MAT_TEXTURE && polygon.hasTexture && hasBodyTexture) {
+		if (polygon.isEnvironment && hasBodyTexture) {
 			const uint8 renderType = mapLba2TextureRenderType(polygon.polyType);
-			const uint32 textureInfo = bodyData.getTextureHandle(polygon.texturePage);
+			const uint32 textureInfo = bodyData.getTextureHandle(polygon.textureIndex);
 			const uint16 textureOffset = (uint16)(textureInfo & 0xffff);
 			const uint16 repMask = (uint16)(textureInfo >> 16);
-			(void)repMask;
 
-			int16 flatShade = lba2BaseColour(polygon);
-			if (renderType == POLYGONTYPE_TEXTURE_FLAT && numVertices >= 3) {
-				const uint16 v0 = polygon.indices[0];
-				const uint16 v1 = polygon.indices[1];
-				const uint16 v2 = polygon.indices[2];
-				flatShade = (lba2VertexColour(modelData->normalTable, polygon, v0) +
-					lba2VertexColour(modelData->normalTable, polygon, v1) +
-					lba2VertexColour(modelData->normalTable, polygon, v2)) / 3;
+			int16 flatShade = 0;
+			if (baseTextureRenderType(renderType) == POLYGONTYPE_TEXTURE_FLAT) {
+				const int32 lightIdx = (int32)polygon.normalIndex;
+				if (lightIdx >= 0 && lightIdx < (int32)ARRAYSIZE(modelData->normalTable)) {
+					flatShade = (int16)(modelData->normalTable[lightIdx] >> 8);
+				}
+			}
+
+			int16 zMax = -32000;
+			CmdRenderTexturedPolygon *destinationPolygon = (CmdRenderTexturedPolygon *)(void *)renderBufferPtr;
+			destinationPolygon->renderType = renderType;
+			destinationPolygon->numVertices = numVertices;
+			destinationPolygon->textureIndex = (uint8)polygon.textureIndex;
+			destinationPolygon->textureOffset = textureOffset;
+			destinationPolygon->repMask = repMask;
+			destinationPolygon->pad = (uint8)(flatShade & 0xff);
+
+			renderBufferPtr += sizeof(CmdRenderTexturedPolygon);
+
+			ComputedVertex *screenVertices = (ComputedVertex *)(void *)renderBufferPtr;
+			renderBufferPtr += numVertices * sizeof(ComputedVertex);
+			ComputedVertex *texVertices = (ComputedVertex *)(void *)renderBufferPtr;
+			renderBufferPtr += numVertices * sizeof(ComputedVertex);
+			int32 *perspW = nullptr;
+			if (usePerspectiveW && usesPerspectiveTexture(renderType)) {
+				if (renderBufferPtr + (int32)(sizeof(CmdRenderTexturedPolygon) + numVertices * (sizeof(ComputedVertex) * 2 + sizeof(int32))) > bufferEnd) {
+					break;
+				}
+				perspW = (int32 *)(void *)renderBufferPtr;
+				renderBufferPtr += numVertices * sizeof(int32);
+			}
+
+			for (int k = 0; k < numVertices; ++k) {
+				const uint16 vertexIndex = polygon.indices[k];
+				const I16Vec3 *point = &modelData->flattenPoints[vertexIndex];
+				const I16Vec3 *rotPoint = &modelData->computedPoints[vertexIndex];
+
+				screenVertices[k].x = point->x;
+				screenVertices[k].y = point->y;
+				zMax = MAX<int16>(zMax, point->z);
+
+				if (baseTextureRenderType(renderType) == POLYGONTYPE_TEXTURE_GOURAUD) {
+					screenVertices[k].intensity = lba2VertexColour(modelData->normalTable, polygon, vertexIndex);
+				} else if (baseTextureRenderType(renderType) == POLYGONTYPE_TEXTURE_FLAT) {
+					screenVertices[k].intensity = flatShade;
+				} else {
+					screenVertices[k].intensity = 0;
+				}
+
+				if (vertexIndex < bodyData.getNormals().size()) {
+					const BodyNormal &normal = bodyData.getNormal((int16)vertexIndex);
+					const uint16 boneGrp = normal.prenormalizedRange;
+					const IMatrix3x3 &boneMatrix = boneGrp < ARRAYSIZE(_matricesTable) ? _matricesTable[boneGrp] : _matricesTable[0];
+					const IVec3 rotated = rot(boneMatrix, normal.x, normal.y, normal.z);
+					mapEnvTextureUV(texVertices[k].x, texVertices[k].y, buildEnvMappedUv(rotated, polygon.envScale));
+				}
+
+				if (perspW != nullptr) {
+					perspW[k] = computePerspectiveW(rotPoint->z, _modelPosWr.z);
+				}
+			}
+
+			if (!isPolygonVisible(screenVertices)) {
+				renderBufferPtr = (uint8 *)destinationPolygon;
+				continue;
+			}
+
+			if (numOfPrimitives >= (int32)ARRAYSIZE(_renderCmds)) {
+				break;
+			}
+			numOfPrimitives++;
+			(*renderCmds)->depth = zMax;
+			(*renderCmds)->renderType = RENDERTYPE_DRAWTEXTUREDPOLYGON;
+			(*renderCmds)->dataPtr = (uint8 *)destinationPolygon;
+			(*renderCmds)++;
+			continue;
+		}
+
+		if (materialType == MAT_TEXTURE && polygon.hasTexture && hasBodyTexture) {
+			const uint8 renderType = mapLba2TextureRenderType(polygon.polyType);
+			const uint32 textureInfo = bodyData.getTextureHandle(polygon.textureIndex);
+			const uint16 textureOffset = (uint16)(textureInfo & 0xffff);
+			const uint16 repMask = (uint16)(textureInfo >> 16);
+
+			int16 flatShade = 0;
+			if (baseTextureRenderType(renderType) == POLYGONTYPE_TEXTURE_FLAT) {
+				const int32 lightIdx = (int32)polygon.normalIndex;
+				if (lightIdx >= 0 && lightIdx < (int32)ARRAYSIZE(modelData->normalTable)) {
+					flatShade = (int16)(modelData->normalTable[lightIdx] >> 8);
+				}
 			}
 
 			const int numTris = (numVertices == 4) ? 2 : 1;
 			static const uint8 triIndices[2][3] = {{0, 1, 2}, {0, 2, 3}};
 
 			for (int tri = 0; tri < numTris; ++tri) {
+				const int triVerts = 3;
+				if (renderBufferPtr + (int32)(sizeof(CmdRenderTexturedPolygon) + triVerts * (sizeof(ComputedVertex) * 2 + (usePerspectiveW && usesPerspectiveTexture(renderType) ? sizeof(int32) : 0))) > bufferEnd) {
+					break;
+				}
 				int16 zMax = -32000;
 				CmdRenderTexturedPolygon *destinationPolygon = (CmdRenderTexturedPolygon *)(void *)renderBufferPtr;
 				destinationPolygon->renderType = renderType;
-				destinationPolygon->numVertices = 3;
-				destinationPolygon->textureIndex = polygon.texturePage;
+				destinationPolygon->numVertices = triVerts;
+				destinationPolygon->textureIndex = (uint8)polygon.textureIndex;
 				destinationPolygon->textureOffset = textureOffset;
 				destinationPolygon->repMask = repMask;
 				destinationPolygon->pad = (uint8)(flatShade & 0xff);
@@ -1822,28 +2257,38 @@ uint8 *Renderer::preparePolygons(const BodyData &bodyData, int32 &numOfPrimitive
 				renderBufferPtr += sizeof(CmdRenderTexturedPolygon);
 
 				ComputedVertex *screenVertices = (ComputedVertex *)(void *)renderBufferPtr;
-				renderBufferPtr += 3 * sizeof(ComputedVertex);
+				renderBufferPtr += triVerts * sizeof(ComputedVertex);
 				ComputedVertex *texVertices = (ComputedVertex *)(void *)renderBufferPtr;
-				renderBufferPtr += 3 * sizeof(ComputedVertex);
+				renderBufferPtr += triVerts * sizeof(ComputedVertex);
+				int32 *perspW = nullptr;
+				if (usePerspectiveW && usesPerspectiveTexture(renderType)) {
+					perspW = (int32 *)(void *)renderBufferPtr;
+					renderBufferPtr += triVerts * sizeof(int32);
+				}
 
-				for (int k = 0; k < 3; ++k) {
+				for (int k = 0; k < triVerts; ++k) {
 					const uint8 corner = triIndices[tri][k];
 					const uint16 vertexIndex = polygon.indices[corner];
 					const I16Vec3 *point = &modelData->flattenPoints[vertexIndex];
+					const I16Vec3 *rotPoint = &modelData->computedPoints[vertexIndex];
 
 					screenVertices[k].x = point->x;
 					screenVertices[k].y = point->y;
 					zMax = MAX<int16>(zMax, point->z);
 
-					if (renderType == POLYGONTYPE_TEXTURE_GOURAUD) {
+					if (baseTextureRenderType(renderType) == POLYGONTYPE_TEXTURE_GOURAUD) {
 						screenVertices[k].intensity = lba2VertexColour(modelData->normalTable, polygon, vertexIndex);
-					} else if (renderType == POLYGONTYPE_TEXTURE_FLAT) {
+					} else if (baseTextureRenderType(renderType) == POLYGONTYPE_TEXTURE_FLAT) {
 						screenVertices[k].intensity = flatShade;
 					} else {
 						screenVertices[k].intensity = 0;
 					}
 
-					mapBodyTextureUV(texVertices[k].x, texVertices[k].y, polygon.u[corner], polygon.v[corner]);
+					mapBodyTextureUV(texVertices[k].x, texVertices[k].y, polygon.u[corner], polygon.v[corner], _engine->isLBA2());
+
+					if (perspW != nullptr) {
+						perspW[k] = computePerspectiveW(rotPoint->z, _modelPosWr.z);
+					}
 				}
 
 				if (!isPolygonVisible(screenVertices)) {
@@ -1851,6 +2296,9 @@ uint8 *Renderer::preparePolygons(const BodyData &bodyData, int32 &numOfPrimitive
 					continue;
 				}
 
+				if (numOfPrimitives >= (int32)ARRAYSIZE(_renderCmds)) {
+					break;
+				}
 				numOfPrimitives++;
 				(*renderCmds)->depth = zMax;
 				(*renderCmds)->renderType = RENDERTYPE_DRAWTEXTUREDPOLYGON;
@@ -1861,6 +2309,10 @@ uint8 *Renderer::preparePolygons(const BodyData &bodyData, int32 &numOfPrimitive
 		}
 
 		int16 zMax = -32000;
+
+		if (renderBufferPtr + (int32)(sizeof(CmdRenderPolygon) + numVertices * sizeof(ComputedVertex)) > bufferEnd) {
+			break;
+		}
 
 		CmdRenderPolygon *destinationPolygon = (CmdRenderPolygon *)(void*)renderBufferPtr;
 		destinationPolygon->numVertices = numVertices;
@@ -1938,6 +2390,9 @@ uint8 *Renderer::preparePolygons(const BodyData &bodyData, int32 &numOfPrimitive
 
 		numOfPrimitives++;
 
+		if (numOfPrimitives >= (int32)ARRAYSIZE(_renderCmds)) {
+			break;
+		}
 		(*renderCmds)->depth = zMax;
 		(*renderCmds)->renderType = RENDERTYPE_DRAWPOLYGON;
 		(*renderCmds)->dataPtr = (uint8 *)destinationPolygon;
@@ -1947,8 +2402,13 @@ uint8 *Renderer::preparePolygons(const BodyData &bodyData, int32 &numOfPrimitive
 	return renderBufferPtr;
 }
 
-const Renderer::RenderCommand *Renderer::depthSortRenderCommands(int32 numOfPrimitives) {
-	Common::sort(&_renderCmds[0], &_renderCmds[numOfPrimitives], [](const RenderCommand &lhs, const RenderCommand &rhs) { return lhs.depth > rhs.depth; });
+const Renderer::RenderCommand *Renderer::depthSortRenderCommands(int32 numOfPrimitives, const BodyData &bodyData) {
+	if (!bodyData.noSort) {
+		// AFF_OBJ.CPP: painter's algorithm (back-to-front) unless a z-buffer is active.
+		// ScummVM has no polygon z-buffer, so always sort descending depth like QuickSort().
+		(void)bodyData;
+		Common::sort(&_renderCmds[0], &_renderCmds[numOfPrimitives], [](const RenderCommand &lhs, const RenderCommand &rhs) { return lhs.depth > rhs.depth; });
+	}
 	return _renderCmds;
 }
 
@@ -1962,7 +2422,7 @@ bool Renderer::renderObjectIso(const BodyData &bodyData, RenderCommand **renderC
 	if (numOfPrimitives == 0) {
 		return false;
 	}
-	const RenderCommand *cmds = depthSortRenderCommands(numOfPrimitives);
+	const RenderCommand *cmds = depthSortRenderCommands(numOfPrimitives, bodyData);
 
 	int32 primitiveCounter = numOfPrimitives;
 
@@ -1973,10 +2433,27 @@ bool Renderer::renderObjectIso(const BodyData &bodyData, RenderCommand **renderC
 		switch (type) {
 		case RENDERTYPE_DRAWLINE: {
 			const CmdRenderLine *lineCoords = (const CmdRenderLine *)(const void*)pointer;
-			const int32 x1 = lineCoords->x1;
-			const int32 y1 = lineCoords->y1;
-			const int32 x2 = lineCoords->x2;
-			const int32 y2 = lineCoords->y2;
+			int32 x1 = lineCoords->x1;
+			int32 y1 = lineCoords->y1;
+			int32 x2 = lineCoords->x2;
+			int32 y2 = lineCoords->y2;
+			const Common::Rect &clip = _engine->_interface->_clip;
+			if (x1 < clip.left - 500 && x2 < clip.left - 500) {
+				break;
+			}
+			if (x1 > clip.right + 500 && x2 > clip.right + 500) {
+				break;
+			}
+			if (y1 < clip.top - 500 && y2 < clip.top - 500) {
+				break;
+			}
+			if (y1 > clip.bottom + 500 && y2 > clip.bottom + 500) {
+				break;
+			}
+			x1 = CLIP(x1, (int32)clip.left, (int32)clip.right);
+			x2 = CLIP(x2, (int32)clip.left, (int32)clip.right);
+			y1 = CLIP(y1, (int32)clip.top, (int32)clip.bottom);
+			y2 = CLIP(y2, (int32)clip.top, (int32)clip.bottom);
 			_engine->_interface->drawLine(x1, y1, x2, y2, lineCoords->colorIndex);
 			break;
 		}
@@ -1990,7 +2467,11 @@ bool Renderer::renderObjectIso(const BodyData &bodyData, RenderCommand **renderC
 			const CmdRenderTexturedPolygon *header = (const CmdRenderTexturedPolygon *)(const void *)pointer;
 			ComputedVertex *screenVertices = (ComputedVertex *)(void *)(pointer + sizeof(CmdRenderTexturedPolygon));
 			ComputedVertex *texVertices = screenVertices + header->numVertices;
-			renderTexturedPolygons(*header, screenVertices, texVertices);
+			const int32 *perspW = nullptr;
+			if (header->renderType >= POLYGONTYPE_TEXTURE_PERSP && header->renderType <= POLYGONTYPE_TEXTURE_FLAT_PERSP) {
+				perspW = (const int32 *)(const void *)(texVertices + header->numVertices);
+			}
+			renderTexturedPolygons(*header, screenVertices, texVertices, perspW);
 			break;
 		}
 		case RENDERTYPE_DRAWSPHERE: {
@@ -2051,7 +2532,7 @@ void Renderer::projectModelPoints(ModelData *modelData, int32 numVertices, const
 			const int32 coZ = -(pointPtr->z + poswr.z);
 
 			pointPtrDest->x = (int16)((coX + coZ) * 24 / ISO_SCALE + _projectionCenter.x);
-			pointPtrDest->y = (int16)((((coX - coZ) * 12) - coY * 30) / ISO_SCALE + _projectionCenter.y);
+			pointPtrDest->y = (int16)((((coX - coZ) * 12) - coY * 30) / ISO_SCALE + _projectionCenter.y + 1);
 			pointPtrDest->z = (int16)(coZ - coX - coY);
 
 			if (pointPtrDest->x < modelRect.left) {
@@ -2074,7 +2555,12 @@ void Renderer::projectModelPoints(ModelData *modelData, int32 numVertices, const
 		for (int32 i = 0; i < numVertices; ++i) {
 			int32 coZ = _kFactor - (pointPtr->z + poswr.z);
 			if (coZ <= 0) {
-				coZ = 0x7FFFFFFF;
+				pointPtrDest->x = -32768;
+				pointPtrDest->y = -32768;
+				pointPtrDest->z = -32768;
+				++pointPtr;
+				++pointPtrDest;
+				continue;
 			}
 
 			int32 coX = (((pointPtr->x + poswr.x) * _lFactorX) / coZ) + _projectionCenter.x;
@@ -2121,14 +2607,14 @@ void Renderer::applyBodyLighting(ModelData *modelData, const BodyData &bodyData,
 	int32 faceNormalIndex = 0;
 
 	if (!perBone) {
-		const IMatrix3x3 matrix = _matricesTable[0] * _normalLight;
+		const IMatrix3x3 &matrix = lba2Format ? _matricesTable[0] : (_matricesTable[0] * _normalLight);
 		for (int32 i = 0; i < (int32)bodyData.getNormals().size() && i < (int32)ARRAYSIZE(modelData->normalTable); ++i) {
-			modelData->normalTable[i] = computeNormalLight(bodyData.getNormal(i), matrix, lba2Format);
+			modelData->normalTable[i] = computeNormalLight(bodyData.getNormal(i), matrix, _normalLight, lba2Format);
 		}
 		for (int32 i = 0; i < (int32)normFaces.size(); ++i) {
 			const int32 lightIdx = numVertices + i;
 			if (lightIdx < (int32)ARRAYSIZE(modelData->normalTable)) {
-				modelData->normalTable[lightIdx] = computeNormalLight(normFaces[i], matrix, lba2Format);
+				modelData->normalTable[lightIdx] = computeNormalLight(normFaces[i], matrix, _normalLight, lba2Format);
 			}
 		}
 		return;
@@ -2138,14 +2624,14 @@ void Renderer::applyBodyLighting(ModelData *modelData, const BodyData &bodyData,
 	int32 vertexNormalOffset = 0;
 	for (int32 boneIdx = 0; boneIdx < numBones; ++boneIdx) {
 		const BodyBone &bone = bodyData.getBone(boneIdx);
-		const IMatrix3x3 matrix = _matricesTable[boneIdx] * _normalLight;
+		const IMatrix3x3 &matrix = lba2Format ? _matricesTable[boneIdx] : (_matricesTable[boneIdx] * _normalLight);
 
 		for (int32 i = 0; i < bone.numVertices; ++i) {
 			const int32 vtx = bone.firstVertex + i;
 			const int32 normalIdx = vertexNormalOffset + i;
 			if (vtx >= 0 && vtx < (int32)ARRAYSIZE(modelData->normalTable) &&
 			    normalIdx >= 0 && normalIdx < (int32)bodyData.getNormals().size()) {
-				modelData->normalTable[vtx] = computeNormalLight(bodyData.getNormal(normalIdx), matrix, lba2Format);
+				modelData->normalTable[vtx] = computeNormalLight(bodyData.getNormal(normalIdx), matrix, _normalLight, lba2Format);
 			}
 		}
 		vertexNormalOffset += bone.numVertices;
@@ -2156,7 +2642,7 @@ void Renderer::applyBodyLighting(ModelData *modelData, const BodyData &bodyData,
 			}
 			const int32 lightIdx = numVertices + faceNormalIndex;
 			if (lightIdx < (int32)ARRAYSIZE(modelData->normalTable)) {
-				modelData->normalTable[lightIdx] = computeNormalLight(normFaces[faceNormalIndex], matrix, lba2Format);
+				modelData->normalTable[lightIdx] = computeNormalLight(normFaces[faceNormalIndex], matrix, _normalLight, lba2Format);
 			}
 			++faceNormalIndex;
 		}
@@ -2168,7 +2654,11 @@ void Renderer::displayStaticModel(ModelData *modelData, const BodyData &bodyData
 	const Common::Array<BodyVertex> &vertices = bodyData.getVertices();
 
 	rotMatIndex2(&_matricesTable[0], &_matrixWorld, angleVec);
-	rotList(vertices, 0, numVertices, &modelData->computedPoints[0], &_matricesTable[0], IVec3(0, 0, 0));
+	if (_engine->isLBA2()) {
+		rotTransList(vertices, 0, numVertices, &modelData->computedPoints[0], &_matricesTable[0], IVec3(0, 0, 0));
+	} else {
+		rotList(vertices, 0, numVertices, &modelData->computedPoints[0], &_matricesTable[0], IVec3(0, 0, 0));
+	}
 	projectModelPoints(modelData, numVertices, poswr, modelRect);
 	applyBodyLighting(modelData, bodyData, false);
 }
@@ -2182,7 +2672,7 @@ void Renderer::animModel(ModelData *modelData, const BodyData &bodyData, RenderC
 	IMatrix3x3 *modelMatrix = &_matricesTable[0];
 
 	const BodyBone &firstBone = bodyData.getBone(0);
-	processRotatedElement(modelMatrix, vertices, angleVec.x, angleVec.y, angleVec.z, firstBone, modelData);
+	processRotatedElement(modelMatrix, 0, vertices, angleVec.x, angleVec.y, angleVec.z, firstBone, modelData);
 
 	int32 numOfPrimitives = 0;
 
@@ -2196,12 +2686,18 @@ void Renderer::animModel(ModelData *modelData, const BodyData &bodyData, RenderC
 			const BoneFrame *boneData = bodyData.getBoneState(boneIdx);
 
 			const uint16 boneType = (uint16)boneData->type;
-			if (isAnimRotateBone(boneType, _engine->isLBA2())) {
-				processRotatedElement(modelMatrix, vertices, boneData->x, boneData->y, boneData->z, bone, modelData);
-			} else if (isAnimTranslateBone(boneType, _engine->isLBA2())) {
-				translateGroup(modelMatrix, vertices, boneData->x, boneData->y, boneData->z, bone, modelData);
+			if (_engine->isLBA2()) {
+				if (boneType & (uint16)BoneType::TYPE_TRANSLATE) {
+					translateGroup(modelMatrix, boneIdx, vertices, boneData->x, boneData->y, boneData->z, bone, modelData);
+				} else {
+					processRotatedElement(modelMatrix, boneIdx, vertices, boneData->x, boneData->y, boneData->z, bone, modelData);
+				}
+			} else if (isAnimRotateBone(boneType, false)) {
+				processRotatedElement(modelMatrix, boneIdx, vertices, boneData->x, boneData->y, boneData->z, bone, modelData);
+			} else if (isAnimTranslateBone(boneType, false)) {
+				translateGroup(modelMatrix, boneIdx, vertices, boneData->x, boneData->y, boneData->z, bone, modelData);
 			} else if (boneType == (uint16)BoneType::TYPE_ZOOM) {
-				// unsupported type
+				zoomGroup(modelMatrix, boneIdx, bone, boneData, modelData);
 			}
 
 			++modelMatrix;
@@ -2234,6 +2730,9 @@ bool Renderer::affObjetIso(int32 x, int32 y, int32 z, int32 alpha, int32 beta, i
 		poswr.z = z;
 	}
 
+	_modelPosWr = poswr;
+	_activeModelData = &_modelData;
+
 	RenderCommand *renderCmds = _renderCmds;
 	if (!bodyData.isAnimated() && bodyData.getNumBones() <= 1) {
 		displayStaticModel(&_modelData, bodyData, renderAngle, poswr, modelRect);
@@ -2248,6 +2747,16 @@ bool Renderer::affObjetIso(int32 x, int32 y, int32 z, int32 alpha, int32 beta, i
 		return false;
 	}
 	return true;
+}
+
+bool Renderer::affObjetIsoAlphaBeta(int32 x, int32 y, int32 z, int32 alpha, int32 beta, int32 gamma, const BodyData &bodyData, Common::Rect &modelRect) {
+	const IMatrix3x3 savedWorld = _matrixWorld;
+	IMatrix3x3 betaGammaWorld;
+	rotMatIndex2(&betaGammaWorld, &savedWorld, IVec3(0, beta, gamma));
+	_matrixWorld = betaGammaWorld;
+	const bool result = affObjetIso(x, y, z, alpha, 0, 0, bodyData, modelRect);
+	_matrixWorld = savedWorld;
+	return result;
 }
 
 void Renderer::drawObj3D(const Common::Rect &rect, int32 y, int32 angle, const BodyData &bodyData, RealValue &move) {
@@ -2325,6 +2834,89 @@ void Renderer::fillHolomapTriangle(int16 *pDest, int32 x0, int32 y0, int32 x1, i
 			}
 			reminder -= step;
 		}
+	}
+}
+
+void Renderer::fillHolomapTriangle32(int32 *pDest, int32 x0, int32 y0, int32 x1, int32 y1) {
+	uint32 dx, step, reminder;
+	if (y0 > y1) {
+		SWAP(x0, x1);
+		SWAP(y0, y1);
+	}
+
+	y1 -= y0;
+	pDest += y0;
+
+	if (y1 <= 0) {
+		*pDest = x0;
+		return;
+	}
+
+	if (x0 <= x1) {
+		dx = (uint32)(x1 - x0) << 16;
+		step = dx / (uint32)y1;
+		reminder = ((dx % (uint32)y1) >> 1) + 0x7FFF;
+		x1 = (int32)(step >> 16);
+		step &= 0xFFFF;
+
+		for (; y1 >= 0; --y1) {
+			*pDest++ = x0;
+			x0 += x1;
+			if (reminder & 0xFFFF0000) {
+				x0 += (int32)(reminder >> 16);
+				reminder &= 0xFFFF;
+			}
+			reminder += step;
+		}
+	} else {
+		dx = (uint32)(x0 - x1) << 16;
+		step = dx / (uint32)y1;
+		reminder = ((dx % (uint32)y1) >> 1) + 0x7FFF;
+		x1 = (int32)(step >> 16);
+		step &= 0xFFFF;
+
+		for (; y1 >= 0; --y1) {
+			*pDest++ = x0;
+			x0 -= x1;
+			if (reminder & 0xFFFF0000) {
+				x0 += (int32)(reminder >> 16);
+				reminder &= 0xFFFF;
+			}
+			reminder -= step;
+		}
+	}
+}
+
+void Renderer::fillHolomapTrianglesPersp(const ComputedVertex &vertex0, const ComputedVertex &vertex1, const ComputedVertex &texCoord0, const ComputedVertex &texCoord1, int32 w0, int32 w1, int32 &lymin, int32 &lymax) {
+	const int32 y0 = vertex0.y;
+	const int32 y1 = vertex1.y;
+	const int64 uw0 = (int64)texCoord0.x * w0;
+	const int64 vw0 = (int64)texCoord0.y * w0;
+	const int64 uw1 = (int64)texCoord1.x * w1;
+	const int64 vw1 = (int64)texCoord1.y * w1;
+
+	if (y0 < y1) {
+		if (y0 < lymin) {
+			lymin = y0;
+		}
+		if (y1 > lymax) {
+			lymax = y1;
+		}
+		fillHolomapTriangle(_tabVerticG, vertex0.x, y0, vertex1.x, y1);
+		fillHolomapTriangle32(_tabPerspUW0, (int32)uw0, y0, (int32)uw1, y1);
+		fillHolomapTriangle32(_tabPerspVW0, (int32)vw0, y0, (int32)vw1, y1);
+		fillHolomapTriangle32(_tabPerspW0, w0, y0, w1, y1);
+	} else if (y0 > y1) {
+		if (y0 > lymax) {
+			lymax = y0;
+		}
+		if (y1 < lymin) {
+			lymin = y1;
+		}
+		fillHolomapTriangle(_tabVerticD, vertex0.x, y0, vertex1.x, y1);
+		fillHolomapTriangle32(_tabPerspUW1, (int32)uw0, y0, (int32)uw1, y1);
+		fillHolomapTriangle32(_tabPerspVW1, (int32)vw0, y0, (int32)vw1, y1);
+		fillHolomapTriangle32(_tabPerspW1, w0, y0, w1, y1);
 	}
 }
 

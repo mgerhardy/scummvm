@@ -39,6 +39,7 @@
 #include "twine/scene/extra.h"
 #include "twine/scene/gamestate.h"
 #include "twine/scene/grid.h"
+#include "twine/scene/buggy.h"
 #include "twine/scene/movements.h"
 #include "twine/scene/scene.h"
 #include "twine/shared.h"
@@ -478,7 +479,11 @@ ReturnType processLifeConditions(TwinEEngine *engine, LifeScriptContext &ctx) { 
 			engine->_scene->_currentScriptValue = 255;
 			break;
 		}
-		engine->_scene->_currentScriptValue = (uint8)ctx.actor->brickShape();
+		if (engine->isLBA2()) {
+			engine->_scene->_currentScriptValue = (ctx.actor->_brickSound & 0x80) ? 1 : 0;
+		} else {
+			engine->_scene->_currentScriptValue = (uint8)ctx.actor->brickShape();
+		}
 		conditionValueSize = ReturnType::RET_U8;
 		break;
 	case kcCOL_DECORS_OBJ: {
@@ -489,7 +494,11 @@ ReturnType processLifeConditions(TwinEEngine *engine, LifeScriptContext &ctx) { 
 			engine->_scene->_currentScriptValue = 255;
 			break;
 		}
-		engine->_scene->_currentScriptValue = (uint8)otherActor->brickShape();
+		if (engine->isLBA2()) {
+			engine->_scene->_currentScriptValue = (otherActor->_brickSound & 0x80) ? 1 : 0;
+		} else {
+			engine->_scene->_currentScriptValue = (uint8)otherActor->brickShape();
+		}
 		conditionValueSize = ReturnType::RET_U8;
 		break;
 	}
@@ -955,8 +964,20 @@ int32 ScriptLife::lFALLABLE(TwinEEngine *engine, LifeScriptContext &ctx) {
  */
 int32 ScriptLife::lSET_DIRMODE(TwinEEngine *engine, LifeScriptContext &ctx) {
 	const int32 controlMode = ctx.stream.readByte();
+	const ControlMode oldMove = ctx.actor->_move;
 
 	ctx.actor->_move = (ControlMode)controlMode;
+	if (engine->isLBA2() && IS_HERO(ctx.actorIdx)) {
+		if ((controlMode == (int)ControlMode::kBuggy || controlMode == (int)ControlMode::kBuggyManual) &&
+		    oldMove != ControlMode::kBuggy && oldMove != ControlMode::kBuggyManual) {
+			engine->_buggy->takeBuggy();
+		}
+		if (controlMode == (int)ControlMode::kBuggy) {
+			ctx.actor->_workFlags.bMANUAL_INTER_FRAME = false;
+		} else if (controlMode == (int)ControlMode::kBuggyManual) {
+			ctx.actor->_workFlags.bMANUAL_INTER_FRAME = true;
+		}
+	}
 	if (ctx.actor->_move == ControlMode::kFollow) {
 		ctx.actor->_followedActor = ctx.stream.readByte();
 		debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::SET_DIRMODE(%i, %i)", (int)controlMode, (int)ctx.actor->_followedActor);
@@ -997,7 +1018,7 @@ int32 ScriptLife::lCAM_FOLLOW(TwinEEngine *engine, LifeScriptContext &ctx) {
 	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::CAM_FOLLOW(%i)", (int)followedActorIdx);
 	if (engine->_scene->_numObjFollow != followedActorIdx) {
 		const ActorStruct *followedActor = engine->_scene->getActor(followedActorIdx);
-		engine->_grid->centerOnActor(followedActor);
+		engine->_grid->centerOnActor(followedActor, true);
 		engine->_scene->_numObjFollow = followedActorIdx;
 	}
 
@@ -1012,8 +1033,19 @@ int32 ScriptLife::lSET_BEHAVIOUR(TwinEEngine *engine, LifeScriptContext &ctx) {
 	const HeroBehaviourType behavior = (HeroBehaviourType)ctx.stream.readByte();
 	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::SET_BEHAVIOUR(%i)", (int)behavior);
 
+	if (engine->isLBA2()) {
+		const HeroBehaviourType oldBehavior = engine->_actor->_heroBehaviour;
+		if (oldBehavior == HeroBehaviourType::kBUGGY && behavior != HeroBehaviourType::kBUGGY) {
+			engine->_buggy->leaveBuggy(behavior);
+		}
+	}
+
 	engine->_animations->initAnim(AnimationTypes::kStanding, AnimType::kAnimationTypeRepeat, AnimationTypes::kNoAnim, OWN_ACTOR_SCENE_INDEX);
 	engine->_actor->setBehaviour(behavior);
+
+	if (engine->isLBA2() && behavior == HeroBehaviourType::kBUGGY) {
+		engine->_buggy->takeBuggy();
+	}
 
 	return 0;
 }

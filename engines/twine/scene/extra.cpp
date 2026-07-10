@@ -21,6 +21,7 @@
 
 #include "twine/scene/extra.h"
 #include "twine/scene/dart.h"
+#include "twine/scene/pof.h"
 #include "common/util.h"
 #include "twine/audio/sound.h"
 #include "twine/input.h"
@@ -308,6 +309,66 @@ int32 Extra::throwExtraObj(int32 owner, int32 x, int32 y, int32 z, int32 bodyInd
 	return -1;
 }
 
+int32 Extra::initExtraPof(int32 x, int32 y, int32 z, int16 numPof, int32 alpha, int32 beta, int32 speed, int32 weight, int32 scaleDeb, int32 scaleFin, int32 duree, int32 rotation, int32 timeout) {
+	for (int32 i = 0; i < EXTRA_MAX_ENTRIES; i++) {
+		ExtraListStruct *extra = &_extraList[i];
+		if (extra->sprite != -1) {
+			continue;
+		}
+
+		extra->sprite = (int16)EXTRA_SPECIAL_MASK;
+		extra->bodyIndex = numPof;
+		extra->info1 = scaleDeb;
+		extra->extraBeta = scaleFin;
+		extra->timeOut = (int16)rotation;
+		extra->payload.lifeTime = (int16)duree;
+		extra->type = ExtraType::END_COL | ExtraType::FLY | ExtraType::NO_SHADOW;
+		if (timeout > 0) {
+			extra->type |= ExtraType::TIME_OUT;
+			extra->timeOut = (int16)timeout;
+		}
+
+		extra->pos.x = x;
+		extra->pos.y = y;
+		extra->pos.z = z;
+		extra->strengthOfHit = 0;
+		extra->spawnTime = _engine->timerRef;
+
+		initFly(extra, alpha, beta, speed, weight);
+		return i;
+	}
+	return -1;
+}
+
+int32 Extra::initExtraAnimSprite(int32 owner, int32 x, int32 y, int32 z, int16 spriteDeb, int16 spriteFin, int32 tempo, int32 scale, int32 transparent, int32 hitforce) {
+	for (int32 i = 0; i < EXTRA_MAX_ENTRIES; i++) {
+		ExtraListStruct *extra = &_extraList[i];
+		if (extra->sprite != -1) {
+			continue;
+		}
+
+		extra->sprite = spriteDeb;
+		extra->bodyIndex = spriteDeb;
+		extra->info1 = spriteFin + 1;
+		extra->type = ExtraType::ANIM_SPRITE;
+		extra->pos.x = x;
+		extra->pos.y = y;
+		extra->pos.z = z;
+		extra->strengthOfHit = (int16)hitforce;
+		extra->payload.actorIdx = owner;
+		extra->spawnTime = _engine->timerRef;
+		extra->timeOut = (int16)tempo;
+		extra->extraAlpha = scale;
+		(void)transparent;
+
+		if (hitforce > 0) {
+			extra->type |= ExtraType::END_OBJ | ExtraType::END_COL | ExtraType::WAIT_NO_COL | ExtraType::IMPACT;
+		}
+		return i;
+	}
+	return -1;
+}
+
 int32 Extra::addExtraAiming(int32 actorIdx, int32 x, int32 y, int32 z, int32 spriteIdx, int32 targetActorIdx, int32 finalAngle, int32 strengthOfHit) {
 	for (int32 i = 0; i < EXTRA_MAX_ENTRIES; i++) {
 		ExtraListStruct *extra = &_extraList[i];
@@ -473,7 +534,23 @@ void Extra::affSpecial(int32 extraIdx, int32 x, int32 y, Common::Rect &renderRec
 
 	switch (specialType) {
 	case ExtraSpecialType::kHitStars:
-		aff2DShape(hitStarsShape, x, y, COLOR_WHITE, (_engine->timerRef * 32) & LBAAngles::ANGLE_270, 4, renderRect);
+		if ((extra->type & ExtraType::FLY) && extra->bodyIndex >= 0 && !(extra->type & ExtraType::TIME_OUT)) {
+			int32 angle = 0;
+			if (extra->timeOut != 0) {
+				angle = (((_engine->timerRef - extra->spawnTime) * LBAAngles::ANGLE_360) / extra->timeOut) & (LBAAngles::ANGLE_360 - 1);
+			}
+			int32 scale = extra->info1;
+			if (scale != extra->extraBeta && extra->payload.lifeTime > 0) {
+				scale = boundRuleThree(extra->info1, extra->extraBeta, extra->payload.lifeTime, _engine->timerRef - extra->spawnTime);
+				if (scale == extra->extraBeta) {
+					extra->sprite = -1;
+					return;
+				}
+			}
+			_engine->_pof->display(extra->pos.x, extra->pos.y, extra->pos.z, extra->bodyIndex, scale, angle);
+		} else {
+			aff2DShape(hitStarsShape, x, y, COLOR_WHITE, (_engine->timerRef * 32) & LBAAngles::ANGLE_270, 4, renderRect);
+		}
 		break;
 	case ExtraSpecialType::kExplodeCloud: {
 		int32 zoom = 1 + _engine->timerRef - extra->spawnTime;
@@ -539,6 +616,13 @@ void Extra::gereExtras() {
 
 		if (extra->type & ExtraType::EXPLOSION) {
 			extra->sprite = boundRuleThree(SPRITEHQR_EXPLOSION_FIRST_FRAME, 100, 30, deltaT);
+			continue;
+		}
+		if (extra->type & ExtraType::ANIM_SPRITE) {
+			extra->sprite = (int16)boundRuleThree(extra->bodyIndex, extra->info1, extra->timeOut, _engine->timerRef - extra->spawnTime);
+			if (extra->sprite >= extra->info1) {
+				extra->sprite = -1;
+			}
 			continue;
 		}
 		// process extra moving

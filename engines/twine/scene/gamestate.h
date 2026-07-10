@@ -129,6 +129,8 @@ public:
 
 	/** Its using FunFrock Sabre */
 	bool _weapon = false;
+	/** LBA2 active weapon inventory index (FLAG_BALLE_MAGIQUE, FLAG_DART, ...) */
+	uint8 _weaponItem = (uint8)InventoryItems::kiMagicBall;
 	bool _endGameItems = false;
 
 	/**
@@ -136,6 +138,7 @@ public:
 	 * 0 means never used, 1 means already used and automatic re-use
 	 */
 	uint8 _inventoryFlags[NUM_INVENTORY_ITEMS];
+	uint8 _inventoryObj3D[MaxInventoryItemsLba2]{};
 
 	uint8 _holomapFlags[MAX_HOLO_POS_2];
 
@@ -213,6 +216,12 @@ public:
 	int16 setMagicPoints(int16 val);
 	int16 setMaxMagicPoints();
 	int16 setLeafBoxes(int16 val);
+	void setInventoryObj3D(int index, uint8 idObj3D);
+	uint8 getInventoryObj3D(int index) const;
+
+	void setActiveWeapon(InventoryItems item);
+	InventoryItems getActiveWeapon() const;
+	bool isSabreWeaponActive() const;
 
 	void handleLateGameItems();
 

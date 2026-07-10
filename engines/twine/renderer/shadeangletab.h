@@ -23,13 +23,13 @@
 #define TWINE_RENDERER_SHADEANGLETAB_H
 
 #include "common/scummsys.h"
+#include "twine/renderer/shadeangletab_lba2.h"
 #include "twine/shared.h"
 
 namespace TwinE {
 
 /**
- * @brief Caches sin cos table for all possible angles (0-1024 = 0-360 degree)
- * @todo this is for lba1 - lba2 is missing
+ * @brief LBA1 sin/cos table (1024 entries, 0-360 degrees)
  */
  // P_SinTab
 const int16 sinTab[] = {
@@ -1058,6 +1058,27 @@ const int16 sinTab[] = {
 	-201,
 	-101,
 };
+
+inline int16 trigSin(int32 angle, bool lba2) {
+	if (lba2) {
+		return sinTabLBA2[ClampAngle(angle) & 4095];
+	}
+	return sinTab[ClampAngle(angle)];
+}
+
+inline int16 trigCos(int32 angle, bool lba2) {
+	if (lba2) {
+		return sinTabLBA2[kSinTabLBA2CosOffset + (ClampAngle(angle) & 4095)];
+	}
+	return sinTab[ClampAngle(angle + LBAAngles::ANGLE_90)];
+}
+
+inline const int16 *trigShadeAngleTab3(bool lba2) {
+	if (lba2) {
+		return &sinTabLBA2[LBAAngles::ANGLE_135];
+	}
+	return &sinTab[LBAAngles::ANGLE_135];
+}
 
 }
 

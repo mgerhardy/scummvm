@@ -81,10 +81,12 @@ struct BodyPolygon {
 	int8 materialType = 0;
 	uint8 colorIndex = 0;
 	int16 intensity = 0;
-	uint8 texturePage = 0;
-	uint8 u[4] = {};
-	uint8 v[4] = {};
+	uint16 textureIndex = 0;
+	uint16 u[4] = {};
+	uint16 v[4] = {};
 	bool hasTexture = false;
+	bool isEnvironment = false;
+	uint16 envScale = 0;
 	uint8 polyType = 0;
 	uint16 normalIndex = 0;
 };

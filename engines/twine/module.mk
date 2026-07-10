@@ -25,6 +25,7 @@ MODULE_OBJS := \
 	renderer/redraw.o \
 	renderer/renderer.o \
 	renderer/screens.o \
+	renderer/shadeangletab_lba2.o \
 	\
 	scene/actor.o \
 	scene/animations.o \
@@ -32,8 +33,12 @@ MODULE_OBJS := \
 	scene/collision.o \
 	scene/dart.o \
 	scene/extra.o \
+	scene/exterior.o \
+	scene/flow.o \
+	scene/pof.o \
 	scene/gamestate.o \
 	scene/grid.o \
+	scene/move3d.o \
 	scene/movements.o \
 	scene/rain.o \
 	scene/scene.o \
@@ -54,6 +59,7 @@ MODULE_OBJS := \
 	movies.o \
 	holomap_v1.o \
 	holomap_v2.o \
+	holoplan_v2.o \
 	input.o \
 	metaengine.o \
 	shared.o \

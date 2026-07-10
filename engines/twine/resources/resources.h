@@ -58,8 +58,12 @@ namespace TwinE {
 
 #define RESSHQR_BLACKPAL 9   // lba2
 #define RESSHQR_ECLAIRPAL 10 // lba2
-#define RESSHQR_ARROWBIN 12  // lba2
+#define RESSHQR_ARROWBIN 12  // lba2 holomap.hqr
+
+#define HOLOHQR_FLECHE 10    // holomap.hqr big arrow body
+#define HOLOHQR_LOFLECHE 11  // holomap.hqr small arrow body
 #define SAMPLE_RAIN 13
+#define SAMPLE_BONUS_TROUVE 2
 
 #define RESSHQR_GAMEOVERMDL 21
 
@@ -69,6 +73,22 @@ namespace TwinE {
 
 #define RESSHQR_HOLOPOINTMDL 29
 #define RESSHQR_HOLOPOINTANIM 30
+#define RESSHQR_IMPACT 47 // lba2
+#define RESSHQR_FLOW 45 // lba2
+#define RESSHQR_POF 46 // lba2
+
+#define RESSHQR_SKYSEA0 11
+#define RESSHQR_SKYSEA1 12
+#define RESSHQR_SKYSEA2 13
+#define RESSHQR_SKYSEA3 14
+#define RESSHQR_SKYSEA4 15
+#define RESSHQR_SKYSEA5 16
+#define RESSHQR_SKYSEA6 17
+#define RESSHQR_SKYSEA7 18
+#define RESSHQR_SKYSEA8 19
+#define RESSHQR_SKYSEA9 20
+#define RESSHQR_SKYSEA10 21
+#define RESSHQR_SKYSEA00 26
 
 #define RESSHQR_PLASMAEFFECT 51
 
@@ -201,8 +221,12 @@ public:
 
 	Common::HashMap<int, BodyData> _objFixBodies;
 
+	uint8 *_impactBuffer = nullptr;
+	int32 _impactBufferSize = 0;
+
 	/** Initialize resource pointers */
 	void initResources();
+	const uint8 *getImpactScript(int32 index) const;
 
 	const Trajectory *giveTrajPtr(int index) const;
 	const TrajectoryData &getTrajectories() const {

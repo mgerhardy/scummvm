@@ -29,10 +29,12 @@
 #include "twine/resources/hqr.h"
 #include "twine/resources/resources.h"
 #include "twine/scene/animations.h"
+#include "twine/scene/collision.h"
 #include "twine/scene/extra.h"
 #include "twine/scene/gamestate.h"
 #include "twine/scene/grid.h"
 #include "twine/scene/movements.h"
+#include "twine/scene/move3d.h"
 #include "twine/scene/scene.h"
 #include "twine/shared.h"
 #include "twine/twine.h"
@@ -108,8 +110,17 @@ void Actor::setBehaviour(HeroBehaviourType behaviour) {
 		sceneHero->_entityDataPtr = &_heroEntityDISCRETE;
 		break;
 	case HeroBehaviourType::kProtoPack:
+	case HeroBehaviourType::kJetPack:
 		_heroBehaviour = behaviour;
 		sceneHero->_entityDataPtr = &_heroEntityPROTOPACK;
+		break;
+	case HeroBehaviourType::kConch:
+		_heroBehaviour = behaviour;
+		sceneHero->_entityDataPtr = &_heroEntityNORMAL;
+		break;
+	case HeroBehaviourType::kBUGGY:
+		_heroBehaviour = behaviour;
+		sceneHero->_entityDataPtr = &_heroEntityNORMAL;
 		break;
 	case HeroBehaviourType::kMax:
 		break;
@@ -129,79 +140,7 @@ void Actor::setBehaviour(HeroBehaviourType behaviour) {
 }
 
 void Actor::setFrame(int32 actorIdx, uint32 frame) {
-#if 0
-	// TODO: converted from asm - not yet adapted
-	ActorStruct *obj = _engine->_scene->getActor(actorIdx);
-	T_PTR_NUM tempNextBody = obj->NextBody;
-	void *tempNextTexture = obj->NextTexture;
-
-	if (frame >= obj->NbFrames) {
-		return;
-	}
-
-	obj->_body = tempNextBody;
-	obj->Texture = tempNextTexture;
-
-	T_PTR_NUM tempAnim = obj->_anim;
-	void (*TransFctAnim)() = nullptr; // Couldn't find this yet
-
-	if (TransFctAnim != nullptr) {
-		uint32 ebp = frame;
-		TransFctAnim();
-		tempAnim = (T_PTR_NUM)(void *)tempAnim.Ptr;
-		frame = ebp;
-	}
-
-	obj->Interpolator = 0;
-	obj->LastAnimStepX = 0;
-	obj->LastAnimStepY = 0;
-	obj->LastAnimStepZ = 0;
-
-	uint16 nbGroups = *((uint16 *)(tempAnim.Ptr + 2));
-
-	obj->LastAnimStepAlpha = 0;
-	obj->LastAnimStepBeta = 0;
-	obj->LastAnimStepGamma = 0;
-	obj->LastOfsIsPtr = 0;
-
-	uint32 lastOfsFrame = nbGroups * 8 + 8; // infos frame + 4 WORDs per group
-
-	obj->LastNbGroups = nbGroups;
-	obj->NextNbGroups = nbGroups;
-	obj->NbGroups = nbGroups;
-
-	lastOfsFrame *= frame;
-	uint32 timerRefHR = 0; // Replace with actual TimerRefHR
-
-	lastOfsFrame += 8; // Skip header
-
-	obj->LastTimer = timerRefHR;
-	obj->Time = timerRefHR;
-	obj->Status = 1; // STATUS_FRAME
-	obj->LastOfsFrame = lastOfsFrame;
-	obj->LastFrame = frame;
-
-	uint32 ecx = nbGroups * 2 - 2; // 2 DWORDs per group, no group 0
-	T_PTR_NUM ebpPtr = tempAnim;
-	tempAnim.Ptr = tempAnim.Ptr + lastOfsFrame + 16;
-
-	memcpy(obj->CurrentFrame, tempAnim.Ptr, ecx);
-
-	if (++frame == obj->NbFrames) {
-		uint16 time = *((uint16 *)(ebpPtr.Ptr + 8));
-		frame = 0;
-		tempAnim.Ptr = (void *)(8);
-	} else {
-		uint16 time = *((uint16 *)tempAnim.Ptr);
-		tempAnim.Ptr -= ebpPtr.Ptr;
-		tempAnim.Num += obj->LastTimer;
-		obj->NextFrame = frame;
-		obj->NextOfsFrame = (uint32)(tempAnim.Ptr);
-		obj->NextTimer = time;
-		obj->Master = *((uint16 *)(tempAnim.Ptr + 8));
-		obj->Status = 1; // STATUS_FRAME
-	}
-#endif
+	_engine->_animations->setAnimFrame(_engine->_scene->getActor(actorIdx), frame);
 }
 
 void Actor::initSprite(int32 spriteNum, int32 actorIdx) {
@@ -256,7 +195,7 @@ void Actor::initBody(BodyType gennewbody, int16 actorIdx) {
 
 	debug(1, "Load body %i for actor %i", (int)gennewbody, actorIdx);
 
-	if (IS_HERO(actorIdx) && _heroBehaviour == HeroBehaviourType::kProtoPack && gennewbody != BodyType::btTunic && gennewbody != BodyType::btNormal) {
+	if (IS_HERO(actorIdx) && (_heroBehaviour == HeroBehaviourType::kProtoPack || _heroBehaviour == HeroBehaviourType::kJetPack) && gennewbody != BodyType::btTunic && gennewbody != BodyType::btNormal) {
 		setBehaviour(HeroBehaviourType::kNormal);
 	}
 
@@ -355,7 +294,11 @@ void Actor::startInitObj(int16 actorIdx) {
 			_engine->_animations->initAnim(actor->_genAnim, AnimType::kAnimationTypeRepeat, AnimationTypes::kNoAnim, actorIdx);
 		}
 
-		_engine->_movements->initRealAngle(actor->_beta, actor->_beta, LBAAngles::ANGLE_0, &actor->realAngle);
+		if (_engine->isLBA2()) {
+			initBoundAngleMove(_engine, &actor->_boundAngle, 0, actor->_beta, actor->_beta);
+		} else {
+			_engine->_movements->initRealAngle(actor->_beta, actor->_beta, LBAAngles::ANGLE_0, &actor->realAngle);
+		}
 	}
 
 	actor->_offsetTrack = -1;
@@ -374,7 +317,11 @@ void Actor::initObject(int16 actorIdx) {
 	memset(&actor->_workFlags, 0, sizeof(DynamicFlagsStruct));
 	memset(&actor->_bonusParameter, 0, sizeof(BonusParameter));
 
-	_engine->_movements->initRealAngle(LBAAngles::ANGLE_0, LBAAngles::ANGLE_0, LBAAngles::ANGLE_0, &actor->realAngle);
+	if (_engine->isLBA2()) {
+		initBoundAngleMove(_engine, &actor->_boundAngle, 0, 0, 0);
+	} else {
+		_engine->_movements->initRealAngle(LBAAngles::ANGLE_0, LBAAngles::ANGLE_0, LBAAngles::ANGLE_0, &actor->realAngle);
+	}
 }
 
 void Actor::hitObj(int32 actorIdx, int32 actorIdxAttacked, int32 hitforce, int32 angle) {
@@ -467,47 +414,42 @@ void Actor::giveExtraBonus(int32 actorIdx) {
 #define GetAngle2D(x0, z0, x1, z1) GetAngleVector2D((x1) - (x0), (z1) - (z0))
 
 void Actor::posObjectAroundAnother(uint8 numsrc, uint8 numtopos) {
-#if 0
-	ActorStruct *objsrc;
-	ActorStruct *objtopos;
-	int32 beta, dist, dist2;
-	int32 step;
+	ActorStruct *objsrc = _engine->_scene->getActor(numsrc);
+	ActorStruct *objtopos = _engine->_scene->getActor(numtopos);
+	if (objsrc == nullptr || objtopos == nullptr) {
+		return;
+	}
 
-	objsrc = _engine->_scene->getActor(numsrc);
-	objtopos = _engine->_scene->getActor(numtopos);
+	const int32 xb = objsrc->_posObj.x;
+	const int32 zb = objsrc->_posObj.z;
 
-	int32 xb = objsrc->Obj.X;
-	int32 zb = objsrc->Obj.Z;
+	objtopos->_posObj.y = objsrc->_posObj.y;
 
-	objtopos->Obj.Y = objsrc->Obj.Y;
+	int32 dist = MAX(objsrc->_boundingBox.mins.x, objsrc->_boundingBox.maxs.x);
+	dist = MAX(dist, objsrc->_boundingBox.mins.z);
+	dist = MAX(dist, objsrc->_boundingBox.maxs.z);
 
-	dist = MAX(objsrc->XMin, objsrc->XMax);
-	dist = MAX(dist, objsrc->ZMin);
-	dist = MAX(dist, objsrc->ZMax);
-
-	dist2 = MAX(objtopos->XMin, objtopos->XMax);
-	dist2 = MAX(dist2, objtopos->ZMin);
-	dist2 = MAX(dist2, objtopos->ZMax);
+	int32 dist2 = MAX(objtopos->_boundingBox.mins.x, objtopos->_boundingBox.maxs.x);
+	dist2 = MAX(dist2, objtopos->_boundingBox.mins.z);
+	dist2 = MAX(dist2, objtopos->_boundingBox.maxs.z);
 
 	dist += dist / 2 + dist2 + dist2 / 2;
 
-	beta = ClampAngle(objsrc->Obj.Beta + START_AROUND_BETA);
+	int32 beta = ClampAngle(objsrc->_beta + START_AROUND_BETA);
 
-	for (step = 0; step < (4096 / STEP_AROUND_BETA); step++, beta += STEP_AROUND_BETA) {
+	for (int32 step = 0; step < (4096 / STEP_AROUND_BETA); ++step, beta += STEP_AROUND_BETA) {
 		beta &= 4095;
-		_engine->_renderer->rotate(0, dist, beta);
+		const IVec2 rot = _engine->_renderer->rotate(0, dist, beta);
 
-		objtopos->Obj.X = xb + X0;
-		objtopos->Obj.Z = zb + Z0;
+		objtopos->_posObj.x = xb + rot.x;
+		objtopos->_posObj.z = zb + rot.y;
 
-		if (_engine->_collision->checkValidObjPos(numtopos, numsrc)) {
-			// accepte position
+		if (_engine->_collision->checkValidObjPos(numtopos)) {
 			break;
 		}
 	}
 
-	objtopos->Obj.Beta = ClampAngle(GetAngle2D(xb, zb, objtopos->Obj.X, objtopos->Obj.Z));
-#endif
+	objtopos->_beta = ClampAngle(_engine->_movements->getAngle(xb, zb, objtopos->_posObj.x, objtopos->_posObj.z));
 }
 
 int16 RealValue::getRealValueFromTime(int32 time) {
@@ -549,7 +491,7 @@ bool ActorStruct::isAttackAnimationActive() const {
 }
 
 bool ActorStruct::isAttackWeaponAnimationActive() const {
-	return _genAnim == AnimationTypes::kSabreAttack || _genAnim == AnimationTypes::kThrowBall || _genAnim == AnimationTypes::kSabreUnknown;
+	return _genAnim == AnimationTypes::kSabreAttack || _genAnim == AnimationTypes::kThrowBall || _genAnim == AnimationTypes::kSabreUnknown || _genAnim == AnimationTypes::kDart;
 }
 
 bool ActorStruct::isJumpAnimationActive() const {

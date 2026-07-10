@@ -59,6 +59,11 @@ public:
 
 	virtual const char *getLocationName(int index) const = 0;
 
+	virtual uint8 getIslandPlanet(int32 island) const {
+		(void)island;
+		return 0;
+	}
+
 	/**
 	 * Clear Holomap location position
 	 * @param locationIdx Scene where position must be cleared

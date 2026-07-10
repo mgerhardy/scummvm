@@ -19,40 +19,26 @@
  *
  */
 
-#ifndef TWINE_SCENE_RAIN_H
-#define TWINE_SCENE_RAIN_H
+#ifndef TWINE_SCENE_POF_H
+#define TWINE_SCENE_POF_H
 
-#include "twine/scene/actor.h"
-#include "twine/twine.h"
+#include "common/scummsys.h"
 
 namespace TwinE {
 
-#define MAX_RAIN 200
+class TwinEEngine;
 
-class Rain {
+class Pof {
 private:
-	TwinEEngine *_engine;
-	int32 LastTimer = 0;
-	int32 DeltaRain = 0;
+	TwinEEngine *_engine = nullptr;
+	uint8 *_buffer = nullptr;
 
 public:
-	struct T_RAIN {
-		int32 XRain = 0;
-		int32 YRain = 0;
-		int32 ZRain = 0;
-		int32 Timer = 0;
-	};
+	Pof(TwinEEngine *engine);
+	~Pof();
 
-	T_RAIN TabRain[MAX_RAIN];
-
-	Rain(TwinEEngine *engine);
-
-	void InitOneRain(T_RAIN *pt);
-	void InitRain();
-	void GereRain();
-	void ClearImpactRain();
-	bool shouldRender() const;
-	void AffRain();
+	bool init();
+	bool display(int32 x, int32 y, int32 z, int32 numPof, int32 scale, int32 rotation) const;
 };
 
 } // namespace TwinE

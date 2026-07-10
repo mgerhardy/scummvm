@@ -68,11 +68,13 @@ void readLba2Polygon(BodyPolygon &poly, Common::SeekableReadStream &stream, int6
 
 	const bool isQuad = (renderType & LBA2_MASK_QUADRILATERE) != 0;
 	const int numVertex = isQuad ? 4 : 3;
-	const bool hasTex = polyType > 7 && blockSize > 16;
+	const bool isEnvironment = (renderType & LBA2_MASK_ENVIRONMENT) != 0;
+	const bool hasTex = polyType > 7 && !isEnvironment;
 
 	poly.polyType = polyType;
 	poly.materialType = mapLba2PolyMaterial(polyType);
-	poly.hasTexture = hasTex;
+	poly.isEnvironment = isEnvironment;
+	poly.hasTexture = hasTex || isEnvironment;
 	poly.indices.clear();
 	poly.normals.clear();
 	poly.indices.reserve(numVertex);
@@ -81,10 +83,26 @@ void readLba2Polygon(BodyPolygon &poly, Common::SeekableReadStream &stream, int6
 		poly.indices.push_back(stream.readUint16LE());
 	}
 
-	if (hasTex) {
+	if (isEnvironment) {
+		if (numVertex == 3) {
+			poly.textureIndex = stream.readUint16LE(); // HandleEnv
+		}
+		stream.seek(polyStart + 8);
+		const uint8 colour = stream.readByte();
+		poly.colorIndex = colour / 16;
+		poly.intensity = colour % 16;
+		stream.seek(polyStart + 10); // NumNormal is uint16 at offset 10 (Colour is uint8 at 8, pad at 9)
+		poly.normalIndex = stream.readUint16LE();
+		stream.seek(polyStart + 12);
+		poly.envScale = stream.readUint16LE();
+		if (numVertex == 4) {
+			stream.seek(polyStart + 14);
+			poly.textureIndex = stream.readUint16LE(); // HandleEnv after Scale
+		}
+	} else if (hasTex) {
 		if (numVertex == 3) {
 			// STRUC_POLY3_TEXTURE: HandleText at offset 6
-			poly.texturePage = (uint8)stream.readUint16LE();
+			poly.textureIndex = stream.readUint16LE();
 		}
 		stream.seek(polyStart + 8);
 		const uint8 colour = stream.readByte();
@@ -96,16 +114,19 @@ void readLba2Polygon(BodyPolygon &poly, Common::SeekableReadStream &stream, int6
 			poly.colorIndex = 2;
 		}
 
+		stream.seek(polyStart + 10); // NumNormal is uint16 at offset 10 (Colour is uint8 at 8, pad at 9)
+		poly.normalIndex = stream.readUint16LE();
+
 		// UV pairs start at offset 12 (U1/V1)
 		stream.seek(polyStart + 12);
 		for (int k = 0; k < numVertex; ++k) {
-			poly.u[k] = (uint8)stream.readUint16LE();
-			poly.v[k] = (uint8)stream.readUint16LE();
+			poly.u[k] = stream.readUint16LE();
+			poly.v[k] = stream.readUint16LE();
 		}
 		if (numVertex == 4) {
 			// STRUC_POLY4_TEXTURE: HandleText after UVs at offset 28
 			stream.seek(polyStart + 28);
-			poly.texturePage = (uint8)stream.readUint16LE();
+			poly.textureIndex = stream.readUint16LE();
 		}
 	} else {
 		stream.seek(polyStart + 8);
@@ -119,6 +140,7 @@ void readLba2Polygon(BodyPolygon &poly, Common::SeekableReadStream &stream, int6
 		}
 
 		if (blockSize >= 12) {
+			stream.seek(polyStart + 10); // NumNormal is uint16 at offset 10 (Colour is uint8 at 8, pad at 9)
 			poly.normalIndex = stream.readUint16LE();
 		}
 	}
@@ -294,8 +316,8 @@ void BodyData::loadPolygonsLBA2(Common::SeekableReadStream &stream, int32 offPol
 		const uint16 sectionSize = stream.readUint16LE();
 		stream.skip(2); // shade
 
-		if (sectionSize == 0 || numPolygons == 0) {
-			break;
+		if (sectionSize < 8 || numPolygons == 0) {
+			continue;
 		}
 
 		const uint32 blockSize = (sectionSize - 8) / numPolygons;

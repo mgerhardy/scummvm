@@ -92,6 +92,7 @@ public:
 	static int32 lSET_RAIL(TwinEEngine *engine, LifeScriptContext &ctx);
 	static int32 lINVERSE_BETA(TwinEEngine *engine, LifeScriptContext &ctx);
 	static int32 lNO_BODY(TwinEEngine *engine, LifeScriptContext &ctx);
+	static int32 lADD_GOLD_PIECES(TwinEEngine *engine, LifeScriptContext &ctx);
 	static int32 lSTOP_L_TRACK_OBJ(TwinEEngine *engine, LifeScriptContext &ctx);
 	static int32 lRESTORE_L_TRACK_OBJ(TwinEEngine *engine, LifeScriptContext &ctx);
 	static int32 lSAVE_COMPORTEMENT_OBJ(TwinEEngine *engine, LifeScriptContext &ctx);

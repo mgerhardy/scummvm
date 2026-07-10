@@ -74,6 +74,7 @@ Resources::~Resources() {
 	}
 	free(_fontPtr);
 	free(_sjisFontPtr);
+	free(_impactBuffer);
 }
 
 void Resources::initPalettes() {
@@ -294,6 +295,17 @@ void Resources::initResources() {
 		if (!_bodyTexture.loadFromHQR(TwineResource(Resources::HQR_RESS_FILE, gRessBodyTextureIndex), false)) {
 			warning("Failed to load body texture atlas");
 		}
+		_impactBufferSize = HQR::getAllocEntry(&_impactBuffer, Resources::HQR_RESS_FILE, RESSHQR_IMPACT);
+		if (_impactBufferSize == 0) {
+			warning("Failed to load impact scripts from ress.hqr");
+		}
+		// LBA2 holomap models live in holomap.hqr; ress.hqr index 29 is RESS_XPL2 palette.
+		if (!_holomapArrowPtr.loadFromHQR(Resources::HQR_HOLOMAP_FILE, HOLOHQR_FLECHE, false)) {
+			warning("Failed to load holomap big arrow model for LBA2");
+		}
+		if (!_holomapTwinsenArrowPtr.loadFromHQR(Resources::HQR_HOLOMAP_FILE, HOLOHQR_LOFLECHE, false)) {
+			warning("Failed to load holomap small arrow model for LBA2");
+		}
 	}
 
 	preloadSprites();
@@ -321,6 +333,21 @@ const TextEntry *Resources::getText(TextBankId textBankId, TextId index) const {
 
 const Trajectory *Resources::giveTrajPtr(int index) const {
 	return _trajectories.getTrajectory(index);
+}
+
+const uint8 *Resources::getImpactScript(int32 index) const {
+	if (_impactBuffer == nullptr || _impactBufferSize < 4) {
+		return nullptr;
+	}
+	const uint32 numImpacts = READ_LE_UINT32(_impactBuffer);
+	if (index < 0 || (uint32)index >= numImpacts) {
+		return nullptr;
+	}
+	const uint32 offset = READ_LE_UINT32(_impactBuffer + (index + 1) * 4);
+	if (offset >= (uint32)_impactBufferSize) {
+		return nullptr;
+	}
+	return _impactBuffer + offset;
 }
 
 int Resources::findSmkMovieIndex(const char *name) const {

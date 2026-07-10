@@ -44,7 +44,6 @@ void AnimData::loadKeyFramesLBA2(Common::SeekableReadStream &stream) {
 		keyframe.x = stream.readSint16LE();
 		keyframe.y = stream.readSint16LE();
 		keyframe.z = stream.readSint16LE();
-		stream.readSint16LE(); // reserved
 
 		// Group 0 (master) — not copied to CurrentFrame in the original engine
 		keyframe.animMasterRot = stream.readSint16LE();

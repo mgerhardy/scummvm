@@ -34,6 +34,7 @@
 #include "twine/debugger/dt-internal.h"
 #include "twine/holomap.h"
 #include "twine/holomap_v1.h"
+#include "twine/holomap_v2.h"
 #include "twine/parser/entity.h"
 #include "twine/parser/texture.h"
 #include "twine/renderer/redraw.h"
@@ -42,6 +43,7 @@
 #include "twine/scene/actor.h"
 #include "twine/scene/gamestate.h"
 #include "twine/scene/grid.h"
+#include "twine/scene/exterior.h"
 #include "twine/scene/scene.h"
 
 #include "twine/shared.h"
@@ -208,6 +210,21 @@ static void holomapFlagsWindow(TwinEEngine *engine) {
 			ImGui::Checkbox("flagredraw", &holomap->_flagredraw);
 			ImGui::Checkbox("dialstat", &holomap->_dialstat);
 			ImGui::Checkbox("flagpal", &holomap->_flagpal);
+		} else if (engine->isLBA2()) {
+			HolomapV2 *holomap = (HolomapV2*)engine->_holomap;
+
+			ImGuiEx::InputAngle("holoAlpha", &holomap->_holoAlpha);
+			ImGuiEx::InputAngle("holoBeta", &holomap->_holoBeta);
+			ImGuiEx::InputAngle("holoGamma", &holomap->_holoGamma);
+			ImGuiEx::InputInt("zoomPlanet", &holomap->_zoomPlanet);
+			ImGuiEx::InputInt("zoomPlanetDest", &holomap->_zoomPlanetDest);
+			ImGuiEx::InputAngle("destAlpha", &holomap->_destAlpha);
+			ImGuiEx::InputAngle("destBeta", &holomap->_destBeta);
+			ImGuiEx::InputInt("numObjectif", &holomap->_numObjectif);
+			ImGui::Checkbox("automove", &holomap->_automove);
+			ImGui::Checkbox("flagRedraw", &holomap->_flagRedraw);
+			ImGui::Checkbox("flagPal", &holomap->_flagPal);
+			ImGui::Checkbox("flagHoloEnd", &holomap->_flagHoloEnd);
 		}
 	}
 	ImGui::End();
@@ -509,6 +526,17 @@ static void sceneDetailsWindows(TwinEEngine *engine) {
 		ImGuiEx::InputInt("Beta light", &scene->_betaLight);
 		ImGuiEx::InputInt("Fall Y position", &scene->_startYFalling);
 		ImGui::Text("Hero position type: %i", (int)scene->_flagChgCube);
+
+		if (engine->isLBA2()) {
+			ImGui::SeparatorText("LBA2 Scene Info");
+			ImGui::Text("Island: %i", (int)scene->_island);
+			ImGui::Text("Cube X/Y: %i / %i", (int)scene->_currentCubeX, (int)scene->_currentCubeY);
+			ImGui::Text("Shadow level: %i", (int)scene->_shadowLevel);
+			ImGui::Text("Mode labyrinth: %i", (int)scene->_modeLabyrinthe);
+			ImGui::Text("Cinema mode: %i", (int)scene->_cinemaMode);
+			ImGui::Text("Outside scene: %s", scene->_isOutsideScene ? "yes" : "no");
+			ImGui::Text("Planet: %i", scene->_planet);
+		}
 	}
 	ImGui::End();
 }
@@ -636,6 +664,41 @@ static void actorDetailsWindow(int &actorIdx, TwinEEngine *engine) {
 				ImGui::Text("A3DS");
 				ImGui::TableNextColumn();
 				ImGui::Text("%i %i %i", actor->A3DS.Num, actor->A3DS.Deb, actor->A3DS.Fin);
+
+				if (engine->isLBA2()) {
+					ImGui::TableNextColumn();
+					ImGui::Text("SampleAlways");
+					ImGui::TableNextColumn();
+					ImGui::Text("%i", actor->SampleAlways);
+					ImGui::TableNextColumn();
+					ImGui::Text("SampleVolume");
+					ImGui::TableNextColumn();
+					ImGui::Text("%i", (int)actor->SampleVolume);
+					ImGui::TableNextColumn();
+					ImGui::Text("SizeSHit");
+					ImGui::TableNextColumn();
+					ImGui::Text("%i", (int)actor->SizeSHit);
+					ImGui::TableNextColumn();
+					ImGui::Text("WagonHit X/Z");
+					ImGui::TableNextColumn();
+					ImGui::Text("%i / %i", (int)actor->_wagonHitX, (int)actor->_wagonHitZ);
+					ImGui::TableNextColumn();
+					ImGui::Text("SaveGenBody");
+					ImGui::TableNextColumn();
+					ImGui::Text("%i", (int)actor->_saveGenBody);
+					ImGui::TableNextColumn();
+					ImGui::Text("SaveOffsetLife");
+					ImGui::TableNextColumn();
+					ImGui::Text("%i", actor->_saveOffsetLife);
+					ImGui::TableNextColumn();
+					ImGui::Text("RailZoneIdx");
+					ImGui::TableNextColumn();
+					ImGui::Text("%i", actor->_railZoneIdx);
+					ImGui::TableNextColumn();
+					ImGui::Text("BoundAngle cur/end");
+					ImGui::TableNextColumn();
+					ImGui::Text("%i / %i", actor->_boundAngle.cur, actor->_boundAngle.end);
+				}
 
 				ImGui::EndTable();
 			}
@@ -799,7 +862,16 @@ static void gameStateMenu(TwinEEngine *engine) {
 		const TextBankId oldTextBankId = engine->_text->textBank();
 		engine->_text->initDial(TextBankId::Inventory_Intro_and_Holomap);
 
-		for (int i = 0; i < NUM_INVENTORY_ITEMS; ++i) {
+		if (engine->isLBA2()) {
+			// Show active weapon for LBA2
+			int weaponItem = engine->_gameState->_weaponItem;
+			if (ImGui::InputInt("Active weapon item", &weaponItem)) {
+				engine->_gameState->_weaponItem = (uint8)CLIP<int>(weaponItem, 0, (int)InventoryItems::MaxInventoryItemsLba2 - 1);
+			}
+		}
+
+		const int numItems = engine->isLBA2() ? (int)InventoryItems::MaxInventoryItemsLba2 : NUM_INVENTORY_ITEMS;
+		for (int i = 0; i < numItems; ++i) {
 			Common::String label;
 			if (engine->_text->getText((TextId)(100 + i))) {
 				Common::U32String original(engine->_text->_currDialTextEntry->string, Common::kDos850);
@@ -807,10 +879,26 @@ static void gameStateMenu(TwinEEngine *engine) {
 			} else {
 				label = Common::String::format("Item %i", i);
 			}
-			uint8 &value = engine->_gameState->_inventoryFlags[i];
-			bool hasItem = value != 0;
-			if (ImGui::Checkbox(label.c_str(), &hasItem)) {
-				value = hasItem == 0 ? 0 : 1;
+			if (i < NUM_INVENTORY_ITEMS) {
+				uint8 &value = engine->_gameState->_inventoryFlags[i];
+				bool hasItem = value != 0;
+				if (ImGui::Checkbox(label.c_str(), &hasItem)) {
+					value = hasItem == 0 ? 0 : 1;
+				}
+			} else {
+				// LBA2 extra items beyond 28: no inventoryFlags entry, just show index
+				ImGui::Text("[%i] %s (lba2 extra)", i, label.c_str());
+			}
+			// Show inventoryObj3D mapping for LBA2
+			if (engine->isLBA2()) {
+				ImGui::SameLine();
+				Common::String obj3dId = Common::String::format("obj3d##%i", i);
+				int obj3d = engine->_gameState->getInventoryObj3D(i);
+				ImGui::PushItemWidth(60);
+				if (ImGui::InputInt(obj3dId.c_str(), &obj3d)) {
+					engine->_gameState->setInventoryObj3D(i, (uint8)CLIP<int>(obj3d, 0, 255));
+				}
+				ImGui::PopItemWidth();
 			}
 		}
 		engine->_text->initDial(oldTextBankId);
@@ -821,6 +909,14 @@ static void gameStateMenu(TwinEEngine *engine) {
 static void gridMenu(TwinEEngine *engine) {
 	if (ImGui::BeginMenu("Grid")) {
 		ImGui::Text("World cube %i %i %i", engine->_grid->_worldCube.x, engine->_grid->_worldCube.y, engine->_grid->_worldCube.z);
+		if (engine->isLBA2()) {
+			ImGui::SeparatorText("LBA2 Exterior Camera");
+			ImGuiEx::InputAngle("alphaCam", &engine->_grid->_alphaCam);
+			ImGuiEx::InputAngle("betaCam", &engine->_grid->_betaCam);
+			ImGuiEx::InputInt("vueDistance", &engine->_grid->_vueDistance);
+			ImGui::Text("vueOffset %i %i %i", engine->_grid->_vueOffsetX, engine->_grid->_vueOffsetY, engine->_grid->_vueOffsetZ);
+			ImGui::Text("Outside: %s", engine->_exterior->isActive() ? "yes" : "no");
+		}
 #if 0
 		Grid *grid = engine->_grid;
 

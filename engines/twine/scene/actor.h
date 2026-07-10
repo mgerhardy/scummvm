@@ -199,7 +199,9 @@ public:
 	int32 _hitForce = 0;
 	int32 _hitBy = -1;
 	BonusParameter _bonusParameter;
+	int32 _alpha = 0;
 	int32 _beta = 0; // facing angle of actor. Minumum is 0 (SW). Going counter clock wise
+	int32 _gamma = 0;
 	int32 _srot = 40; // speed of rotation
 	ControlMode _move = ControlMode::kNoMove; // Move
 	int32 _delayInMillis = 0; // Info
@@ -250,6 +252,7 @@ public:
 	int32 _animStepBeta = 0;
 	IVec3 _animStep;
 	int32 _anim = -1;
+	int32 _animDial = (int32)AnimationTypes::kTalk; // AnimDial (GEN_ANIM_PARLE)
 	int32 _doorWidth = 0;
 	int32 _frame = 0;
 	AnimType _flagAnim = AnimType::kAnimationTypeRepeat;

@@ -33,8 +33,10 @@
 #include "twine/renderer/screens.h"
 #include "twine/resources/resources.h"
 #include "twine/scene/actor.h"
+#include "twine/scene/dart.h"
 #include "twine/scene/buggy.h"
 #include "twine/scene/movements.h"
+#include "twine/scene/flow.h"
 #include "twine/scene/wagon.h"
 #include "twine/script/script_move_v2.h"
 #include "twine/shared.h"
@@ -179,7 +181,7 @@ static const ScriptLifeFunction function_map[] = {
 	{"SET_RAIL", ScriptLifeV2::lSET_RAIL},
 	{"INVERSE_BETA", ScriptLifeV2::lINVERSE_BETA},
 	{"NO_BODY", ScriptLifeV2::lNO_BODY},
-	{"GIVE_GOLD_PIECES", ScriptLife::lGIVE_GOLD_PIECES},
+	{"ADD_GOLD_PIECES", ScriptLifeV2::lADD_GOLD_PIECES},
 	{"STOP_L_TRACK_OBJ", ScriptLifeV2::lSTOP_L_TRACK_OBJ},
 	{"RESTORE_L_TRACK_OBJ", ScriptLifeV2::lRESTORE_L_TRACK_OBJ},
 	{"SAVE_COMPORTEMENT_OBJ", ScriptLifeV2::lSAVE_COMPORTEMENT_OBJ},
@@ -510,7 +512,7 @@ int32 ScriptLifeV2::lCAMERA_CENTER(TwinEEngine *engine, LifeScriptContext &ctx) 
 	const int32 angle = ClampAngle(ToAngle(ctx.stream.readByte() * 1024));
 	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::lCAMERA_CENTER(%i)", (int)angle);
 	engine->_grid->_addBetaCam = angle;
-	engine->_grid->centerOnActor(engine->_scene->getActor(2));
+	engine->_grid->centerOnActor(engine->_scene->getActor(engine->_scene->_numObjFollow), true);
 	engine->_redraw->_firstTime = true;
 	return 0;
 }
@@ -673,9 +675,9 @@ int32 ScriptLifeV2::lMEMO_ARDOISE(TwinEEngine *engine, LifeScriptContext &ctx) {
 	const uint8 num = ctx.stream.readByte();
 	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::lMEMO_ARDOISE(%i)", (int)num);
 	if (engine->_gameState->hasGameFlag(GAMEFLAG_ARDOISE)) {
-		// TODO: implement me
+		engine->_redraw->addOverlay(OverlayType::koInventory, num, 0, 0, 0, OverlayPosType::koNormal, 1);
 	}
-	return -1;
+	return 0;
 }
 
 int32 ScriptLifeV2::lSET_CHANGE_CUBE(TwinEEngine *engine, LifeScriptContext &ctx) {
@@ -829,8 +831,8 @@ int32 ScriptLifeV2::lSTATE_INVENTORY(TwinEEngine *engine, LifeScriptContext &ctx
 	const uint8 num = ctx.stream.readByte(); // num vargame
 	const uint8 idObj3D = ctx.stream.readByte();
 	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::lSTATE_INVENTORY(%i, %i)", (int)num, (int)idObj3D);
-	// TODO: TabInv[num].IdObj3D = idObj3D;
-	return -1;
+	engine->_gameState->setInventoryObj3D(num, idObj3D);
+	return 0;
 }
 
 int32 ScriptLifeV2::lAND_IF(TwinEEngine *engine, LifeScriptContext &ctx) {
@@ -1071,12 +1073,7 @@ int32 ScriptLifeV2::lINVERSE_BETA(TwinEEngine *engine, LifeScriptContext &ctx) {
 	ctx.actor->_beta = ClampAngle(ctx.actor->_beta + LBAAngles::ANGLE_180);
 
 	if (ctx.actor->_move == ControlMode::kWagon) {
-#if 0 // TODO:
-		ctx.actor->Info1 = 1; // reinit speed wagon
-
-		// to be clean
-		APtObj = ctx.actor;
-#endif
+		ctx.actor->_cropTop = 1; // Info1: reinit wagon speed
 
 		// SizeSHit contains the number of the brick under the wagon hack
 		// test front axle position
@@ -1096,20 +1093,62 @@ int32 ScriptLifeV2::lNO_BODY(TwinEEngine *engine, LifeScriptContext &ctx) {
 	return 0;
 }
 
+int32 ScriptLifeV2::lADD_GOLD_PIECES(TwinEEngine *engine, LifeScriptContext &ctx) {
+	const int16 amount = ctx.stream.readSint16LE();
+	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::lADD_GOLD_PIECES(%i)", (int)amount);
+	const bool useZlitos = engine->_scene->_planet >= 2;
+	if (useZlitos) {
+		engine->_gameState->setZlitos(engine->_gameState->_zlitosPieces + amount);
+	} else {
+		engine->_gameState->addKashes(amount);
+	}
+	engine->_sound->mixSample3D(SAMPLE_BONUS_TROUVE, 0x1000, 1, ctx.actor->posObj(), ctx.actorIdx);
+	const int16 sprite = SPRITEHQR_KASHES + (useZlitos ? 1 : 0);
+	engine->_redraw->addOverlay(OverlayType::koSprite, sprite, 10, 30, 0, OverlayPosType::koNormal, 2);
+	return 0;
+}
+
 int32 ScriptLifeV2::lSTOP_L_TRACK_OBJ(TwinEEngine *engine, LifeScriptContext &ctx) {
-	return -1;
+	const uint8 num = ctx.stream.readByte();
+	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::lSTOP_L_TRACK_OBJ(%i)", (int)num);
+	ActorStruct *other = engine->_scene->getActor(num);
+	if (other && other->_lifePoint > 0) {
+		cleanTrack(other);
+		other->_memoLabelTrack = other->_offsetLabelTrack;
+		other->_offsetTrack = -1;
+	}
+	return 0;
 }
 
 int32 ScriptLifeV2::lRESTORE_L_TRACK_OBJ(TwinEEngine *engine, LifeScriptContext &ctx) {
-	return -1;
+	const uint8 num = ctx.stream.readByte();
+	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::lRESTORE_L_TRACK_OBJ(%i)", (int)num);
+	ActorStruct *other = engine->_scene->getActor(num);
+	if (other && other->_lifePoint > 0) {
+		cleanTrack(other);
+		other->_offsetTrack = other->_memoLabelTrack;
+	}
+	return 0;
 }
 
 int32 ScriptLifeV2::lSAVE_COMPORTEMENT_OBJ(TwinEEngine *engine, LifeScriptContext &ctx) {
-	return -1;
+	const uint8 num = ctx.stream.readByte();
+	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::lSAVE_COMPORTEMENT_OBJ(%i)", (int)num);
+	ActorStruct *other = engine->_scene->getActor(num);
+	if (other && other->_lifePoint > 0) {
+		other->_saveOffsetLife = other->_offsetLife;
+	}
+	return 0;
 }
 
 int32 ScriptLifeV2::lRESTORE_COMPORTEMENT_OBJ(TwinEEngine *engine, LifeScriptContext &ctx) {
-	return -1;
+	const uint8 num = ctx.stream.readByte();
+	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::lRESTORE_COMPORTEMENT_OBJ(%i)", (int)num);
+	ActorStruct *other = engine->_scene->getActor(num);
+	if (other && other->_lifePoint > 0) {
+		other->_offsetLife = other->_saveOffsetLife;
+	}
+	return 0;
 }
 
 int32 ScriptLifeV2::lSPY(TwinEEngine *engine, LifeScriptContext &ctx) {
@@ -1131,19 +1170,51 @@ int32 ScriptLifeV2::lPOPCORN(TwinEEngine *engine, LifeScriptContext &ctx) {
 }
 
 int32 ScriptLifeV2::lFLOW_POINT(TwinEEngine *engine, LifeScriptContext &ctx) {
-	return -1;
+	const uint8 pointIdx = ctx.stream.readByte();
+	const uint8 flowIdx = ctx.stream.readByte();
+	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::lFLOW_POINT(%i, %i)", (int)pointIdx, (int)flowIdx);
+	const IVec3 &pos = engine->_scene->_sceneTracks[pointIdx];
+	engine->_flow->createParticleFlow(0, ctx.actorIdx, 0, pos.x, pos.y, pos.z, 0, flowIdx);
+	return 0;
 }
 
 int32 ScriptLifeV2::lFLOW_OBJ(TwinEEngine *engine, LifeScriptContext &ctx) {
-	return -1;
+	const uint8 num = ctx.stream.readByte();
+	const uint8 flowIdx = ctx.stream.readByte();
+	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::lFLOW_OBJ(%i, %i)", (int)num, (int)flowIdx);
+	ActorStruct *other = engine->_scene->getActor(num);
+	if (other && other->_lifePoint > 0) {
+		engine->_flow->createParticleFlow(0, num, 0,
+			other->_posObj.x + engine->getRandomNumber(256) - 128,
+			other->_posObj.y + engine->getRandomNumber(128),
+			other->_posObj.z + engine->getRandomNumber(256) - 128,
+			other->_beta, flowIdx);
+	}
+	return 0;
 }
 
 int32 ScriptLifeV2::lSET_ANIM_DIAL(TwinEEngine *engine, LifeScriptContext &ctx) {
-	return -1;
+	const uint16 animDial = ctx.stream.readUint16LE();
+	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::lSET_ANIM_DIAL(%i)", (int)animDial);
+	ctx.actor->_animDial = animDial;
+	return 0;
 }
 
 int32 ScriptLifeV2::lPCX(TwinEEngine *engine, LifeScriptContext &ctx) {
-	return -1;
+	const uint8 num = ctx.stream.readByte();
+	const uint8 effect = ctx.stream.readByte();
+	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::lPCX(%i, %i)", (int)num, (int)effect);
+	engine->saveTimer(false);
+	if (!engine->_screens->_flagFade) {
+		engine->_screens->fadeToBlack(engine->_screens->_ptrPal);
+	}
+	const int32 pcxIndex = num * 2;
+	engine->_screens->loadImage(TwineImage(Resources::HQR_SCREEN_FILE, pcxIndex, pcxIndex + 1), effect == 0);
+	if (effect != 0) {
+		engine->setPalette(engine->_screens->_palettePcx);
+	}
+	engine->restoreTimer();
+	return 0;
 }
 
 int32 ScriptLifeV2::lEND_MESSAGE(TwinEEngine *engine, LifeScriptContext &ctx) {
@@ -1159,19 +1230,54 @@ int32 ScriptLifeV2::lEND_MESSAGE_OBJ(TwinEEngine *engine, LifeScriptContext &ctx
 }
 
 int32 ScriptLifeV2::lPARM_SAMPLE(TwinEEngine *engine, LifeScriptContext &ctx) {
-	return -1;
+	engine->_sound->_parmSampleDecalage = ctx.stream.readSint16LE();
+	engine->_sound->_parmSampleVolume = ctx.stream.readByte();
+	engine->_sound->_parmSampleFrequence = ctx.stream.readSint16LE();
+	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::lPARM_SAMPLE()");
+	return 0;
 }
 
 int32 ScriptLifeV2::lNEW_SAMPLE(TwinEEngine *engine, LifeScriptContext &ctx) {
-	return -1;
+	const uint16 sampleIdx = ctx.stream.readUint16LE();
+	engine->_sound->_parmSampleDecalage = ctx.stream.readSint16LE();
+	engine->_sound->_parmSampleVolume = ctx.stream.readByte();
+	engine->_sound->_parmSampleFrequence = ctx.stream.readSint16LE();
+	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::lNEW_SAMPLE(%i)", (int)sampleIdx);
+	const uint16 pitch = engine->_sound->_parmSampleFrequence ? (uint16)engine->_sound->_parmSampleFrequence : 0x1000;
+	engine->_sound->mixSample3D(sampleIdx, pitch, 1, ctx.actor->posObj(), ctx.actorIdx);
+	return 0;
 }
 
 int32 ScriptLifeV2::lPOS_OBJ_AROUND(TwinEEngine *engine, LifeScriptContext &ctx) {
-	return -1;
+	const uint8 obj = ctx.stream.readByte();
+	const uint8 num = ctx.stream.readByte();
+	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::lPOS_OBJ_AROUND(%i, %i)", (int)obj, (int)num);
+	ActorStruct *other = engine->_scene->getActor(obj);
+	if (other != nullptr && other->_lifePoint > 0) {
+		engine->_actor->posObjectAroundAnother(num, obj);
+	}
+	return 0;
 }
 
 int32 ScriptLifeV2::lPCX_MESS_OBJ(TwinEEngine *engine, LifeScriptContext &ctx) {
-	return -1;
+	const uint8 num = ctx.stream.readByte();
+	const uint8 effect = ctx.stream.readByte();
+	const uint8 obj = ctx.stream.readByte();
+	const int16 mess = ctx.stream.readSint16LE();
+	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::lPCX_MESS_OBJ(%i, %i, %i, %i)", (int)num, (int)effect, (int)obj, (int)mess);
+	ActorStruct *other = engine->_scene->getActor(obj);
+	if (other == nullptr || other->_lifePoint <= 0) {
+		return 0;
+	}
+	engine->saveTimer(false);
+	engine->_scene->_talkingActor = obj;
+	engine->_screens->loadImage(TwineImage(Resources::HQR_SCREEN_FILE, num * 2, num * 2 + 1), effect == 0);
+	engine->_sound->stopSamples();
+	engine->_text->drawTextProgressive((TextId)mess);
+	engine->_screens->fadeToBlack(engine->_screens->_palettePcx);
+	engine->_redraw->drawScene(true);
+	engine->restoreTimer();
+	return 0;
 }
 
 ScriptLifeV2::ScriptLifeV2(TwinEEngine *engine) : ScriptLife(engine, function_map, ARRAYSIZE(function_map)) {

@@ -28,6 +28,7 @@
 namespace TwinE {
 
 struct AnimTimerDataStruct;
+class ActorStruct;
 class BodyData;
 class TwinEEngine;
 
@@ -43,7 +44,7 @@ private:
 	 * @param animData Animation data
 	 * @param animTimerDataPtr Animation time data
 	 */
-	bool setInterDepObjet(int32 keyframeIdx, const AnimData &animData, AnimTimerDataStruct *animTimerDataPtr);
+	bool setInterDepObjet(int32 keyframeIdx, const AnimData &animData, AnimTimerDataStruct *animTimerDataPtr, ActorStruct *actor);
 
 	void copyKeyFrameToState(const KeyFrame *keyframe, BodyData &bodyData, int32 numBones) const;
 	void copyStateToKeyFrame(KeyFrame *keyframe, const BodyData &bodyData) const;
@@ -78,6 +79,9 @@ public:
 	 */
 	void setAnimObjet(int32 keyframeIdx, const AnimData &animData, BodyData &bodyData, AnimTimerDataStruct *animTimerDataPtr);
 
+	/** LBA2 ObjectSetFrame - snap actor to a specific animation frame */
+	void setAnimFrame(ActorStruct *actor, uint32 frame);
+
 	/**
 	 * Set new body animation
 	 * @param keyframeIdx Animation key frame index
@@ -105,7 +109,10 @@ public:
 	 * @param bodyData Body model data
 	 * @param animTimerDataPtr Animation time data
 	 */
-	void stockInterAnim(const BodyData &bodyData, AnimTimerDataStruct *animTimerDataPtr);
+	void stockInterAnim(const BodyData &bodyData, AnimTimerDataStruct *animTimerDataPtr, const AnimData *newAnimData = nullptr);
+
+	/** LBA2 ObjectSetInterAnim: bone interpolation after INTERDEP (INTFRAME) */
+	void setInterAnimObjetLBA2(int32 keyframeIdx, const AnimData &animData, BodyData &bodyData, AnimTimerDataStruct *animTimerDataPtr);
 
 	/**
 	 * Initialize animation

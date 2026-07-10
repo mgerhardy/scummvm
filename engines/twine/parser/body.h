@@ -36,6 +36,16 @@ namespace TwinE {
 struct AnimTimerDataStruct {
 	const KeyFrame *ptr = nullptr;
 	int32 time = 0; // keyframe time
+	// LBA2 INTERDEP.CPP incremental root-motion state
+	int32 lastAnimStepX = 0;
+	int32 lastAnimStepY = 0;
+	int32 lastAnimStepZ = 0;
+	int32 lastAnimStepAlpha = 0;
+	int32 lastAnimStepBeta = 0;
+	int32 lastAnimStepGamma = 0;
+	uint32 interpolator = 0; // 16.16 fixed point from INTERDEP
+	bool skipBoneInterp = false; // INTFRAME skips on FLAG_FRAME boundary
+	int32 lastNbGroups = 0; // ObjectInitAnim group-count transition
 };
 
 class BodyData : public Parser {
@@ -130,7 +140,7 @@ public:
 		return _textureHandles;
 	}
 
-	uint32 getTextureHandle(uint8 textureIndex) const {
+	uint32 getTextureHandle(uint16 textureIndex) const {
 		if (textureIndex >= _textureHandles.size()) {
 			return 0;
 		}

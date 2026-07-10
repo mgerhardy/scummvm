@@ -33,6 +33,7 @@
 #include "twine/scene/actor.h"
 #include "twine/scene/collision.h"
 #include "twine/scene/graph.h"
+#include "twine/scene/exterior.h"
 #include "twine/scene/grid.h"
 #include "twine/scene/scene.h"
 #include "twine/shared.h"
@@ -570,6 +571,11 @@ bool Grid::drawGraph(int32 posX, int32 posY, const uint8 *pGraph, bool isSprite)
 }
 
 const uint8 *Grid::getBlockBufferGround(const IVec3 &pos, int32 &ground) {
+	if (_engine->isLBA2() && _engine->_exterior->isActive()) {
+		ground = _engine->_exterior->getAltitude(pos.x, pos.z);
+		return nullptr;
+	}
+
 	const IVec3 &collision = updateCollisionCoordinates(pos.x, pos.y, pos.z);
 	const uint8 *ptr = _bufCube + collision.y * 2 + collision.x * SIZE_CUBE_Y * 2 + collision.z * SIZE_CUBE_X * SIZE_CUBE_Y * 2;
 
@@ -653,7 +659,89 @@ void Grid::drawBrickBlock(int32 blockIdx, int32 brickBlockIdx, int32 x, int32 y,
 	_nbBrickColon[col]++;
 }
 
+bool Grid::isExteriorActive() const {
+	return _engine->isLBA2() && _engine->_exterior->isActive();
+}
+
+void Grid::updateExteriorCamera(bool recenterBeta) {
+	const ActorStruct *hero = _engine->_scene->getActor(_engine->_scene->_numObjFollow);
+	if (hero == nullptr) {
+		return;
+	}
+
+	int32 lookBeta = hero->_beta;
+	if (_addBetaCam != 0) {
+		lookBeta = ClampAngle(lookBeta + _addBetaCam);
+	}
+
+	if (recenterBeta) {
+		_betaCam = ClampAngle(LBAAngles::ANGLE_180 - lookBeta);
+	}
+
+	const IVec2 offset = _engine->_renderer->rotate(0, LBA2_DISTANCE_VISEE, lookBeta);
+	_vueOffsetX = hero->_posObj.x + offset.x;
+	_vueOffsetY = hero->_posObj.y;
+	_vueOffsetZ = hero->_posObj.z + offset.y;
+
+	_startCube.x = _vueOffsetX / SIZE_BRICK_XZ;
+	_startCube.y = _vueOffsetY / SIZE_BRICK_Y;
+	_startCube.z = _vueOffsetZ / SIZE_BRICK_XZ;
+
+	_worldCube.x = _startCube.x * SIZE_BRICK_XZ;
+	_worldCube.y = _startCube.y * SIZE_BRICK_Y;
+	_worldCube.z = _startCube.z * SIZE_BRICK_XZ;
+
+	const int32 w = _engine->width();
+	const int32 h = _engine->height();
+	int32 nearClip = LBA2_CLIP_NEAR;
+	if (h > 480) {
+		nearClip = LBA2_CLIP_NEAR * 480 / h;
+	}
+
+	_engine->_renderer->setProjection(w / 2, h / 2, nearClip, LBA2_CHAMP_X, LBA2_CHAMP_Z);
+	_engine->_renderer->setFollowCamera(_vueOffsetX, _vueOffsetY, _vueOffsetZ,
+		_alphaCam, _betaCam, _gammaCam, _vueDistance);
+
+	const IVec3 &projPos = _engine->_renderer->projectPoint(0, 0, 0);
+	_engine->_redraw->_projPosScreen.x = projPos.x;
+	_engine->_redraw->_projPosScreen.y = projPos.y;
+}
+
+IVec3 Grid::actorRenderPos(const ActorStruct *actor) const {
+	if (isExteriorActive()) {
+		return actor->posObj();
+	}
+	return actor->posObj() - _worldCube;
+}
+
+int32 Grid::actorRenderDepth(const ActorStruct *actor) const {
+	if (isExteriorActive()) {
+		const IVec3 &world = _engine->_renderer->longWorldRot(actor->_posObj.x, actor->_posObj.y, actor->_posObj.z);
+		return _engine->_renderer->getCameraRotation().z - world.z;
+	}
+	return actor->_posObj.x - _worldCube.x + actor->_posObj.z - _worldCube.z;
+}
+
+bool Grid::projectActorPoint(const ActorStruct *actor, IVec3 &proj) const {
+	if (isExteriorActive()) {
+		const IVec3 &world = _engine->_renderer->longWorldRot(actor->_posObj.x, actor->_posObj.y, actor->_posObj.z);
+		return _engine->_renderer->longProjectPoint(world, proj);
+	}
+	proj = _engine->_renderer->projectPoint(actorRenderPos(actor));
+	return true;
+}
+
 void Grid::redrawGrid() { // AffGrille
+	if (isExteriorActive()) {
+		updateExteriorCamera(false);
+		_engine->_exterior->redraw();
+		return;
+	}
+
+	_engine->_renderer->setIsoProjection(_engine->width() / 2 - 8 - 1, _engine->height() / 2, SIZE_BRICK_XZ);
+	_engine->_renderer->setPosCamera(0, 0, 0);
+	_engine->_renderer->setAngleCamera(LBAAngles::ANGLE_0, LBAAngles::ANGLE_0, LBAAngles::ANGLE_0);
+
 	_worldCube.x = _startCube.x * SIZE_BRICK_XZ;
 	_worldCube.y = _startCube.y * SIZE_BRICK_Y;
 	_worldCube.z = _startCube.z * SIZE_BRICK_XZ;
@@ -696,6 +784,14 @@ BlockEntry Grid::getBlockEntry(int32 xmap, int32 ymap, int32 zmap) const {
 }
 
 ShapeType Grid::worldColBrick(int32 x, int32 y, int32 z) {
+	if (_engine->isLBA2() && _engine->_exterior->isActive()) {
+		const int32 groundY = _engine->_exterior->getAltitude(x, z);
+		if (groundY > y) {
+			return _engine->_exterior->giveTerrainCol(x, z) ? ShapeType::kSolid : ShapeType::kNone;
+		}
+		return ShapeType::kNone;
+	}
+
 	const IVec3 &collision = updateCollisionCoordinates(x, y, z);
 
 	if (collision.x < 0 || collision.x >= SIZE_CUBE_X || collision.z < 0 || collision.z >= SIZE_CUBE_Z) {
@@ -741,6 +837,24 @@ bool Grid::shouldCheckWaterCol(int32 actorIdx) const {
 }
 
 ShapeType Grid::worldColBrickFull(int32 x, int32 y, int32 z, int32 y2, int32 actorIdx) {
+	if (_engine->isLBA2() && _engine->_exterior->isActive()) {
+		const int32 groundY = _engine->_exterior->getAltitude(x, z);
+		if (groundY > y) {
+			if (_engine->_exterior->giveTerrainCol(x, z)) {
+				return ShapeType::kSolid;
+			}
+			if (_engine->_exterior->testDecorCollision(x, y, z)) {
+				ActorStruct *actor = _engine->_scene->getActor(actorIdx);
+				if (actor != nullptr) {
+					actor->setCollision(ShapeType::kSolid);
+					actor->_brickSound |= 0x80;
+				}
+				return ShapeType::kSolid;
+			}
+		}
+		return ShapeType::kNone;
+	}
+
 	const IVec3 &collision = updateCollisionCoordinates(x, y, z);
 
 	if (collision.x < 0 || collision.x >= SIZE_CUBE_X || collision.z < 0 || collision.z >= SIZE_CUBE_Z) {
@@ -803,6 +917,10 @@ ShapeType Grid::worldColBrickFull(int32 x, int32 y, int32 z, int32 y2, int32 act
 }
 
 uint8 Grid::worldCodeBrick(int32 x, int32 y, int32 z) {
+	if (_engine->isLBA2() && _engine->_exterior->isActive()) {
+		return _engine->_exterior->getTerrainBrickCode(x, y, z);
+	}
+
 	uint8 code = 0xF0U;
 	if (y > -1) {
 		const IVec3 &collision = updateCollisionCoordinates(x, y, z);
@@ -817,10 +935,19 @@ uint8 Grid::worldCodeBrick(int32 x, int32 y, int32 z) {
 	return code;
 }
 
-void Grid::centerOnActor(const ActorStruct *actor) {
-	_startCube.x = (actor->_posObj.x + SIZE_BRICK_Y) / SIZE_BRICK_XZ;
-	_startCube.y = (actor->_posObj.y + SIZE_BRICK_Y) / SIZE_BRICK_Y;
-	_startCube.z = (actor->_posObj.z + SIZE_BRICK_Y) / SIZE_BRICK_XZ;
+void Grid::centerOnActor(const ActorStruct *actor, bool recenterCamera) {
+	_startCube.x = actor->_posObj.x / SIZE_BRICK_XZ;
+	if (recenterCamera) {
+		// CameraCenter(0) / CAM_FOLLOW / manual recenter (INTEXT.CPP, GERELIFE.CPP)
+		_startCube.y = (actor->_posObj.y + SIZE_BRICK_Y) / SIZE_BRICK_Y;
+	} else {
+		// CameraCenter(1) on scene load (INTEXT.CPP)
+		_startCube.y = actor->_posObj.y / SIZE_BRICK_Y;
+	}
+	_startCube.z = actor->_posObj.z / SIZE_BRICK_XZ;
+	if (isExteriorActive()) {
+		updateExteriorCamera(true);
+	}
 	_engine->_redraw->_firstTime = true;
 }
 
@@ -838,9 +965,12 @@ void Grid::centerScreenOnActor() {
 	                                   actor->_posObj.z - (_startCube.z * SIZE_BRICK_XZ));
 	// TODO: these border values should get scaled for higher resolutions
 	if (projPos.x < 80 || projPos.x >= _engine->width() - 60 || projPos.y < 80 || projPos.y >= _engine->height() - 50) {
-		_startCube.x = ((actor->_posObj.x + SIZE_BRICK_Y) / SIZE_BRICK_XZ) + (((actor->_posObj.x + SIZE_BRICK_Y) / SIZE_BRICK_XZ) - _startCube.x) / 2;
+		const int32 xm = actor->_posObj.x / SIZE_BRICK_XZ;
+		const int32 zm = actor->_posObj.z / SIZE_BRICK_XZ;
+
+		_startCube.x = xm + (xm - _startCube.x) / 2;
 		_startCube.y = actor->_posObj.y / SIZE_BRICK_Y;
-		_startCube.z = ((actor->_posObj.z + SIZE_BRICK_Y) / SIZE_BRICK_XZ) + (((actor->_posObj.z + SIZE_BRICK_Y) / SIZE_BRICK_XZ) - _startCube.z) / 2;
+		_startCube.z = zm + (zm - _startCube.z) / 2;
 
 		if (_startCube.x >= SIZE_CUBE_X) {
 			_startCube.x = SIZE_CUBE_X - 1;

@@ -21,7 +21,10 @@
 
 #include "twine/scene/rain.h"
 #include "twine/renderer/renderer.h"
+#include "twine/scene/exterior.h"
+#include "twine/scene/gamestate.h"
 #include "twine/scene/grid.h"
+#include "twine/scene/scene.h"
 #include "twine/twine.h"
 
 namespace TwinE {
@@ -78,15 +81,31 @@ void Rain::ClearImpactRain() {
 	}
 }
 
+bool Rain::shouldRender() const {
+	if (!_engine->isLBA2() || !_engine->_rainEnabled) {
+		return false;
+	}
+	// Rain is only for Citadel Island exterior during the opening storm.
+	const bool tempeteActive = _engine->_gameState->getChapter() < 2 || _engine->_flagRain;
+	return _engine->_scene->_isOutsideScene && _engine->_scene->_island == 0 && tempeteActive;
+}
+
 void Rain::AffRain() {
+	if (!shouldRender()) {
+		return;
+	}
 	int32 lFactorX = _engine->_renderer->getLFactorX();
 	int32 lFactorY = _engine->_renderer->getLFactorY();
 	IVec3 cameraRot = _engine->_renderer->getCameraRotation();
 	int32 cameraZr = cameraRot.z;
 
-	// ClipZFar approximation
-	int32 clipZFar = 14000; // Default value from CREDITS.CPP
-	int32 startZFog = 5000;    // Default value from CREDITS.CPP
+	// ClipZFar / StartZFog from loaded exterior cube
+	int32 clipZFar = 14000;
+	int32 startZFog = 5000;
+	if (_engine->_exterior->isActive()) {
+		clipZFar = _engine->_exterior->clipZFar();
+		startZFog = _engine->_exterior->startZFog();
+	}
 
 	for (int32 i = 0; i < MAX_RAIN; i++) {
 		if (TabRain[i].Timer) {
@@ -145,8 +164,12 @@ void Rain::AffRain() {
 
 			int32 c = boundRuleThree(16 * 3 + 10, 16 * 3 + 3, clipZFar - startZFog, Z0);
 
-			// Draw rain drop
-			_engine->_workVideoBuffer.drawLine(xp, yp, proj2.x, proj2.y, c);
+			if (_engine->_exterior->isActive()) {
+				const int32 zScaled = ruleThree32(0, 65535, clipZFar, cameraZr - p2.z);
+				_engine->_exterior->lineRain(xp, yp, zScaled, proj2.x, proj2.y, zScaled, c);
+			} else {
+				_engine->_workVideoBuffer.drawLine(xp, yp, proj2.x, proj2.y, c);
+			}
 
 			// Check collision with ground
 			int32 groundHeight = 0;

@@ -19,41 +19,24 @@
  *
  */
 
-#ifndef TWINE_SCENE_RAIN_H
-#define TWINE_SCENE_RAIN_H
+#ifndef TWINE_SCENE_MOVE3D_H
+#define TWINE_SCENE_MOVE3D_H
 
 #include "twine/scene/actor.h"
-#include "twine/twine.h"
 
 namespace TwinE {
 
-#define MAX_RAIN 200
+class TwinEEngine;
 
-class Rain {
-private:
-	TwinEEngine *_engine;
-	int32 LastTimer = 0;
-	int32 DeltaRain = 0;
-
-public:
-	struct T_RAIN {
-		int32 XRain = 0;
-		int32 YRain = 0;
-		int32 ZRain = 0;
-		int32 Timer = 0;
-	};
-
-	T_RAIN TabRain[MAX_RAIN];
-
-	Rain(TwinEEngine *engine);
-
-	void InitOneRain(T_RAIN *pt);
-	void InitRain();
-	void GereRain();
-	void ClearImpactRain();
-	bool shouldRender() const;
-	void AffRain();
-};
+// LIB386/3D/MOVE.CPP - timer-based distance/angle stepping
+void changeSpeedMove(TwinEEngine *engine, MoveStruct *move, int32 speed);
+void restartMove(TwinEEngine *engine, MoveStruct *move);
+void initMove(TwinEEngine *engine, MoveStruct *move, int32 speed);
+int32 getDeltaMove(TwinEEngine *engine, MoveStruct *move);
+void initBoundAngleMove(TwinEEngine *engine, BoundMoveStruct *bound, int32 speed, int32 start, int32 end);
+void changeSpeedBoundAngleMove(TwinEEngine *engine, BoundMoveStruct *bound, int32 speed, int32 end);
+int32 getBoundAngleMove(TwinEEngine *engine, BoundMoveStruct *bound);
+int32 getSpeedMove(const MoveStruct *move);
 
 } // namespace TwinE
 

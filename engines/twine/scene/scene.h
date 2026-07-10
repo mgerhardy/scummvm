@@ -133,7 +133,6 @@ private:
 	// the first actor is the own hero
 	ActorStruct _sceneActors[NUM_MAX_ACTORS]; // ListObjet
 	int32 _currentSceneSize = 0;
-	bool _isOutsideScene = false; // lba2
 
 	/** Timer for the next sample ambience in scene */
 	int32 _timerNextAmbiance = 0;
@@ -167,6 +166,7 @@ public:
 	int32 _oldcube = LBA1SceneId::Citadel_Island_Prison;
 
 	int32 _planet = -1;
+	bool _isOutsideScene = false; // lba2
 
 	int32 _numHolomapTraj = -1;
 

@@ -146,8 +146,12 @@ class DebugState;
 // lba2
 class Buggy;
 class Dart;
+class Exterior;
+class Flow;
+class Pof;
 class Rain;
 class Wagon;
+class HoloPlanV2;
 
 enum class EngineState {
 	Menu,
@@ -222,6 +226,9 @@ private:
 	void processBonusList();
 	void processInventoryAction();
 	void processOptionsMenu();
+	void throwMecaPenguin();
+	void processLba2WeaponSelect(InventoryItems weapon);
+	bool heroCanUsePlayerMenus() const;
 
 	void initConfigurations();
 	/** Initialize all needed stuffs at first time running engine */
@@ -309,8 +316,12 @@ public:
 	Input *_input;
 	Buggy *_buggy; // lba2
 	Dart *_dart; // lba2
+	Exterior *_exterior; // lba2
+	Flow *_flow; // lba2
+	Pof *_pof; // lba2
 	Rain *_rain; // lba2
 	Wagon *_wagon; // lba2
+	HoloPlanV2 *_holoPlan; // lba2
 	DebugState *_debugState;
 
 	ScriptLife *_scriptLife;
@@ -329,6 +340,7 @@ public:
 	uint32 _gameFlags = 0u;
 	Common::Platform _platform;
 	bool _flagRain = false;
+	bool _rainEnabled = true; // RainEnable in original
 
 	/** Disable screen recenter */
 	bool _cameraZone = false;

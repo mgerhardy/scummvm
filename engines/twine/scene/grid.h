@@ -201,6 +201,21 @@ public:
 
 	int32 _addBetaCam = 0;
 
+	/** LBA2 exterior follow camera (VueOffset/AlphaCam/BetaCam/VueDistance) */
+	int32 _vueOffsetX = 0;
+	int32 _vueOffsetY = 0;
+	int32 _vueOffsetZ = 0;
+	int32 _alphaCam = LBA2_DEFAULT_ALPHA_CAM;
+	int32 _betaCam = 0;
+	int32 _gammaCam = 0;
+	int32 _vueDistance = LBA2_VUE_DISTANCE;
+
+	bool isExteriorActive() const;
+	void updateExteriorCamera(bool recenterBeta = false);
+	IVec3 actorRenderPos(const ActorStruct *actor) const;
+	int32 actorRenderDepth(const ActorStruct *actor) const;
+	bool projectActorPoint(const ActorStruct *actor, IVec3 &proj) const;
+
 	/** Flag to know if the engine is using celling grids */
 	int16 _zoneGrm = 0;
 	/** Current celling grid index */
@@ -233,7 +248,7 @@ public:
 
 	/** recenter screen on followed actor automatically */
 	void centerScreenOnActor();
-	void centerOnActor(const ActorStruct* actor);
+	void centerOnActor(const ActorStruct *actor, bool recenterCamera = false);
 
 	/**
 	 * Draw brick sprite in the screen

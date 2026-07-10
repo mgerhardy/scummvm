@@ -27,13 +27,16 @@
 #include "twine/parser/entity.h"
 #include "twine/renderer/renderer.h"
 #include "twine/resources/resources.h"
+#include "twine/scene/buggy.h"
 #include "twine/scene/collision.h"
 #include "twine/scene/dart.h"
+#include "twine/scene/flow.h"
 #include "twine/scene/extra.h"
 #include "twine/scene/gamestate.h"
 #include "twine/scene/grid.h"
 #include "twine/scene/movements.h"
 #include "twine/scene/scene.h"
+#include "twine/scene/actor.h"
 #include "twine/scene/wagon.h"
 #include "twine/shared.h"
 
@@ -59,6 +62,59 @@ static bool isAnimTranslateBone(uint16 type, bool lba2) {
 		return (type & (uint16)BoneType::TYPE_TRANSLATE) != 0;
 	}
 	return type == (uint16)BoneType::TYPE_TRANSLATE;
+}
+
+static int32 nextAnimFrameIndex(const AnimData &animData, int32 frameIdx) {
+	const int32 numFrames = (int32)animData.getNbFramesAnim();
+	int32 next = frameIdx + 1;
+	if (next >= numFrames) {
+		next = animData.getLoopFrame();
+	}
+	return next;
+}
+
+static int16 patchInterAngleLBA2(int16 last, int16 next, uint32 interpolator) {
+	int32 diff = (next - last) & 0xFFF;
+	if (diff != 0) {
+		diff = SignExt12((int16)diff);
+		diff = (diff * (int32)interpolator) >> 16;
+		last = (int16)((last + diff) & 0xFFF);
+	}
+	return last;
+}
+
+static int16 patchInterStepLBA2(int16 last, int16 next, uint32 interpolator) {
+	int32 diff = (int32)next - (int32)last;
+	if (diff != 0) {
+		diff = (diff * (int32)interpolator) >> 16;
+		last = (int16)(last + diff);
+	}
+	return last;
+}
+
+static bool isStoredKeyframe(const KeyFrame *keyframe, const KeyFrame *animKeyframeBuf, int32 bufSize) {
+	if (keyframe == nullptr) {
+		return false;
+	}
+	for (int32 i = 0; i < bufSize; ++i) {
+		if (keyframe == &animKeyframeBuf[i]) {
+			return true;
+		}
+	}
+	return false;
+}
+
+static void resetAnimTimerState(AnimTimerDataStruct *animTimerDataPtr) {
+	animTimerDataPtr->ptr = nullptr;
+	animTimerDataPtr->time = 0;
+	animTimerDataPtr->lastAnimStepX = 0;
+	animTimerDataPtr->lastAnimStepY = 0;
+	animTimerDataPtr->lastAnimStepZ = 0;
+	animTimerDataPtr->lastAnimStepAlpha = 0;
+	animTimerDataPtr->lastAnimStepBeta = 0;
+	animTimerDataPtr->lastAnimStepGamma = 0;
+	animTimerDataPtr->interpolator = 0;
+	animTimerDataPtr->skipBoneInterp = false;
 }
 
 Animations::Animations(TwinEEngine *engine) : _engine(engine) {
@@ -112,14 +168,77 @@ bool Animations::doSetInterAnimObjet(int32 framedest, const AnimData &animData, 
 	if (!pBody.isAnimated()) {
 		return false;
 	}
-	const KeyFrame *keyFrame = animData.getKeyframe(framedest);
 
 	const int16 numBones = pBody.getNumBones();
-
 	int32 numOfBonesInAnim = animData.getNumBoneframes();
 	if (numOfBonesInAnim > numBones) {
 		numOfBonesInAnim = numBones;
 	}
+
+	if (_engine->isLBA2()) {
+		if (ptranimdest->skipBoneInterp) {
+			ptranimdest->skipBoneInterp = false;
+			return false;
+		}
+
+		if (numOfBonesInAnim <= 1) {
+			return false;
+		}
+
+		const uint32 interpolator = ptranimdest->interpolator;
+		const bool fromStoredPose = isStoredKeyframe(ptranimdest->ptr, _animKeyframeBuf, ARRAYSIZE(_animKeyframeBuf));
+		if (interpolator == 0 && !fromStoredPose) {
+			return false;
+		}
+
+		const KeyFrame *animKeyFrame = animData.getKeyframe(framedest);
+		if (animKeyFrame == nullptr) {
+			return false;
+		}
+
+		const KeyFrame *lastKeyFrame;
+		const KeyFrame *nextKeyFrame;
+		if (fromStoredPose) {
+			lastKeyFrame = ptranimdest->ptr;
+			nextKeyFrame = animKeyFrame;
+		} else {
+			lastKeyFrame = animKeyFrame;
+			const int32 nextFrameIdx = nextAnimFrameIndex(animData, framedest);
+			nextKeyFrame = animData.getKeyframe(nextFrameIdx);
+		}
+		if (lastKeyFrame == nullptr || nextKeyFrame == nullptr) {
+			return false;
+		}
+
+		const int32 numGroups = MIN<int32>(numOfBonesInAnim, (int32)MIN(lastKeyFrame->boneframes.size(), nextKeyFrame->boneframes.size()));
+
+		for (int32 boneIdx = 1; boneIdx < numGroups; ++boneIdx) {
+			BoneFrame *boneState = pBody.getBoneState(boneIdx);
+			const BoneFrame &lastBone = lastKeyFrame->boneframes[boneIdx];
+			const BoneFrame &nextBone = nextKeyFrame->boneframes[boneIdx];
+
+			boneState->type = nextBone.type;
+			const uint16 boneType = (uint16)nextBone.type;
+			if (boneType == (uint16)BoneType::TYPE_ROTATE) {
+				boneState->x = patchInterAngleLBA2(lastBone.x, nextBone.x, interpolator);
+				boneState->y = patchInterAngleLBA2(lastBone.y, nextBone.y, interpolator);
+				boneState->z = patchInterAngleLBA2(lastBone.z, nextBone.z, interpolator);
+			} else {
+				boneState->x = patchInterStepLBA2(lastBone.x, nextBone.x, interpolator);
+				boneState->y = patchInterStepLBA2(lastBone.y, nextBone.y, interpolator);
+				boneState->z = patchInterStepLBA2(lastBone.z, nextBone.z, interpolator);
+			}
+		}
+
+		if (fromStoredPose && interpolator >= 0x10000) {
+			ptranimdest->ptr = animKeyFrame;
+		}
+
+		(void)global;
+		return false;
+	}
+
+	const KeyFrame *keyFrame = animData.getKeyframe(framedest);
 	const int32 timeDest = keyFrame->length;
 
 	const KeyFrame *lastKeyFramePtr = ptranimdest->ptr;
@@ -212,8 +331,10 @@ void Animations::setAnimObjet(int32 keyframeIdx, const AnimData &animData, BodyD
 	_animMasterRot = keyFrame->animMasterRot;
 	_animStepBeta = ToAngle(keyFrame->animStepBeta);
 
+	resetAnimTimerState(animTimerDataPtr);
 	animTimerDataPtr->ptr = animData.getKeyframe(keyframeIdx);
 	animTimerDataPtr->time = _engine->timerRef;
+	animTimerDataPtr->lastNbGroups = animData.getNumBoneframes();
 
 	const int16 numBones = bodyData.getNumBones();
 
@@ -225,7 +346,51 @@ void Animations::setAnimObjet(int32 keyframeIdx, const AnimData &animData, BodyD
 	copyKeyFrameToState(keyFrame, bodyData, numOfBonesInAnim);
 }
 
-void Animations::stockInterAnim(const BodyData &bodyData, AnimTimerDataStruct *animTimerDataPtr) {
+void Animations::setAnimFrame(ActorStruct *actor, uint32 frame) {
+	if (actor->_body == -1 || actor->_anim == -1 || actor->_entityDataPtr == nullptr) {
+		return;
+	}
+
+	const AnimData &animData = _engine->_resources->_animData[actor->_anim];
+	if (frame >= (uint32)animData.getNbFramesAnim()) {
+		return;
+	}
+
+	BodyData &bodyData = actor->_entityDataPtr->getBody(actor->_body);
+	if (!bodyData.isAnimated()) {
+		return;
+	}
+
+	AnimTimerDataStruct *animTimerDataPtr = &bodyData._animTimerData;
+	resetAnimTimerState(animTimerDataPtr);
+	animTimerDataPtr->time = _engine->timerRef;
+	animTimerDataPtr->skipBoneInterp = true;
+
+	const KeyFrame *keyFrame = animData.getKeyframe((int32)frame);
+	if (keyFrame == nullptr) {
+		return;
+	}
+
+	animTimerDataPtr->ptr = keyFrame;
+	actor->_frame = (int16)frame;
+
+	_animStep.x = keyFrame->x;
+	_animStep.y = keyFrame->y;
+	_animStep.z = keyFrame->z;
+	_animMasterRot = keyFrame->animMasterRot;
+	_animStepBeta = ToAngle(keyFrame->animStepBeta);
+
+	int16 numOfBonesInAnim = animData.getNumBoneframes();
+	if (numOfBonesInAnim > bodyData.getNumBones()) {
+		numOfBonesInAnim = bodyData.getNumBones();
+	}
+	copyKeyFrameToState(keyFrame, bodyData, numOfBonesInAnim);
+
+	actor->_workFlags.bAnimNewFrame = 1;
+	actor->_workFlags.bAnimEnded = 0;
+}
+
+void Animations::stockInterAnim(const BodyData &bodyData, AnimTimerDataStruct *animTimerDataPtr, const AnimData *newAnimData) {
 	if (!bodyData.isAnimated()) {
 		return;
 	}
@@ -237,6 +402,32 @@ void Animations::stockInterAnim(const BodyData &bodyData, AnimTimerDataStruct *a
 	KeyFrame *keyframe = &_animKeyframeBuf[_animKeyframeBufIdx++];
 	animTimerDataPtr->ptr = keyframe;
 	copyStateToKeyFrame(keyframe, bodyData);
+
+	const int32 oldNbGroups = (int32)keyframe->boneframes.size();
+	animTimerDataPtr->lastNbGroups = oldNbGroups;
+
+	if (newAnimData != nullptr) {
+		const int32 newNbGroups = newAnimData->getNumBoneframes();
+		const KeyFrame *frame0 = newAnimData->getKeyframe(0);
+		if (frame0 != nullptr && newNbGroups > oldNbGroups) {
+			keyframe->boneframes.reserve(newNbGroups);
+			for (int32 i = oldNbGroups; i < newNbGroups && i < (int32)frame0->boneframes.size(); ++i) {
+				keyframe->boneframes.push_back(frame0->boneframes[i]);
+			}
+		}
+	}
+}
+
+void Animations::setInterAnimObjetLBA2(int32 keyframeIdx, const AnimData &animData, BodyData &bodyData, AnimTimerDataStruct *animTimerDataPtr) {
+	// INTFRAME.CPP: only interpolate while INTERDEP reported motion (FLAG_CHANGE + interpolator)
+	if (animTimerDataPtr->skipBoneInterp) {
+		animTimerDataPtr->skipBoneInterp = false;
+		return;
+	}
+	if (animTimerDataPtr->interpolator == 0 && !isStoredKeyframe(animTimerDataPtr->ptr, _animKeyframeBuf, ARRAYSIZE(_animKeyframeBuf))) {
+		return;
+	}
+	(void)doSetInterAnimObjet(keyframeIdx, animData, bodyData, animTimerDataPtr, false);
 }
 
 void Animations::copyStateToKeyFrame(KeyFrame *keyframe, const BodyData &bodyData) const {
@@ -257,18 +448,86 @@ void Animations::copyKeyFrameToState(const KeyFrame *keyframe, BodyData &bodyDat
 	}
 }
 
-bool Animations::setInterDepObjet(int32 keyframeIdx, const AnimData &animData, AnimTimerDataStruct *animTimerDataPtr) {
+bool Animations::setInterDepObjet(int32 keyframeIdx, const AnimData &animData, AnimTimerDataStruct *animTimerDataPtr, ActorStruct *actor) {
 	const KeyFrame *keyFrame = animData.getKeyframe(keyframeIdx);
+	if (keyFrame == nullptr) {
+		return false;
+	}
 	const int32 timeDest = keyFrame->length;
+
+	if (_engine->timerRef < animTimerDataPtr->time) {
+		animTimerDataPtr->time = _engine->timerRef;
+		return false;
+	}
 
 	int32 remainingFrameTime = animTimerDataPtr->time;
 	if (animTimerDataPtr->ptr == nullptr) {
-		remainingFrameTime = timeDest;
+		remainingFrameTime = _engine->timerRef;
+		animTimerDataPtr->time = _engine->timerRef;
 	}
-
 	const int32 time = _engine->timerRef - remainingFrameTime;
 
 	_animMasterRot = keyFrame->animMasterRot;
+
+	uint32 interpolator = 0;
+	bool keyFramePassed = false;
+	if (time >= timeDest) {
+		interpolator = 0x10000;
+		keyFramePassed = true;
+		animTimerDataPtr->ptr = keyFrame;
+		animTimerDataPtr->time = _engine->timerRef;
+	} else if (timeDest > 0) {
+		interpolator = (uint32)(((time << 16) + ((timeDest + 1) >> 1)) / timeDest);
+	}
+
+	if (_engine->isLBA2() && actor != nullptr) {
+		if (_animMasterRot & 1) {
+			const int32 alphaStep = SignExt12(keyFrame->animStepAlpha);
+			const int32 betaStep = SignExt12(keyFrame->animStepBeta);
+			const int32 gammaStep = SignExt12(keyFrame->animStepGamma);
+
+			const int32 alphaDelta = (int32)(((int64)interpolator * alphaStep) >> 16);
+			actor->_alpha = ClampAngle(actor->_alpha + alphaDelta - animTimerDataPtr->lastAnimStepAlpha);
+			animTimerDataPtr->lastAnimStepAlpha = alphaDelta;
+
+			const int32 betaDelta = (int32)(((int64)interpolator * betaStep) >> 16);
+			actor->_beta = ClampAngle(actor->_beta + betaDelta - animTimerDataPtr->lastAnimStepBeta);
+			animTimerDataPtr->lastAnimStepBeta = betaDelta;
+			_animStepBeta = betaDelta;
+
+			const int32 gammaDelta = (int32)(((int64)interpolator * gammaStep) >> 16);
+			actor->_gamma = ClampAngle(actor->_gamma + gammaDelta - animTimerDataPtr->lastAnimStepGamma);
+			animTimerDataPtr->lastAnimStepGamma = gammaDelta;
+		}
+
+		const int32 xDelta = (int32)(((int64)interpolator * keyFrame->x) >> 16);
+		const int32 yDelta = (int32)(((int64)interpolator * keyFrame->y) >> 16);
+		const int32 zDelta = (int32)(((int64)interpolator * keyFrame->z) >> 16);
+
+		const int32 rotX = xDelta - animTimerDataPtr->lastAnimStepX;
+		const int32 rotY = yDelta - animTimerDataPtr->lastAnimStepY;
+		const int32 rotZ = zDelta - animTimerDataPtr->lastAnimStepZ;
+
+		animTimerDataPtr->lastAnimStepX = xDelta;
+		animTimerDataPtr->lastAnimStepY = yDelta;
+		animTimerDataPtr->lastAnimStepZ = zDelta;
+
+		_animStep = _engine->_renderer->rotateRootAnimStep(actor->_alpha, actor->_beta, actor->_gamma, rotX, rotY, rotZ);
+
+		animTimerDataPtr->interpolator = interpolator;
+		if (keyFramePassed) {
+			animTimerDataPtr->skipBoneInterp = true;
+			animTimerDataPtr->interpolator = 0;
+			animTimerDataPtr->lastAnimStepX = 0;
+			animTimerDataPtr->lastAnimStepY = 0;
+			animTimerDataPtr->lastAnimStepZ = 0;
+			animTimerDataPtr->lastAnimStepAlpha = 0;
+			animTimerDataPtr->lastAnimStepBeta = 0;
+			animTimerDataPtr->lastAnimStepGamma = 0;
+		}
+
+		return keyFramePassed;
+	}
 
 	if (time >= timeDest) {
 		_animStep.x = keyFrame->x;
@@ -279,7 +538,7 @@ bool Animations::setInterDepObjet(int32 keyframeIdx, const AnimData &animData, A
 		_animStepGamma = ToAngle(keyFrame->animStepGamma);
 		animTimerDataPtr->ptr = animData.getKeyframe(keyframeIdx);
 		animTimerDataPtr->time = _engine->timerRef;
-		return true; // finished animation
+		return true;
 	}
 
 	_animStep.x = (keyFrame->x * time) / timeDest;
@@ -424,6 +683,15 @@ void Animations::processAnimActions(int32 actorIdx) { // GereAnimAction
 				                          action.xAngle, actor->_beta, action.speed, action.weight);
 			}
 			break;
+		case ActionType::ACTION_FLOW_3D:
+			if (_engine->isLBA2() && action.animFrame == actor->_frame) {
+				const IVec2 &destPos = _engine->_renderer->rotate(action.distanceX, action.distanceZ, actor->_beta);
+				const int32 throwX = destPos.x + actor->_posObj.x;
+				const int32 throwY = action.distanceY + actor->_posObj.y;
+				const int32 throwZ = destPos.y + actor->_posObj.z;
+				_engine->_flow->createParticleFlow(0, actorIdx, 0, throwX, throwY, throwZ, actor->_beta, (int32)action.strength);
+			}
+			break;
 		case ActionType::ACTION_ZV:
 		default:
 			break;
@@ -482,8 +750,26 @@ bool Animations::initAnim(AnimationTypes genNewAnim, AnimType flag, AnimationTyp
 		// if no previous animation
 		setAnimObjet(0, _engine->_resources->_animData[newanim], bodyData, &bodyData._animTimerData);
 	} else {
-		// interpolation between animations
-		stockInterAnim(bodyData, &bodyData._animTimerData);
+		// interpolation between animations (ObjectInitAnim + STOFRAME)
+		const AnimData &newAnimData = _engine->_resources->_animData[newanim];
+		const AnimData &oldAnimData = _engine->_resources->_animData[actor->_anim];
+		AnimTimerDataStruct &timerData = bodyData._animTimerData;
+		resetAnimTimerState(&timerData);
+		timerData.lastNbGroups = oldAnimData.getNumBoneframes();
+		stockInterAnim(bodyData, &timerData, &newAnimData);
+
+		const int32 oldNbGroups = timerData.lastNbGroups;
+		const int32 newNbGroups = newAnimData.getNumBoneframes();
+		if (newNbGroups > oldNbGroups) {
+			const KeyFrame *frame0 = newAnimData.getKeyframe(0);
+			if (frame0 != nullptr) {
+				for (int32 i = oldNbGroups; i < newNbGroups && i < (int32)frame0->boneframes.size(); ++i) {
+					if (i < (int32)bodyData.getNumBones()) {
+						*bodyData.getBoneState(i) = frame0->boneframes[i];
+					}
+				}
+			}
+		}
 	}
 
 	actor->_anim = newanim;
@@ -612,7 +898,7 @@ void Animations::doAnim(int32 actorIdx) {
 			bool keyFramePassed = false;
 			BodyData &bodyData = actor->_entityDataPtr->getBody(actor->_body);
 			if (bodyData.isAnimated()) {
-				keyFramePassed = setInterDepObjet(actor->_frame, animData, &bodyData._animTimerData);
+				keyFramePassed = setInterDepObjet(actor->_frame, animData, &bodyData._animTimerData, actor);
 			}
 
 			if (_animMasterRot) {
@@ -621,18 +907,25 @@ void Animations::doAnim(int32 actorIdx) {
 				actor->_workFlags.bIsRotationByAnim = 0;
 			}
 
-			actor->_beta = ClampAngle(actor->_beta + _animStepBeta - actor->_animStepBeta);
-			actor->_animStepBeta = _animStepBeta;
-
-			const IVec2 &destPos = _engine->_renderer->rotate(_animStep.x, _animStep.z, actor->_beta);
-
-			_animStep.x = destPos.x;
-			_animStep.z = destPos.y;
+			if (!_engine->isLBA2()) {
+				actor->_beta = ClampAngle(actor->_beta + _animStepBeta - actor->_animStepBeta);
+				actor->_animStepBeta = _animStepBeta;
+			} else {
+				actor->_animStepBeta = _animStepBeta;
+			}
 
 			if (_engine->isLBA2() && actor->_move == ControlMode::kWagon) {
 				processActor = actor->posObj();
 				_engine->_wagon->DoAnimWagon(actor);
+			} else if (_engine->isLBA2() && (actor->_move == ControlMode::kBuggy || actor->_move == ControlMode::kBuggyManual)) {
+				processActor = actor->posObj();
+				_engine->_buggy->doAnimBuggy(actor);
+			} else if (_engine->isLBA2()) {
+				processActor = actor->posObj() + _animStep;
 			} else {
+				const IVec2 &destPos = _engine->_renderer->rotate(_animStep.x, _animStep.z, actor->_beta);
+				_animStep.x = destPos.x;
+				_animStep.z = destPos.y;
 				processActor = actor->posObj() + _animStep - actor->_animStep;
 			}
 
@@ -645,6 +938,17 @@ void Animations::doAnim(int32 actorIdx) {
 				actor->_frame++;
 				actor->_workFlags.bAnimNewFrame = 1;
 
+				if (_engine->isLBA2() && bodyData.isAnimated()) {
+					int32 numOfBonesInAnim = animData.getNumBoneframes();
+					if (numOfBonesInAnim > bodyData.getNumBones()) {
+						numOfBonesInAnim = bodyData.getNumBones();
+					}
+					const KeyFrame *newFrame = animData.getKeyframe(actor->_frame);
+					if (newFrame != nullptr) {
+						copyKeyFrameToState(newFrame, bodyData, numOfBonesInAnim);
+					}
+				}
+
 				// if actor have animation actions to process
 				processAnimActions(actorIdx);
 
@@ -654,6 +958,16 @@ void Animations::doAnim(int32 actorIdx) {
 
 					if (actor->_flagAnim == AnimType::kAnimationTypeRepeat) {
 						actor->_frame = animData.getLoopFrame();
+						if (bodyData.isAnimated()) {
+							const KeyFrame *loopFrame = animData.getKeyframe(actor->_frame);
+							if (loopFrame != nullptr) {
+								int32 loopBones = animData.getNumBoneframes();
+								if (loopBones > bodyData.getNumBones()) {
+									loopBones = bodyData.getNumBones();
+								}
+								copyKeyFrameToState(loopFrame, bodyData, loopBones);
+							}
+						}
 					} else {
 						actor->_genAnim = actor->_nextGenAnim;
 						actor->_anim = searchAnim(actor->_genAnim, actorIdx);

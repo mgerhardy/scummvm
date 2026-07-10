@@ -28,13 +28,21 @@
 #include "twine/scene/animations.h"
 #include "twine/scene/collision.h"
 #include "twine/scene/gamestate.h"
+#include "twine/scene/move3d.h"
 #include "twine/scene/grid.h"
 #include "twine/scene/scene.h"
+#include "twine/scene/buggy.h"
 #include "twine/scene/wagon.h"
+#include "twine/scene/buggy.h"
 #include "twine/text.h"
 #include "twine/twine.h"
 
 namespace TwinE {
+
+namespace {
+// LBA2 OBJECT.CPP ManualRealAngle uses a fixed angular velocity, not discrete 90-degree steps.
+static constexpr int32 kLBA2ManualRotSpeed = 1024;
+} // namespace
 
 Movements::Movements(TwinEEngine *engine) : _engine(engine) {}
 
@@ -65,7 +73,11 @@ void Movements::initRealAngle(int16 startAngle, int16 endAngle, int16 stepAngle,
 }
 
 void Movements::clearRealAngle(ActorStruct *actorPtr) {
-	initRealAngle(actorPtr->_beta, actorPtr->_beta, LBAAngles::ANGLE_0, &actorPtr->realAngle);
+	if (_engine->isLBA2()) {
+		initBoundAngleMove(_engine, &actorPtr->_boundAngle, 0, actorPtr->_beta, actorPtr->_beta);
+	} else {
+		initRealAngle(actorPtr->_beta, actorPtr->_beta, LBAAngles::ANGLE_0, &actorPtr->realAngle);
+	}
 }
 
 void Movements::initRealValue(int16 startAngle, int16 endAngle, int16 stepAngle, RealValue *movePtr) {
@@ -105,7 +117,7 @@ int32 Movements::getAngle(int32 x0, int32 z0, int32 x1, int32 z1) {
 
 	int32 startAngle = LBAAngles::ANGLE_0;
 	//	stopAngle  = LBAAngles::ANGLE_90;
-	const int16 *shadeAngleTab3(&sinTab[LBAAngles::ANGLE_135]);
+	const int16 *shadeAngleTab3(trigShadeAngleTab3(_engine->isLBA2()));
 	while (shadeAngleTab3[startAngle] > destAngle) {
 		startAngle++;
 	}
@@ -154,7 +166,7 @@ int32 Movements::getAngle(int32 x0, int32 z0, int32 x1, int32 z1) {
 
 	while (start < (end - 1)) {
 		int32 angle = (start + end) >> 1;
-		diff = tmp - sinTab[angle];
+		diff = tmp - trigSin(angle, _engine->isLBA2());
 		if (diff > 0) {
 			end = angle;
 		} else {
@@ -165,7 +177,7 @@ int32 Movements::getAngle(int32 x0, int32 z0, int32 x1, int32 z1) {
 		}
 	}
 	if (diff) {
-		if (tmp <= ((sinTab[start] + sinTab[end]) >> 1)) {
+		if (tmp <= ((trigSin(start, _engine->isLBA2()) + trigSin(end, _engine->isLBA2())) >> 1)) {
 			start = end;
 		}
 	}
@@ -257,7 +269,11 @@ void Movements::processBehaviourExecution(int actorIdx) {
 		if (_engine->_actor->_combatAuto) {
 			ActorStruct *actor = _engine->_scene->getActor(actorIdx);
 			_lastJoyFlag = true;
-			actor->_beta = actor->realAngle.getRealAngle(_engine->timerRef);
+			if (_engine->isLBA2()) {
+				actor->_beta = (actor->_beta + getDeltaMove(_engine, &actor->_boundAngle.move)) & 4095;
+			} else {
+				actor->_beta = actor->realAngle.getRealAngle(_engine->timerRef);
+			}
 			// TODO: previousLoopActionKey must be handled properly
 			if (!_previousLoopActionKey || actor->_genAnim == AnimationTypes::kStanding) {
 				const int32 aggresiveMode = _engine->getRandomNumber(3);
@@ -288,6 +304,9 @@ void Movements::processBehaviourExecution(int actorIdx) {
 		_engine->_animations->initAnim(AnimationTypes::kHide, AnimType::kAnimationTypeRepeat, AnimationTypes::kNoAnim, actorIdx);
 		break;
 	case HeroBehaviourType::kProtoPack:
+	case HeroBehaviourType::kJetPack:
+	case HeroBehaviourType::kBUGGY:
+	case HeroBehaviourType::kConch:
 	case HeroBehaviourType::kMax:
 		break;
 	}
@@ -295,6 +314,55 @@ void Movements::processBehaviourExecution(int actorIdx) {
 
 bool Movements::processAttackExecution(int actorIdx) {
 	ActorStruct *actor = _engine->_scene->getActor(actorIdx);
+
+	if (_engine->isLBA2()) {
+		const InventoryItems weapon = _engine->_gameState->getActiveWeapon();
+		switch (weapon) {
+		case InventoryItems::kiMagicBall:
+			if (_engine->_gameState->hasItem(InventoryItems::kiMagicBall)) {
+				if (_engine->_gameState->_magicBall == -1) {
+					_engine->_animations->initAnim(AnimationTypes::kThrowBall, AnimType::kAnimationThen, AnimationTypes::kStanding, actorIdx);
+				}
+				_lastJoyFlag = true;
+				actor->_beta = getBoundAngleMove(_engine, &actor->_boundAngle);
+				return true;
+			}
+			break;
+		case InventoryItems::kiDart:
+			if (_engine->_gameState->hasItem(InventoryItems::kiDart) && _engine->_gameState->hasGameFlag(InventoryItems::kiDart) > 0) {
+				_engine->_animations->initAnim(AnimationTypes::kDart, AnimType::kAnimationThen, AnimationTypes::kStanding, actorIdx);
+				_lastJoyFlag = true;
+				actor->_beta = getBoundAngleMove(_engine, &actor->_boundAngle);
+				return true;
+			} else if (_engine->_gameState->hasItem(InventoryItems::kiMagicBall)) {
+				_engine->_gameState->setActiveWeapon(InventoryItems::kiMagicBall);
+			}
+			break;
+		case InventoryItems::kiSabreLba2:
+			if (_engine->_gameState->hasItem(InventoryItems::kiSabreLba2)) {
+				if (actor->_genBody != BodyType::btSabre) {
+					_engine->_actor->initBody(BodyType::btSabre, actorIdx);
+				}
+				_engine->_animations->initAnim(AnimationTypes::kSabreAttack, AnimType::kAnimationThen, AnimationTypes::kStanding, actorIdx);
+				_lastJoyFlag = true;
+				actor->_beta = getBoundAngleMove(_engine, &actor->_boundAngle);
+				return true;
+			}
+			break;
+		case InventoryItems::kiConch:
+			if (_engine->_actor->_heroBehaviour == HeroBehaviourType::kConch) {
+				_engine->_animations->initAnim(AnimationTypes::kThrowBall, AnimType::kAnimationTypeRepeat, AnimationTypes::kNoAnim, actorIdx);
+				_lastJoyFlag = true;
+				actor->_beta = getBoundAngleMove(_engine, &actor->_boundAngle);
+				return true;
+			}
+			break;
+		default:
+			break;
+		}
+		return false;
+	}
+
 	if (!_engine->_gameState->_weapon) {
 		// Use Magic Ball
 		if (_engine->_gameState->hasItem(InventoryItems::kiMagicBall)) {
@@ -331,10 +399,16 @@ void Movements::processManualMovementExecution(int actorIdx) {
 	if (actor->isAttackWeaponAnimationActive()) {
 		return;
 	}
+
+	const bool dodgeActive = _engine->isLBA2() && _engine->_input->isActionActive(TwinEActionType::Dodge);
+	const bool protoAutoForward = _engine->isLBA2() && IS_HERO(actorIdx) &&
+		(_engine->_actor->_heroBehaviour == HeroBehaviourType::kProtoPack || _engine->_actor->_heroBehaviour == HeroBehaviourType::kJetPack) &&
+		_engine->timerRef < _timerProto;
+
 	// Original: if (!MyFire OR ActionNormal) - skip movement when fire buttons are held
 	if ((!_heroActionKey && !_heroAttackKey) || _actionNormal) {
 		// if walking should get stopped
-		if (!_engine->_input->isActionActive(TwinEActionType::MoveForward) && !_engine->_input->isActionActive(TwinEActionType::MoveBackward)) {
+		if (!_engine->_input->isActionActive(TwinEActionType::MoveForward) && !_engine->_input->isActionActive(TwinEActionType::MoveBackward) && !protoAutoForward) {
 			if (_lastJoyFlag && (_heroActionKey != _previousLoopActionKey || _heroAttackKey != _previousLoopAttackKey || _changedCursorKeys != _previousChangedCursorKeys)) {
 				_engine->_animations->initAnim(AnimationTypes::kStanding, AnimType::kAnimationTypeRepeat, AnimationTypes::kNoAnim, actorIdx);
 			}
@@ -342,31 +416,55 @@ void Movements::processManualMovementExecution(int actorIdx) {
 
 		_lastJoyFlag = false;
 
-		if (_engine->_input->isActionActive(TwinEActionType::MoveForward)) {
+		if (_engine->_input->isActionActive(TwinEActionType::MoveForward) || protoAutoForward) {
 			if (!_engine->_scene->_flagClimbing) {
-				_engine->_animations->initAnim(AnimationTypes::kForward, AnimType::kAnimationTypeRepeat, AnimationTypes::kNoAnim, actorIdx);
+				if (dodgeActive && actor->_flagAnim != AnimType::kAnimationAllThen) {
+					_engine->_animations->initAnim(AnimationTypes::kDodgeForward, AnimType::kAnimationAllThen, AnimationTypes::kStanding, actorIdx);
+				} else if (!dodgeActive) {
+					_engine->_animations->initAnim(AnimationTypes::kForward, AnimType::kAnimationTypeRepeat, AnimationTypes::kNoAnim, actorIdx);
+				}
 			}
 			_lastJoyFlag = true;
 		} else if (_engine->_input->isActionActive(TwinEActionType::MoveBackward)) {
-			_engine->_animations->initAnim(AnimationTypes::kBackward, AnimType::kAnimationTypeRepeat, AnimationTypes::kNoAnim, actorIdx);
+			if (dodgeActive && actor->_flagAnim != AnimType::kAnimationAllThen) {
+				_engine->_animations->initAnim(AnimationTypes::kDodgeBackward, AnimType::kAnimationAllThen, AnimationTypes::kStanding, actorIdx);
+			} else if (!dodgeActive) {
+				_engine->_animations->initAnim(AnimationTypes::kBackward, AnimType::kAnimationTypeRepeat, AnimationTypes::kNoAnim, actorIdx);
+			}
 			_lastJoyFlag = true;
 		}
 
 		if (_engine->_input->isActionActive(TwinEActionType::TurnLeft)) {
 			if (actor->_genAnim == AnimationTypes::kStanding) {
-				_engine->_animations->initAnim(AnimationTypes::kTurnLeft, AnimType::kAnimationTypeRepeat, AnimationTypes::kNoAnim, actorIdx);
+				if (dodgeActive && actor->_flagAnim != AnimType::kAnimationAllThen) {
+					_engine->_animations->initAnim(AnimationTypes::kDodgeLeft, AnimType::kAnimationAllThen, AnimationTypes::kStanding, actorIdx);
+				} else if (!dodgeActive) {
+					_engine->_animations->initAnim(AnimationTypes::kTurnLeft, AnimType::kAnimationTypeRepeat, AnimationTypes::kNoAnim, actorIdx);
+				}
 			} else {
 				if (!actor->_workFlags.bIsRotationByAnim) {
-					actor->_beta = actor->realAngle.getRealAngle(_engine->timerRef);
+					if (_engine->isLBA2()) {
+						actor->_beta = (actor->_beta + getDeltaMove(_engine, &actor->_boundAngle.move)) & 4095;
+					} else {
+						actor->_beta = actor->realAngle.getRealAngle(_engine->timerRef);
+					}
 				}
 			}
 			_lastJoyFlag = true;
 		} else if (_engine->_input->isActionActive(TwinEActionType::TurnRight)) {
 			if (actor->_genAnim == AnimationTypes::kStanding) {
-				_engine->_animations->initAnim(AnimationTypes::kTurnRight, AnimType::kAnimationTypeRepeat, AnimationTypes::kNoAnim, actorIdx);
+				if (dodgeActive && actor->_flagAnim != AnimType::kAnimationAllThen) {
+					_engine->_animations->initAnim(AnimationTypes::kDodgeRight, AnimType::kAnimationAllThen, AnimationTypes::kStanding, actorIdx);
+				} else if (!dodgeActive) {
+					_engine->_animations->initAnim(AnimationTypes::kTurnRight, AnimType::kAnimationTypeRepeat, AnimationTypes::kNoAnim, actorIdx);
+				}
 			} else {
 				if (!actor->_workFlags.bIsRotationByAnim) {
-					actor->_beta = actor->realAngle.getRealAngle(_engine->timerRef);
+					if (_engine->isLBA2()) {
+						actor->_beta = (actor->_beta + getDeltaMove(_engine, &actor->_boundAngle.move)) & 4095;
+					} else {
+						actor->_beta = actor->realAngle.getRealAngle(_engine->timerRef);
+					}
 				}
 			}
 			_lastJoyFlag = true;
@@ -383,28 +481,27 @@ void Movements::processManualRotationExecution(int actorIdx) {
 	if (actor->isJumpAnimationActive()) {
 		return;
 	}
-	int16 tempAngle;
-	if (_engine->_input->isActionActive(TwinEActionType::TurnLeft)) {
-		tempAngle = LBAAngles::ANGLE_90;
-	} else if (_engine->_input->isActionActive(TwinEActionType::TurnRight)) {
-		tempAngle = -LBAAngles::ANGLE_90;
-	} else {
-		tempAngle = LBAAngles::ANGLE_0;
-	}
 
-	initRealAngleConst(actor->_beta, actor->_beta + tempAngle, actor->_srot, &actor->realAngle);
+	manualRealAngle(actor);
 }
 
 void Movements::processManualAction(int actorIdx) {
 	if (IS_HERO(actorIdx)) {
+		if (_engine->isLBA2() && _engine->_scene->_sceneHero->_workFlags.bSKATING) {
+			return;
+		}
+
 		_actionNormal = false;
+		const bool dodgeBlocksAttack = _engine->isLBA2() && _engine->_input->isActionActive(TwinEActionType::Dodge) &&
+			(_engine->_input->isActionActive(TwinEActionType::TurnLeft) || _engine->_input->isActionActive(TwinEActionType::TurnRight));
+
 		if (_engine->_input->isHeroActionActive()) {
 			processBehaviourExecution(actorIdx);
 		} else if (_engine->_input->toggleActionIfActive(TwinEActionType::SpecialAction)) {
 			_actionNormal = true;
 		}
 		// MyFire & F_ALT
-		if (_engine->_input->isActionActive(TwinEActionType::ThrowMagicBall) && !_engine->_gameState->inventoryDisabled()) {
+		if (!dodgeBlocksAttack && _engine->_input->isActionActive(TwinEActionType::ThrowMagicBall) && !_engine->_gameState->inventoryDisabled()) {
 			processAttackExecution(actorIdx);
 		}
 	}
@@ -419,6 +516,12 @@ void Movements::processFollowAction(int actorIdx) {
 	int32 newAngle = getAngle(actor->posObj(), followedActor->posObj());
 	if (actor->_flags.bSprite3D) {
 		actor->_beta = newAngle;
+	} else if (_engine->isLBA2()) {
+		if (!actor->_srot) {
+			actor->_beta = newAngle;
+		} else if (!actor->_workFlags.bIsRotationByAnim) {
+			changeSpeedBoundAngleMove(_engine, &actor->_boundAngle, actor->_srot, newAngle);
+		}
 	} else {
 		initRealAngleConst(actor->_beta, newAngle, actor->_srot, &actor->realAngle);
 	}
@@ -462,6 +565,21 @@ void Movements::processSameXZAction(int actorIdx) {
 }
 
 void Movements::manualRealAngle(ActorStruct *actor) {
+	if (_engine->isLBA2()) {
+		int32 speed = 0;
+		if (_engine->_input->isActionActive(TwinEActionType::TurnLeft)) {
+			speed = kLBA2ManualRotSpeed;
+		} else if (_engine->_input->isActionActive(TwinEActionType::TurnRight)) {
+			speed = -kLBA2ManualRotSpeed;
+		}
+		changeSpeedMove(_engine, &actor->_boundAngle.move, speed);
+
+		if (actor->isJumpAnimationActive() || actor->_workFlags.bIsRotationByAnim) {
+			restartMove(_engine, &actor->_boundAngle.move);
+		}
+		return;
+	}
+
 	int16 tempAngle = LBAAngles::ANGLE_0;
 	if (_engine->_input->isActionActive(TwinEActionType::TurnLeft)) {
 		tempAngle = LBAAngles::ANGLE_90;
@@ -470,6 +588,10 @@ void Movements::manualRealAngle(ActorStruct *actor) {
 	}
 
 	initRealAngleConst(actor->_beta, actor->_beta + tempAngle, actor->_srot, &actor->realAngle);
+}
+
+void Movements::setProtoTimer(int32 timer) {
+	_timerProto = timer;
 }
 
 void Movements::doDir(int32 actorIdx) {
@@ -485,7 +607,21 @@ void Movements::doDir(int32 actorIdx) {
 		}
 		return;
 	}
-	if (!actor->_flags.bSprite3D && actor->_move != ControlMode::kManual) {
+
+	if (_engine->isLBA2()) {
+		if (actor->_workFlags.bSKATING) {
+			actor->_beta = getBoundAngleMove(_engine, &actor->_boundAngle);
+		}
+
+		if (!actor->_flags.bSprite3D && actor->_move != ControlMode::kManual && actor->_move != ControlMode::kWagon &&
+		    actor->_move != ControlMode::kBuggyManual) {
+			if (actor->_workFlags.bIsRotationByAnim) {
+				restartMove(_engine, &actor->_boundAngle.move);
+			} else {
+				actor->_beta = getBoundAngleMove(_engine, &actor->_boundAngle);
+			}
+		}
+	} else if (!actor->_flags.bSprite3D && actor->_move != ControlMode::kManual) {
 		actor->_beta = actor->realAngle.getRealAngle(_engine->timerRef);
 	}
 
@@ -509,6 +645,13 @@ void Movements::doDir(int32 actorIdx) {
 	case ControlMode::kWagon:
 		if (_engine->isLBA2()) {
 			_engine->_wagon->DoDirWagon(actor);
+		}
+		break;
+	case ControlMode::kBuggy:
+	case ControlMode::kBuggyManual:
+		if (_engine->isLBA2() && IS_HERO(actorIdx)) {
+			_engine->_buggy->moveBuggy(actor);
+			_engine->_buggy->doAnimBuggy(actor);
 		}
 		break;
 	/**

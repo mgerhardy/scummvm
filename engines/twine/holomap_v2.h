@@ -67,6 +67,7 @@ public:
 
 private:
 	Location _locations[HOLO_MAX_ARROW];
+	char _locationNames[HOLO_MAX_CUBE][30]{};
 
 	// Globe mesh data
 	IVec3 _holomapSurface[HOLO_GLOBE_VERTICES];
@@ -85,7 +86,8 @@ private:
 	};
 	HolomapSort _holomapSort[HOLO_GLOBE_QUADS];
 
-	// Globe rendering state
+public:
+	// Globe rendering state (public for imgui debugger access)
 	int32 _holoAlpha = 0;
 	int32 _holoBeta = 0;
 	int32 _holoGamma = 0;
@@ -106,6 +108,8 @@ private:
 	bool _flagRedraw = true;
 	bool _flagPal = true;
 	bool _flagHoloEnd = false;
+
+private:
 
 	// Holomap image
 	uint8 *_holomapImagePtr = nullptr;
@@ -129,6 +133,8 @@ public:
 	bool setHoloPos(int32 locationIdx) override;
 	bool loadLocations() override;
 	const char *getLocationName(int index) const override;
+	uint8 getIslandPlanet(int32 island) const override;
+	const Location &getLocation(int32 index) const;
 	void clrHoloPos(int32 locationIdx) override;
 	void holoTraj(int32 trajectoryIndex) override;
 	void initHoloDatas() override;

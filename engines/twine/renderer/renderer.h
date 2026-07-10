@@ -42,6 +42,11 @@
 #define POLYGONTYPE_TEXTURE 10
 #define POLYGONTYPE_TEXTURE_GOURAUD 11
 #define POLYGONTYPE_TEXTURE_FLAT 12
+#define POLYGONTYPE_TEXTURE_PERSP 13
+#define POLYGONTYPE_TEXTURE_GOURAUD_PERSP 14
+#define POLYGONTYPE_TEXTURE_FLAT_PERSP 15
+
+#define W_NORM (1 << 30)
 
 #define RENDERTYPE_DRAWTEXTUREDPOLYGON 3
 
@@ -182,9 +187,11 @@ private:
 	}
 	void rotMatIndex2(IMatrix3x3 *targetMatrix, const IMatrix3x3 *currentMatrix, const IVec3 &angleVec);
 	void rotList(const Common::Array<BodyVertex>& vertices, int32 firstPoint, int32 numPoints, I16Vec3 *destPoints, const IMatrix3x3 *rotationMatrix, const IVec3 &destPos);
-	void processRotatedElement(IMatrix3x3 *targetMatrix, const Common::Array<BodyVertex>& vertices, int32 rotX, int32 rotY, int32 rotZ, const BodyBone &bone, ModelData *modelData);
+	void rotTransList(const Common::Array<BodyVertex>& vertices, int32 firstPoint, int32 numPoints, I16Vec3 *destPoints, const IMatrix3x3 *matrix, const IVec3 &trans);
+	void processRotatedElement(IMatrix3x3 *targetMatrix, int32 boneIdx, const Common::Array<BodyVertex>& vertices, int32 rotX, int32 rotY, int32 rotZ, const BodyBone &bone, ModelData *modelData);
 	void transRotList(const Common::Array<BodyVertex>& vertices, int32 firstPoint, int32 numPoints, I16Vec3 *destPoints, const IMatrix3x3 *translationMatrix, const IVec3 &angleVec, const IVec3 &destPos);
-	void translateGroup(IMatrix3x3 *targetMatrix, const Common::Array<BodyVertex>& vertices, int32 rotX, int32 rotY, int32 rotZ, const BodyBone &bone, ModelData *modelData);
+	void translateGroup(IMatrix3x3 *targetMatrix, int32 boneIdx, const Common::Array<BodyVertex>& vertices, int32 rotX, int32 rotY, int32 rotZ, const BodyBone &bone, ModelData *modelData);
+	void zoomGroup(IMatrix3x3 *targetMatrix, int32 boneIdx, const BodyBone &bone, const BoneFrame *boneData, ModelData *modelData);
 	/**
 	 * @brief Rotate the given coordinates by the given rotation matrix
 	 */
@@ -200,7 +207,11 @@ private:
 	IMatrix3x3 _matrixWorld; // LMatriceWorld
 	IMatrix3x3 _matricesTable[30 + 1];
 	IVec3 _normalLight; // NormalXLight, NormalYLight, NormalZLight
+	IVec3 _normalLightLocal; // LBA2: light vector in normal/camera-independent space
 	IVec3 _cameraRot; // CameraXr, CameraYr, CameraZr
+	IVec3 _modelPosWr; // world offset used during body rendering (PosXWr..PosZWr)
+
+	ModelData *_activeModelData = nullptr;
 
 	RenderCommand _renderCmds[1000];
 	/**
@@ -221,6 +232,12 @@ private:
 	int16* _tabMapV0 = nullptr;
 	int16* _tabMapU1 = nullptr;
 	int16* _tabMapV1 = nullptr;
+	int32* _tabPerspW0 = nullptr;
+	int32* _tabPerspW1 = nullptr;
+	int32* _tabPerspUW0 = nullptr;
+	int32* _tabPerspUW1 = nullptr;
+	int32* _tabPerspVW0 = nullptr;
+	int32* _tabPerspVW1 = nullptr;
 	int16* _tabx0 = nullptr;
 	int16* _tabx1 = nullptr;
 
@@ -238,21 +255,25 @@ private:
 	void svgaPolyTriche(int16 vtop, int16 vbottom, uint16 color) const;
 	bool computePoly(int16 polyRenderType, const ComputedVertex *vertices, int32 numVertices, int16 &vtop, int16 &vbottom);
 
-	const RenderCommand *depthSortRenderCommands(int32 numOfPrimitives);
+	const RenderCommand *depthSortRenderCommands(int32 numOfPrimitives, const BodyData &bodyData);
+	void recomputeLight();
 	uint8 *preparePolygons(const BodyData &bodyData, int32 &numOfPrimitives, RenderCommand **renderCmds, uint8 *renderBufferPtr, ModelData *modelData);
 	uint8 *prepareSpheres(const Common::Array<BodySphere>& spheres, int32 &numOfPrimitives, RenderCommand **renderCmds, uint8 *renderBufferPtr, ModelData *modelData);
 	uint8 *prepareLines(const Common::Array<BodyLine>& lines, int32 &numOfPrimitives, RenderCommand **renderCmds, uint8 *renderBufferPtr, ModelData *modelData);
 
+	void clearPolySpans(int32 yMin, int32 yMax);
 	void flipMatrix();
 
 	void fillTextPolyNoClip(int32 top, int32 bottom, const uint8 *holomapImage, uint32 holomapImageSize);
-	void fillBodyTextPolyNoClip(int32 top, int32 bottom, const uint8 *texture, uint8 renderType, int16 flatShade, uint16 repMask = 0xffff);
+	void fillBodyTextPolyNoClip(int32 top, int32 bottom, const uint8 *texture, uint8 renderType, int16 flatShade, uint16 repMask = 0xffff, bool perspective = false);
 	void fillHolomapTriangle(int16 *pDest, int32 x1, int32 y1, int32 x2, int32 y2);
 	void fillHolomapTriangles(const ComputedVertex &vertex1, const ComputedVertex &vertex2, const ComputedVertex &texCoord1, const ComputedVertex &texCoord2, int32 &top, int32 &bottom);
+	void fillHolomapTrianglesPersp(const ComputedVertex &vertex0, const ComputedVertex &vertex1, const ComputedVertex &texCoord0, const ComputedVertex &texCoord1, int32 w0, int32 w1, int32 &lymin, int32 &lymax);
+	void fillHolomapTriangle32(int32 *pDest, int32 x0, int32 y0, int32 x1, int32 y1);
 
 	bool computeTexturedPoly(int16 polyRenderType, const ComputedVertex *screenVerts, const ComputedVertex *texVerts, int32 numVertices, int16 &vtop, int16 &vbottom, ComputedVertex *&outScreen, ComputedVertex *&outTex, int32 &outCount);
-	void renderTexturedPolygons(const CmdRenderTexturedPolygon &polygon, ComputedVertex *screenVerts, ComputedVertex *texVerts);
-	void renderTexturedTriangle(const ComputedVertex screenCoords[3], const ComputedVertex texCoords[3], uint8 renderType, const uint8 *texture, int16 flatShade, uint16 repMask = 0xffff);
+	void renderTexturedPolygons(const CmdRenderTexturedPolygon &polygon, ComputedVertex *screenVerts, ComputedVertex *texVerts, const int32 *perspW = nullptr);
+	void renderTexturedTriangle(const ComputedVertex screenCoords[3], const ComputedVertex texCoords[3], uint8 renderType, const uint8 *texture, int16 flatShade, uint16 repMask = 0xffff, const int32 perspW[3] = nullptr);
 
 	// ClipGauche, ClipDroite, ClipHaut, ClipBas
 	int16 leftClip(int16 polyRenderType, ComputedVertex **offTabPoly, int32 numVertices, ComputedVertex **offTabTexPoly = nullptr);
@@ -292,10 +313,17 @@ public:
 
 	IVec3 projectPoint(int32 cX, int32 cY, int32 cZ);
 
+	/** Project already world-rotated coordinates (output of longWorldRot). */
+	bool longProjectPoint(const IVec3 &rotatedWorld, IVec3 &proj);
+
+	void drawTexturedGroundTriangle(const ComputedVertex screenCoords[3], const ComputedVertex texCoords[3], uint8 renderType, const uint8 *texture, int16 flatShade, uint16 repMask = 0xffff);
+
 	void setFollowCamera(int32 transPosX, int32 transPosY, int32 transPosZ, int32 cameraAlpha, int32 cameraBeta, int32 cameraGamma, int32 cameraZoom);
 	void setPosCamera(int32 x, int32 y, int32 z);
 	IVec3 setAngleCamera(int32 alpha, int32 beta, int32 gamma);
 	IVec3 setInverseAngleCamera(int32 alpha, int32 beta, int32 gamma);
+	IVec3 rotateRootAnimStep(int32 alpha, int32 beta, int32 gamma, int32 x, int32 y, int32 z);
+	IVec3 inverseRotPoint(const IMatrix3x3 &matrix, int32 x, int32 y, int32 z);
 
 	inline IVec3 setBaseRotation(const IVec3 &rot) {
 		return setAngleCamera(rot.x, rot.y, rot.z);
@@ -305,6 +333,7 @@ public:
 	void setIsoProjection(int32 x, int32 y, int32 scale);
 
 	bool affObjetIso(int32 x, int32 y, int32 z, int32 angleX, int32 angleY, int32 angleZ, const BodyData &bodyData, Common::Rect &modelRect);
+	bool affObjetIsoAlphaBeta(int32 x, int32 y, int32 z, int32 alpha, int32 beta, int32 gamma, const BodyData &bodyData, Common::Rect &modelRect);
 
 	inline bool renderIsoModel(const IVec3 &pos, int32 angleX, int32 angleY, int32 angleZ, const BodyData &bodyData, Common::Rect &modelRect) {
 		return affObjetIso(pos.x, pos.y, pos.z, angleX, angleY, angleZ, bodyData, modelRect);

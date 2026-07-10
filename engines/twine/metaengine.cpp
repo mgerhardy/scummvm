@@ -22,6 +22,7 @@
 #include "backends/keymapper/action.h"
 #include "backends/keymapper/keymap.h"
 #include "base/plugins.h"
+#include <cstring>
 #include "common/system.h"
 #include "common/translation.h"
 #include "engines/advancedDetector.h"
@@ -216,10 +217,12 @@ Common::KeymapArray TwinEMetaEngine::initKeymaps(const char *target) const {
 	using namespace Common;
 	Action *act;
 
+	const bool isLBA2 = strstr(target, "lba2") != nullptr;
+
 	KeymapArray array(4);
 
 	{
-		Keymap *gameKeyMap = new Keymap(Keymap::kKeymapTypeGame, mainKeyMapId, "Little Big Adventure");
+		Keymap *gameKeyMap = new Keymap(Keymap::kKeymapTypeGame, mainKeyMapId, isLBA2 ? "Little Big Adventure 2" : "Little Big Adventure");
 		act = new Action("PAUSE", _("Pause"));
 		act->setCustomEngineActionEvent(TwinEActionType::Pause);
 		act->addDefaultInputMapping("p");
@@ -232,7 +235,11 @@ Common::KeymapArray TwinEMetaEngine::initKeymaps(const char *target) const {
 
 		act = new Action("DEBUGGRIDCAMERAPRESSDOWN", _("Debug grid camera down"));
 		act->setCustomEngineActionEvent(TwinEActionType::DebugGridCameraPressDown);
-		act->addDefaultInputMapping("x");
+		if (isLBA2) {
+			act->addDefaultInputMapping("d");
+		} else {
+			act->addDefaultInputMapping("x");
+		}
 		gameKeyMap->addAction(act);
 
 		act = new Action("DEBUGGRIDCAMERAPRESSLEFT", _("Debug grid camera left"));
@@ -246,45 +253,113 @@ Common::KeymapArray TwinEMetaEngine::initKeymaps(const char *target) const {
 		act->addDefaultInputMapping("c");
 		gameKeyMap->addAction(act);
 
-		act = new Action("CHANGETONORMALBEHAVIOUR", _("Normal behavior"));
-		act->setCustomEngineActionEvent(TwinEActionType::ChangeBehaviourNormal);
-		act->addDefaultInputMapping("1");
-		gameKeyMap->addAction(act);
+		if (!isLBA2) {
+			act = new Action("CHANGETONORMALBEHAVIOUR", _("Normal behavior"));
+			act->setCustomEngineActionEvent(TwinEActionType::ChangeBehaviourNormal);
+			act->addDefaultInputMapping("1");
+			gameKeyMap->addAction(act);
 
-		act = new Action("CHANGETOATHLETICBEHAVIOUR", _("Athletic behavior"));
-		act->setCustomEngineActionEvent(TwinEActionType::ChangeBehaviourAthletic);
-		act->addDefaultInputMapping("2");
-		gameKeyMap->addAction(act);
+			act = new Action("CHANGETOATHLETICBEHAVIOUR", _("Athletic behavior"));
+			act->setCustomEngineActionEvent(TwinEActionType::ChangeBehaviourAthletic);
+			act->addDefaultInputMapping("2");
+			gameKeyMap->addAction(act);
 
-		act = new Action("CHANGETOAGGRESSIVEBEHAVIOUR", _("Aggressive behavior"));
-		act->setCustomEngineActionEvent(TwinEActionType::ChangeBehaviourAggressive);
-		act->addDefaultInputMapping("3");
-		gameKeyMap->addAction(act);
+			act = new Action("CHANGETOAGGRESSIVEBEHAVIOUR", _("Aggressive behavior"));
+			act->setCustomEngineActionEvent(TwinEActionType::ChangeBehaviourAggressive);
+			act->addDefaultInputMapping("3");
+			gameKeyMap->addAction(act);
 
-		act = new Action("CHANGETODISCREETBEHAVIOUR", _("Discreet behavior"));
-		act->setCustomEngineActionEvent(TwinEActionType::ChangeBehaviourDiscreet);
-		act->addDefaultInputMapping("4");
-		gameKeyMap->addAction(act);
+			act = new Action("CHANGETODISCREETBEHAVIOUR", _("Discreet behavior"));
+			act->setCustomEngineActionEvent(TwinEActionType::ChangeBehaviourDiscreet);
+			act->addDefaultInputMapping("4");
+			gameKeyMap->addAction(act);
 
-		act = new Action("NORMALBEHAVIOUR", _("Normal behavior"));
-		act->setCustomEngineActionEvent(TwinEActionType::QuickBehaviourNormal);
-		act->addDefaultInputMapping("F1");
-		gameKeyMap->addAction(act);
+			act = new Action("NORMALBEHAVIOUR", _("Normal behavior"));
+			act->setCustomEngineActionEvent(TwinEActionType::QuickBehaviourNormal);
+			act->addDefaultInputMapping("F1");
+			gameKeyMap->addAction(act);
 
-		act = new Action("ATHLETICBEHAVIOUR", _("Athletic behavior"));
-		act->setCustomEngineActionEvent(TwinEActionType::QuickBehaviourAthletic);
-		act->addDefaultInputMapping("F2");
-		gameKeyMap->addAction(act);
+			act = new Action("ATHLETICBEHAVIOUR", _("Athletic behavior"));
+			act->setCustomEngineActionEvent(TwinEActionType::QuickBehaviourAthletic);
+			act->addDefaultInputMapping("F2");
+			gameKeyMap->addAction(act);
 
-		act = new Action("AGGRESSIVEBEHAVIOUR", _("Aggressive behavior"));
-		act->setCustomEngineActionEvent(TwinEActionType::QuickBehaviourAggressive);
-		act->addDefaultInputMapping("F3");
-		gameKeyMap->addAction(act);
+			act = new Action("AGGRESSIVEBEHAVIOUR", _("Aggressive behavior"));
+			act->setCustomEngineActionEvent(TwinEActionType::QuickBehaviourAggressive);
+			act->addDefaultInputMapping("F3");
+			gameKeyMap->addAction(act);
 
-		act = new Action("DISCREETBEHAVIOUR", _("Discreet behavior"));
-		act->setCustomEngineActionEvent(TwinEActionType::QuickBehaviourDiscreet);
-		act->addDefaultInputMapping("F4");
-		gameKeyMap->addAction(act);
+			act = new Action("DISCREETBEHAVIOUR", _("Discreet behavior"));
+			act->setCustomEngineActionEvent(TwinEActionType::QuickBehaviourDiscreet);
+			act->addDefaultInputMapping("F4");
+			gameKeyMap->addAction(act);
+		} else {
+			act = new Action("WEAPONMAGICBALL", _("Magic ball"));
+			act->setCustomEngineActionEvent(TwinEActionType::WeaponMagicBall);
+			act->addDefaultInputMapping("1");
+			gameKeyMap->addAction(act);
+
+			act = new Action("WEAPONDART", _("Darts"));
+			act->setCustomEngineActionEvent(TwinEActionType::WeaponDart);
+			act->addDefaultInputMapping("2");
+			gameKeyMap->addAction(act);
+
+			act = new Action("WEAPONBLOWPIPE", _("Blowpipe"));
+			act->setCustomEngineActionEvent(TwinEActionType::WeaponBlowpipe);
+			act->addDefaultInputMapping("3");
+			gameKeyMap->addAction(act);
+
+			act = new Action("WEAPONCONCH", _("Conch shell"));
+			act->setCustomEngineActionEvent(TwinEActionType::WeaponConch);
+			act->addDefaultInputMapping("4");
+			gameKeyMap->addAction(act);
+
+			act = new Action("WEAPONGLOVE", _("Glove"));
+			act->setCustomEngineActionEvent(TwinEActionType::WeaponGlove);
+			act->addDefaultInputMapping("5");
+			gameKeyMap->addAction(act);
+
+			act = new Action("WEAPONLASER", _("Laser gun"));
+			act->setCustomEngineActionEvent(TwinEActionType::WeaponLaser);
+			act->addDefaultInputMapping("6");
+			gameKeyMap->addAction(act);
+
+			act = new Action("WEAPONSABRE", _("Saber"));
+			act->setCustomEngineActionEvent(TwinEActionType::WeaponSabre);
+			act->addDefaultInputMapping("7");
+			gameKeyMap->addAction(act);
+
+			act = new Action("NORMALBEHAVIOUR", _("Normal behavior"));
+			act->setCustomEngineActionEvent(TwinEActionType::QuickBehaviourNormal);
+			act->addDefaultInputMapping("F5");
+			gameKeyMap->addAction(act);
+
+			act = new Action("ATHLETICBEHAVIOUR", _("Athletic behavior"));
+			act->setCustomEngineActionEvent(TwinEActionType::QuickBehaviourAthletic);
+			act->addDefaultInputMapping("F6");
+			gameKeyMap->addAction(act);
+
+			act = new Action("AGGRESSIVEBEHAVIOUR", _("Aggressive behavior"));
+			act->setCustomEngineActionEvent(TwinEActionType::QuickBehaviourAggressive);
+			act->addDefaultInputMapping("F7");
+			gameKeyMap->addAction(act);
+
+			act = new Action("DISCREETBEHAVIOUR", _("Discreet behavior"));
+			act->setCustomEngineActionEvent(TwinEActionType::QuickBehaviourDiscreet);
+			act->addDefaultInputMapping("F8");
+			gameKeyMap->addAction(act);
+
+			act = new Action("DODGE", _("Dodge"));
+			act->setCustomEngineActionEvent(TwinEActionType::Dodge);
+			act->addDefaultInputMapping("x");
+			act->addDefaultInputMapping("JOY_LEFT_STICK");
+			gameKeyMap->addAction(act);
+
+			act = new Action("USEPENGUIN", _("Launch penguin"));
+			act->setCustomEngineActionEvent(TwinEActionType::UsePenguin);
+			act->addDefaultInputMapping("n");
+			gameKeyMap->addAction(act);
+		}
 
 		act = new Action("BEHAVIOURACTION", _("Behavior action"));
 		act->setCustomEngineActionEvent(TwinEActionType::ExecuteBehaviourAction);
@@ -299,15 +374,23 @@ Common::KeymapArray TwinEMetaEngine::initKeymaps(const char *target) const {
 		act->addDefaultInputMapping("JOY_X");
 		gameKeyMap->addAction(act);
 
-		act = new Action("MENU", _("Global Main Menu"));
-		act->addDefaultInputMapping("F5");
-		act->setEvent(EVENT_MAINMENU);
-		gameKeyMap->addAction(act);
+		if (!isLBA2) {
+			act = new Action("MENU", _("Global Main Menu"));
+			act->addDefaultInputMapping("F5");
+			act->setEvent(EVENT_MAINMENU);
+			gameKeyMap->addAction(act);
 
-		act = new Action("OPTIONSMENU", _("Options menu"));
-		act->setCustomEngineActionEvent(TwinEActionType::OptionsMenu);
-		act->addDefaultInputMapping("F6");
-		gameKeyMap->addAction(act);
+			act = new Action("OPTIONSMENU", _("Options menu"));
+			act->setCustomEngineActionEvent(TwinEActionType::OptionsMenu);
+			act->addDefaultInputMapping("F6");
+			gameKeyMap->addAction(act);
+		} else {
+			act = new Action("OPTIONSMENU", _("Options menu"));
+			act->setCustomEngineActionEvent(TwinEActionType::OptionsMenu);
+			act->addDefaultInputMapping("F4");
+			act->addDefaultInputMapping("o");
+			gameKeyMap->addAction(act);
+		}
 
 		act = new Action("CENTER", _("Center"));
 		act->setCustomEngineActionEvent(TwinEActionType::RecenterScreenOnTwinsen);
@@ -391,19 +474,6 @@ Common::KeymapArray TwinEMetaEngine::initKeymaps(const char *target) const {
 		act->addDefaultInputMapping("JOY_B");
 		act->addDefaultInputMapping("JOY_BACK");
 		gameKeyMap->addAction(act);
-
-		// TODO: lba2 has shortcuts for the inventory items
-		// J: Protopack/Jetpack
-		// P: Mecha-Penguin
-		// H: Holomap
-		// X: Dodges
-		// 1: Magic Ball
-		// 2: Darts
-		// 3: Blowpipe/Blowtron
-		// 4: Conch Shell
-		// 5: Glove
-		// 6: Laser Gun
-		// 7: Saber
 
 		array[0] = gameKeyMap;
 	}

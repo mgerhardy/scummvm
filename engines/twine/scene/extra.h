@@ -52,6 +52,10 @@ enum ExtraType : uint32 {
 	FLASH = 1 << 6,           // 0x0040
 	SEARCH_OBJ = 1 << 7,      // 0x0080
 	IMPACT = 1 << 8,          // 0x0100
+	ANIM_SPRITE = 1u << 21,   // lba2 EXTRA_ANIM_SPRITE
+	NO_SHADOW = 1u << 22,     // lba2 EXTRA_NO_SHADOW
+	HIT_ANY = 1u << 24,       // lba2 EXTRA_HIT_ANY
+	WAIT_NO_COL_OWNER = 1u << 25, // lba2 EXTRA_WAIT_NO_COL_OWNER
 	MAGIC_BALL_KEY = 1 << 9,  // 0x0200
 	TIME_IN = 1 << 10,        // 0x0400
 	ONE_FRAME = 1 << 11,      // 0x0800
@@ -93,7 +97,6 @@ class Extra {
 private:
 	TwinEEngine *_engine;
 
-	void initFly(ExtraListStruct *extra, int32 xAngle, int32 yAngle, int32 x, int32 extraAngle);
 	void bounceExtra(ExtraListStruct *extra, int32 x, int32 y, int32 z);
 	int32 searchBonusKey() const;
 	int32 extraSearchKey(int32 actorIdx, int32 x, int32 y, int32 z, int32 spriteIdx, int32 extraIdx);
@@ -120,6 +123,8 @@ public:
 	/** Reset all used extras */
 	void clearExtra();
 
+	void initFly(ExtraListStruct *extra, int32 xAngle, int32 yAngle, int32 x, int32 extraAngle);
+
 	int32 initSpecial(int32 x, int32 y, int32 z, ExtraSpecialType type);
 	int32 addExtraBonus(int32 x, int32 y, int32 z, int32 xAngle, int32 yAngle, int32 type, int32 bonusAmount);
 
@@ -129,6 +134,8 @@ public:
 
 	int32 throwExtra(int32 actorIdx, int32 x, int32 y, int32 z, int32 spriteIdx, int32 xAngle, int32 yAngle, int32 xRotPoint, int32 extraAngle, int32 strengthOfHit);
 	int32 throwExtraObj(int32 owner, int32 x, int32 y, int32 z, int32 bodyIndex, int32 alpha, int32 beta, int32 speed, int16 alpharot, int32 weight, int32 hitforce);
+	int32 initExtraPof(int32 x, int32 y, int32 z, int16 numPof, int32 alpha, int32 beta, int32 speed, int32 weight, int32 scaleDeb, int32 scaleFin, int32 duree, int32 rotation, int32 timeout);
+	int32 initExtraAnimSprite(int32 owner, int32 x, int32 y, int32 z, int16 spriteDeb, int16 spriteFin, int32 tempo, int32 scale, int32 transparent, int32 hitforce);
 	int32 addExtraAiming(int32 actorIdx, int32 x, int32 y, int32 z, int32 spriteIdx, int32 targetActorIdx, int32 finalAngle, int32 strengthOfHit);
 	void addExtraThrowMagicball(int32 x, int32 y, int32 z, int32 xAngle, int32 yAngle, int32 xRotPoint, int32 extraAngle);
 

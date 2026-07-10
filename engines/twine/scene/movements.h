@@ -70,6 +70,8 @@ private:
 	ChangedCursorKeys _changedCursorKeys;
 	ChangedCursorKeys _previousChangedCursorKeys;
 
+	int32 _timerProto = 0;
+
 	/**
 	 * The Actor is controlled by the player. This works well only for the Hero Actor in general.
 	 * To use it for other Actors they would have to have necessary animations that would be also
@@ -189,6 +191,8 @@ public:
 	void initRealAngleConst(int32 start, int32 end, int32 duration, RealValue *movePtr) const;
 
 	void doDir(int32 actorIdx);
+
+	void setProtoTimer(int32 timer);
 };
 
 inline void Movements::setActionNormal(bool actionNormal) {

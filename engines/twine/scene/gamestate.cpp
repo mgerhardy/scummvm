@@ -98,6 +98,7 @@ void GameState::initHeroVars() {
 	_magicPoint = 0;
 
 	_weapon = false;
+	_weaponItem = (uint8)InventoryItems::kiMagicBall;
 
 	_engine->_scene->_sceneHero->_genBody = BodyType::btNormal;
 	_engine->_scene->_sceneHero->setLife(_engine->getMaxLife());
@@ -135,6 +136,7 @@ void GameState::initEngineVars() {
 
 	_magicLevelIdx = 0;
 	_weapon = false;
+	_weaponItem = (uint8)InventoryItems::kiMagicBall;
 
 	setChapter(0);
 
@@ -302,7 +304,8 @@ bool GameState::loadGameLBA2(Common::SeekableReadStream *file) {
 	_pendingStartCube.z = file->readSint32LE();
 	_hasPendingStartCube = true;
 
-	_weapon = file->readByte() != 0;
+	_weaponItem = file->readByte();
+	_weapon = _weaponItem == (uint8)InventoryItems::kiUseSabre || _weaponItem == (uint8)InventoryItems::kiSabreLba2;
 	_engine->timerRef = file->readSint32LE();
 	_engine->_scene->_numObjFollow = file->readByte();
 	_engine->_actor->_previousHeroBehaviour = (HeroBehaviourType)file->readByte();
@@ -446,7 +449,7 @@ bool GameState::saveGameLBA2(Common::WriteStream *file) {
 	file->writeSint32LE(_engine->_grid->_startCube.y);
 	file->writeSint32LE(_engine->_grid->_startCube.z);
 
-	file->writeByte(_weapon ? 1 : 0);
+	file->writeByte(_weaponItem);
 	file->writeSint32LE(_engine->timerRef);
 	file->writeByte(_engine->_scene->_numObjFollow);
 	file->writeByte((byte)_engine->_actor->_previousHeroBehaviour);
@@ -518,7 +521,7 @@ void GameState::setGameFlag(uint8 index, int16 value) {
 }
 
 void GameState::doFoundObj(InventoryItems item) {
-	_engine->_grid->centerOnActor(_engine->_scene->_sceneHero);
+	_engine->_grid->centerOnActor(_engine->_scene->_sceneHero, true);
 
 	// Hide hero in scene
 	_engine->_scene->_sceneHero->_flags.bIsInvisible = 1;
@@ -855,6 +858,42 @@ int16 GameState::setLeafBoxes(int16 val) {
 		_engine->unlockAchievement("LBA_ACH_003");
 	}
 	return _inventoryNumLeafsBox;
+}
+
+void GameState::setInventoryObj3D(int index, uint8 idObj3D) {
+	if (index >= 0 && index < MaxInventoryItemsLba2) {
+		_inventoryObj3D[index] = idObj3D;
+	}
+}
+
+uint8 GameState::getInventoryObj3D(int index) const {
+	if (index >= 0 && index < MaxInventoryItemsLba2) {
+		return _inventoryObj3D[index];
+	}
+	return 0;
+}
+
+void GameState::setActiveWeapon(InventoryItems item) {
+	if (_engine->isLBA2()) {
+		_weaponItem = (uint8)item;
+		_weapon = item == InventoryItems::kiSabreLba2;
+	} else {
+		_weapon = item == InventoryItems::kiUseSabre;
+	}
+}
+
+InventoryItems GameState::getActiveWeapon() const {
+	if (_engine->isLBA2()) {
+		return (InventoryItems)_weaponItem;
+	}
+	return _weapon ? InventoryItems::kiUseSabre : InventoryItems::kiMagicBall;
+}
+
+bool GameState::isSabreWeaponActive() const {
+	if (_engine->isLBA2()) {
+		return _weaponItem == (uint8)InventoryItems::kiSabreLba2;
+	}
+	return _weapon;
 }
 
 void GameState::addLeafBoxes(int16 val) {

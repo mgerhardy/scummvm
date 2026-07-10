@@ -40,6 +40,8 @@
 #include "twine/scene/animations.h"
 #include "twine/scene/collision.h"
 #include "twine/scene/dart.h"
+#include "twine/scene/exterior.h"
+#include "twine/scene/flow.h"
 #include "twine/scene/extra.h"
 #include "twine/scene/grid.h"
 #include "twine/scene/movements.h"
@@ -260,7 +262,10 @@ int32 Redraw::fillActorDrawingList(DrawListStruct *drawList, bool flagflip) {
 		// no redraw required
 		if (actor->_flags.bIsBackgrounded && !flagflip) {
 			// get actor position on screen
-			const IVec3 &projPos = _engine->_renderer->projectPoint(actor->posObj() - _engine->_grid->_worldCube);
+			IVec3 projPos;
+			if (!_engine->_grid->projectActorPoint(actor, projPos)) {
+				continue;
+			}
 			// check if actor is visible on screen, otherwise don't display it
 			if (projPos.x > VIEW_X0 && projPos.x < VIEW_X1(_engine) && projPos.y > VIEW_Y0 && projPos.y < VIEW_Y1(_engine)) {
 				actor->_workFlags.bWasDrawn = 1;
@@ -272,24 +277,27 @@ int32 Redraw::fillActorDrawingList(DrawListStruct *drawList, bool flagflip) {
 			continue;
 		}
 		// get actor position on screen
-		const IVec3 &projPos = _engine->_renderer->projectPoint(actor->posObj() - _engine->_grid->_worldCube);
+		IVec3 projPos;
+		if (!_engine->_grid->projectActorPoint(actor, projPos)) {
+			continue;
+		}
 
 		if ((actor->_flags.bSpriteClip && projPos.x > -112 && projPos.x < _engine->width() + 112 && projPos.y > VIEW_X0 && projPos.y < _engine->height() + 171) ||
 		    ((!actor->_flags.bSpriteClip) && projPos.x > VIEW_X0 && projPos.x < VIEW_X1(_engine) && projPos.y > VIEW_Y0 && projPos.y < VIEW_Y1(_engine))) {
 
-			int32 ztri = actor->_posObj.x - _engine->_grid->_worldCube.x + actor->_posObj.z - _engine->_grid->_worldCube.z;
+			int32 ztri = _engine->_grid->actorRenderDepth(actor);
 
 			// if actor is above another actor
 			if (actor->_carryBy != -1) {
 				const ActorStruct *standOnActor = _engine->_scene->getActor(actor->_carryBy);
-				ztri = standOnActor->_posObj.x - _engine->_grid->_worldCube.x + standOnActor->_posObj.z - _engine->_grid->_worldCube.z + 2;
+				ztri = _engine->_grid->actorRenderDepth(standOnActor) + 2;
 			}
 
 			if (actor->_flags.bSprite3D) {
 				drawList[drawListPos].type = DrawListType::DrawActorSprites;
 				drawList[drawListPos].numObj = n;
 				if (actor->_flags.bSpriteClip) {
-					ztri = actor->_animStep.x - _engine->_grid->_worldCube.x + actor->_animStep.z - _engine->_grid->_worldCube.z;
+					ztri = _engine->_grid->actorRenderDepth(actor);
 				}
 			} else {
 				drawList[drawListPos].type = DrawListType::DrawObject3D;
@@ -439,13 +447,20 @@ void Redraw::processDrawListShadows(const DrawListStruct &drawCmd) {
 void Redraw::processDrawListActors(const DrawListStruct &drawCmd, bool flagflip) {
 	const int32 actorIdx = drawCmd.numObj;
 	ActorStruct *actor = _engine->_scene->getActor(actorIdx);
+	if (actor->_entityDataPtr == nullptr || actor->_body < 0) {
+		return;
+	}
 	if (actor->_anim >= 0) {
 		const AnimData &animData = _engine->_resources->_animData[actor->_anim];
 		BodyData &bodyData = actor->_entityDataPtr->getBody(actor->_body);
-		_engine->_animations->setInterAnimObjet2(actor->_frame, animData, bodyData, &bodyData._animTimerData);
+		if (_engine->isLBA2()) {
+			_engine->_animations->setInterAnimObjetLBA2(actor->_frame, animData, bodyData, &bodyData._animTimerData);
+		} else {
+			_engine->_animations->setInterAnimObjet2(actor->_frame, animData, bodyData, &bodyData._animTimerData);
+		}
 	}
 
-	const IVec3 &delta = actor->posObj() - _engine->_grid->_worldCube;
+	const IVec3 delta = _engine->_grid->actorRenderPos(actor);
 	Common::Rect renderRect;
 
 	if (actorIdx == OWN_ACTOR_SCENE_INDEX) {
@@ -454,7 +469,11 @@ void Redraw::processDrawListActors(const DrawListStruct &drawCmd, bool flagflip)
 		}
 	}
 
-	if (!_engine->_renderer->affObjetIso(delta.x, delta.y, delta.z, LBAAngles::ANGLE_0, actor->_beta, LBAAngles::ANGLE_0, actor->_entityDataPtr->getBody(actor->_body), renderRect)) {
+	if (!_engine->_renderer->affObjetIso(delta.x, delta.y, delta.z,
+		_engine->isLBA2() ? actor->_alpha : LBAAngles::ANGLE_0,
+		actor->_beta,
+		_engine->isLBA2() ? actor->_gamma : LBAAngles::ANGLE_0,
+		actor->_entityDataPtr->getBody(actor->_body), renderRect)) {
 		return;
 	}
 
@@ -492,7 +511,10 @@ void Redraw::processDrawListActorSprites(const DrawListStruct &drawCmd, bool bgR
 	const uint8 *spritePtr = _engine->_resources->_spriteTable[actor->_body];
 
 	// get actor position on screen
-	const IVec3 &projPos = _engine->_renderer->projectPoint(actor->posObj() - _engine->_grid->_worldCube);
+	IVec3 projPos;
+	if (!_engine->_grid->projectActorPoint(actor, projPos)) {
+		return;
+	}
 
 	const int32 dx = spriteData.surface().w;
 	const int32 dy = spriteData.surface().h;
@@ -790,6 +812,12 @@ void Redraw::renderOverlays() {
 		switch (overlay->move) {
 		case OverlayPosType::koNormal: // wait number of seconds and die
 			if (_engine->timerRef >= overlay->timerEnd) {
+				if (overlay->type == OverlayType::koRain) {
+					_engine->_flagRain = false;
+					if (!_engine->_scene->_isOutsideScene || _engine->_gameState->getChapter() >= 2) {
+						_engine->_sound->stopSample(SAMPLE_RAIN);
+					}
+				}
 				overlay->num = -1;
 				continue;
 			}
@@ -920,10 +948,30 @@ void Redraw::renderOverlays() {
 			break;
 		}
 		case OverlayType::koSysText:
-		case OverlayType::koFlash:
+			break;
+		case OverlayType::koFlash: {
+			const int32 phase = (_engine->timerRef / 2) & 1;
+			if (phase) {
+				_engine->_workVideoBuffer.fillRect(_engine->rect(), COLOR_WHITE);
+				addPhysBox(_engine->rect());
+			}
+			break;
+		}
 		case OverlayType::koRain:
-		case OverlayType::koInventory:
-			// TODO lba2
+			break;
+		case OverlayType::koInventory: {
+			const Common::Rect rect(10, 10, 79, 79);
+			_engine->_interface->box(rect, COLOR_BLACK);
+			_engine->_interface->setClip(rect);
+			const BodyData &bodyPtr = _engine->_resources->_inventoryTable[overlay->num];
+			_overlayRotation += 1;
+			_engine->_renderer->draw3dObject(40, 40, bodyPtr, _overlayRotation, 16000);
+			_engine->_menu->drawRectBorders(rect);
+			addPhysBox(rect);
+			_engine->_gameState->init3DGame();
+			_engine->_interface->unsetClip();
+			break;
+		}
 		case OverlayType::koMax:
 			break;
 		}
@@ -1001,6 +1049,10 @@ void Redraw::drawScene(bool flagflip) { // AffScene
 	correctZLevels(drawList, drawListPos);
 	processDrawList(drawList, drawListPos, flagflip);
 
+	if (_engine->isLBA2()) {
+		_engine->_flow->renderAll();
+	}
+
 	_engine->_debugState->renderDebugView();
 
 	renderOverlays();
@@ -1033,8 +1085,16 @@ void Redraw::drawScene(bool flagflip) { // AffScene
 void Redraw::drawBubble(int32 actorIdx) {
 	ActorStruct *actor = _engine->_scene->getActor(actorIdx);
 
-	// get actor position on screen
-	const IVec3 &projPos = _engine->_renderer->projectPoint(actor->_posObj.x - _engine->_grid->_worldCube.x, actor->_posObj.y + actor->_boundingBox.maxs.y - _engine->_grid->_worldCube.y, actor->_posObj.z - _engine->_grid->_worldCube.z);
+	const IVec3 renderPos = _engine->_grid->actorRenderPos(actor);
+	IVec3 projPos(renderPos.x, renderPos.y + actor->_boundingBox.maxs.y, renderPos.z);
+	if (_engine->_grid->isExteriorActive()) {
+		const IVec3 &world = _engine->_renderer->longWorldRot(projPos.x, projPos.y, projPos.z);
+		if (!_engine->_renderer->longProjectPoint(world, projPos)) {
+			return;
+		}
+	} else {
+		projPos = _engine->_renderer->projectPoint(projPos);
+	}
 
 	if (actorIdx != _bubbleActor) {
 		_bubbleSpriteIndex = _bubbleSpriteIndex ^ 1;
