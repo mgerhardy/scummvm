@@ -19,6 +19,7 @@ MODULE_OBJS := \
 	parser/holomap.o \
 	parser/parser.o \
 	parser/sprite.o \
+	parser/texture.o \
 	parser/text.o \
 	\
 	renderer/redraw.o \
@@ -46,6 +47,7 @@ MODULE_OBJS := \
 	script/script_move_v2.o \
 	\
 	resources/hqr.o \
+	resources/bkg.o \
 	resources/lzss.o \
 	resources/resources.o \
 	\

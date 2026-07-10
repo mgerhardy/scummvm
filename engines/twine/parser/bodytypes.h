@@ -71,11 +71,22 @@ struct BodyNormal {
 	uint16 prenormalizedRange;
 };
 
+struct BodyUVGroup {
+	uint8 u[4] = {};
+};
+
 struct BodyPolygon {
 	Common::Array<uint16> indices;
 	Common::Array<uint16> normals;
 	int8 materialType = 0;
-	int16 intensity = 0; // color1 / color2
+	uint8 colorIndex = 0;
+	int16 intensity = 0;
+	uint8 texturePage = 0;
+	uint8 u[4] = {};
+	uint8 v[4] = {};
+	bool hasTexture = false;
+	uint8 polyType = 0;
+	uint16 normalIndex = 0;
 };
 
 }

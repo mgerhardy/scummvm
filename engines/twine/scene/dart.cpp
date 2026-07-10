@@ -35,7 +35,7 @@ namespace TwinE {
 
 void Dart::InitDarts() {
 	int32 x0 = -64, x1 = 64, y0 = -64, y1 = 64, z0 = -64, z1 = 64;
-	if (_dartBody.loadFromHQR(TwineResource(Resources::HQR_BODY_FILE, BODY_3D_DART), false)) {
+	if (_dartBody.loadFromHQR(TwineResource(Resources::HQR_OBJFIX_FILE, BODY_3D_DART), false)) {
 		x0 = _dartBody.bbox.mins.x;
 		x1 = _dartBody.bbox.maxs.x;
 		y0 = _dartBody.bbox.mins.y;

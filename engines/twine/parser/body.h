@@ -46,11 +46,17 @@ private:
 	void loadPolygons(Common::SeekableReadStream &stream);
 	void loadLines(Common::SeekableReadStream &stream);
 	void loadSpheres(Common::SeekableReadStream &stream);
+	void loadPolygonsLBA2(Common::SeekableReadStream &stream, int32 offPolys, int32 offLines, int32 bodyIndex);
+	void loadLinesLBA2(Common::SeekableReadStream &stream, int32 offLines, int32 nbLines);
+	void loadSpheresLBA2(Common::SeekableReadStream &stream, int32 offSpheres, int32 nbSpheres);
+	void loadTextureHandlesLBA2(Common::SeekableReadStream &stream, int32 offTextures, int32 nbTextures);
 
 	Common::Array<BodyPolygon> _polygons;
+	Common::Array<uint32> _textureHandles;
 	Common::Array<BodyVertex> _vertices;
 	Common::Array<BodySphere> _spheres;
 	Common::Array<BodyNormal> _normals;
+	Common::Array<BodyNormal> _normFaces;
 	Common::Array<BodyLine> _lines;
 	Common::Array<BodyBone> _bones;
 
@@ -61,6 +67,8 @@ protected:
 
 public:
 	bool animated = false;
+	bool noSort = false;
+	bool hasTransparency = false;
 	AnimTimerDataStruct _animTimerData;
 
 	BoundingBox bbox;
@@ -102,6 +110,10 @@ public:
 		return _normals;
 	}
 
+	const Common::Array<BodyNormal> &getNormFaces() const {
+		return _normFaces;
+	}
+
 	const BodyNormal &getNormal(int16 normalIdx) const {
 		return _normals[normalIdx];
 	}
@@ -112,6 +124,17 @@ public:
 
 	const Common::Array<BodyBone> &getBones() const {
 		return _bones;
+	}
+
+	const Common::Array<uint32> &getTextureHandles() const {
+		return _textureHandles;
+	}
+
+	uint32 getTextureHandle(uint8 textureIndex) const {
+		if (textureIndex >= _textureHandles.size()) {
+			return 0;
+		}
+		return _textureHandles[textureIndex];
 	}
 
 	const BodyBone &getBone(int16 boneIdx) const {

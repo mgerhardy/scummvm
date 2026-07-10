@@ -54,6 +54,9 @@ void SpriteData::reset() {
 
 bool SpriteData::loadFromStream(Common::SeekableReadStream &stream, bool lba1) {
 	reset();
+	if (_rawSprite) {
+		return loadSpriteRaw(stream);
+	}
 	if (_bricks) {
 		// brick sprites don't have the offsets
 		return loadSprite(stream, 0);
@@ -89,7 +92,7 @@ bool SpriteData::loadSprite(Common::SeekableReadStream &stream, uint32 offset) {
 			const uint8 runSpec = stream.readByte();
 			const uint8 runLength = bits(runSpec, 0, 6) + 1;
 			const uint8 type = bits(runSpec, 6, 2);
-			if (type == 1) {
+			if (type == 1 || type == 3) {
 				uint8 *start = (uint8 *)_surfaces[_sprites].getBasePtr(x, y);
 				for (uint8 i = 0; i < runLength; ++i) {
 					if (start > last) {
@@ -106,6 +109,27 @@ bool SpriteData::loadSprite(Common::SeekableReadStream &stream, uint32 offset) {
 				Common::fill(start, end, stream.readByte());
 			}
 			x += runLength;
+		}
+	}
+	if (stream.err()) {
+		return false;
+	}
+	++_sprites;
+	return true;
+}
+
+bool SpriteData::loadSpriteRaw(Common::SeekableReadStream &stream) {
+	stream.seek(8);
+	const int width = stream.readByte();
+	const int height = stream.readByte();
+	_offsetX[_sprites] = 0;
+	_offsetY[_sprites] = 0;
+	const Graphics::PixelFormat format = Graphics::PixelFormat::createFormatCLUT8();
+	_surfaces[_sprites].create(width, height, format);
+	for (int y = 0; y < height; ++y) {
+		uint8 *row = (uint8 *)_surfaces[_sprites].getBasePtr(0, y);
+		for (int x = 0; x < width; ++x) {
+			row[x] = stream.readByte();
 		}
 	}
 	if (stream.err()) {

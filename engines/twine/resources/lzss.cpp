@@ -21,8 +21,39 @@
 
 #include "twine/resources/lzss.h"
 #include "common/textconsole.h"
+#include "common/array.h"
 
 namespace TwinE {
+
+void expandLZ(uint8 *dst, const uint8 *src, uint32 decompSize, uint32 minBloc) {
+	uint32 dstOffset = 0;
+	uint32 srcOffset = 0;
+
+	while (dstOffset < decompSize) {
+		const uint8 flag = src[srcOffset++];
+		uint8 bit = flag;
+		for (int i = 0; i < 8; i++) {
+			if (dstOffset >= decompSize) {
+				break;
+			}
+			if ((bit & 0x1) != 0) {
+				dst[dstOffset++] = src[srcOffset++];
+			} else {
+				const uint32 blockLength = (src[srcOffset] & 0x0f) + minBloc;
+				const uint32 blockOffset = ((uint32)(src[srcOffset + 1]) << 4) | (src[srcOffset] >> 4);
+				srcOffset += 2;
+				for (uint32 j = 0; j < blockLength; j++) {
+					dst[dstOffset] = dst[dstOffset - blockOffset - 1];
+					dstOffset++;
+					if (dstOffset >= decompSize) {
+						break;
+					}
+				}
+			}
+			bit >>= 1;
+		}
+	}
+}
 
 LzssReadStream::LzssReadStream(Common::ReadStream *indata, uint32 mode, uint32 realsize) {
 	_outLzssBufData = new uint8[realsize]();
@@ -42,44 +73,28 @@ void LzssReadStream::decodeLZSS(Common::ReadStream *in, uint32 mode, uint32 data
 		return;
 	}
 
-	uint8 *dst = _outLzssBufData;
-	int32 remainingBytes = (int32)dataSize;
-
-	do {
-		uint8 b = in->readByte();
-		for (int32 d = 0; d < 8; d++) {
-			if (in->eos() || in->err()) {
-				_err = dataSize > 0;
-				return;
-			}
-			int32 length;
-			if (!(b & (1 << d))) {
-				const uint16 offset = in->readUint16LE();
-				length = (offset & 0x0F) + (mode + 1);
-				const uint8 *ptr = dst - (offset >> 4) - 1;
-				if (remainingBytes < length) {
-					_err = true;
-					return;
-				}
-				remainingBytes -= length;
-				for (int32 i = 0; i < length; i++) {
-					*dst++ = *ptr++;
-				}
-			} else {
-				length = 1;
-				if (remainingBytes < length) {
-					_err = true;
-					return;
-				}
-				remainingBytes -= length;
-				*dst++ = in->readByte();
-			}
-			dataSize -= length;
-			if (dataSize <= 0) {
+	Common::Array<uint8> compBuf;
+	if (Common::SeekableReadStream *seekable = dynamic_cast<Common::SeekableReadStream *>(in)) {
+		const int64 compSize = seekable->size();
+		if (compSize > 0) {
+			compBuf.resize((uint)compSize);
+			if (seekable->read(compBuf.data(), compSize) != compSize) {
+				_err = true;
 				return;
 			}
 		}
-	} while (dataSize);
+	}
+	if (compBuf.empty()) {
+		while (!in->eos() && !in->err()) {
+			compBuf.push_back(in->readByte());
+		}
+	}
+	if (compBuf.empty()) {
+		_err = true;
+		return;
+	}
+
+	expandLZ(_outLzssBufData, compBuf.data(), dataSize, mode + 1);
 }
 
 bool LzssReadStream::eos() const {

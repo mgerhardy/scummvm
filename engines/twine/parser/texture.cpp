@@ -19,34 +19,44 @@
  *
  */
 
-#include "twine/parser/parser.h"
-#include "common/stream.h"
-#include "twine/resources/hqr.h"
-#include "twine/shared.h"
+#include "twine/parser/texture.h"
 
 namespace TwinE {
 
-bool Parser::loadFromBuffer(const uint8 *buf, uint32 size, bool lba1) {
-	if (size == 0) {
-		return false;
-	}
-	Common::MemoryReadStream stream(buf, size);
-	return loadFromStream(stream, lba1);
+void BodyTextureData::reset() {
+	_pages.clear();
 }
 
-bool Parser::loadFromHQR(const char *name, int index, bool lba1) {
-	Common::SeekableReadStream *stream = HQR::makeReadStream(name, index);
-	if (stream == nullptr) {
-		warning("Failed to load %s with index %i", name, index);
+bool BodyTextureData::loadFromStream(Common::SeekableReadStream &stream, bool lba1) {
+	reset();
+	if (lba1) {
 		return false;
 	}
-	_hqrIndex = index;
-	if (!loadFromStream(*stream, lba1)) {
-		delete stream;
+	const int32 size = stream.size();
+	if (size <= 0) {
 		return false;
 	}
-	delete stream;
-	return true;
+	const int32 numPages = (size + kPageSize - 1) / kPageSize;
+	_pages.resize(numPages * kPageSize, 0);
+	for (int32 i = 0; i < numPages; ++i) {
+		const int32 toRead = MIN<int32>(kPageSize, size - i * kPageSize);
+		stream.read(_pages.data() + i * kPageSize, toRead);
+	}
+	return !stream.err();
 }
 
-} // End of namespace TwinE
+const uint8 *BodyTextureData::getPage(int page) const {
+	if (page < 0 || page >= pageCount()) {
+		return nullptr;
+	}
+	return _pages.data() + page * kPageSize;
+}
+
+const uint8 *BodyTextureData::getAtOffset(uint32 offset) const {
+	if (_pages.empty() || offset >= _pages.size()) {
+		return nullptr;
+	}
+	return _pages.data() + offset;
+}
+
+} // namespace TwinE

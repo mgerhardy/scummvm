@@ -33,6 +33,44 @@ void AnimData::loadBoneFrame(KeyFrame &keyframe, Common::SeekableReadStream &str
 	keyframe.boneframes.push_back(boneframe);
 }
 
+void AnimData::loadKeyFramesLBA2(Common::SeekableReadStream &stream) {
+	const uint16 nbFrames = _numKeyframes;
+	const uint16 nbGroups = _numBoneframes;
+
+	_keyframes.reserve(nbFrames);
+	for (uint16 frameIdx = 0; frameIdx < nbFrames; ++frameIdx) {
+		KeyFrame keyframe;
+		keyframe.length = stream.readUint16LE();
+		keyframe.x = stream.readSint16LE();
+		keyframe.y = stream.readSint16LE();
+		keyframe.z = stream.readSint16LE();
+		stream.readSint16LE(); // reserved
+
+		// Group 0 (master) — not copied to CurrentFrame in the original engine
+		keyframe.animMasterRot = stream.readSint16LE();
+		keyframe.animStepAlpha = stream.readSint16LE();
+		keyframe.animStepBeta = stream.readSint16LE();
+		keyframe.animStepGamma = stream.readSint16LE();
+
+		keyframe.boneframes.clear();
+		keyframe.boneframes.reserve(nbGroups);
+
+		BoneFrame masterBone;
+		masterBone.type = BoneType::TYPE_ROTATE;
+		masterBone.x = keyframe.animStepAlpha;
+		masterBone.y = keyframe.animStepBeta;
+		masterBone.z = keyframe.animStepGamma;
+		keyframe.boneframes.push_back(masterBone);
+
+		for (uint16 groupIdx = 1; groupIdx < nbGroups; ++groupIdx) {
+			loadBoneFrame(keyframe, stream);
+		}
+
+		_keyframes.push_back(keyframe);
+		assert(keyframe.boneframes.size() == (uint)nbGroups);
+	}
+}
+
 void AnimData::loadKeyFrames(Common::SeekableReadStream &stream) {
 	for (uint16 i = 0U; i < _numKeyframes; ++i) {
 		KeyFrame keyframe;
@@ -67,7 +105,11 @@ bool AnimData::loadFromStream(Common::SeekableReadStream &stream, bool lba1) {
 	_loopFrame = stream.readUint16LE();
 	stream.readUint16LE();
 
-	loadKeyFrames(stream);
+	if (lba1) {
+		loadKeyFrames(stream);
+	} else {
+		loadKeyFramesLBA2(stream);
+	}
 
 	return !stream.err();
 }

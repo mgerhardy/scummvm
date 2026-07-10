@@ -61,6 +61,7 @@ private:
 
 	void loadBoneFrame(KeyFrame &keyframe, Common::SeekableReadStream &stream);
 	void loadKeyFrames(Common::SeekableReadStream &stream);
+	void loadKeyFramesLBA2(Common::SeekableReadStream &stream);
 
 	uint16 _numKeyframes;
 	uint16 _numBoneframes;

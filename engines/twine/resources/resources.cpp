@@ -37,6 +37,34 @@
 
 namespace TwinE {
 
+namespace {
+
+int32 gRessSpriteClipIndex = -1;
+int32 gRessBodyTextureIndex = -1;
+
+void detectLba2RessIndices() {
+	if (gRessSpriteClipIndex >= 0) {
+		return;
+	}
+	uint8 *entry5 = nullptr;
+	uint8 *entry6 = nullptr;
+	const int32 size5 = HQR::getAllocEntry(&entry5, Resources::HQR_RESS_FILE, 5);
+	HQR::getAllocEntry(&entry6, Resources::HQR_RESS_FILE, 6);
+	free(entry5);
+	free(entry6);
+	if (size5 >= 65536) {
+		gRessBodyTextureIndex = RESSHQR_BODY_TEXTURE_GOG;
+		gRessSpriteClipIndex = RESSHQR_SPRITEBOXDATA_LBA2_GOG;
+	} else {
+		gRessSpriteClipIndex = RESSHQR_SPRITEBOXDATA_LBA2_CD;
+		gRessBodyTextureIndex = RESSHQR_BODY_TEXTURE_CD;
+	}
+	debugC(1, TwinE::kDebugResources, "LBA2 RESS layout: sprite clip=%i body texture=%i",
+		gRessSpriteClipIndex, gRessBodyTextureIndex);
+}
+
+} // namespace
+
 Resources::~Resources() {
 	for (size_t i = 0; i < ARRAYSIZE(_spriteTable); ++i) {
 		free(_spriteTable[i]);
@@ -70,13 +98,37 @@ void Resources::loadEntityData(EntityData &entityData, int32 &index) {
 		// TODO: don't allocate each time
 		TwineResource modelRes(Resources::HQR_RESS_FILE, 44);
 		uint8 *file3dBuf = nullptr;
-		const int32 holomapImageSize = HQR::getAllocEntry(&file3dBuf, modelRes);
-		if (!entityData.loadFromBuffer((uint8 *)(file3dBuf + *(((uint32 *)file3dBuf) + (index))), holomapImageSize, _engine->isLBA1())) {
+		const int32 file3dSize = HQR::getAllocEntry(&file3dBuf, modelRes);
+		const uint32 *offsets = (const uint32 *)file3dBuf;
+		const uint32 offset = offsets[index];
+		uint32 entitySize = (uint32)file3dSize - offset;
+		const uint32 numOffsets = (uint32)file3dSize / sizeof(uint32);
+		for (uint32 i = index + 1; i < numOffsets; ++i) {
+			const uint32 nextOffset = offsets[i];
+			if (nextOffset > offset && nextOffset < (uint32)file3dSize) {
+				entitySize = nextOffset - offset;
+				break;
+			}
+		}
+		if (!entityData.loadFromBuffer(file3dBuf + offset, entitySize, _engine->isLBA1())) {
 			delete file3dBuf;
 			error("Failed to load actor 3d data for index: %i", index);
 		}
 		delete file3dBuf;
 	}
+}
+
+const BodyData *Resources::getObjFixBody(int index) {
+	if (_objFixBodies.contains(index)) {
+		return &_objFixBodies.getVal(index);
+	}
+	BodyData body;
+	if (!body.loadFromHQR(TwineResource(Resources::HQR_OBJFIX_FILE, index), false)) {
+		warning("Failed to load objfix body for index %i", index);
+		return nullptr;
+	}
+	_objFixBodies.setVal(index, body);
+	return &_objFixBodies.getVal(index);
 }
 
 const T_ANIM_3DS *Resources::getAnim(int index) const {
@@ -229,6 +281,19 @@ void Resources::initResources() {
 		debugC(1, TwinE::kDebugResources, "preload %i trajectories", (int)_trajectories.getTrajectories().size());
 	} else if (_engine->isLBA2()) {
 		preloadAnim3DS();
+		detectLba2RessIndices();
+		if (!_spriteBoundingBox.loadFromHQR(TwineResource(Resources::HQR_RESS_FILE, gRessSpriteClipIndex), false)) {
+			warning("Failed to load sprite bounding box data");
+		}
+		if (!_spriteRawBoundingBox.loadFromHQR(TwineResource(Resources::HQR_RESS_FILE, RESSHQR_SPRITERAW_CLIP), false)) {
+			warning("Failed to load sprite raw bounding box data");
+		}
+		if (!_anim3DSBoundingBox.loadFromHQR(TwineResource(Resources::HQR_RESS_FILE, RESSHQR_ANIM3DS_CLIP), false)) {
+			warning("Failed to load anim3ds bounding box data");
+		}
+		if (!_bodyTexture.loadFromHQR(TwineResource(Resources::HQR_RESS_FILE, gRessBodyTextureIndex), false)) {
+			warning("Failed to load body texture atlas");
+		}
 	}
 
 	preloadSprites();

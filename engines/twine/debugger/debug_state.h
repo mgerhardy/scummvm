@@ -91,6 +91,7 @@ public:
 	bool _actorDetailsWindow = true;
 	bool _sceneFlagsWindow = false;
 	bool _paletteWindow = false;
+	bool _bodyTextureWindow = false;
 	bool _loggerWindow = false;
 	bool _frameTimeWindow = false;
 	bool _frameDataRecording = true;

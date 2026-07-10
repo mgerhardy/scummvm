@@ -47,28 +47,8 @@ namespace HQR {
  * @param mode compression mode used
  */
 static void decompressEntry(uint8 *dst, const uint8 *compBuf, uint32 compSize, int32 decompsize, int32 mode) {
-	Common::MemoryReadStream stream(compBuf, compSize);
-	do {
-		uint8 b = stream.readByte();
-		for (int32 d = 0; d < 8; d++) {
-			int32 length;
-			if (!(b & (1 << d))) {
-				const uint16 offset = stream.readUint16LE();
-				length = (offset & 0x0F) + (mode + 1);
-				const uint8 *ptr = dst - (offset >> 4) - 1;
-				for (int32 i = 0; i < length; i++) {
-					*(dst++) = *(ptr++);
-				}
-			} else {
-				length = 1;
-				*(dst++) = stream.readByte();
-			}
-			decompsize -= length;
-			if (decompsize <= 0) {
-				return;
-			}
-		}
-	} while (decompsize);
+	expandLZ(dst, compBuf, (uint32)decompsize, (uint32)(mode + 1));
+	(void)compSize;
 }
 
 /**

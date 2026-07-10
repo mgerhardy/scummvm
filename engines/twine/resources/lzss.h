@@ -26,6 +26,9 @@
 
 namespace TwinE {
 
+/** LZSS expand matching the original LBA ExpandLZ() routine. */
+void expandLZ(uint8 *dst, const uint8 *src, uint32 decompSize, uint32 minBloc);
+
 class LzssReadStream : public Common::SeekableReadStream {
 private:
 	uint8 *_outLzssBufData;

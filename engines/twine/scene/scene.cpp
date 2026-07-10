@@ -243,7 +243,7 @@ bool Scene::loadSceneLBA2() {
 
 		loadModel(*act, (int16)stream.readUint16LE(), false);
 
-		act->_genBody = (BodyType)stream.readByte();
+		act->_genBody = normalizeBodyType(stream.readByte());
 		act->_genAnim = (AnimationTypes)stream.readSint16LE();
 		act->_sprite = (int16)stream.readUint16LE();
 		act->_posObj.x = (int16)stream.readUint16LE();
@@ -251,7 +251,7 @@ bool Scene::loadSceneLBA2() {
 		act->_posObj.z = (int16)stream.readUint16LE();
 		act->_oldPos = act->posObj();
 		act->_hitForce = stream.readByte();
-		setBonusParameterFlags(act, stream.readUint16LE());
+		setBonusParameterFlags(act, stream.readUint16LE() & ~1);
 		act->_beta = (int16)stream.readUint16LE();
 		act->_srot = (int16)stream.readUint16LE();
 		act->_move = (ControlMode)stream.readByte(); // move
@@ -264,9 +264,10 @@ bool Scene::loadSceneLBA2() {
 		act->_bonusAmount = stream.readSint16LE();
 		act->_talkColor = stream.readByte();
 		if (act->_flags.bHasSpriteAnim3D) {
-			/*act->spriteAnim3DNumber = */stream.readSint32LE();
-			/*act->spriteSizeHit = */stream.readSint16LE();
-			/*act->cropBottom = act->spriteSizeHit;*/
+			act->A3DS.Num = stream.readSint32LE();
+			act->SizeSHit = stream.readSint16LE();
+			act->A3DS.Deb = act->_sprite;
+			act->A3DS.Fin = act->_sprite;
 		}
 		act->_armor = stream.readByte();
 		act->setLife(stream.readByte());
@@ -319,7 +320,7 @@ bool Scene::loadSceneLBA2() {
 		point->z = stream.readSint32LE();
 	}
 
-	uint16 sceneNumPatches = stream.readUint32LE();
+	uint16 sceneNumPatches = stream.readUint16LE();
 	for (uint16 i = 0; i < sceneNumPatches; i++) {
 		/*size = */stream.readUint16LE();
 		/*offset = */stream.readUint16LE();
@@ -377,7 +378,7 @@ bool Scene::loadSceneLBA1() {
 
 		loadModel(*act, stream.readUint16LE(), true);
 
-		act->_genBody = (BodyType)stream.readByte();
+		act->_genBody = normalizeBodyType(stream.readByte());
 		act->_genAnim = (AnimationTypes)stream.readByte();
 		act->_sprite = (int16)stream.readUint16LE();
 		act->_posObj.x = (int16)stream.readUint16LE();
@@ -617,7 +618,9 @@ void Scene::changeCube() {
 		// _engine->_music->fadeMusicMidi(1);
 	}
 
-	_engine->_grid->initGrid(_newCube);
+	if (!_engine->_grid->initGrid(_newCube)) {
+		error("Failed to load scene grid %i", _newCube);
+	}
 
 	// LBA2: load per-island palette from XPL data
 	if (_engine->isLBA2()) {

@@ -34,9 +34,15 @@ struct LifeScriptContext {
 	uint8 *opcodePtr; // local opcode script pointer
 
 	LifeScriptContext(int32 _actorIdx, ActorStruct *_actor) : actorIdx(_actorIdx), actor(_actor), stream(_actor->_lifeScript, _actor->_lifeScriptSize) {
-		assert(actor->_offsetLife >= 0);
+		if (_actor->_lifeScript == nullptr || _actor->_lifeScriptSize <= 0 || _actor->_offsetLife < 0 || _actor->_offsetLife >= _actor->_lifeScriptSize) {
+			return;
+		}
 		stream.skip(_actor->_offsetLife);
 		updateOpcodePos();
+	}
+
+	bool isValid() const {
+		return actor->_lifeScript != nullptr && actor->_lifeScriptSize > 0 && actor->_offsetLife >= 0 && actor->_offsetLife < actor->_lifeScriptSize;
 	}
 
 	void setOpcode(uint8 opcode) {
@@ -67,6 +73,16 @@ enum LifeScriptOperators {
 	/*<=*/kLessThanOrEqualTo = 4,
 	/*!=*/kNotEqualTo = 5
 };
+
+enum class ReturnType {
+	RET_S8 = 0,
+	RET_S16 = 1,
+	RET_STRING = 2,
+	RET_U8 = 4
+};
+
+ReturnType processLifeConditions(TwinEEngine *engine, LifeScriptContext &ctx);
+bool processLifeOperators(TwinEEngine *engine, LifeScriptContext &ctx, ReturnType valueType);
 
 class ScriptLife {
 private:

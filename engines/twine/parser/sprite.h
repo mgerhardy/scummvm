@@ -52,14 +52,14 @@ public:
 };
 
 inline const BoundingBox *SpriteBoundingBoxData::bbox(int index) const {
-	if (index < 0) {
+	if (index < 0 || index >= (int)_boundingBoxes.size()) {
 		return nullptr;
 	}
 	return &_boundingBoxes[index];
 }
 
 inline const SpriteDim *SpriteBoundingBoxData::dim(int index) const {
-	if (index < 0) {
+	if (index < 0 || index >= (int)_dimensions.size()) {
 		return nullptr;
 	}
 	return &_dimensions[index];
@@ -67,13 +67,16 @@ inline const SpriteDim *SpriteBoundingBoxData::dim(int index) const {
 
 class SpriteData : public Parser {
 protected:
+protected:
 	Graphics::ManagedSurface _surfaces[2];
 	int _offsetX[2] {0};
 	int _offsetY[2] {0};
 	int _sprites = 0;
 	bool _bricks = false;
+	bool _rawSprite = false;
 
 	bool loadSprite(Common::SeekableReadStream &stream, uint32 offset);
+	bool loadSpriteRaw(Common::SeekableReadStream &stream);
 	void reset() override;
 public:
 	bool loadFromStream(Common::SeekableReadStream &stream, bool lba1) override;
@@ -108,6 +111,13 @@ class BrickData : public SpriteData {
 public:
 	BrickData() {
 		_bricks = true;
+	}
+};
+
+class SpriteRawData : public SpriteData {
+public:
+	SpriteRawData() {
+		_rawSprite = true;
 	}
 };
 

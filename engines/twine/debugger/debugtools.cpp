@@ -35,6 +35,7 @@
 #include "twine/holomap.h"
 #include "twine/holomap_v1.h"
 #include "twine/parser/entity.h"
+#include "twine/parser/texture.h"
 #include "twine/renderer/redraw.h"
 #include "twine/renderer/screens.h"
 #include "twine/resources/resources.h"
@@ -244,6 +245,37 @@ static void paletteWindow(TwinEEngine *engine) {
 		ImGui::PushID("ptrPal");
 		ImGuiEx::Palette(engine->_screens->_ptrPal);
 		ImGui::PopID();
+	}
+	ImGui::End();
+}
+
+static void bodyTextureWindow(TwinEEngine *engine) {
+	if (!engine->_debugState->_bodyTextureWindow) {
+		return;
+	}
+
+	const BodyTextureData &bodyTexture = engine->_resources->getBodyTexture();
+	if (ImGui::Begin("Body textures", &engine->_debugState->_bodyTextureWindow)) {
+		const int pageCount = bodyTexture.pageCount();
+		ImGui::Text("Atlas pages: %i (%i bytes)", pageCount, pageCount > 0 ? pageCount * 256 * 256 : 0);
+		if (pageCount == 0) {
+			ImGui::Text("No body texture atlas loaded");
+		} else {
+			static int currentPage = 0;
+			if (currentPage >= pageCount) {
+				currentPage = 0;
+			}
+			ImGui::SliderInt("Page", &currentPage, 0, pageCount - 1);
+			static float pixelScale = 2.f;
+			ImGui::SliderFloat("Zoom", &pixelScale, 1.f, 8.f, "%.0fx");
+
+			const uint8 *page = bodyTexture.getPage(currentPage);
+			if (page != nullptr) {
+				ImGui::PushID(currentPage);
+				ImGuiEx::IndexedImage(page, 256, 256, engine->_screens->_ptrPal, pixelScale);
+				ImGui::PopID();
+			}
+		}
 	}
 	ImGui::End();
 }
@@ -682,6 +714,20 @@ static void actorDetailsWindow(int &actorIdx, TwinEEngine *engine) {
 			if (actor->_entityDataPtr != nullptr) {
 				BodyData &bodyData = actor->_entityDataPtr->getBody(actor->_body);
 				ImGuiEx::InputBoundingBox((int)(uintptr)&bodyData, "Bounding box", bodyData.bbox);
+				ImGui::Text("Vertices: %u  Bones: %u  Polygons: %u", bodyData.getNumVertices(), bodyData.getNumBones(),
+					(uint)bodyData.getPolygons().size());
+				const Common::Array<uint32> &handles = bodyData.getTextureHandles();
+				if (!handles.empty()) {
+					ImGui::Text("Texture handles: %u", (uint)handles.size());
+					if (ImGui::BeginTable("##texhandles", 4)) {
+						for (uint i = 0; i < handles.size(); ++i) {
+							ImGui::TableNextColumn();
+							const uint32 info = handles[i];
+							ImGui::Text("%u: off=%04x rep=%04x", i, info & 0xffff, info >> 16);
+						}
+						ImGui::EndTable();
+					}
+				}
 			} else {
 				ImGui::Text("No entity data");
 			}
@@ -864,6 +910,9 @@ static void debuggerMenu(TwinEEngine *engine) {
 			if (ImGui::MenuItem("Show palette")) {
 				engine->_debugState->_paletteWindow = true;
 			}
+			if (ImGui::MenuItem("Body textures")) {
+				engine->_debugState->_bodyTextureWindow = true;
+			}
 			if (ImGui::MenuItem("Dark palette")) {
 				engine->_scriptLife->lSET_DARK_PAL(engine, fakeCtx);
 			}
@@ -934,6 +983,7 @@ void onImGuiRender() {
 	holomapFlagsWindow(engine);
 	gameFlagsWindow(engine);
 	paletteWindow(engine);
+	bodyTextureWindow(engine);
 	sceneFlagsWindow(engine);
 	frameTimeWindow(engine);
 	_logger->draw("Logger", &engine->_debugState->_loggerWindow);

@@ -228,7 +228,7 @@ TextId Actor::getTextIdForBehaviour() const {
 }
 
 int32 Actor::searchBody(BodyType bodyIdx, int32 actorIdx, ActorBoundingBox &actorBoundingBox) {
-	if (bodyIdx == BodyType::btNone) {
+	if (bodyIdx == BodyType::btNone || (uint8)(int)bodyIdx == 255) {
 		return -1;
 	}
 	ActorStruct *actor = _engine->_scene->getActor(actorIdx);
@@ -244,6 +244,13 @@ int32 Actor::searchBody(BodyType bodyIdx, int32 actorIdx, ActorBoundingBox &acto
 void Actor::initBody(BodyType gennewbody, int16 actorIdx) {
 	ActorStruct *localActor = _engine->_scene->getActor(actorIdx);
 	if (localActor->_flags.bSprite3D) {
+		return;
+	}
+
+	if (gennewbody == BodyType::btNone || (uint8)(int)gennewbody == 255) {
+		localActor->_genBody = BodyType::btNone;
+		localActor->_body = -1;
+		localActor->_boundingBox = BoundingBox();
 		return;
 	}
 
@@ -337,7 +344,9 @@ void Actor::startInitObj(int16 actorIdx) {
 		actor->_body = -1;
 
 		debug(1, "Init actor %i with model %i", actorIdx, (int)actor->_genBody);
-		initBody(actor->_genBody, actorIdx);
+		if (actor->_genBody != BodyType::btNone) {
+			initBody(actor->_genBody, actorIdx);
+		}
 
 		actor->_anim = -1;
 		actor->_flagAnim = AnimType::kAnimationTypeRepeat;

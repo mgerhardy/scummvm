@@ -47,6 +47,20 @@ static const int32 magicLevelStrengthOfHit[] = {
 	MagicballStrengthType::kFireBallStrength,
 	0};
 
+static bool isAnimRotateBone(uint16 type, bool lba2) {
+	if (lba2) {
+		return (type & (uint16)BoneType::TYPE_TRANSLATE) == 0;
+	}
+	return type == (uint16)BoneType::TYPE_ROTATE;
+}
+
+static bool isAnimTranslateBone(uint16 type, bool lba2) {
+	if (lba2) {
+		return (type & (uint16)BoneType::TYPE_TRANSLATE) != 0;
+	}
+	return type == (uint16)BoneType::TYPE_TRANSLATE;
+}
+
 Animations::Animations(TwinEEngine *engine) : _engine(engine) {
 }
 
@@ -156,19 +170,20 @@ bool Animations::doSetInterAnimObjet(int32 framedest, const AnimData &animData, 
 		const BoneFrame &lastBoneFrame = lastKeyFramePtr->boneframes[boneIdx];
 
 		boneState->type = boneFrame.type;
-		switch (boneFrame.type) {
-		case BoneType::TYPE_ROTATE:
+		const uint16 boneType = (uint16)boneFrame.type;
+		if (isAnimRotateBone(boneType, _engine->isLBA2())) {
 			boneState->x = patchInterAngle(time, timeDest, boneFrame.x, lastBoneFrame.x);
 			boneState->y = patchInterAngle(time, timeDest, boneFrame.y, lastBoneFrame.y);
 			boneState->z = patchInterAngle(time, timeDest, boneFrame.z, lastBoneFrame.z);
-			break;
-		case BoneType::TYPE_TRANSLATE:
-		case BoneType::TYPE_ZOOM:
+		} else if (isAnimTranslateBone(boneType, _engine->isLBA2())) {
 			boneState->x = patchInterStep(time, timeDest, boneFrame.x, lastBoneFrame.x);
 			boneState->y = patchInterStep(time, timeDest, boneFrame.y, lastBoneFrame.y);
 			boneState->z = patchInterStep(time, timeDest, boneFrame.z, lastBoneFrame.z);
-			break;
-		default:
+		} else if (boneType == (uint16)BoneType::TYPE_ZOOM) {
+			boneState->x = patchInterStep(time, timeDest, boneFrame.x, lastBoneFrame.x);
+			boneState->y = patchInterStep(time, timeDest, boneFrame.y, lastBoneFrame.y);
+			boneState->z = patchInterStep(time, timeDest, boneFrame.z, lastBoneFrame.z);
+		} else {
 			error("Unsupported animation rotation mode %d", boneFrame.type);
 		}
 
@@ -235,9 +250,10 @@ void Animations::copyStateToKeyFrame(KeyFrame *keyframe, const BodyData &bodyDat
 }
 
 void Animations::copyKeyFrameToState(const KeyFrame *keyframe, BodyData &bodyData, int32 numBones) const {
-	for (int32 i = 0; i < numBones; ++i) {
-		BoneFrame *boneState = bodyData.getBoneState(i);
-		*boneState = keyframe->boneframes[i];
+	const int32 numAnimBones = MIN<int32>(numBones, (int32)keyframe->boneframes.size());
+	// boneframes[0] is the anim master group; body bone 0 uses the actor orientation.
+	for (int32 i = 1; i < numAnimBones; ++i) {
+		*bodyData.getBoneState(i) = keyframe->boneframes[i];
 	}
 }
 

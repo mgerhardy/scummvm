@@ -230,6 +230,12 @@ public:
 	int32 _offsetLabelTrack = 0; // pointer to LABEL offset
 	int32 _memoLabelTrack = 0;
 
+	struct ExeSwitch {
+		uint8 func = 0;
+		uint8 typeAnswer = 0;
+		int16 value = 0;
+	} _exeSwitch;
+
 	/**
 	 * colliding actor id
 	 */

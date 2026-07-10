@@ -19,34 +19,35 @@
  *
  */
 
-#include "twine/parser/parser.h"
+#ifndef TWINE_PARSER_TEXTURE_H
+#define TWINE_PARSER_TEXTURE_H
+
+#include "common/array.h"
 #include "common/stream.h"
-#include "twine/resources/hqr.h"
-#include "twine/shared.h"
+#include "twine/parser/parser.h"
 
 namespace TwinE {
 
-bool Parser::loadFromBuffer(const uint8 *buf, uint32 size, bool lba1) {
-	if (size == 0) {
-		return false;
-	}
-	Common::MemoryReadStream stream(buf, size);
-	return loadFromStream(stream, lba1);
-}
+/** LBA2 body texture atlas page (256x256 palette indices, index 0 = transparent). */
+class BodyTextureData : public Parser {
+private:
+	static constexpr int kPageSize = 256 * 256;
+	Common::Array<uint8> _pages;
 
-bool Parser::loadFromHQR(const char *name, int index, bool lba1) {
-	Common::SeekableReadStream *stream = HQR::makeReadStream(name, index);
-	if (stream == nullptr) {
-		warning("Failed to load %s with index %i", name, index);
-		return false;
-	}
-	_hqrIndex = index;
-	if (!loadFromStream(*stream, lba1)) {
-		delete stream;
-		return false;
-	}
-	delete stream;
-	return true;
-}
+protected:
+	void reset() override;
 
-} // End of namespace TwinE
+public:
+	bool loadFromStream(Common::SeekableReadStream &stream, bool lba1) override;
+
+	int pageCount() const {
+		return _pages.size() / kPageSize;
+	}
+
+	const uint8 *getPage(int page) const;
+	const uint8 *getAtOffset(uint32 offset) const;
+};
+
+} // namespace TwinE
+
+#endif

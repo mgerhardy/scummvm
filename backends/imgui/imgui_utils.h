@@ -42,6 +42,7 @@ bool InputInt(const char *label, INT *v, int step = 1, int step_fast = 100, ImGu
 
 void Boolean(bool val);
 void Palette(const Graphics::Palette &palette);
+void IndexedImage(const uint8 *indices, int width, int height, const Graphics::Palette &palette, float pixelScale = 2.f);
 bool toggleButton(const char *label, bool *p_value, bool inverse = false);
 
 } // namespace ImGuiEx

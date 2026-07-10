@@ -167,6 +167,7 @@ static void addClassicEditionSearchPaths(const Common::FSNode &gameDataDir, bool
 	if (lba2) {
 		SearchMan.addSubDirectoryMatching(gameDataDir, "common/video");
 		SearchMan.addSubDirectoryMatching(gameDataDir, "common/music");
+		SearchMan.addSubDirectoryMatching(gameDataDir, "speedrun/windows");
 	} else {
 		SearchMan.addSubDirectoryMatching(gameDataDir, "common/fla");
 		SearchMan.addSubDirectoryMatching(gameDataDir, "common/music");
@@ -185,6 +186,11 @@ TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flag
 		addClassicEditionSearchPaths(gameDataDir, false);
 	} else if (isLba2Classic()) {
 		addClassicEditionSearchPaths(gameDataDir, true);
+		const Common::FSNode parentDir = gameDataDir.getParent();
+		if (parentDir.exists()) {
+			SearchMan.addSubDirectoryMatching(parentDir, "common");
+			SearchMan.addSubDirectoryMatching(parentDir, "commonclassic");
+		}
 	} else if (isLBA2()) {
 		SearchMan.addSubDirectoryMatching(gameDataDir, "video");
 		SearchMan.addSubDirectoryMatching(gameDataDir, "music");
@@ -1175,17 +1181,19 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 			_dart->CheckDartCol(actor);
 		}
 
-		if (actor->_offsetLife != -1) {
+		if (actor->_offsetLife >= 0) {
 			_scriptLife->doLife(a);
 		}
 
-		if (_debugState->_playFoundItemAnimation) {
+		if (_debugState->_playFoundItemAnimation && _scene->_sceneHero->_offsetLife >= 0) {
 			_debugState->_playFoundItemAnimation = false;
 			auto tmp = _scene->_sceneHero->_offsetLife;
 			LifeScriptContext fakeCtx(0, _scene->_sceneHero);
-			fakeCtx.stream.writeByte(InventoryItems::kiHolomap);
-			fakeCtx.stream.seek(0);
-			_scriptLife->lFOUND_OBJECT(this, fakeCtx);
+			if (fakeCtx.isValid()) {
+				fakeCtx.stream.writeByte(InventoryItems::kiHolomap);
+				fakeCtx.stream.seek(0);
+				_scriptLife->lFOUND_OBJECT(this, fakeCtx);
+			}
 			_scene->_sceneHero->_offsetLife = tmp;
 		}
 

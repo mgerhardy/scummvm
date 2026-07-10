@@ -913,7 +913,12 @@ bool Menu::init() {
 
 	CursorMan.pushCursor(cursorArrow, 11, 16, 1, 1, 3);
 	CursorMan.pushCursorPalette(cursorPalette, 0, 2);
-	return HQR::getEntry(_plasmaEffectPtr, Resources::HQR_RESS_FILE, RESSHQR_PLASMAEFFECT) > 0;
+	const int32 numRessEntries = HQR::numEntries(Resources::HQR_RESS_FILE);
+	if (RESSHQR_PLASMAEFFECT < numRessEntries) {
+		return HQR::getEntry(_plasmaEffectPtr, Resources::HQR_RESS_FILE, RESSHQR_PLASMAEFFECT) > 0;
+	}
+	warning("Plasma menu effect not available in this game version");
+	return true;
 }
 
 EngineState Menu::run() {

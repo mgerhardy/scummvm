@@ -22,6 +22,8 @@
 #include "twine/renderer/renderer.h"
 #include "common/util.h"
 #include "twine/menu/interface.h"
+#include "twine/parser/body.h"
+#include "twine/parser/anim.h"
 #include "twine/renderer/redraw.h"
 #include "twine/renderer/shadeangletab.h"
 #include "twine/resources/resources.h"
@@ -45,8 +47,10 @@ Renderer::~Renderer() {
 	free(_tabVerticD);
 	free(_tabCoulG);
 	free(_tabCoulD);
-	free(_taby0);
-	free(_taby1);
+	free(_tabMapU0);
+	free(_tabMapV0);
+	free(_tabMapU1);
+	free(_tabMapV1);
 }
 
 void Renderer::init(int32 w, int32 h) {
@@ -60,13 +64,17 @@ void Renderer::init(int32 w, int32 h) {
 	memset(_tabCoulG, 0, size);
 	_tabCoulD = (int16 *)malloc(size);
 	memset(_tabCoulD, 0, size);
-	_taby0 = (int16 *)malloc(size);
-	memset(_taby0, 0, size);
-	_taby1 = (int16 *)malloc(size);
-	memset(_taby1, 0, size);
+	_tabMapU0 = (int16 *)malloc(size);
+	memset(_tabMapU0, 0, size);
+	_tabMapV0 = (int16 *)malloc(size);
+	memset(_tabMapV0, 0, size);
+	_tabMapU1 = (int16 *)malloc(size);
+	memset(_tabMapU1, 0, size);
+	_tabMapV1 = (int16 *)malloc(size);
+	memset(_tabMapV1, 0, size);
 
-	_tabx0 = _tabCoulG;
-	_tabx1 = _tabCoulD;
+	_tabx0 = _tabMapU0;
+	_tabx1 = _tabMapU1;
 }
 
 void Renderer::projIso(IVec3 &pos, int32 x, int32 y, int32 z) {
@@ -302,6 +310,20 @@ void Renderer::rotMatIndex2(IMatrix3x3 *pDest, const IMatrix3x3 *pSrc, const IVe
 	}
 }
 
+static bool isAnimRotateBone(uint16 type, bool lba2) {
+	if (lba2) {
+		return (type & (uint16)BoneType::TYPE_TRANSLATE) == 0;
+	}
+	return type == (uint16)BoneType::TYPE_ROTATE;
+}
+
+static bool isAnimTranslateBone(uint16 type, bool lba2) {
+	if (lba2) {
+		return (type & (uint16)BoneType::TYPE_TRANSLATE) != 0;
+	}
+	return type == (uint16)BoneType::TYPE_TRANSLATE;
+}
+
 bool isPolygonVisible(const ComputedVertex *vertices) { // TestVuePoly
 	const int32 a = ((int32)vertices[0].y - (int32)vertices[2].y) * ((int32)vertices[1].x - (int32)vertices[0].x);
 	const int32 b = ((int32)vertices[1].y - (int32)vertices[0].y) * ((int32)vertices[0].x - (int32)vertices[2].x);
@@ -368,25 +390,37 @@ void Renderer::transRotList(const Common::Array<BodyVertex> &vertices, int32 fir
 
 // TranslateGroupe
 void Renderer::translateGroup(IMatrix3x3 *targetMatrix, const Common::Array<BodyVertex> &vertices, int32 rotX, int32 rotY, int32 rotZ, const BodyBone &bone, ModelData *modelData) {
-	IVec3 renderAngle;
-	renderAngle.x = rotX;
-	renderAngle.y = rotY;
-	renderAngle.z = rotZ;
-
+	const IVec3 renderAngle(rotX, rotY, rotZ);
 	IVec3 destPos;
 
-	if (bone.isRoot()) { // base point
-		*targetMatrix = _matrixWorld;
-	} else { // dependent
-		const int32 pointsIdx = bone.vertex;
-		destPos = modelData->computedPoints[pointsIdx];
-
+	const IMatrix3x3 *parentMatrix;
+	if (bone.isRoot()) {
+		parentMatrix = &_matrixWorld;
+	} else {
+		destPos = modelData->computedPoints[bone.vertex];
 		const int32 matrixIndex = bone.parent;
 		assert(matrixIndex >= 0 && matrixIndex < ARRAYSIZE(_matricesTable));
-		*targetMatrix = _matricesTable[matrixIndex];
+		parentMatrix = &_matricesTable[matrixIndex];
 	}
 
-	transRotList(vertices, bone.firstVertex, bone.numVertices, &modelData->computedPoints[bone.firstVertex], targetMatrix, renderAngle, destPos);
+	if (_engine->isLBA2()) {
+		// AFF_OBJ.CPP: RotatePoint + CopyMatrix + InitMatrixTrans + RotTransList
+		IMatrix3x3 rotMat;
+		rotMatIndex2(&rotMat, parentMatrix, renderAngle);
+		const IVec3 animOffset = rot(rotMat, 0, 0, 16384);
+		*targetMatrix = *parentMatrix;
+		destPos.x += animOffset.x;
+		destPos.y += animOffset.y;
+		destPos.z += animOffset.z;
+		rotList(vertices, bone.firstVertex, bone.numVertices, &modelData->computedPoints[bone.firstVertex], targetMatrix, destPos);
+	} else {
+		if (bone.isRoot()) {
+			*targetMatrix = _matrixWorld;
+		} else {
+			*targetMatrix = _matricesTable[bone.parent];
+		}
+		transRotList(vertices, bone.firstVertex, bone.numVertices, &modelData->computedPoints[bone.firstVertex], targetMatrix, renderAngle, destPos);
+	}
 }
 
 void Renderer::setLightVector(int32 angleX, int32 angleY, int32 angleZ) {
@@ -397,19 +431,103 @@ void Renderer::setLightVector(int32 angleX, int32 angleY, int32 angleZ) {
 	_normalLight = rot(rotationMatrix, 0, 0, normalUnit - 5);
 }
 
-int16 Renderer::leftClip(int16 polyRenderType, ComputedVertex** offTabPoly, int32 numVertices) {
+namespace {
+
+bool usesGouraudShade(int16 polyRenderType) {
+	if (polyRenderType == POLYGONTYPE_TEXTURE || polyRenderType == POLYGONTYPE_TEXTURE_FLAT) {
+		return false;
+	}
+	return polyRenderType >= POLYGONTYPE_GOURAUD;
+}
+
+uint8 mapLba2TextureRenderType(uint8 polyType) {
+	switch (polyType) {
+	case 8:
+	case 12:
+		return POLYGONTYPE_TEXTURE;
+	case 9:
+	case 13:
+		return POLYGONTYPE_TEXTURE_FLAT;
+	default:
+		return POLYGONTYPE_TEXTURE_GOURAUD;
+	}
+}
+
+void mapBodyTextureUV(int16 &mapU, int16 &mapV, uint8 u, uint8 v) {
+	mapU = (int16)((uint16)u << 8);
+	mapV = (int16)((uint16)v << 8);
+}
+
+byte shadeTexturedPixel(byte texel, int16 light) {
+	if (texel == 0) {
+		return 0;
+	}
+	const int16 shade = CLIP<int16>(light >> 8, 0, 15);
+	return (byte)((texel & 0xF0) | shade);
+}
+
+uint16 computeNormalLight(const BodyNormal &normal, const IMatrix3x3 &matrix, bool lba2Format) {
+	const int32 x = (int32)normal.x;
+	const int32 y = (int32)normal.y;
+	const int32 z = (int32)normal.z;
+
+	int32 intensity = 0;
+	intensity += matrix.row1.x * x + matrix.row1.y * y + matrix.row1.z * z;
+	intensity += matrix.row2.x * x + matrix.row2.y * y + matrix.row2.z * z;
+	intensity += matrix.row3.x * x + matrix.row3.y * y + matrix.row3.z * z;
+
+	if (intensity > 0) {
+		intensity >>= 14;
+		// LBA2 stores bone group in the 4th normal field, not a scale divisor.
+		if (!lba2Format && normal.prenormalizedRange != 0) {
+			intensity /= normal.prenormalizedRange;
+		}
+	} else {
+		intensity = 0;
+	}
+
+	if (lba2Format) {
+		// AFF_OBJ ListLights[] values are consumed with >> 8 in the colour path.
+		return (uint16)(MIN<int32>(intensity, 255) << 8);
+	}
+	return (uint16)intensity;
+}
+
+uint8 lba2BaseColour(const BodyPolygon &polygon) {
+	return (uint8)((polygon.colorIndex << 4) | (polygon.intensity & 0x0f));
+}
+
+uint8 lba2VertexColour(const int16 *normalTable, const BodyPolygon &polygon, uint16 vertexIndex) {
+	const uint8 baseColour = lba2BaseColour(polygon);
+	if (vertexIndex >= 500) {
+		return baseColour;
+	}
+	return (uint8)((baseColour + (normalTable[vertexIndex] >> 8)) & 0xff);
+}
+
+} // namespace
+
+int16 Renderer::leftClip(int16 polyRenderType, ComputedVertex **offTabPoly, int32 numVertices, ComputedVertex **offTabTexPoly) {
 	const Common::Rect &clip = _engine->_interface->_clip;
 	ComputedVertex *pTabPolyClip = offTabPoly[1];
 	ComputedVertex *pTabPoly = offTabPoly[0];
+	ComputedVertex *pTexTabPolyClip = offTabTexPoly ? offTabTexPoly[1] : nullptr;
+	ComputedVertex *pTexTabPoly = offTabTexPoly ? offTabTexPoly[0] : nullptr;
 	int16 newNbPoints = 0;
 
 	// invert the pointers to continue on the clipped vertices in the next method
 	offTabPoly[0] = pTabPolyClip;
 	offTabPoly[1] = pTabPoly;
+	if (offTabTexPoly) {
+		offTabTexPoly[0] = pTexTabPolyClip;
+		offTabTexPoly[1] = pTexTabPoly;
+	}
 
 	for (; numVertices > 0; --numVertices, pTabPoly++) {
 		const ComputedVertex *p0 = pTabPoly;
 		const ComputedVertex *p1 = p0 + 1;
+		const ComputedVertex *p0tex = pTexTabPoly;
+		const ComputedVertex *p1tex = pTexTabPoly ? pTexTabPoly + 1 : nullptr;
 
 		// clipFlag :
 		// 0x00 : none clipped
@@ -420,224 +538,321 @@ int16 Renderer::leftClip(int16 polyRenderType, ComputedVertex** offTabPoly, int3
 
 		if (p0->x < clip.left) {
 			if (clipFlag) {
+				if (pTexTabPoly) {
+					++pTexTabPoly;
+				}
 				continue; // both clipped, skip point 0
 			}
 			clipFlag |= 1;
 		} else {
 			// point 0 not clipped, store it
 			*pTabPolyClip++ = *pTabPoly;
+			if (pTexTabPolyClip) {
+				*pTexTabPolyClip++ = *pTexTabPoly;
+			}
 			++newNbPoints;
 		}
 
 		if (clipFlag) {
 			// point 0 or 1 is clipped, apply clipping
+			const ComputedVertex *pt0 = p0;
+			const ComputedVertex *pt1 = p1;
+			const ComputedVertex *pt0tex = p0tex;
+			const ComputedVertex *pt1tex = p1tex;
 			if (p1->x >= p0->x) {
-				p0 = p1;
-				p1 = pTabPoly;
+				pt0 = p1;
+				pt1 = pTabPoly;
+				pt0tex = p1tex;
+				pt1tex = p0tex;
 			}
 
-			const int32 dx = p1->x - p0->x;
-			const int32 dy = p1->y - p0->y;
-			const int32 dxClip = clip.left - p0->x;
+			const int32 dx = pt1->x - pt0->x;
+			const int32 dy = pt1->y - pt0->y;
+			const int32 dxClip = clip.left - pt0->x;
 
-			pTabPolyClip->y = (int16)(p0->y + ((dxClip * dy) / dx));
+			pTabPolyClip->y = (int16)(pt0->y + ((dxClip * dy) / dx));
 			pTabPolyClip->x = (int16)clip.left;
 
-			if (polyRenderType >= POLYGONTYPE_GOURAUD) {
-				pTabPolyClip->intensity = (int16)(p0->intensity + (((p1->intensity - p0->intensity) * dxClip) / dx));
+			if (usesGouraudShade(polyRenderType)) {
+				pTabPolyClip->intensity = (int16)(pt0->intensity + (((pt1->intensity - pt0->intensity) * dxClip) / dx));
+			}
+
+			if (pTexTabPolyClip) {
+				pTexTabPolyClip->x = (int16)(pt0tex->x + (((pt1tex->x - pt0tex->x) * dxClip) / dx));
+				pTexTabPolyClip->y = (int16)(pt0tex->y + (((pt1tex->y - pt0tex->y) * dxClip) / dx));
+				++pTexTabPolyClip;
 			}
 
 			++pTabPolyClip;
 			++newNbPoints;
 		}
+
+		if (pTexTabPoly) {
+			++pTexTabPoly;
+		}
 	}
 
 	// copy first vertex to the end
 	*pTabPolyClip = *offTabPoly[0];
+	if (pTexTabPolyClip) {
+		*pTexTabPolyClip = *offTabTexPoly[0];
+	}
 	return newNbPoints;
 }
 
-int16 Renderer::rightClip(int16 polyRenderType, ComputedVertex** offTabPoly, int32 numVertices) {
+int16 Renderer::rightClip(int16 polyRenderType, ComputedVertex **offTabPoly, int32 numVertices, ComputedVertex **offTabTexPoly) {
 	const Common::Rect &clip = _engine->_interface->_clip;
 	ComputedVertex *pTabPolyClip = offTabPoly[1];
 	ComputedVertex *pTabPoly = offTabPoly[0];
+	ComputedVertex *pTexTabPolyClip = offTabTexPoly ? offTabTexPoly[1] : nullptr;
+	ComputedVertex *pTexTabPoly = offTabTexPoly ? offTabTexPoly[0] : nullptr;
 	int16 newNbPoints = 0;
 
-	// invert the pointers to continue on the clipped vertices in the next method
 	offTabPoly[0] = pTabPolyClip;
 	offTabPoly[1] = pTabPoly;
+	if (offTabTexPoly) {
+		offTabTexPoly[0] = pTexTabPolyClip;
+		offTabTexPoly[1] = pTexTabPoly;
+	}
 
 	for (; numVertices > 0; --numVertices, pTabPoly++) {
 		const ComputedVertex *p0 = pTabPoly;
 		const ComputedVertex *p1 = p0 + 1;
+		const ComputedVertex *p0tex = pTexTabPoly;
+		const ComputedVertex *p1tex = pTexTabPoly ? pTexTabPoly + 1 : nullptr;
 
-		// clipFlag :
-		// 0x00 : none clipped
-		// 0x01 : point 0 clipped
-		// 0x02 : point 1 clipped
-		// 0x03 : both clipped
 		uint8 clipFlag = (p1->x > clip.right) ? 2 : 0;
 
 		if (p0->x > clip.right) {
 			if (clipFlag) {
-				continue; // both clipped, skip point 0
+				if (pTexTabPoly) {
+					++pTexTabPoly;
+				}
+				continue;
 			}
 			clipFlag |= 1;
 		} else {
-			// point 0 not clipped, store it
 			*pTabPolyClip++ = *pTabPoly;
+			if (pTexTabPolyClip) {
+				*pTexTabPolyClip++ = *pTexTabPoly;
+			}
 			++newNbPoints;
 		}
 
 		if (clipFlag) {
-			// point 0 or 1 is clipped, apply clipping
+			const ComputedVertex *pt0 = p0;
+			const ComputedVertex *pt1 = p1;
+			const ComputedVertex *pt0tex = p0tex;
+			const ComputedVertex *pt1tex = p1tex;
 			if (p1->x >= p0->x) {
-				p0 = p1;
-				p1 = pTabPoly;
+				pt0 = p1;
+				pt1 = pTabPoly;
+				pt0tex = p1tex;
+				pt1tex = p0tex;
 			}
 
-			const int32 dx = p1->x - p0->x;
-			const int32 dy = p1->y - p0->y;
-			const int32 dxClip = clip.right - p0->x;
+			const int32 dx = pt1->x - pt0->x;
+			const int32 dy = pt1->y - pt0->y;
+			const int32 dxClip = clip.right - pt0->x;
 
-			pTabPolyClip->y = (int16)(p0->y + ((dxClip * dy) / dx));
+			pTabPolyClip->y = (int16)(pt0->y + ((dxClip * dy) / dx));
 			pTabPolyClip->x = (int16)clip.right;
 
-			if (polyRenderType >= POLYGONTYPE_GOURAUD) {
-				pTabPolyClip->intensity = (int16)(p0->intensity + (((p1->intensity - p0->intensity) * dxClip) / dx));
+			if (usesGouraudShade(polyRenderType)) {
+				pTabPolyClip->intensity = (int16)(pt0->intensity + (((pt1->intensity - pt0->intensity) * dxClip) / dx));
+			}
+
+			if (pTexTabPolyClip) {
+				pTexTabPolyClip->x = (int16)(pt0tex->x + (((pt1tex->x - pt0tex->x) * dxClip) / dx));
+				pTexTabPolyClip->y = (int16)(pt0tex->y + (((pt1tex->y - pt0tex->y) * dxClip) / dx));
+				++pTexTabPolyClip;
 			}
 
 			++pTabPolyClip;
 			++newNbPoints;
 		}
+
+		if (pTexTabPoly) {
+			++pTexTabPoly;
+		}
 	}
 
-	// copy first vertex to the end
 	*pTabPolyClip = *offTabPoly[0];
+	if (pTexTabPolyClip) {
+		*pTexTabPolyClip = *offTabTexPoly[0];
+	}
 	return newNbPoints;
 }
 
-int16 Renderer::topClip(int16 polyRenderType, ComputedVertex** offTabPoly, int32 numVertices) {
+int16 Renderer::topClip(int16 polyRenderType, ComputedVertex **offTabPoly, int32 numVertices, ComputedVertex **offTabTexPoly) {
 	const Common::Rect &clip = _engine->_interface->_clip;
 	ComputedVertex *pTabPolyClip = offTabPoly[1];
 	ComputedVertex *pTabPoly = offTabPoly[0];
+	ComputedVertex *pTexTabPolyClip = offTabTexPoly ? offTabTexPoly[1] : nullptr;
+	ComputedVertex *pTexTabPoly = offTabTexPoly ? offTabTexPoly[0] : nullptr;
 	int16 newNbPoints = 0;
 
-	// invert the pointers to continue on the clipped vertices in the next method
 	offTabPoly[0] = pTabPolyClip;
 	offTabPoly[1] = pTabPoly;
+	if (offTabTexPoly) {
+		offTabTexPoly[0] = pTexTabPolyClip;
+		offTabTexPoly[1] = pTexTabPoly;
+	}
 
 	for (; numVertices > 0; --numVertices, pTabPoly++) {
 		const ComputedVertex *p0 = pTabPoly;
 		const ComputedVertex *p1 = p0 + 1;
+		const ComputedVertex *p0tex = pTexTabPoly;
+		const ComputedVertex *p1tex = pTexTabPoly ? pTexTabPoly + 1 : nullptr;
 
-		// clipFlag :
-		// 0x00 : none clipped
-		// 0x01 : point 0 clipped
-		// 0x02 : point 1 clipped
-		// 0x03 : both clipped
 		uint8 clipFlag = (p1->y < clip.top) ? 2 : 0;
 
 		if (p0->y < clip.top) {
 			if (clipFlag) {
-				continue; // both clipped, skip point 0
+				if (pTexTabPoly) {
+					++pTexTabPoly;
+				}
+				continue;
 			}
 			clipFlag |= 1;
 		} else {
-			// point 0 not clipped, store it
 			*pTabPolyClip++ = *pTabPoly;
+			if (pTexTabPolyClip) {
+				*pTexTabPolyClip++ = *pTexTabPoly;
+			}
 			++newNbPoints;
 		}
 
 		if (clipFlag) {
-			// point 0 or 1 is clipped, apply clipping
+			const ComputedVertex *pt0 = p0;
+			const ComputedVertex *pt1 = p1;
+			const ComputedVertex *pt0tex = p0tex;
+			const ComputedVertex *pt1tex = p1tex;
 			if (p1->y >= p0->y) {
-				p0 = p1;
-				p1 = pTabPoly;
+				pt0 = p1;
+				pt1 = pTabPoly;
+				pt0tex = p1tex;
+				pt1tex = p0tex;
 			}
 
-			const int32 dx = p1->x - p0->x;
-			const int32 dy = p1->y - p0->y;
-			const int32 dyClip = clip.top - p0->y;
+			const int32 dx = pt1->x - pt0->x;
+			const int32 dy = pt1->y - pt0->y;
+			const int32 dyClip = clip.top - pt0->y;
 
-			pTabPolyClip->x = (int16)(p0->x + ((dyClip * dx) / dy));
+			pTabPolyClip->x = (int16)(pt0->x + ((dyClip * dx) / dy));
 			pTabPolyClip->y = (int16)clip.top;
 
-			if (polyRenderType >= POLYGONTYPE_GOURAUD) {
-				pTabPolyClip->intensity = (int16)(p0->intensity + (((p1->intensity - p0->intensity) * dyClip) / dy));
+			if (usesGouraudShade(polyRenderType)) {
+				pTabPolyClip->intensity = (int16)(pt0->intensity + (((pt1->intensity - pt0->intensity) * dyClip) / dy));
+			}
+
+			if (pTexTabPolyClip) {
+				pTexTabPolyClip->x = (int16)(pt0tex->x + (((pt1tex->x - pt0tex->x) * dyClip) / dy));
+				pTexTabPolyClip->y = (int16)(pt0tex->y + (((pt1tex->y - pt0tex->y) * dyClip) / dy));
+				++pTexTabPolyClip;
 			}
 
 			++pTabPolyClip;
 			++newNbPoints;
 		}
+
+		if (pTexTabPoly) {
+			++pTexTabPoly;
+		}
 	}
 
-	// copy first vertex to the end
 	*pTabPolyClip = *offTabPoly[0];
+	if (pTexTabPolyClip) {
+		*pTexTabPolyClip = *offTabTexPoly[0];
+	}
 	return newNbPoints;
 }
 
-int16 Renderer::bottomClip(int16 polyRenderType, ComputedVertex** offTabPoly, int32 numVertices) {
+int16 Renderer::bottomClip(int16 polyRenderType, ComputedVertex **offTabPoly, int32 numVertices, ComputedVertex **offTabTexPoly) {
 	const Common::Rect &clip = _engine->_interface->_clip;
 	ComputedVertex *pTabPolyClip = offTabPoly[1];
 	ComputedVertex *pTabPoly = offTabPoly[0];
+	ComputedVertex *pTexTabPolyClip = offTabTexPoly ? offTabTexPoly[1] : nullptr;
+	ComputedVertex *pTexTabPoly = offTabTexPoly ? offTabTexPoly[0] : nullptr;
 	int16 newNbPoints = 0;
 
-	// invert the pointers to continue on the clipped vertices in the next method
 	offTabPoly[0] = pTabPolyClip;
 	offTabPoly[1] = pTabPoly;
+	if (offTabTexPoly) {
+		offTabTexPoly[0] = pTexTabPolyClip;
+		offTabTexPoly[1] = pTexTabPoly;
+	}
 
 	for (; numVertices > 0; --numVertices, pTabPoly++) {
 		const ComputedVertex *p0 = pTabPoly;
 		const ComputedVertex *p1 = p0 + 1;
+		const ComputedVertex *p0tex = pTexTabPoly;
+		const ComputedVertex *p1tex = pTexTabPoly ? pTexTabPoly + 1 : nullptr;
 
-		// clipFlag :
-		// 0x00 : none clipped
-		// 0x01 : point 0 clipped
-		// 0x02 : point 1 clipped
-		// 0x03 : both clipped
 		uint8 clipFlag = (p1->y > clip.bottom) ? 2 : 0;
 
 		if (p0->y > clip.bottom) {
 			if (clipFlag) {
-				continue; // both clipped, skip point 0
+				if (pTexTabPoly) {
+					++pTexTabPoly;
+				}
+				continue;
 			}
 			clipFlag |= 1;
 		} else {
-			// point 0 not clipped, store it
 			*pTabPolyClip++ = *pTabPoly;
+			if (pTexTabPolyClip) {
+				*pTexTabPolyClip++ = *pTexTabPoly;
+			}
 			++newNbPoints;
 		}
 
 		if (clipFlag) {
-			// point 0 or 1 is clipped, apply clipping
+			const ComputedVertex *pt0 = p0;
+			const ComputedVertex *pt1 = p1;
+			const ComputedVertex *pt0tex = p0tex;
+			const ComputedVertex *pt1tex = p1tex;
 			if (p1->y >= p0->y) {
-				p0 = p1;
-				p1 = pTabPoly;
+				pt0 = p1;
+				pt1 = pTabPoly;
+				pt0tex = p1tex;
+				pt1tex = p0tex;
 			}
 
-			const int32 dx = p1->x - p0->x;
-			const int32 dy = p1->y - p0->y;
-			const int32 dyClip = clip.bottom - p0->y;
+			const int32 dx = pt1->x - pt0->x;
+			const int32 dy = pt1->y - pt0->y;
+			const int32 dyClip = clip.bottom - pt0->y;
 
-			pTabPolyClip->x = (int16)(p0->x + ((dyClip * dx) / dy));
+			pTabPolyClip->x = (int16)(pt0->x + ((dyClip * dx) / dy));
 			pTabPolyClip->y = (int16)clip.bottom;
 
-			if (polyRenderType >= POLYGONTYPE_GOURAUD) {
-				pTabPolyClip->intensity = (int16)(p0->intensity + (((p1->intensity - p0->intensity) * dyClip) / dy));
+			if (usesGouraudShade(polyRenderType)) {
+				pTabPolyClip->intensity = (int16)(pt0->intensity + (((pt1->intensity - pt0->intensity) * dyClip) / dy));
+			}
+
+			if (pTexTabPolyClip) {
+				pTexTabPolyClip->x = (int16)(pt0tex->x + (((pt1tex->x - pt0tex->x) * dyClip) / dy));
+				pTexTabPolyClip->y = (int16)(pt0tex->y + (((pt1tex->y - pt0tex->y) * dyClip) / dy));
+				++pTexTabPolyClip;
 			}
 
 			++pTabPolyClip;
 			++newNbPoints;
 		}
+
+		if (pTexTabPoly) {
+			++pTexTabPoly;
+		}
 	}
 
-	// copy first vertex to the end
 	*pTabPolyClip = *offTabPoly[0];
+	if (pTexTabPolyClip) {
+		*pTexTabPolyClip = *offTabTexPoly[0];
+	}
 	return newNbPoints;
 }
 
-int32 Renderer::computePolyMinMax(int16 polyRenderType, ComputedVertex **offTabPoly, int32 numVertices, int16 &ymin, int16 &ymax) {
+int32 Renderer::computePolyMinMax(int16 polyRenderType, ComputedVertex **offTabPoly, int32 numVertices, int16 &ymin, int16 &ymax, ComputedVertex **offTabTexPoly) {
 	int16 xmin = SCENE_SIZE_MAX;
 	int16 xmax = SCENE_SIZE_MIN;
 
@@ -673,7 +888,7 @@ int32 Renderer::computePolyMinMax(int16 polyRenderType, ComputedVertex **offTabP
 
 	int32 clippedNumVertices = numVertices;
 	if (xmin < clip.left) {
-		clippedNumVertices = leftClip(polyRenderType, offTabPoly, clippedNumVertices);
+		clippedNumVertices = leftClip(polyRenderType, offTabPoly, clippedNumVertices, offTabTexPoly);
 		if (!clippedNumVertices) {
 			return 0;
 		}
@@ -682,7 +897,7 @@ int32 Renderer::computePolyMinMax(int16 polyRenderType, ComputedVertex **offTabP
 	}
 
 	if (xmax > clip.right) {
-		clippedNumVertices = rightClip(polyRenderType, offTabPoly, clippedNumVertices);
+		clippedNumVertices = rightClip(polyRenderType, offTabPoly, clippedNumVertices, offTabTexPoly);
 		if (!clippedNumVertices) {
 			return 0;
 		}
@@ -691,7 +906,7 @@ int32 Renderer::computePolyMinMax(int16 polyRenderType, ComputedVertex **offTabP
 	}
 
 	if (ymin < clip.top) {
-		clippedNumVertices = topClip(polyRenderType, offTabPoly, clippedNumVertices);
+		clippedNumVertices = topClip(polyRenderType, offTabPoly, clippedNumVertices, offTabTexPoly);
 		if (!clippedNumVertices) {
 			return 0;
 		}
@@ -700,7 +915,7 @@ int32 Renderer::computePolyMinMax(int16 polyRenderType, ComputedVertex **offTabP
 	}
 
 	if (ymax > clip.bottom) {
-		clippedNumVertices = bottomClip(polyRenderType, offTabPoly, clippedNumVertices);
+		clippedNumVertices = bottomClip(polyRenderType, offTabPoly, clippedNumVertices, offTabTexPoly);
 		if (!clippedNumVertices) {
 			return 0;
 		}
@@ -775,7 +990,7 @@ bool Renderer::computePoly(int16 polyRenderType, const ComputedVertex *vertices,
 
 			pVertic = &_tabVerticG[p0->y];
 
-			if (polyRenderType >= POLYGONTYPE_GOURAUD) {
+			if (usesGouraudShade(polyRenderType)) {
 				pCoul = &_tabCoulG[p0->y];
 			}
 		} else if (dy < 0) {
@@ -791,7 +1006,7 @@ bool Renderer::computePoly(int16 polyRenderType, const ComputedVertex *vertices,
 
 			pVertic = &_tabVerticD[p0->y];
 
-			if (polyRenderType >= POLYGONTYPE_GOURAUD) {
+			if (usesGouraudShade(polyRenderType)) {
 				pCoul = &_tabCoulD[p0->y];
 			}
 		}
@@ -1198,6 +1413,185 @@ void Renderer::renderPolygons(const CmdRenderPolygon &polygon, ComputedVertex *v
 	}
 }
 
+bool Renderer::computeTexturedPoly(int16 polyRenderType, const ComputedVertex *screenVerts, const ComputedVertex *texVerts, int32 numVertices, int16 &vtop, int16 &vbottom, ComputedVertex *&outScreen, ComputedVertex *&outTex, int32 &outCount) {
+	assert(numVertices < ARRAYSIZE(_clippedPolygonVertices1));
+	for (int32 i = 0; i < numVertices; ++i) {
+		_clippedPolygonVertices1[i] = screenVerts[i];
+		_clippedTexCoords1[i] = texVerts[i];
+	}
+
+	ComputedVertex *offTabPoly[] = {_clippedPolygonVertices1, _clippedPolygonVertices2};
+	ComputedVertex *offTabTexPoly[] = {_clippedTexCoords1, _clippedTexCoords2};
+
+	outCount = computePolyMinMax(polyRenderType, offTabPoly, numVertices, vtop, vbottom, offTabTexPoly);
+	if (outCount == 0) {
+		return false;
+	}
+
+	outScreen = offTabPoly[0];
+	outTex = offTabTexPoly[0];
+
+	if (usesGouraudShade(polyRenderType)) {
+		ComputedVertex *pTabPoly = outScreen;
+		ComputedVertex *p0;
+		ComputedVertex *p1;
+		int16 *pCoul;
+		int32 incY = -1;
+		int32 dy, dc;
+		int32 step, reminder;
+		int32 edgeCount = outCount;
+
+		for (; edgeCount > 0; --edgeCount, pTabPoly++) {
+			p0 = pTabPoly;
+			p1 = p0 + 1;
+
+			dy = p1->y - p0->y;
+			if (dy == 0) {
+				continue;
+			} else if (dy > 0) {
+				if (p0->x <= p1->x) {
+					incY = 1;
+				} else {
+					p0 = p1;
+					p1 = pTabPoly;
+					incY = -1;
+				}
+				pCoul = &_tabCoulG[p0->y];
+			} else {
+				dy = -dy;
+				if (p0->x <= p1->x) {
+					p0 = p1;
+					p1 = pTabPoly;
+					incY = 1;
+				} else {
+					incY = -1;
+				}
+				pCoul = &_tabCoulD[p0->y];
+			}
+
+			dc = (p1->intensity - p0->intensity) << 8;
+			step = dc / dy;
+			reminder = ((((dc % dy) >> 1) + 0x7F) & 0xFF) | (p0->intensity << 8);
+
+			for (int32 y = dy; y >= 0; --y) {
+				*pCoul = (int16)reminder;
+				pCoul += incY;
+				reminder += step;
+			}
+		}
+	}
+
+	return true;
+}
+
+void Renderer::renderTexturedTriangle(const ComputedVertex screenCoords[3], const ComputedVertex texCoords[3], uint8 renderType, const uint8 *texture, int16 flatShade, uint16 repMask) {
+	int16 vtop = 0;
+	int16 vbottom = 0;
+	ComputedVertex *screenVerts = nullptr;
+	ComputedVertex *texVerts = nullptr;
+	int32 clippedCount = 0;
+	if (!computeTexturedPoly(renderType, screenCoords, texCoords, 3, vtop, vbottom, screenVerts, texVerts, clippedCount)) {
+		return;
+	}
+
+	int32 lymin = vtop;
+	int32 lymax = vbottom;
+
+	for (int32 i = 0; i < clippedCount; ++i) {
+		fillHolomapTriangles(screenVerts[i], screenVerts[i + 1], texVerts[i], texVerts[i + 1], lymin, lymax);
+	}
+
+	fillBodyTextPolyNoClip(lymin, lymax, texture, renderType, flatShade, repMask);
+}
+
+void Renderer::renderTexturedPolygons(const CmdRenderTexturedPolygon &polygon, ComputedVertex *screenVerts, ComputedVertex *texVerts) {
+	const uint8 *texture = _engine->_resources->getBodyTexture().getAtOffset(polygon.textureOffset);
+	if (!texture) {
+		texture = _engine->_resources->getBodyTexture().getPage(0);
+	}
+	if (!texture) {
+		return;
+	}
+
+	if (polygon.numVertices == 3) {
+		renderTexturedTriangle(screenVerts, texVerts, polygon.renderType, texture, polygon.pad, polygon.repMask);
+	}
+}
+
+void Renderer::fillBodyTextPolyNoClip(int32 yMin, int32 yMax, const uint8 *texture, uint8 renderType, int16 flatShade, uint16 repMask) {
+	if (yMin < 0 || yMin >= _engine->_frontVideoBuffer.h) {
+		return;
+	}
+	const int screenWidth = _engine->width();
+	byte *pDestLine = (byte *)_engine->_frontVideoBuffer.getBasePtr(0, yMin);
+
+	const int16 *pVerticG = &_tabVerticG[yMin];
+	const int16 *pVerticD = &_tabVerticD[yMin];
+	const uint16 *pU0 = (const uint16 *)&_tabMapU0[yMin];
+	const uint16 *pV0 = (const uint16 *)&_tabMapV0[yMin];
+	const uint16 *pU1 = (const uint16 *)&_tabMapU1[yMin];
+	const uint16 *pV1 = (const uint16 *)&_tabMapV1[yMin];
+	const int16 *pCoulG = &_tabCoulG[yMin];
+	const int16 *pCoulD = &_tabCoulD[yMin];
+	const bool gouraud = renderType == POLYGONTYPE_TEXTURE_GOURAUD;
+	const bool flat = renderType == POLYGONTYPE_TEXTURE_FLAT;
+
+	yMax -= yMin;
+
+	for (; yMax >= 0; yMax--) {
+		int16 xMin = *pVerticG++;
+		int16 xMax = *pVerticD++;
+		xMax -= xMin;
+
+		uint32 u0, v0;
+		int32 u, v;
+		u = u0 = *pU0++;
+		v = v0 = *pV0++;
+		uint32 u1 = *pU1++;
+		uint32 v1 = *pV1++;
+		int32 light = flat ? (flatShade << 8) : (gouraud ? *pCoulG++ : 0);
+		int32 lightEnd = gouraud ? *pCoulD++ : light;
+
+		if (xMax > 0) {
+			byte *pDest = pDestLine + xMin;
+
+			int32 ustep = ((int32)u1 - (int32)u0 + 1) / xMax;
+			int32 vstep = ((int32)v1 - (int32)v0 + 1) / xMax;
+			int32 lightStep = gouraud ? (lightEnd - light) / xMax : 0;
+
+			for (; xMax > 0; xMax--) {
+				const uint32 idx = ((u >> 8) & (repMask & 0xFF)) | (v & ((repMask >> 8) << 8));
+				const byte texel = texture[idx];
+				if (texel != 0) {
+					if (renderType == POLYGONTYPE_TEXTURE) {
+						*pDest = texel;
+					} else {
+						*pDest = shadeTexturedPixel(texel, (int16)light);
+					}
+				}
+				++pDest;
+
+				u += ustep;
+				v += vstep;
+				light += lightStep;
+			}
+		} else if (xMax == 0) {
+			byte *pDest = pDestLine + xMin;
+			const uint32 idx = ((u >> 8) & (repMask & 0xFF)) | (v & ((repMask >> 8) << 8));
+			const byte texel = texture[idx];
+			if (texel != 0) {
+				if (renderType == POLYGONTYPE_TEXTURE) {
+					*pDest = texel;
+				} else {
+					*pDest = shadeTexturedPixel(texel, (int16)light);
+				}
+			}
+		}
+
+		pDestLine += screenWidth;
+	}
+}
+
 void Renderer::fillVertices(int16 vtop, int16 vbottom, uint8 renderType, uint16 color) {
 	switch (renderType) {
 	case POLYGONTYPE_FLAT:
@@ -1386,11 +1780,85 @@ uint8 *Renderer::prepareLines(const Common::Array<BodyLine> &lines, int32 &numOf
 	return renderBufferPtr;
 }
 
-uint8 *Renderer::preparePolygons(const Common::Array<BodyPolygon> &polygons, int32 &numOfPrimitives, RenderCommand **renderCmds, uint8 *renderBufferPtr, ModelData *modelData) {
+uint8 *Renderer::preparePolygons(const BodyData &bodyData, int32 &numOfPrimitives, RenderCommand **renderCmds, uint8 *renderBufferPtr, ModelData *modelData) {
+	const Common::Array<BodyPolygon> &polygons = bodyData.getPolygons();
+	const bool hasBodyTexture = _engine->_resources->getBodyTexture().pageCount() > 0;
+
 	for (const BodyPolygon &polygon : polygons) {
 		const uint8 materialType = polygon.materialType;
 		const uint8 numVertices = polygon.indices.size();
 		assert(numVertices <= 16);
+
+		if (materialType == MAT_TEXTURE && polygon.hasTexture && hasBodyTexture) {
+			const uint8 renderType = mapLba2TextureRenderType(polygon.polyType);
+			const uint32 textureInfo = bodyData.getTextureHandle(polygon.texturePage);
+			const uint16 textureOffset = (uint16)(textureInfo & 0xffff);
+			const uint16 repMask = (uint16)(textureInfo >> 16);
+			(void)repMask;
+
+			int16 flatShade = lba2BaseColour(polygon);
+			if (renderType == POLYGONTYPE_TEXTURE_FLAT && numVertices >= 3) {
+				const uint16 v0 = polygon.indices[0];
+				const uint16 v1 = polygon.indices[1];
+				const uint16 v2 = polygon.indices[2];
+				flatShade = (lba2VertexColour(modelData->normalTable, polygon, v0) +
+					lba2VertexColour(modelData->normalTable, polygon, v1) +
+					lba2VertexColour(modelData->normalTable, polygon, v2)) / 3;
+			}
+
+			const int numTris = (numVertices == 4) ? 2 : 1;
+			static const uint8 triIndices[2][3] = {{0, 1, 2}, {0, 2, 3}};
+
+			for (int tri = 0; tri < numTris; ++tri) {
+				int16 zMax = -32000;
+				CmdRenderTexturedPolygon *destinationPolygon = (CmdRenderTexturedPolygon *)(void *)renderBufferPtr;
+				destinationPolygon->renderType = renderType;
+				destinationPolygon->numVertices = 3;
+				destinationPolygon->textureIndex = polygon.texturePage;
+				destinationPolygon->textureOffset = textureOffset;
+				destinationPolygon->repMask = repMask;
+				destinationPolygon->pad = (uint8)(flatShade & 0xff);
+
+				renderBufferPtr += sizeof(CmdRenderTexturedPolygon);
+
+				ComputedVertex *screenVertices = (ComputedVertex *)(void *)renderBufferPtr;
+				renderBufferPtr += 3 * sizeof(ComputedVertex);
+				ComputedVertex *texVertices = (ComputedVertex *)(void *)renderBufferPtr;
+				renderBufferPtr += 3 * sizeof(ComputedVertex);
+
+				for (int k = 0; k < 3; ++k) {
+					const uint8 corner = triIndices[tri][k];
+					const uint16 vertexIndex = polygon.indices[corner];
+					const I16Vec3 *point = &modelData->flattenPoints[vertexIndex];
+
+					screenVertices[k].x = point->x;
+					screenVertices[k].y = point->y;
+					zMax = MAX<int16>(zMax, point->z);
+
+					if (renderType == POLYGONTYPE_TEXTURE_GOURAUD) {
+						screenVertices[k].intensity = lba2VertexColour(modelData->normalTable, polygon, vertexIndex);
+					} else if (renderType == POLYGONTYPE_TEXTURE_FLAT) {
+						screenVertices[k].intensity = flatShade;
+					} else {
+						screenVertices[k].intensity = 0;
+					}
+
+					mapBodyTextureUV(texVertices[k].x, texVertices[k].y, polygon.u[corner], polygon.v[corner]);
+				}
+
+				if (!isPolygonVisible(screenVertices)) {
+					renderBufferPtr = (uint8 *)destinationPolygon;
+					continue;
+				}
+
+				numOfPrimitives++;
+				(*renderCmds)->depth = zMax;
+				(*renderCmds)->renderType = RENDERTYPE_DRAWTEXTUREDPOLYGON;
+				(*renderCmds)->dataPtr = (uint8 *)destinationPolygon;
+				(*renderCmds)++;
+			}
+			continue;
+		}
 
 		int16 zMax = -32000;
 
@@ -1407,13 +1875,18 @@ uint8 *Renderer::preparePolygons(const Common::Array<BodyPolygon> &polygons, int
 
 		if (materialType >= MAT_GOURAUD) {
 			destinationPolygon->renderType = polygon.materialType - (MAT_GOURAUD - MAT_FLAT);
-			destinationPolygon->colorIndex = polygon.intensity;
+			destinationPolygon->colorIndex = lba2BaseColour(polygon);
 
 			for (int16 idx = 0; idx < numVertices; ++idx) {
-				const uint16 shadeEntry = polygon.normals[idx];
-				const int16 shadeValue = polygon.intensity + modelData->normalTable[shadeEntry];
 				const uint16 vertexIndex = polygon.indices[idx];
 				const I16Vec3 *point = &modelData->flattenPoints[vertexIndex];
+				int16 shadeValue;
+				if (_engine->isLBA2() || polygon.normals.empty()) {
+					shadeValue = lba2VertexColour(modelData->normalTable, polygon, vertexIndex);
+				} else {
+					const uint16 shadeEntry = polygon.normals[idx];
+					shadeValue = polygon.intensity + modelData->normalTable[shadeEntry];
+				}
 
 				vertex->intensity = shadeValue;
 				vertex->x = point->x;
@@ -1425,8 +1898,20 @@ uint8 *Renderer::preparePolygons(const Common::Array<BodyPolygon> &polygons, int
 			if (materialType >= MAT_FLAT) {
 				// only 1 shade value is used
 				destinationPolygon->renderType = materialType - MAT_FLAT;
-				const uint16 normalIndex = polygon.normals[0];
-				const int16 shadeValue = polygon.intensity + modelData->normalTable[normalIndex];
+				int16 shadeValue;
+				if (_engine->isLBA2() || polygon.normals.empty()) {
+					const uint8 baseColour = lba2BaseColour(polygon);
+					const uint16 lightIdx = polygon.normalIndex;
+					const uint16 light = lightIdx < ARRAYSIZE(modelData->normalTable) ? modelData->normalTable[lightIdx] : 0;
+					shadeValue = (baseColour + (light >> 8)) & 0xff;
+				} else {
+					shadeValue = polygon.intensity;
+					if (!polygon.normals.empty()) {
+						shadeValue += modelData->normalTable[polygon.normals[0]];
+					} else if (numVertices > 0) {
+						shadeValue += modelData->normalTable[polygon.indices[0]];
+					}
+				}
 				destinationPolygon->colorIndex = shadeValue;
 			} else {
 				// no shade is used
@@ -1470,7 +1955,7 @@ const Renderer::RenderCommand *Renderer::depthSortRenderCommands(int32 numOfPrim
 bool Renderer::renderObjectIso(const BodyData &bodyData, RenderCommand **renderCmds, ModelData *modelData, Common::Rect &modelRect) {
 	int32 numOfPrimitives = 0;
 	uint8 *renderBufferPtr = _renderCoordinatesBuffer;
-	renderBufferPtr = preparePolygons(bodyData.getPolygons(), numOfPrimitives, renderCmds, renderBufferPtr, modelData);
+	renderBufferPtr = preparePolygons(bodyData, numOfPrimitives, renderCmds, renderBufferPtr, modelData);
 	renderBufferPtr = prepareLines(bodyData.getLines(), numOfPrimitives, renderCmds, renderBufferPtr, modelData);
 	prepareSpheres(bodyData.getSpheres(), numOfPrimitives, renderCmds, renderBufferPtr, modelData);
 
@@ -1499,6 +1984,13 @@ bool Renderer::renderObjectIso(const BodyData &bodyData, RenderCommand **renderC
 			const CmdRenderPolygon *header = (const CmdRenderPolygon *)(const void*)pointer;
 			ComputedVertex *vertices = (ComputedVertex *)(void*)(pointer + sizeof(CmdRenderPolygon));
 			renderPolygons(*header, vertices);
+			break;
+		}
+		case RENDERTYPE_DRAWTEXTUREDPOLYGON: {
+			const CmdRenderTexturedPolygon *header = (const CmdRenderTexturedPolygon *)(const void *)pointer;
+			ComputedVertex *screenVertices = (ComputedVertex *)(void *)(pointer + sizeof(CmdRenderTexturedPolygon));
+			ComputedVertex *texVertices = screenVertices + header->numVertices;
+			renderTexturedPolygons(*header, screenVertices, texVertices);
 			break;
 		}
 		case RENDERTYPE_DRAWSPHERE: {
@@ -1548,48 +2040,12 @@ bool Renderer::renderObjectIso(const BodyData &bodyData, RenderCommand **renderC
 	return true;
 }
 
-void Renderer::animModel(ModelData *modelData, const BodyData &bodyData, RenderCommand *renderCmds, const IVec3 &angleVec, const IVec3 &poswr, Common::Rect &modelRect) {
-	const int32 numVertices = bodyData.getNumVertices();
-	const int32 numBones = bodyData.getNumBones();
-
-	const Common::Array<BodyVertex> &vertices = bodyData.getVertices();
-
-	IMatrix3x3 *modelMatrix = &_matricesTable[0];
-
-	const BodyBone &firstBone = bodyData.getBone(0);
-	processRotatedElement(modelMatrix, vertices, angleVec.x, angleVec.y, angleVec.z, firstBone, modelData);
-
-	int32 numOfPrimitives = 0;
-
-	if (numBones - 1 != 0) {
-		numOfPrimitives = numBones - 1;
-		int boneIdx = 1;
-		modelMatrix = &_matricesTable[boneIdx];
-
-		do {
-			const BodyBone &bone = bodyData.getBone(boneIdx);
-			const BoneFrame *boneData = bodyData.getBoneState(boneIdx);
-
-			if (boneData->type == BoneType::TYPE_ROTATE) {
-				processRotatedElement(modelMatrix, vertices, boneData->x, boneData->y, boneData->z, bone, modelData);
-			} else if (boneData->type == BoneType::TYPE_TRANSLATE) {
-				translateGroup(modelMatrix, vertices, boneData->x, boneData->y, boneData->z, bone, modelData);
-			} else if (boneData->type == BoneType::TYPE_ZOOM) {
-				// unsupported type
-			}
-
-			++modelMatrix;
-			++boneIdx;
-		} while (--numOfPrimitives);
-	}
-
-	numOfPrimitives = numVertices;
-
+void Renderer::projectModelPoints(ModelData *modelData, int32 numVertices, const IVec3 &poswr, Common::Rect &modelRect) {
 	const I16Vec3 *pointPtr = &modelData->computedPoints[0];
 	I16Vec3 *pointPtrDest = &modelData->flattenPoints[0];
 
 	if (_typeProj == TYPE_ISO) {
-		do {
+		for (int32 i = 0; i < numVertices; ++i) {
 			const int32 coX = pointPtr->x + poswr.x;
 			const int32 coY = pointPtr->y + poswr.y;
 			const int32 coZ = -(pointPtr->z + poswr.z);
@@ -1604,7 +2060,6 @@ void Renderer::animModel(ModelData *modelData, const BodyData &bodyData, RenderC
 			if (pointPtrDest->x > modelRect.right) {
 				modelRect.right = pointPtrDest->x;
 			}
-
 			if (pointPtrDest->y < modelRect.top) {
 				modelRect.top = pointPtrDest->y;
 			}
@@ -1612,11 +2067,11 @@ void Renderer::animModel(ModelData *modelData, const BodyData &bodyData, RenderC
 				modelRect.bottom = pointPtrDest->y;
 			}
 
-			pointPtr++;
-			pointPtrDest++;
-		} while (--numOfPrimitives);
+			++pointPtr;
+			++pointPtrDest;
+		}
 	} else {
-		do {
+		for (int32 i = 0; i < numVertices; ++i) {
 			int32 coZ = _kFactor - (pointPtr->z + poswr.z);
 			if (coZ <= 0) {
 				coZ = 0x7FFFFFFF;
@@ -1651,56 +2106,111 @@ void Renderer::animModel(ModelData *modelData, const BodyData &bodyData, RenderC
 			}
 			pointPtrDest->z = (int16)coZ;
 
-			pointPtr++;
-			pointPtrDest++;
+			++pointPtr;
+			++pointPtrDest;
+		}
+	}
+}
 
-		} while (--numOfPrimitives);
+void Renderer::applyBodyLighting(ModelData *modelData, const BodyData &bodyData, bool perBone) {
+	memset(modelData->normalTable, 0, sizeof(modelData->normalTable));
+
+	const bool lba2Format = _engine->isLBA2();
+	const int32 numVertices = (int32)bodyData.getNumVertices();
+	const Common::Array<BodyNormal> &normFaces = bodyData.getNormFaces();
+	int32 faceNormalIndex = 0;
+
+	if (!perBone) {
+		const IMatrix3x3 matrix = _matricesTable[0] * _normalLight;
+		for (int32 i = 0; i < (int32)bodyData.getNormals().size() && i < (int32)ARRAYSIZE(modelData->normalTable); ++i) {
+			modelData->normalTable[i] = computeNormalLight(bodyData.getNormal(i), matrix, lba2Format);
+		}
+		for (int32 i = 0; i < (int32)normFaces.size(); ++i) {
+			const int32 lightIdx = numVertices + i;
+			if (lightIdx < (int32)ARRAYSIZE(modelData->normalTable)) {
+				modelData->normalTable[lightIdx] = computeNormalLight(normFaces[i], matrix, lba2Format);
+			}
+		}
+		return;
 	}
 
-	int32 numNormals = (int32)bodyData.getNormals().size();
+	const int32 numBones = (int32)bodyData.getNumBones();
+	int32 vertexNormalOffset = 0;
+	for (int32 boneIdx = 0; boneIdx < numBones; ++boneIdx) {
+		const BodyBone &bone = bodyData.getBone(boneIdx);
+		const IMatrix3x3 matrix = _matricesTable[boneIdx] * _normalLight;
 
-	if (numNormals) { // process normal data
-		uint16 *currentShadeDestination = (uint16 *)modelData->normalTable;
-		IMatrix3x3 *lightMatrix = &_matricesTable[0];
+		for (int32 i = 0; i < bone.numVertices; ++i) {
+			const int32 vtx = bone.firstVertex + i;
+			const int32 normalIdx = vertexNormalOffset + i;
+			if (vtx >= 0 && vtx < (int32)ARRAYSIZE(modelData->normalTable) &&
+			    normalIdx >= 0 && normalIdx < (int32)bodyData.getNormals().size()) {
+				modelData->normalTable[vtx] = computeNormalLight(bodyData.getNormal(normalIdx), matrix, lba2Format);
+			}
+		}
+		vertexNormalOffset += bone.numVertices;
 
-		numOfPrimitives = numBones;
+		for (int32 i = 0; i < bone.numNormals; ++i) {
+			if (faceNormalIndex >= (int32)normFaces.size()) {
+				break;
+			}
+			const int32 lightIdx = numVertices + faceNormalIndex;
+			if (lightIdx < (int32)ARRAYSIZE(modelData->normalTable)) {
+				modelData->normalTable[lightIdx] = computeNormalLight(normFaces[faceNormalIndex], matrix, lba2Format);
+			}
+			++faceNormalIndex;
+		}
+	}
+}
 
-		int16 shadeIndex = 0;
-		int16 boneIdx = 0;
-		do { // for each element
-			numNormals = bodyData.getBone(boneIdx).numNormals;
+void Renderer::displayStaticModel(ModelData *modelData, const BodyData &bodyData, const IVec3 &angleVec, const IVec3 &poswr, Common::Rect &modelRect) {
+	const int32 numVertices = (int32)bodyData.getNumVertices();
+	const Common::Array<BodyVertex> &vertices = bodyData.getVertices();
 
-			if (numNormals) {
-				const IMatrix3x3 matrix = *lightMatrix * _normalLight;
+	rotMatIndex2(&_matricesTable[0], &_matrixWorld, angleVec);
+	rotList(vertices, 0, numVertices, &modelData->computedPoints[0], &_matricesTable[0], IVec3(0, 0, 0));
+	projectModelPoints(modelData, numVertices, poswr, modelRect);
+	applyBodyLighting(modelData, bodyData, false);
+}
 
-				for (int32 i = 0; i < numNormals; ++i) { // for each normal
-					const BodyNormal &normalPtr = bodyData.getNormal(shadeIndex);
+void Renderer::animModel(ModelData *modelData, const BodyData &bodyData, RenderCommand *renderCmds, const IVec3 &angleVec, const IVec3 &poswr, Common::Rect &modelRect) {
+	const int32 numVertices = bodyData.getNumVertices();
+	const int32 numBones = bodyData.getNumBones();
 
-					const int32 x = (int32)normalPtr.x;
-					const int32 y = (int32)normalPtr.y;
-					const int32 z = (int32)normalPtr.z;
+	const Common::Array<BodyVertex> &vertices = bodyData.getVertices();
 
-					int32 intensity = 0;
-					intensity += matrix.row1.x * x + matrix.row1.y * y + matrix.row1.z * z;
-					intensity += matrix.row2.x * x + matrix.row2.y * y + matrix.row2.z * z;
-					intensity += matrix.row3.x * x + matrix.row3.y * y + matrix.row3.z * z;
+	IMatrix3x3 *modelMatrix = &_matricesTable[0];
 
-					if (intensity > 0) {
-						intensity >>= 14;
-						intensity /= normalPtr.prenormalizedRange;
-					} else {
-						intensity = 0;
-					}
+	const BodyBone &firstBone = bodyData.getBone(0);
+	processRotatedElement(modelMatrix, vertices, angleVec.x, angleVec.y, angleVec.z, firstBone, modelData);
 
-					*currentShadeDestination++ = (uint16)intensity;
-					++shadeIndex;
-				};
+	int32 numOfPrimitives = 0;
+
+	if (numBones - 1 != 0) {
+		numOfPrimitives = numBones - 1;
+		int boneIdx = 1;
+		modelMatrix = &_matricesTable[boneIdx];
+
+		do {
+			const BodyBone &bone = bodyData.getBone(boneIdx);
+			const BoneFrame *boneData = bodyData.getBoneState(boneIdx);
+
+			const uint16 boneType = (uint16)boneData->type;
+			if (isAnimRotateBone(boneType, _engine->isLBA2())) {
+				processRotatedElement(modelMatrix, vertices, boneData->x, boneData->y, boneData->z, bone, modelData);
+			} else if (isAnimTranslateBone(boneType, _engine->isLBA2())) {
+				translateGroup(modelMatrix, vertices, boneData->x, boneData->y, boneData->z, bone, modelData);
+			} else if (boneType == (uint16)BoneType::TYPE_ZOOM) {
+				// unsupported type
 			}
 
+			++modelMatrix;
 			++boneIdx;
-			++lightMatrix;
 		} while (--numOfPrimitives);
 	}
+
+	projectModelPoints(modelData, numVertices, poswr, modelRect);
+	applyBodyLighting(modelData, bodyData, true);
 }
 
 bool Renderer::affObjetIso(int32 x, int32 y, int32 z, int32 alpha, int32 beta, int32 gamma, const BodyData &bodyData, Common::Rect &modelRect) {
@@ -1724,20 +2234,10 @@ bool Renderer::affObjetIso(int32 x, int32 y, int32 z, int32 alpha, int32 beta, i
 		poswr.z = z;
 	}
 
-	if (!bodyData.isAnimated()) {
-#if 0
-		// TODO: fill modeldata.flattenedpoints
-		// not used in original source release
-		int32 numOfPrimitives = 0;
-		RenderCommand* renderCmds = _renderCmds;
-		return renderModelElements(numOfPrimitives, bodyData, &renderCmds, &_modelData, modelRect);
-#else
-		error("Unsupported unanimated model render for model index %i!", bodyData.hqrIndex());
-#endif
-	}
-	// restart at the beginning of the renderTable
 	RenderCommand *renderCmds = _renderCmds;
-	if (bodyData.isAnimated()) {
+	if (!bodyData.isAnimated() && bodyData.getNumBones() <= 1) {
+		displayStaticModel(&_modelData, bodyData, renderAngle, poswr, modelRect);
+	} else {
 		animModel(&_modelData, bodyData, renderCmds, renderAngle, poswr, modelRect);
 	}
 	if (!renderObjectIso(bodyData, &renderCmds, &_modelData, modelRect)) {
@@ -1840,8 +2340,8 @@ void Renderer::fillHolomapTriangles(const ComputedVertex &vertex0, const Compute
 			lymax = y1;
 		}
 		fillHolomapTriangle(_tabVerticG, vertex0.x, y0, vertex1.x, y1);
-		fillHolomapTriangle(_tabx0, (int32)(uint16)texCoord0.x, y0, (int32)(uint16)texCoord1.x, y1);
-		fillHolomapTriangle(_taby0, (int32)(uint16)texCoord0.y, y0, (int32)(uint16)texCoord1.y, y1);
+		fillHolomapTriangle(_tabMapU0, (int32)(uint16)texCoord0.x, y0, (int32)(uint16)texCoord1.x, y1);
+		fillHolomapTriangle(_tabMapV0, (int32)(uint16)texCoord0.y, y0, (int32)(uint16)texCoord1.y, y1);
 	} else if (y0 > y1) {
 		if (y0 > lymax) {
 			lymax = y0;
@@ -1850,8 +2350,8 @@ void Renderer::fillHolomapTriangles(const ComputedVertex &vertex0, const Compute
 			lymin = y1;
 		}
 		fillHolomapTriangle(_tabVerticD, vertex0.x, y0, vertex1.x, y1);
-		fillHolomapTriangle(_tabx1, (int32)(uint16)texCoord0.x, y0, (int32)(uint16)texCoord1.x, y1);
-		fillHolomapTriangle(_taby1, (int32)(uint16)texCoord0.y, y0, (int32)(uint16)texCoord1.y, y1);
+		fillHolomapTriangle(_tabMapU1, (int32)(uint16)texCoord0.x, y0, (int32)(uint16)texCoord1.x, y1);
+		fillHolomapTriangle(_tabMapV1, (int32)(uint16)texCoord0.y, y0, (int32)(uint16)texCoord1.y, y1);
 	}
 }
 
@@ -1873,10 +2373,10 @@ void Renderer::fillTextPolyNoClip(int32 yMin, int32 yMax, const uint8 *holomapIm
 
 	const int16 *pVerticG = &_tabVerticG[yMin];
 	const int16 *pVerticD = &_tabVerticD[yMin];
-	const uint16 *pU0 = (const uint16 *)&_tabx0[yMin];
-	const uint16 *pV0 = (const uint16 *)&_taby0[yMin];
-	const uint16 *pU1 = (const uint16 *)&_tabx1[yMin];
-	const uint16 *pV1 = (const uint16 *)&_taby1[yMin];
+	const uint16 *pU0 = (const uint16 *)&_tabMapU0[yMin];
+	const uint16 *pV0 = (const uint16 *)&_tabMapV0[yMin];
+	const uint16 *pU1 = (const uint16 *)&_tabMapU1[yMin];
+	const uint16 *pV1 = (const uint16 *)&_tabMapV1[yMin];
 
 	yMax -= yMin;
 

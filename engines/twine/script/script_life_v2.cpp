@@ -159,9 +159,9 @@ static const ScriptLifeFunction function_map[] = {
 	{"SWITCH", ScriptLifeV2::lSWITCH},
 	{"OR_CASE", ScriptLifeV2::lOR_CASE},
 	{"CASE", ScriptLifeV2::lCASE},
-	{"DEFAULT", ScriptLife::lEMPTY}, // unused
+	{"DEFAULT", ScriptLifeV2::lDEFAULT},
 	{"BREAK", ScriptLifeV2::lBREAK},
-	{"END_SWITCH", ScriptLife::lEMPTY}, // unused
+	{"END_SWITCH", ScriptLifeV2::lEND_SWITCH},
 	{"SET_HIT_ZONE", ScriptLifeV2::lSET_HIT_ZONE},
 	{"SAVE_COMPORTEMENT", ScriptLifeV2::lSAVE_COMPORTEMENT},
 	{"RESTORE_COMPORTEMENT", ScriptLifeV2::lRESTORE_COMPORTEMENT},
@@ -834,31 +834,52 @@ int32 ScriptLifeV2::lSTATE_INVENTORY(TwinEEngine *engine, LifeScriptContext &ctx
 }
 
 int32 ScriptLifeV2::lAND_IF(TwinEEngine *engine, LifeScriptContext &ctx) {
-	return -1;
+	return ScriptLife::lIF(engine, ctx);
 }
 
 int32 ScriptLifeV2::lSWITCH(TwinEEngine *engine, LifeScriptContext &ctx) {
-	return -1;
+	ctx.actor->_exeSwitch.func = ctx.stream.readByte();
+	ctx.stream.seek(ctx.stream.pos() - 1);
+	const ReturnType valueType = processLifeConditions(engine, ctx);
+	ctx.actor->_exeSwitch.value = engine->_scene->_currentScriptValue;
+	ctx.actor->_exeSwitch.typeAnswer = (uint8)valueType;
+	return 0;
 }
 
 int32 ScriptLifeV2::lOR_CASE(TwinEEngine *engine, LifeScriptContext &ctx) {
-	return -1;
+	const int16 savedValue = ctx.actor->_exeSwitch.value;
+	const ReturnType savedType = (ReturnType)ctx.actor->_exeSwitch.typeAnswer;
+	const int16 jumpOffset = ctx.stream.readSint16LE();
+	engine->_scene->_currentScriptValue = savedValue;
+	if (processLifeOperators(engine, ctx, savedType)) {
+		ctx.stream.seek(jumpOffset);
+	}
+	return 0;
 }
 
 int32 ScriptLifeV2::lCASE(TwinEEngine *engine, LifeScriptContext &ctx) {
-	return -1;
+	const int16 savedValue = ctx.actor->_exeSwitch.value;
+	const ReturnType savedType = (ReturnType)ctx.actor->_exeSwitch.typeAnswer;
+	const int16 jumpOffset = ctx.stream.readSint16LE();
+	engine->_scene->_currentScriptValue = savedValue;
+	if (!processLifeOperators(engine, ctx, savedType)) {
+		ctx.stream.seek(jumpOffset);
+	}
+	return 0;
 }
 
 int32 ScriptLifeV2::lDEFAULT(TwinEEngine *engine, LifeScriptContext &ctx) {
-	return -1;
+	return 0;
 }
 
 int32 ScriptLifeV2::lBREAK(TwinEEngine *engine, LifeScriptContext &ctx) {
-	return -1;
+	const int16 offset = ctx.stream.readSint16LE();
+	ctx.stream.seek(offset);
+	return 0;
 }
 
 int32 ScriptLifeV2::lEND_SWITCH(TwinEEngine *engine, LifeScriptContext &ctx) {
-	return -1;
+	return 0;
 }
 
 int32 ScriptLifeV2::lSET_HIT_ZONE(TwinEEngine *engine, LifeScriptContext &ctx) {

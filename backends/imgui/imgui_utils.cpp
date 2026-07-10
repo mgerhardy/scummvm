@@ -66,6 +66,36 @@ void Palette(const Graphics::Palette &palette) {
 	drawList->Flags = backupFlags;
 }
 
+void IndexedImage(const uint8 *indices, int width, int height, const Graphics::Palette &palette, float pixelScale) {
+	if (indices == nullptr || width <= 0 || height <= 0) {
+		return;
+	}
+
+	ImDrawList *drawList = ImGui::GetWindowDrawList();
+	const ImDrawListFlags backupFlags = drawList->Flags;
+	drawList->Flags &= ~ImDrawListFlags_AntiAliasedLines;
+
+	const ImVec2 origin = ImGui::GetCursorScreenPos();
+	const float px = pixelScale >= 1.f ? pixelScale : 1.f;
+
+	for (int y = 0; y < height; ++y) {
+		for (int x = 0; x < width; ++x) {
+			const uint8 index = indices[y * width + x];
+			if (index == 0) {
+				continue;
+			}
+			uint8 r, g, b;
+			palette.get(index, r, g, b);
+			const ImVec2 v1(origin.x + x * px, origin.y + y * px);
+			const ImVec2 v2(v1.x + px, v1.y + px);
+			drawList->AddRectFilled(v1, v2, IM_COL32(r, g, b, 255));
+		}
+	}
+
+	ImGui::Dummy(ImVec2(width * px, height * px));
+	drawList->Flags = backupFlags;
+}
+
 bool toggleButton(const char *label, bool *p_value, bool inverse) {
 	int pop = 0;
 	if (*p_value != inverse) {

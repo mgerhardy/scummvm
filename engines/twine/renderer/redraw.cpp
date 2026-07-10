@@ -316,7 +316,7 @@ int32 Redraw::fillActorDrawingList(DrawListStruct *drawList, bool flagflip) {
 				drawList[drawListPos].z = ztri - 1; // save the shadow entry in the _drawList
 				drawList[drawListPos].type = DrawListType::DrawShadows;
 				drawList[drawListPos].numObj = 0;
-				drawList[drawListPos].num = 1;
+				drawList[drawListPos].num = 0;
 				drawListPos++;
 			}
 			if (_flagMCGA && n == _engine->_scene->_numObjFollow) {
@@ -401,11 +401,17 @@ int32 Redraw::fillDartDrawingList(DrawListStruct *drawList, int32 drawListPos) {
 }
 
 void Redraw::processDrawListShadows(const DrawListStruct &drawCmd) {
+	const SpriteData &shadowSprite = _engine->_resources->_spriteShadowPtr;
+	if (shadowSprite.sprites() == 0) {
+		return;
+	}
+	const int shadowIdx = MIN<int>(drawCmd.num, shadowSprite.sprites() - 1);
+
 	// get actor position on screen
 	const IVec3 &projPos = _engine->_renderer->projectPoint(drawCmd.xw - _engine->_grid->_worldCube.x, drawCmd.yw - _engine->_grid->_worldCube.y, drawCmd.zw - _engine->_grid->_worldCube.z);
 
-	int32 spriteWidth = _engine->_resources->_spriteShadowPtr.surface(drawCmd.num).w;
-	int32 spriteHeight = _engine->_resources->_spriteShadowPtr.surface(drawCmd.num).h;
+	int32 spriteWidth = shadowSprite.surface(shadowIdx).w;
+	int32 spriteHeight = shadowSprite.surface(shadowIdx).h;
 
 	// calculate sprite size and position on screen
 	Common::Rect renderRect;
@@ -415,7 +421,7 @@ void Redraw::processDrawListShadows(const DrawListStruct &drawCmd) {
 	renderRect.bottom = projPos.y + (spriteHeight / 2);
 
 	if (_engine->_interface->setClip(renderRect)) {
-		_engine->_grid->drawSprite(renderRect.left, renderRect.top, _engine->_resources->_spriteShadowPtr, drawCmd.num);
+		_engine->_grid->drawSprite(renderRect.left, renderRect.top, shadowSprite, shadowIdx);
 
 		const int32 tmpX = (drawCmd.xw + SIZE_BRICK_Y) / SIZE_BRICK_XZ;
 		const int32 tmpY = drawCmd.yw / SIZE_BRICK_Y;
@@ -479,6 +485,9 @@ void Redraw::processDrawListActorSprites(const DrawListStruct &drawCmd, bool bgR
 	int32 actorIdx = drawCmd.numObj;
 	ActorStruct *actor = _engine->_scene->getActor(actorIdx);
 	const SpriteData &spriteData = _engine->_resources->_spriteData[actor->_body];
+	if (spriteData.sprites() == 0) {
+		return;
+	}
 	// TODO: using the raw pointer and not the SpriteData surface here is a workaround for issue https://bugs.scummvm.org/ticket/12024
 	const uint8 *spritePtr = _engine->_resources->_spriteTable[actor->_body];
 
@@ -490,6 +499,9 @@ void Redraw::processDrawListActorSprites(const DrawListStruct &drawCmd, bool bgR
 
 	// calculate sprite position on screen
 	const SpriteDim *dim = _engine->_resources->_spriteBoundingBox.dim(actor->_body);
+	if (!dim) {
+		return;
+	}
 	Common::Rect renderRect;
 	renderRect.left = projPos.x + dim->x;
 	renderRect.top = projPos.y + dim->y;
@@ -544,7 +556,8 @@ void Redraw::processDrawListExtras(const DrawListStruct &drawCmd) {
 	Common::Rect renderRect;
 
 	if ((extra->sprite & EXTRA_SPECIAL_MASK) && (extra->sprite & (EXTRA_SPECIAL_MASK - 1)) == (int16)ExtraSpecialType::kObject3D) {
-		if (_engine->_renderer->affObjetIso(worldDelta.x, worldDelta.y, worldDelta.z, extra->extraAlpha, extra->extraBeta, LBAAngles::ANGLE_0, _engine->_dart->getDartBody(), renderRect)) {
+		const BodyData *objBody = _engine->_resources->getObjFixBody(extra->bodyIndex);
+		if (objBody != nullptr && _engine->_renderer->affObjetIso(worldDelta.x, worldDelta.y, worldDelta.z, extra->extraAlpha, extra->extraBeta, LBAAngles::ANGLE_0, *objBody, renderRect)) {
 			if (_engine->_interface->setClip(renderRect)) {
 				const int32 xm = (extra->pos.x + DEMI_BRICK_XZ) / SIZE_BRICK_XZ;
 				const int32 ym = extra->pos.y / SIZE_BRICK_Y;

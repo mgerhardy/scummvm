@@ -29,15 +29,116 @@
 // LBA2 body flags
 #define MASK_OBJECT_ANIMATED (1 << 8)
 
+// LBA2 polygon render flags (body2.ts / AFF_OBJ.CPP)
+#define LBA2_MASK_QUADRILATERE (1 << 15)
+#define LBA2_MASK_ENVIRONMENT (1 << 14)
+
 namespace TwinE {
+
+namespace {
+
+uint8 mapLba2PolyMaterial(uint8 polyType) {
+	switch (polyType) {
+	case 0:
+		return 0; // POLY_SOLID
+	case 1:
+		return MAT_FLAT;
+	case 2:
+		return MAT_TRANS;
+	case 3:
+		return MAT_TRAME;
+	case 4:
+		return MAT_GOURAUD;
+	case 5:
+	case 7:
+		return MAT_GRANIT;
+	case 6:
+		return MAT_GOURAUD;
+	default:
+		if (polyType > 7) {
+			return MAT_TEXTURE;
+		}
+		return MAT_GOURAUD;
+	}
+}
+
+void readLba2Polygon(BodyPolygon &poly, Common::SeekableReadStream &stream, int64 polyStart,
+		uint16 renderType, uint8 polyType, uint32 blockSize, int32 bodyIndex) {
+	stream.seek(polyStart);
+
+	const bool isQuad = (renderType & LBA2_MASK_QUADRILATERE) != 0;
+	const int numVertex = isQuad ? 4 : 3;
+	const bool hasTex = polyType > 7 && blockSize > 16;
+
+	poly.polyType = polyType;
+	poly.materialType = mapLba2PolyMaterial(polyType);
+	poly.hasTexture = hasTex;
+	poly.indices.clear();
+	poly.normals.clear();
+	poly.indices.reserve(numVertex);
+
+	for (int k = 0; k < numVertex; ++k) {
+		poly.indices.push_back(stream.readUint16LE());
+	}
+
+	if (hasTex) {
+		if (numVertex == 3) {
+			// STRUC_POLY3_TEXTURE: HandleText at offset 6
+			poly.texturePage = (uint8)stream.readUint16LE();
+		}
+		stream.seek(polyStart + 8);
+		const uint8 colour = stream.readByte();
+		poly.colorIndex = colour / 16;
+		poly.intensity = colour % 16;
+
+		// Zoe's mustache colour fix (bodies 17 and 26)
+		if ((bodyIndex == 17 || bodyIndex == 26) && poly.colorIndex == 1) {
+			poly.colorIndex = 2;
+		}
+
+		// UV pairs start at offset 12 (U1/V1)
+		stream.seek(polyStart + 12);
+		for (int k = 0; k < numVertex; ++k) {
+			poly.u[k] = (uint8)stream.readUint16LE();
+			poly.v[k] = (uint8)stream.readUint16LE();
+		}
+		if (numVertex == 4) {
+			// STRUC_POLY4_TEXTURE: HandleText after UVs at offset 28
+			stream.seek(polyStart + 28);
+			poly.texturePage = (uint8)stream.readUint16LE();
+		}
+	} else {
+		stream.seek(polyStart + 8);
+		const uint8 colour = stream.readByte();
+		poly.colorIndex = colour / 16;
+		poly.intensity = colour % 16;
+
+		// Zoe's mustache colour fix (bodies 17 and 26)
+		if ((bodyIndex == 17 || bodyIndex == 26) && poly.colorIndex == 1) {
+			poly.colorIndex = 2;
+		}
+
+		if (blockSize >= 12) {
+			poly.normalIndex = stream.readUint16LE();
+		}
+	}
+
+	stream.seek(polyStart + blockSize);
+}
+
+} // namespace
 
 void BodyData::reset() {
 	_vertices.clear();
 	_bones.clear();
 	_normals.clear();
+	_normFaces.clear();
 	_polygons.clear();
 	_spheres.clear();
 	_lines.clear();
+	_textureHandles.clear();
+	noSort = false;
+	hasTransparency = false;
 }
 
 void BodyData::loadVertices(Common::SeekableReadStream &stream) {
@@ -183,6 +284,75 @@ void BodyData::loadSpheres(Common::SeekableReadStream &stream) {
 	}
 }
 
+void BodyData::loadPolygonsLBA2(Common::SeekableReadStream &stream, int32 offPolys, int32 offLines, int32 bodyIndex) {
+	stream.seek(offPolys);
+	const int64 polyEnd = offLines;
+	while (stream.pos() < polyEnd && !stream.eos()) {
+		const uint16 renderType = stream.readUint16LE();
+		const uint8 polyType = renderType & 0xff;
+		const uint16 numPolygons = stream.readUint16LE();
+		const uint16 sectionSize = stream.readUint16LE();
+		stream.skip(2); // shade
+
+		if (sectionSize == 0 || numPolygons == 0) {
+			break;
+		}
+
+		const uint32 blockSize = (sectionSize - 8) / numPolygons;
+		for (uint16 j = 0; j < numPolygons; ++j) {
+			const int64 polyStart = stream.pos();
+			BodyPolygon poly;
+			readLba2Polygon(poly, stream, polyStart, renderType, polyType, blockSize, bodyIndex);
+			_polygons.push_back(poly);
+		}
+	}
+}
+
+void BodyData::loadTextureHandlesLBA2(Common::SeekableReadStream &stream, int32 offTextures, int32 nbTextures) {
+	if (nbTextures <= 0) {
+		return;
+	}
+	stream.seek(offTextures);
+	_textureHandles.reserve(nbTextures);
+	for (int32 i = 0; i < nbTextures; ++i) {
+		_textureHandles.push_back(stream.readUint32LE());
+	}
+}
+
+void BodyData::loadLinesLBA2(Common::SeekableReadStream &stream, int32 offLines, int32 nbLines) {
+	if (nbLines == 0) {
+		return;
+	}
+	stream.seek(offLines);
+	_lines.reserve(nbLines);
+	for (int32 i = 0; i < nbLines; ++i) {
+		BodyLine line;
+		stream.readUint16LE(); // type
+		const uint16 colour = stream.readUint16LE();
+		line.color = colour / 16;
+		line.vertex1 = stream.readUint16LE();
+		line.vertex2 = stream.readUint16LE();
+		_lines.push_back(line);
+	}
+}
+
+void BodyData::loadSpheresLBA2(Common::SeekableReadStream &stream, int32 offSpheres, int32 nbSpheres) {
+	if (nbSpheres == 0) {
+		return;
+	}
+	stream.seek(offSpheres);
+	_spheres.reserve(nbSpheres);
+	for (int32 i = 0; i < nbSpheres; ++i) {
+		BodySphere sphere;
+		stream.readUint16LE(); // type
+		sphere.color = stream.readUint16LE();
+		sphere.vertex = stream.readUint16LE();
+		sphere.radius = stream.readUint16LE();
+		sphere.fillType = 0;
+		_spheres.push_back(sphere);
+	}
+}
+
 bool BodyData::loadFromStream(Common::SeekableReadStream &stream, bool lba1) {
 	reset();
 	if (lba1) {
@@ -210,6 +380,8 @@ bool BodyData::loadFromStream(Common::SeekableReadStream &stream, bool lba1) {
 		// T_BODY_HEADER (lba2)
 		const uint32 flags = stream.readUint32LE();
 		animated = (flags & MASK_OBJECT_ANIMATED) != 0;
+		noSort = (flags & (1 << 9)) != 0;
+		hasTransparency = (flags & (1 << 10)) != 0;
 		stream.skip(4); // int16 SizeHeader and int16 Dummy
 		bbox.mins.x = stream.readSint32LE();
 		bbox.maxs.x = stream.readSint32LE();
@@ -225,40 +397,41 @@ bool BodyData::loadFromStream(Common::SeekableReadStream &stream, bool lba1) {
 		const int32 offPoints = stream.readSint32LE();
 		const int32 nbNormals = stream.readSint32LE();
 		const int32 offNormals = stream.readSint32LE();
-		/*const int32 nbNormFaces =*/ stream.readSint32LE();
-		/*const int32 offNormFaces =*/ stream.readSint32LE();
+		const int32 nbNormFaces = stream.readSint32LE();
+		const int32 offNormFaces = stream.readSint32LE();
 		const int32 nbPolys = stream.readSint32LE();
 		const int32 offPolys = stream.readSint32LE();
 		const int32 nbLines = stream.readSint32LE();
 		const int32 offLines = stream.readSint32LE();
 		const int32 nbSpheres = stream.readSint32LE();
 		const int32 offSpheres = stream.readSint32LE();
-		/*const int32 nbTextures =*/ stream.readSint32LE();
-		/*const int32 offTextures =*/ stream.readSint32LE();
+		const int32 nbTextures = stream.readSint32LE();
+		const int32 offTextures = stream.readSint32LE();
+		(void)nbPolys;
 
-		// Load vertices (4 x int16 per point: x, y, z, pad)
+		// Load vertices (4 x int16: x, y, z, bone)
 		stream.seek(offPoints);
 		_vertices.reserve(nbPoints);
 		for (int32 i = 0; i < nbPoints; ++i) {
 			const int16 x = stream.readSint16LE();
 			const int16 y = stream.readSint16LE();
 			const int16 z = stream.readSint16LE();
-			stream.skip(2); // padding
-			_vertices.push_back({x, y, z, 0});
+			const uint16 bone = stream.readUint16LE();
+			_vertices.push_back({x, y, z, bone});
 		}
 
-		// Load bones/groupes (4 x uint16: OrgGroupe, OrgPoint, NbPts, NbNorm)
+		// Load bones/groupes (4 x uint16: parent, orgPoint, nbPts, nbNorm)
 		stream.seek(offGroupes);
 		_bones.reserve(nbGroupes);
-		int16 vertexOffset = 0;
+		int32 vertexOffset = 0;
 		for (int32 i = 0; i < nbGroupes; ++i) {
-			const uint16 orgGroupe = stream.readUint16LE();
+			const uint16 parent = stream.readUint16LE();
 			const uint16 orgPoint = stream.readUint16LE();
 			const uint16 nbPts = stream.readUint16LE();
 			const uint16 nbNorm = stream.readUint16LE();
 
 			BodyBone bone;
-			bone.parent = (i == 0) ? 0xffff : orgGroupe;
+			bone.parent = parent;
 			bone.vertex = orgPoint;
 			bone.firstVertex = vertexOffset;
 			bone.numVertices = nbPts;
@@ -268,15 +441,9 @@ bool BodyData::loadFromStream(Common::SeekableReadStream &stream, bool lba1) {
 			bone.initalBoneState.y = 0;
 			bone.initalBoneState.z = 0;
 
-			for (int j = 0; j < nbPts; ++j) {
-				if (vertexOffset + j < (int)_vertices.size()) {
-					_vertices[vertexOffset + j].bone = i;
-				}
-			}
-			vertexOffset += nbPts;
-
 			_bones.push_back(bone);
 			_boneStates[i] = bone.initalBoneState;
+			vertexOffset += nbPts;
 		}
 
 		// Load normals (4 x int16: x, y, z, prenormalizedRange)
@@ -291,61 +458,29 @@ bool BodyData::loadFromStream(Common::SeekableReadStream &stream, bool lba1) {
 			_normals.push_back(normal);
 		}
 
-		// Load polygons
-		stream.seek(offPolys);
-		_polygons.reserve(nbPolys);
-		for (int32 i = 0; i < nbPolys; ++i) {
-			BodyPolygon poly;
-			poly.materialType = stream.readByte();
-			const uint8 numVerts = stream.readByte();
-			poly.intensity = stream.readSint16LE();
-
-			int16 normal = -1;
-			if (poly.materialType == MAT_FLAT || poly.materialType == MAT_GRANIT) {
-				normal = stream.readSint16LE();
+		// Load face normals used for flat shading (NbNormFaces entries)
+		if (nbNormFaces > 0 && offNormFaces > 0) {
+			stream.seek(offNormFaces);
+			_normFaces.reserve(nbNormFaces);
+			for (int32 i = 0; i < nbNormFaces; ++i) {
+				BodyNormal normal;
+				normal.x = stream.readSint16LE();
+				normal.y = stream.readSint16LE();
+				normal.z = stream.readSint16LE();
+				normal.prenormalizedRange = stream.readUint16LE();
+				_normFaces.push_back(normal);
 			}
-
-			poly.indices.reserve(numVerts);
-			poly.normals.reserve(numVerts);
-			for (int k = 0; k < numVerts; ++k) {
-				if (poly.materialType >= MAT_GOURAUD) {
-					normal = stream.readSint16LE();
-				}
-				const uint16 vertexIndex = stream.readUint16LE() / 6;
-				poly.indices.push_back(vertexIndex);
-				poly.normals.push_back(normal);
-			}
-			_polygons.push_back(poly);
 		}
 
-		// Load lines
-		stream.seek(offLines);
-		_lines.reserve(nbLines);
-		for (int32 i = 0; i < nbLines; ++i) {
-			BodyLine line;
-			stream.skip(1);
-			line.color = stream.readByte();
-			stream.skip(2);
-			line.vertex1 = stream.readUint16LE() / 6;
-			line.vertex2 = stream.readUint16LE() / 6;
-			_lines.push_back(line);
-		}
-
-		// Load spheres
-		stream.seek(offSpheres);
-		_spheres.reserve(nbSpheres);
-		for (int32 i = 0; i < nbSpheres; ++i) {
-			BodySphere sphere;
-			sphere.fillType = stream.readByte();
-			sphere.color = stream.readUint16LE();
-			stream.readByte();
-			sphere.radius = stream.readUint16LE();
-			sphere.vertex = stream.readUint16LE() / 6;
-			_spheres.push_back(sphere);
-		}
+		// Load polygons, lines, spheres and UV groups (LBA2 format)
+		loadPolygonsLBA2(stream, offPolys, offLines, _hqrIndex);
+		loadLinesLBA2(stream, offLines, nbLines);
+		loadSpheresLBA2(stream, offSpheres, nbSpheres);
+		loadTextureHandlesLBA2(stream, offTextures, nbTextures);
 	}
 
-	return !stream.err();
+	stream.clearErr();
+	return true;
 }
 
 } // namespace TwinE

@@ -37,6 +37,7 @@ struct BlockDataEntry {
 	 */
 	uint16 brickIdx;
 	uint8 sound;
+	uint8 groundType = 0; // LBA2: bits 4-7 of brickType (1 = water)
 };
 
 struct BlockData {

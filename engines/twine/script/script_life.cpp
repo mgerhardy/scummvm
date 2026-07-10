@@ -106,17 +106,10 @@ enum LifeScriptConditions {
 	kcANGLE_OBJ = 45 /*<! meansure the angle between two actors */
 };
 
-enum class ReturnType {
-	RET_S8 = 0,
-	RET_S16 = 1,
-	RET_STRING = 2,
-	RET_U8 = 4
-};
-
 /**
  * Returns @c 1 Condition value size (1 byte), @c 2 Condition value size (2 bytes)
  */
-static ReturnType processLifeConditions(TwinEEngine *engine, LifeScriptContext &ctx) { // DoFuncLife
+ReturnType processLifeConditions(TwinEEngine *engine, LifeScriptContext &ctx) { // DoFuncLife
 	ReturnType conditionValueSize = engine->isLBA1() ? ReturnType::RET_U8 : ReturnType::RET_S8;
 	int32 conditionOpcode = ctx.stream.readByte();
 	switch (conditionOpcode) {
@@ -571,7 +564,7 @@ static ReturnType processLifeConditions(TwinEEngine *engine, LifeScriptContext &
 /**
  * Returns @c -1 Need implementation, @c 0 Condition false, @c 1 Condition true
  */
-static int32 processLifeOperators(TwinEEngine *engine, LifeScriptContext &ctx, ReturnType valueType) { // DoTest
+bool processLifeOperators(TwinEEngine *engine, LifeScriptContext &ctx, ReturnType valueType) { // DoTest
 	const int32 operatorCode = ctx.stream.readByte();
 
 	int32 conditionValue;
@@ -820,8 +813,12 @@ int32 ScriptLife::lELSE(TwinEEngine *engine, LifeScriptContext &ctx) {
  * Choose new body for the current actor (Parameter = File3D Body Instance)
  * @note Opcode @c 0x11
  */
+static BodyType readBodyType(byte raw) {
+	return normalizeBodyType(raw);
+}
+
 int32 ScriptLife::lBODY(TwinEEngine *engine, LifeScriptContext &ctx) {
-	const BodyType bodyIdx = (BodyType)ctx.stream.readByte();
+	const BodyType bodyIdx = readBodyType(ctx.stream.readByte());
 	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::BODY(%i)", (int)bodyIdx);
 	engine->_actor->initBody(bodyIdx, ctx.actorIdx);
 	return 0;
@@ -833,7 +830,7 @@ int32 ScriptLife::lBODY(TwinEEngine *engine, LifeScriptContext &ctx) {
  */
 int32 ScriptLife::lBODY_OBJ(TwinEEngine *engine, LifeScriptContext &ctx) {
 	const int32 otherActorIdx = ctx.stream.readByte();
-	const BodyType otherBodyIdx = (BodyType)ctx.stream.readByte();
+	const BodyType otherBodyIdx = readBodyType(ctx.stream.readByte());
 	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::BODY_OBJ(%i, %i)", (int)otherActorIdx, (int)otherBodyIdx);
 	engine->_actor->initBody(otherBodyIdx, otherActorIdx);
 	return 0;
@@ -1051,8 +1048,16 @@ int32 ScriptLife::lCOMPORTEMENT(TwinEEngine *engine, LifeScriptContext &ctx) {
  * @note Opcode @c 0x21
  */
 int32 ScriptLife::lSET_COMPORTEMENT(TwinEEngine *engine, LifeScriptContext &ctx) {
-	ctx.actor->_offsetLife = ctx.stream.readSint16LE();
-	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::SET_COMPORTEMENT(%i)", (int)ctx.actor->_offsetLife);
+	const int16 offset = ctx.stream.readSint16LE();
+	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::SET_COMPORTEMENT(%i)", (int)offset);
+	if (offset < 0) {
+		ctx.actor->_offsetLife = -1;
+	} else if (offset >= ctx.actor->_lifeScriptSize) {
+		warning("Actor %d SET_COMPORTEMENT offset %d out of bounds (%d)", ctx.actorIdx, (int)offset, (int)ctx.actor->_lifeScriptSize);
+		ctx.actor->_offsetLife = -1;
+	} else {
+		ctx.actor->_offsetLife = offset;
+	}
 	return 0;
 }
 
@@ -1064,7 +1069,15 @@ int32 ScriptLife::lSET_COMPORTEMENT_OBJ(TwinEEngine *engine, LifeScriptContext &
 	const int32 otherActorIdx = ctx.stream.readByte();
 	const int16 pos = ctx.stream.readSint16LE();
 	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::SET_COMPORTEMENT_OBJ(%i, %i)", (int)otherActorIdx, (int)pos);
-	engine->_scene->getActor(otherActorIdx)->_offsetLife = pos;
+	ActorStruct *otherActor = engine->_scene->getActor(otherActorIdx);
+	if (pos < 0) {
+		otherActor->_offsetLife = -1;
+	} else if (pos >= otherActor->_lifeScriptSize) {
+		warning("Actor %d SET_COMPORTEMENT_OBJ(%d, %d) offset out of bounds (%d)", ctx.actorIdx, (int)otherActorIdx, (int)pos, (int)otherActor->_lifeScriptSize);
+		otherActor->_offsetLife = -1;
+	} else {
+		otherActor->_offsetLife = pos;
+	}
 	return 0;
 }
 
@@ -2118,9 +2131,15 @@ ScriptLife::ScriptLife(TwinEEngine *engine, const ScriptLifeFunction *functionMa
 
 void ScriptLife::doLife(int32 actorIdx) {
 	ActorStruct *actor = _engine->_scene->getActor(actorIdx);
+	if (actor->_offsetLife < 0) {
+		return;
+	}
 	int32 end = -2;
 
 	LifeScriptContext ctx(actorIdx, actor);
+	if (!ctx.isValid()) {
+		return;
+	}
 	debugC(3, kDebugLevels::kDebugScriptsLife, "LIFE::BEGIN(%i)", actorIdx);
 	do {
 		const byte scriptOpcode = ctx.stream.readByte();

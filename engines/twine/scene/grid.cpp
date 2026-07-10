@@ -29,6 +29,7 @@
 #include "twine/renderer/renderer.h"
 #include "twine/renderer/screens.h"
 #include "twine/resources/resources.h"
+#include "twine/resources/bkg.h"
 #include "twine/scene/actor.h"
 #include "twine/scene/collision.h"
 #include "twine/scene/graph.h"
@@ -38,8 +39,20 @@
 #include "twine/twine.h"
 
 #define CELLING_GRIDS_START_INDEX 120
+#define LBA2_GRI_HEADER_SIZE 34
 
 namespace TwinE {
+
+namespace {
+
+bool isWaterBlock(const BlockDataEntry *blockPtr, bool lba2) {
+	if (lba2) {
+		return blockPtr->groundType == 1;
+	}
+	return blockPtr->brickType == WATER_BRICK;
+}
+
+} // namespace
 
 Grid::Grid(TwinEEngine *engine) : _engine(engine) {
 	_blockBufferSize = SIZE_CUBE_X * SIZE_CUBE_Z * SIZE_CUBE_Y * sizeof(BlockEntry);
@@ -295,7 +308,12 @@ void Grid::loadGridBricks() {
 	memset(_brickUsageTable, 0, sizeof(_brickUsageTable));
 
 	// get block libraries usage bits
-	const uint8 *ptrToBllBits = _currentGrid + (_currentGridSize - 32);
+	const uint8 *ptrToBllBits;
+	if (_engine->isLBA2()) {
+		ptrToBllBits = _currentGrid + 2; // T_GRI_HEADER::UsedBlock
+	} else {
+		ptrToBllBits = _currentGrid + (_currentGridSize - 32);
+	}
 
 	// for all bits under the 32bytes (256bits)
 	for (uint32 i = 1; i < 256; i++) {
@@ -324,13 +342,21 @@ void Grid::loadGridBricks() {
 		++currentBllEntryIdx;
 	}
 
+	if (_engine->isLBA2()) {
+		Bkg::init();
+	}
+
 	for (uint32 i = firstBrick; i <= lastBrick; i++) {
 		if (!_brickUsageTable[i]) {
 			free(_bufferBrick[i]);
 			_bufferBrick[i] = nullptr;
 			continue;
 		}
-		_brickSizeTable[i] = HQR::getAllocEntry(&_bufferBrick[i], Resources::HQR_LBA_BRK_FILE, i);
+		if (_engine->isLBA2()) {
+			_brickSizeTable[i] = Bkg::loadEntry(&_bufferBrick[i], Bkg::brickEntryIndex(i));
+		} else {
+			_brickSizeTable[i] = HQR::getAllocEntry(&_bufferBrick[i], Resources::HQR_LBA_BRK_FILE, i);
+		}
 		if (_brickSizeTable[i] == 0) {
 			warning("Failed to load isometric brick index %i", i);
 		}
@@ -352,12 +378,25 @@ void Grid::decompColumn(const uint8 *gridEntry, uint32 gridEntrySize, uint8 *des
 			}
 		} else if (type == 1) { // 0x40
 			for (int32 i = 0; i < blockCount; i++) {
-				outstream.writeUint16LE(stream.readUint16LE());
+				const uint8 layout = stream.readByte() - 1;
+				const uint8 blockIdx = stream.readByte();
+				const uint16 packed = (uint16)((layout + 1) & 0xff) | ((uint16)blockIdx << 8);
+				outstream.writeUint16LE(packed);
 			}
-		} else {
+		} else if (type == 2) {
 			const uint16 gridIdx = stream.readUint16LE();
 			for (int32 i = 0; i < blockCount; i++) {
 				outstream.writeUint16LE(gridIdx);
+			}
+		} else if (type == 3) {
+			warning("Unsupported grid block type 3");
+			for (int32 i = 0; i < blockCount; i++) {
+				outstream.writeUint16LE(0);
+			}
+		} else {
+			warning("Unknown grid block type %i", type);
+			for (int32 i = 0; i < blockCount; i++) {
+				outstream.writeUint16LE(0);
 			}
 		}
 		assert(!outstream.err());
@@ -396,13 +435,14 @@ void Grid::calcGraphMsk(const uint8 *gridEntry, uint32 gridEntrySize, uint8 *des
 
 void Grid::copyMapToCube() {
 	int32 blockOffset = 0;
+	const int32 offsetTableBase = _engine->isLBA2() ? LBA2_GRI_HEADER_SIZE : 0;
 
 	for (int32 z = 0; z < SIZE_CUBE_Z; z++) {
 		const int32 gridIdx = z * SIZE_CUBE_X;
 
 		for (int32 x = 0; x < SIZE_CUBE_X; x++) {
-			const int32 gridOffset = READ_LE_UINT16(_currentGrid + 2 * (x + gridIdx));
-			decompColumn(_currentGrid + gridOffset, _currentGridSize - gridOffset, _bufCube + blockOffset, _blockBufferSize - blockOffset);
+			const int32 gridOffset = READ_LE_UINT16(_currentGrid + offsetTableBase + 2 * (x + gridIdx));
+			decompColumn(_currentGrid + offsetTableBase + gridOffset, _currentGridSize - offsetTableBase - gridOffset, _bufCube + blockOffset, _blockBufferSize - blockOffset);
 			blockOffset += 2 * SIZE_CUBE_Y;
 		}
 	}
@@ -426,17 +466,40 @@ void Grid::createCellingGridMap(const uint8 *gridPtr, int32 gridPtrSize) { // Mi
 }
 
 bool Grid::initGrid(int32 index) {
-	// load grids from file
-	_currentGridSize = HQR::getAllocEntry(&_currentGrid, Resources::HQR_LBA_GRI_FILE, index);
-	if (_currentGridSize == 0) {
-		warning("Failed to load grid index: %i", index);
-		return false;
-	}
+	if (_engine->isLBA2()) {
+		Bkg::init();
+		const int32 sceneryIndex = Bkg::getSceneryIndex(index);
+		_currentGridSize = Bkg::loadEntry(&_currentGrid, Bkg::gridEntryIndex(sceneryIndex));
+		if (_currentGridSize == 0) {
+			warning("Failed to load grid index: %i from %s", index, Resources::HQR_LBA_BKG_FILE);
+			return false;
+		}
 
-	// load layouts from file
-	if (!_currentBlockLibrary.loadFromHQR(Resources::HQR_LBA_BLL_FILE, index, _engine->isLBA1())) {
-		warning("Failed to load block library index: %i", index);
-		return false;
+		const uint8 myBll = _currentGrid[0];
+		uint8 *bllBuf = nullptr;
+		const int32 bllSize = Bkg::loadEntry(&bllBuf, Bkg::blockLibraryEntryIndex(myBll));
+		if (bllSize == 0 || bllBuf == nullptr) {
+			warning("Failed to load block library %i for grid %i", myBll, index);
+			return false;
+		}
+		Common::MemoryReadStream bllStream(bllBuf, bllSize, DisposeAfterUse::YES);
+		if (!_currentBlockLibrary.loadFromStream(bllStream, false)) {
+			warning("Failed to parse block library %i for grid %i", myBll, index);
+			return false;
+		}
+	} else {
+		// load grids from file
+		_currentGridSize = HQR::getAllocEntry(&_currentGrid, Resources::HQR_LBA_GRI_FILE, index);
+		if (_currentGridSize == 0) {
+			warning("Failed to load grid index: %i", index);
+			return false;
+		}
+
+		// load layouts from file
+		if (!_currentBlockLibrary.loadFromHQR(Resources::HQR_LBA_BLL_FILE, index, true)) {
+			warning("Failed to load block library index: %i", index);
+			return false;
+		}
 	}
 
 	loadGridBricks();
@@ -700,7 +763,7 @@ ShapeType Grid::worldColBrickFull(int32 x, int32 y, int32 z, int32 y2, int32 act
 	const uint8 tmpBrickIdx = *(pCube + 1);
 	if (block) {
 		const BlockDataEntry *blockPtr = getAdrBlock(block, tmpBrickIdx);
-		if (checkWater && blockPtr->brickType == WATER_BRICK) {
+		if (checkWater && isWaterBlock(blockPtr, _engine->isLBA2())) {
 			brickShape = ShapeType::kSolid; // full collision
 		} else {
 			brickShape = (ShapeType)blockPtr->brickShape;
@@ -714,7 +777,7 @@ ShapeType Grid::worldColBrickFull(int32 x, int32 y, int32 z, int32 y2, int32 act
 				uint8 code = *pCode;
 				if (code) {
 					const BlockDataEntry *blockPtr = getAdrBlock(block, 0);
-					if (blockPtr->brickType == WATER_BRICK) {
+					if (isWaterBlock(blockPtr, _engine->isLBA2())) {
 						// Special check mount funfrock
 						if (_engine->_scene->_numCube != LBA1SceneId::Polar_Island_on_the_rocky_peak) {
 							// full collision

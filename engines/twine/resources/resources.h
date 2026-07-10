@@ -28,6 +28,7 @@
 #include "twine/parser/body.h"
 #include "twine/parser/holomap.h"
 #include "twine/parser/sprite.h"
+#include "twine/parser/texture.h"
 #include "twine/parser/text.h"
 #include "twine/resources/hqr.h"
 #include "twine/scene/gamestate.h"
@@ -39,7 +40,13 @@ namespace TwinE {
 #define RESSHQR_MAINPAL 0
 #define RESSHQR_LBAFONT 1
 #define RESSHQR_BLANK 2
-#define RESSHQR_SPRITEBOXDATA 3
+#define RESSHQR_SPRITEBOXDATA 3     // lba1
+#define RESSHQR_SPRITEBOXDATA_LBA2_CD 5  // lba2 CD layout
+#define RESSHQR_SPRITEBOXDATA_LBA2_GOG 6 // lba2 GOG classic layout
+#define RESSHQR_BODY_TEXTURE_CD 6        // lba2 CD layout
+#define RESSHQR_BODY_TEXTURE_GOG 5         // lba2 GOG classic layout
+#define RESSHQR_SPRITERAW_CLIP 8           // lba2
+#define RESSHQR_ANIM3DS_CLIP 43            // lba2
 #define RESSHQR_SPRITESHADOW 4
 #define RESSHQR_HOLOPAL 5           // lba1
 #define RESSHQR_HOLOSURFACE 6       // lba1
@@ -183,11 +190,16 @@ public:
 
 	SpriteData _spriteShadowPtr;
 	SpriteBoundingBoxData _spriteBoundingBox;
+	SpriteBoundingBoxData _spriteRawBoundingBox;
+	SpriteBoundingBoxData _anim3DSBoundingBox;
+	BodyTextureData _bodyTexture;
 
 	BodyData _holomapPointModelPtr;
 	BodyData _holomapTwinsenModelPtr;
 	BodyData _holomapTwinsenArrowPtr;
 	BodyData _holomapArrowPtr;
+
+	Common::HashMap<int, BodyData> _objFixBodies;
 
 	/** Initialize resource pointers */
 	void initResources();
@@ -197,9 +209,22 @@ public:
 		return _trajectories;
 	}
 	void loadEntityData(EntityData &entityData, int32 &index);
+	const BodyData *getObjFixBody(int index);
 
 	const TextEntry *getText(TextBankId textBankId, TextId index) const;
 	const T_ANIM_3DS *getAnim(int index) const;
+
+	const BodyTextureData &getBodyTexture() const {
+		return _bodyTexture;
+	}
+
+	const SpriteBoundingBoxData &getSpriteRawBoundingBox() const {
+		return _spriteRawBoundingBox;
+	}
+
+	const SpriteBoundingBoxData &getAnim3DSBoundingBox() const {
+		return _anim3DSBoundingBox;
+	}
 
 	int findSmkMovieIndex(const char *name) const;
 
@@ -215,6 +240,7 @@ public:
 	 * sets for use with the grids. Each grid may use only one set of blocks (one entry of lba_bll.hqr).
 	 */
 	static constexpr const char *HQR_LBA_GRI_FILE = "lba_gri.hqr";
+	static constexpr const char *HQR_LBA_BKG_FILE = "lba_bkg.hqr";
 	// isometric libraries for use in grids.
 	static constexpr const char *HQR_LBA_BLL_FILE = "lba_bll.hqr";
 	/**
@@ -230,6 +256,7 @@ public:
 	static constexpr const char *HQR_SCREEN_FILE = "screen.hqr";
 	// sprites
 	static constexpr const char *HQR_SPRITES_FILE = "sprites.hqr";
+	static constexpr const char *HQR_SPRITERAW_FILE = "spriraw.hqr";
 	/**
 	 * model/animation entities
 	 * contains data associating 3D models (Body.hqr) with animations (Anim.hqr) for the game characters.
@@ -237,6 +264,8 @@ public:
 	static constexpr const char *HQR_FILE3D_FILE = "file3d.hqr";
 	// 3d model data
 	static constexpr const char *HQR_BODY_FILE = "body.hqr";
+	// fixed 3d objects (darts, thrown extras, inventory props)
+	static constexpr const char *HQR_OBJFIX_FILE = "objfix.hqr";
 	// animations
 	static constexpr const char *HQR_ANIM_FILE = "anim.hqr";
 	static constexpr const char *HQR_ANIM3DS_FILE = "anim3ds.hqr";

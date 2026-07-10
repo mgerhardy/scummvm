@@ -50,7 +50,14 @@ struct EntityAnim {
 		byte sampleVolume = 0;
 		int16 pointIndex = 0;
 		int16 spriteIndex = 0;
+		int16 modelIndex = 0;
+		int16 alpha = 0;
+		int16 beta = 0;
 		uint8 targetActor = 0;
+		uint16 unk1 = 0;
+		uint16 unk2 = 0;
+		uint16 unk3 = 0;
+		uint8 unk4 = 0;
 		int16 sampleIndex = 0;
 		int16 frequency = 0;
 		int16 xAngle = 0;

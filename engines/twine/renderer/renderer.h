@@ -39,6 +39,11 @@
 #define POLYGONTYPE_GOURAUD 7
 #define POLYGONTYPE_DITHER 8
 #define POLYGONTYPE_OUTLINE 9
+#define POLYGONTYPE_TEXTURE 10
+#define POLYGONTYPE_TEXTURE_GOURAUD 11
+#define POLYGONTYPE_TEXTURE_FLAT 12
+
+#define RENDERTYPE_DRAWTEXTUREDPOLYGON 3
 
 #define MAT_TRISTE 0
 #define MAT_PIERRE 1
@@ -51,6 +56,7 @@
 #define MAT_GRANIT 8
 #define MAT_GOURAUD 9
 #define MAT_DITHER 10
+#define MAT_TEXTURE 11
 
 #define TYPE_3D 0
 #define TYPE_ISO 1
@@ -73,6 +79,16 @@ struct CmdRenderPolygon {
 	uint8 numVertices = 0;
 	int16 colorIndex = 0; // intensity
 	// followed by Vertex array
+};
+
+struct CmdRenderTexturedPolygon {
+	uint8 renderType = 0;
+	uint8 numVertices = 0;
+	uint8 textureIndex = 0;
+	uint8 pad = 0;
+	uint16 textureOffset = 0;
+	uint16 repMask = 0xffff;
+	// followed by screen Vertex array, then texture Vertex array (mapU/mapV in x/y)
 };
 
 struct IMatrix3x3 {
@@ -155,6 +171,9 @@ private:
 
 	// AnimNuage
 	void animModel(ModelData *modelData, const BodyData &bodyData, RenderCommand *renderCmds, const IVec3 &angleVec, const IVec3 &renderPos, Common::Rect &modelRect);
+	void displayStaticModel(ModelData *modelData, const BodyData &bodyData, const IVec3 &angleVec, const IVec3 &poswr, Common::Rect &modelRect);
+	void projectModelPoints(ModelData *modelData, int32 numVertices, const IVec3 &poswr, Common::Rect &modelRect);
+	void applyBodyLighting(ModelData *modelData, const BodyData &bodyData, bool perBone);
 	bool computeSphere(int32 x, int32 y, int32 radius, int &vtop, int &vbottom);
 	bool renderObjectIso(const BodyData &bodyData, RenderCommand **renderCmds, ModelData *modelData, Common::Rect &modelRect); // RenderObjetIso
 	IVec3 longInverseRot(int32 x, int32 y, int32 z);
@@ -191,15 +210,19 @@ private:
 	uint8 _renderCoordinatesBuffer[10000]{0};
 	ComputedVertex _clippedPolygonVertices1[128];
 	ComputedVertex _clippedPolygonVertices2[128];
+	ComputedVertex _clippedTexCoords1[128];
+	ComputedVertex _clippedTexCoords2[128];
 
 	int16* _tabVerticG = nullptr;
 	int16* _tabVerticD = nullptr;
 	int16* _tabCoulG = nullptr;
 	int16* _tabCoulD = nullptr;
-	int16* _taby0 = nullptr;
-	int16* _taby1 = nullptr;
-	int16* _tabx0 = nullptr; // also _tabCoulG
-	int16* _tabx1 = nullptr; // also _tabCoulD
+	int16* _tabMapU0 = nullptr;
+	int16* _tabMapV0 = nullptr;
+	int16* _tabMapU1 = nullptr;
+	int16* _tabMapV1 = nullptr;
+	int16* _tabx0 = nullptr;
+	int16* _tabx1 = nullptr;
 
 	bool _typeProj = TYPE_3D;
 
@@ -216,22 +239,27 @@ private:
 	bool computePoly(int16 polyRenderType, const ComputedVertex *vertices, int32 numVertices, int16 &vtop, int16 &vbottom);
 
 	const RenderCommand *depthSortRenderCommands(int32 numOfPrimitives);
-	uint8 *preparePolygons(const Common::Array<BodyPolygon>& polygons, int32 &numOfPrimitives, RenderCommand **renderCmds, uint8 *renderBufferPtr, ModelData *modelData);
+	uint8 *preparePolygons(const BodyData &bodyData, int32 &numOfPrimitives, RenderCommand **renderCmds, uint8 *renderBufferPtr, ModelData *modelData);
 	uint8 *prepareSpheres(const Common::Array<BodySphere>& spheres, int32 &numOfPrimitives, RenderCommand **renderCmds, uint8 *renderBufferPtr, ModelData *modelData);
 	uint8 *prepareLines(const Common::Array<BodyLine>& lines, int32 &numOfPrimitives, RenderCommand **renderCmds, uint8 *renderBufferPtr, ModelData *modelData);
 
 	void flipMatrix();
 
 	void fillTextPolyNoClip(int32 top, int32 bottom, const uint8 *holomapImage, uint32 holomapImageSize);
+	void fillBodyTextPolyNoClip(int32 top, int32 bottom, const uint8 *texture, uint8 renderType, int16 flatShade, uint16 repMask = 0xffff);
 	void fillHolomapTriangle(int16 *pDest, int32 x1, int32 y1, int32 x2, int32 y2);
 	void fillHolomapTriangles(const ComputedVertex &vertex1, const ComputedVertex &vertex2, const ComputedVertex &texCoord1, const ComputedVertex &texCoord2, int32 &top, int32 &bottom);
 
+	bool computeTexturedPoly(int16 polyRenderType, const ComputedVertex *screenVerts, const ComputedVertex *texVerts, int32 numVertices, int16 &vtop, int16 &vbottom, ComputedVertex *&outScreen, ComputedVertex *&outTex, int32 &outCount);
+	void renderTexturedPolygons(const CmdRenderTexturedPolygon &polygon, ComputedVertex *screenVerts, ComputedVertex *texVerts);
+	void renderTexturedTriangle(const ComputedVertex screenCoords[3], const ComputedVertex texCoords[3], uint8 renderType, const uint8 *texture, int16 flatShade, uint16 repMask = 0xffff);
+
 	// ClipGauche, ClipDroite, ClipHaut, ClipBas
-	int16 leftClip(int16 polyRenderType, ComputedVertex** offTabPoly, int32 numVertices);
-	int16 rightClip(int16 polyRenderType, ComputedVertex** offTabPoly, int32 numVertices);
-	int16 topClip(int16 polyRenderType, ComputedVertex** offTabPoly, int32 numVertices);
-	int16 bottomClip(int16 polyRenderType, ComputedVertex** offTabPoly, int32 numVertices);
-	int32 computePolyMinMax(int16 polyRenderType, ComputedVertex **offTabPoly, int32 numVertices, int16 &vtop, int16 &vbottom);
+	int16 leftClip(int16 polyRenderType, ComputedVertex **offTabPoly, int32 numVertices, ComputedVertex **offTabTexPoly = nullptr);
+	int16 rightClip(int16 polyRenderType, ComputedVertex **offTabPoly, int32 numVertices, ComputedVertex **offTabTexPoly = nullptr);
+	int16 topClip(int16 polyRenderType, ComputedVertex **offTabPoly, int32 numVertices, ComputedVertex **offTabTexPoly = nullptr);
+	int16 bottomClip(int16 polyRenderType, ComputedVertex **offTabPoly, int32 numVertices, ComputedVertex **offTabTexPoly = nullptr);
+	int32 computePolyMinMax(int16 polyRenderType, ComputedVertex **offTabPoly, int32 numVertices, int16 &vtop, int16 &vbottom, ComputedVertex **offTabTexPoly = nullptr);
 public:
 	Renderer(TwinEEngine *engine);
 	~Renderer();

@@ -60,6 +60,9 @@ bool BlockLibraryData::parseLayout(BlockData &blockData, Common::SeekableReadStr
 		blockEntry.brickType = stream.readByte();
 		blockEntry.brickIdx = stream.readUint16LE();
 		blockEntry.sound = bits(blockEntry.brickType, 0, 4);
+		if (!lba1) {
+			blockEntry.groundType = bits(blockEntry.brickType, 4, 4);
+		}
 	}
 	return !stream.err();
 }

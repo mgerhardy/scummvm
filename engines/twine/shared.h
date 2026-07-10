@@ -408,6 +408,13 @@ enum class BodyType {
 	btLabyrinth = 12    // Lba2 GEN_BODY_LABYRINTHE
 };
 
+inline BodyType normalizeBodyType(byte raw) {
+	if (raw == 255) {
+		return BodyType::btNone;
+	}
+	return (BodyType)raw;
+}
+
 enum class ExtraSpecialType {
 	kHitStars = 0,
 	kExplodeCloud = 1,
