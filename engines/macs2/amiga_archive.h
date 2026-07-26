@@ -39,7 +39,7 @@ namespace Macs2 {
  */
 enum AmigaResourceType : uint16 {
 	kAmigaResOO = 0x4F4F, // object / graphics
-	kAmigaResMM = 0x4D4D, // music (Protracker MOD)
+	kAmigaResMM = 0x4D4D, // scene package (MXMM: planar BG + tables; not Protracker)
 	kAmigaResOS = 0x4F53, // sound effect
 	kAmigaResFF = 0x4646, // font
 	kAmigaResUnknown = 0
@@ -59,6 +59,11 @@ struct AmigaInfoData {
 	uint16 volumeCount = 0;
 	uint16 mdirSize = 0;
 	uint16 uiPaletteAmiga[13] = {0}; // 12-bit 0x0RGB values
+	/**
+	 * Starting MM resource id from MXIN (u32BE at Info offset 8).
+	 * Demo Info stores 40 → MM_0040 (intro). Script-visible scene id is mmId+1.
+	 */
+	uint16 startSceneResourceId = 0;
 	bool loaded = false;
 };
 
@@ -67,7 +72,7 @@ struct AmigaInfoData {
  *
  * Members are exposed as Common::Archive paths:
  *   "scene_table"          - first PP20 block (decompressed MXOO)
- *   "OO_0104", "MM_0004".. - typed resources (decompressed when PP20/MXMM)
+ *   "OO_0104", "MM_0004".. - typed resources (PP20 decompressed; MXMM raw)
  *   "Info"                 - raw MXIN game metadata (if present on disk)
  *
  * Based on FORMAT.md / extract_macs2 Amiga mode in scummvm-tools.

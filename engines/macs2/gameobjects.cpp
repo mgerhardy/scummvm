@@ -402,6 +402,17 @@ Macs2::GameObject *Macs2::GameObjects::getObjectByIndex(uint16 index) {
 }
 
 Common::MemoryReadStream *Macs2::GameObjects::readGameObjectStrings(uint16 index, Common::MemoryReadStream *fileStream) {
+	// Amiga: strings live on the GameObject itself (plaintext, u16BE lengths).
+	if (g_engine != nullptr && g_engine->isAmiga()) {
+		GameObject *obj = getObjectByIndex(index);
+		if (obj == nullptr)
+			return new Common::MemoryReadStream(nullptr, 0);
+		byte *copy = (byte *)malloc(obj->_stringData.size());
+		if (!obj->_stringData.empty())
+			memcpy(copy, obj->_stringData.data(), obj->_stringData.size());
+		return new Common::MemoryReadStream(copy, obj->_stringData.size(), DisposeAfterUse::YES);
+	}
+
 	// TODO: The original binary caches the last loaded object's string data in memory
 	// (g_wStringDecodeCacheObjectId at DS:0f86 / g_pSavedScriptState). It skips the file
 	// read if the same object is requested again. We re-read from file every time.

@@ -2706,12 +2706,23 @@ void Script::ScriptExecutor::scriptPlayMusicSlot() {
 	}
 
 	if (_activeMusicSlot != 0) {
-		_engine->getAdlib()->stopMusic();
+		if (!_engine->isAmiga())
+			_engine->getAdlib()->stopMusic();
 		_activeMusicSlot = 0;
 	}
 
 	if (_musicSlots[slotID - 1].empty()) {
 		warning("Opcode 0x44: playMusicSlot with empty slot %u", slotID);
+		_activeMusicSlot = slotID;
+		return;
+	}
+
+	// Amiga MM_* are scene packages (planar BG), not AdLib/Protracker song blobs.
+	// Demo scripts also never call this opcode. Keep slot state without AdLib.
+	if (_engine->isAmiga()) {
+		_musicControlMode = 0;
+		_musicControlStep = 0;
+		_musicControlVolume = 0;
 		_activeMusicSlot = slotID;
 		return;
 	}
@@ -2754,7 +2765,8 @@ void Script::ScriptExecutor::scriptStopMusicSlot() {
 			_musicControlStep = fadeParam;
 			_musicControlVolume = 0;
 		} else {
-			_engine->getAdlib()->stopMusic();
+			if (!_engine->isAmiga())
+				_engine->getAdlib()->stopMusic();
 			_activeMusicSlot = 0;
 		}
 	}
@@ -2781,7 +2793,7 @@ void Script::ScriptExecutor::scriptFreeMusicSlot() {
 	}
 
 	if (_activeMusicSlot == slotID) {
-		if (_musicEnabled && _soundSystemActive) {
+		if (_musicEnabled && _soundSystemActive && !_engine->isAmiga()) {
 			_engine->getAdlib()->stopMusic();
 		}
 		_activeMusicSlot = 0;
@@ -2919,12 +2931,7 @@ ExecutionResult Script::ScriptExecutor::executeOpcodes() {
 		if (hasScriptError()) {
 			break;
 		}
-		// TODO: Just for breaking out at the moment when end conditions fail to work
-		if (_stream->eos()) {
-			break;
-		}
-		// TODO: Probably only one of these is necessary
-		if (_stream->size() == 0 || _stream->pos() >= _stream->size() - 1) {
+		if (_stream->eos() || _stream->size() == 0 || _stream->pos() >= _stream->size()) {
 			break;
 		}
 

@@ -259,10 +259,28 @@ public:
 	// Adlib data
 	void readExecutable();
 
-	/** Amiga: open DataA/Mdir archive and load cursors / Info / minimal runtime state. */
+	/** Amiga: open DataA/Mdir, load OO objects as GameObjects, cursors, and scene stubs. */
 	void readAmigaResources();
 	void applyAmigaUiPalette();
 	bool loadAmigaCursorResource(uint16 resourceId, AnimFrame &out);
+	/**
+	 * Load DOS-format scene graphics (RLE background, maps, palette, bg anims) from stream.
+	 * Used by DOS changeScene and as an Amiga demo fallback when RESOURCE.MCS is present.
+	 */
+	bool loadDosSceneGraphics(Common::MemoryReadStream *stream, uint32 sceneIndex);
+	/**
+	 * Amiga: load native MM_* MXMM package by resource id (not script scene id).
+	 * Script-visible scene ids are resourceId+1 (Ghidra FUN_002215fa / load_scene_mxmm).
+	 * Also extracts trailer script/strings into _amigaPendingScene* for changeScene.
+	 * Palette indices 0..31 stay Amiga COLOR registers for OO sprite compatibility.
+	 */
+	bool loadAmigaSceneBackground(uint32 sceneResourceId);
+	/** Amiga: try RESOURCE.MCS in the game directory for room art missing from DataA. */
+	bool tryLoadAmigaSceneGraphicsFallback(uint32 sceneIndex);
+	/** Open/cache DOS RESOURCE.MCS for Amiga demo fallback assets. */
+	bool ensureAmigaDosMcsStream();
+	/** Load shading table + fonts from DOS MCS (Amiga DataA has no usable text font yet). */
+	bool loadDosGlobalAssetsFromMcs(Common::MemoryReadStream *stream);
 
 	// Assumes that the stream is at the location of the number of background animations
 	void readBackgroundAnimations(Common::MemoryReadStream *stream);
@@ -376,6 +394,12 @@ public:
 
 	/** Amiga DataA/Mdir archive (owned). Null on DOS. */
 	Macs2AmigaArchive *_amigaArchive = nullptr;
+	/** Optional DOS RESOURCE.MCS used only for Amiga demo room-art fallback (owned). */
+	Common::MemoryReadStream *_amigaDosMcsStream = nullptr;
+	bool _amigaMissingBgWarned = false;
+	/** Filled by loadAmigaSceneBackground; consumed by Amiga changeScene. */
+	Common::Array<byte> _amigaPendingSceneScript;
+	Common::Array<byte> _amigaPendingSceneStrings;
 
 	void setCursorMode(Script::MouseMode newMode);
 	void nextCursorMode();

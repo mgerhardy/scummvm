@@ -25,6 +25,8 @@
 #include "common/archive.h"
 #include "common/config-manager.h"
 #include "common/debug.h"
+#include "common/file.h"
+#include "common/memstream.h"
 #include "common/endian.h"
 #include "common/ptr.h"
 #include "common/savefile.h"
@@ -45,6 +47,8 @@
 #include "macs2/debugtools.h"
 #include "macs2/detection.h"
 #include "macs2/hotspot_names.h"
+#include "macs2/amiga_archive.h"
+#include "macs2/amiga_decode.h"
 #include "macs2/music.h"
 #include "macs2/view1.h"
 
@@ -298,8 +302,8 @@ void Macs2Engine::readResourceFile() {
 
 void Macs2Engine::readExecutable() {
 	if (isAmiga()) {
-		// Amiga uses Protracker MOD music from DataA (MM_*) and has no MCSEXEC.EXE.
-		// Inventory border icon indices match the DOS demo defaults for now.
+		// Amiga has no MCSEXEC.EXE; music is not AdLib. Inventory border icon
+		// indices match the DOS demo defaults for now.
 		inventoryIconIndices.resize(6);
 		containerInventoryIconIndices.resize(6);
 		for (uint i = 0; i < 6; i++) {
@@ -437,6 +441,8 @@ Macs2Engine::~Macs2Engine() {
 		delete _amigaArchive;
 		_amigaArchive = nullptr;
 	}
+	delete _amigaDosMcsStream;
+	_amigaDosMcsStream = nullptr;
 	delete _scriptExecutor;
 	for (uint i = 0; i < GameObjects::instance()._objects.size(); i++) {
 		delete GameObjects::instance()._objects[i];
@@ -483,56 +489,44 @@ uint16 Macs2Engine::scaledMusicVolume(uint16 gameAttenuation) const {
 	return (total > 0x3F) ? 0x3F : total;
 }
 
-void Macs2Engine::changeScene(uint32 newSceneIndex, bool executeScript) {
-	if (isAmiga()) {
-		// Amiga scene loading (planar backgrounds / BE scene body) is not implemented yet.
-		Scenes::instance()._lastSceneIndex = Scenes::instance()._currentSceneIndex;
-		Scenes::instance()._currentSceneIndex = newSceneIndex;
-		if (executeScript)
-			scheduleRun(true);
-		return;
-	}
-
-	// Release old scene resources
-	_backgroundAnimations.clear();
-	_backgroundAnimationsBlobs.clear();
-	memset(_areaOverrides, 0, sizeof(_areaOverrides));
+bool Macs2Engine::loadDosSceneGraphics(Common::MemoryReadStream *stream, uint32 sceneIndex) {
+	if (stream == nullptr)
+		return false;
 
 	// Background image
 	// [0752h] is pointing to 3000h bytes data starting at Ch + 4h in the file
 	// Addressing the background image starts at l0037_25A9
-	_fileStream->seek(0xC + 0x4 + 0xC * newSceneIndex - 0xC, SEEK_SET);
-	uint32 bgImageOffset = _fileStream->readUint32LE();
-	uint32 sceneTableEntry2 = _fileStream->readUint32LE();
-	uint32 sceneTableEntry3 = _fileStream->readUint32LE();
+	stream->seek(0xC + 0x4 + 0xC * sceneIndex - 0xC, SEEK_SET);
+	uint32 bgImageOffset = stream->readUint32LE();
+	uint32 sceneTableEntry2 = stream->readUint32LE();
+	uint32 sceneTableEntry3 = stream->readUint32LE();
 	(void)sceneTableEntry3; // strings offset, not used here
 	_mapSubSceneTableFilePos = 0;
 	_mapImageFileOffset = 0;
 	// The map image file offset is stored in the scene data block at offset +0x3C0.
 	// (sceneDataOffset2 + 0x3C0 = resource_offsets(0x80) + 0x340 of additional data).
-	if (sceneTableEntry2 != 0 && sceneTableEntry2 < (uint32)_fileStream->size()) {
-		_fileStream->seek(sceneTableEntry2 + 0x3C0, SEEK_SET);
-		uint32 mapOffset = _fileStream->readUint32LE();
-		if (mapOffset != 0 && mapOffset < (uint32)_fileStream->size()) {
+	if (sceneTableEntry2 != 0 && sceneTableEntry2 < (uint32)stream->size()) {
+		stream->seek(sceneTableEntry2 + 0x3C0, SEEK_SET);
+		uint32 mapOffset = stream->readUint32LE();
+		if (mapOffset != 0 && mapOffset < (uint32)stream->size()) {
 			// Validate it's actually RLE data for a kScreenWidth-wide image
-			_fileStream->seek(mapOffset, SEEK_SET);
-			uint16 rowLen = _fileStream->readUint16LE();
+			stream->seek(mapOffset, SEEK_SET);
+			uint16 rowLen = stream->readUint16LE();
 			if (rowLen >= 50 && rowLen <= 640) {
 				_mapImageFileOffset = mapOffset;
 				_mapSubSceneTableFilePos = sceneTableEntry2 + 0x3C0;
 			}
 		}
 	}
-	_fileStream->seek(bgImageOffset, SEEK_SET);
-
-	// TODO: Copy-pasted code here
+	if (bgImageOffset == 0 || bgImageOffset >= (uint32)stream->size())
+		return false;
+	stream->seek(bgImageOffset, SEEK_SET);
 
 	uint8 data[0x320];
 
 	for (int y = 0; y < kGameHeight; y++) {
-		// TODO: Use the proper read function, it seems to be available
-		uint16 length = _fileStream->readUint16LE();
-		_fileStream->read(data, length);
+		uint16 length = stream->readUint16LE();
+		stream->read(data, length);
 		int16 remainingPixels = kScreenWidth; // signed: see readRLEImage (matches decodeRLERows 1008:0666)
 		uint8 *dataPointer = data;
 		uint16 x = 0;
@@ -544,7 +538,6 @@ void Macs2Engine::changeScene(uint32 newSceneIndex, bool executeScript) {
 				remainingPixels--;
 				x++;
 			} else {
-				// We need to decode the RLE data
 				const uint8 &runlength = dataPointer[0];
 				dataPointer++;
 				const uint8 &encodedValue = dataPointer[0];
@@ -560,9 +553,8 @@ void Macs2Engine::changeScene(uint32 newSceneIndex, bool executeScript) {
 	// We load the palette right afterwards - 0x300 is exactly 3 * 256d
 	Common::Array<uint8> palette;
 	palette.resize(0x300);
-	_fileStream->read(palette.data(), 0x300);
+	stream->read(palette.data(), 0x300);
 
-	// TODO: Copy-pasted code here
 	// Make a copy that will not be color corrected, for fading
 	memcpy(_palVanilla, palette.data(), 256 * 3);
 	memcpy(_pal, palette.data(), 0x300);
@@ -575,93 +567,443 @@ void Macs2Engine::changeScene(uint32 newSceneIndex, bool executeScript) {
 	// changeScene @ 1008:2574: 0x100-byte panel remap table (scene+0x1006 area, NOT shading table)
 	if (_panelRemapTable.size() != 0x100)
 		_panelRemapTable.resize(0x100);
-	_fileStream->read(_panelRemapTable.data(), 0x100);
+	stream->read(_panelRemapTable.data(), 0x100);
 
-	_fileStream->readByte(); // unknownByte1
-	_fileStream->readByte(); // unknownByte2
-	_fileStream->readByte(); // unknownByte3
+	stream->readByte(); // unknownByte1
+	stream->readByte(); // unknownByte2
+	stream->readByte(); // unknownByte3
 
 	// Offset 1013h
-	Graphics::ManagedSurface depthRLE = readRLEImage(_fileStream->pos(), _fileStream);
-	// Confirmed: depth map at scene offset 0x1013
+	Graphics::ManagedSurface depthRLE = readRLEImage(stream->pos(), stream);
 	_depthMap.blitFrom(depthRLE);
 
 	// Offset 2017h
-	Graphics::ManagedSurface pathfindingRLE = readRLEImage(_fileStream->pos(), _fileStream);
-	// Walkability/pathfinding map at scene offset 0x2017
+	Graphics::ManagedSurface pathfindingRLE = readRLEImage(stream->pos(), stream);
 	_pathfindingMap.blitFrom(pathfindingRLE);
 
 	// Offset 301Bh - Shadow/shading intensity map for character rendering
-	Graphics::ManagedSurface shadowRLE = readRLEImage(_fileStream->pos(), _fileStream);
+	Graphics::ManagedSurface shadowRLE = readRLEImage(stream->pos(), stream);
 	_shadowMap.blitFrom(shadowRLE);
 
 	// Offset 401Fh - Hotspot/interaction map (320x200, pixel value = hotspot color index)
-	Graphics::ManagedSurface bgMap = readRLEImage(_fileStream->pos(), _fileStream);
+	Graphics::ManagedSurface bgMap = readRLEImage(stream->pos(), stream);
 	_hotspotMap.copyFrom(bgMap);
 
-	// Pretty sure that this is the pathfinding points. We address them starting
 	// Load pathfinding nodes (16 entries x 10 bytes at scene+0x5023)
 	pathfindingPoints.clear();
 	for (int i = 0; i < 16; i++) {
 		PathfindingPoint current;
 		current._index = i;
-		current._position.x = _fileStream->readUint16LE();
-		current._position.y = _fileStream->readUint16LE();
+		current._position.x = stream->readUint16LE();
+		current._position.y = stream->readUint16LE();
 		uint8 adj[4];
-		_fileStream->read(adj, 4);
-		uint16 numConnections = _fileStream->readUint16LE();
+		stream->read(adj, 4);
+		uint16 numConnections = stream->readUint16LE();
 		current._adjacentPoints.clear();
 		for (uint16 j = 0; j < numConnections && j < 4; j++)
 			current._adjacentPoints.push_back(adj[j]);
 		pathfindingPoints.push_back(current);
 	}
 
-	_numHotspots = _fileStream->readUint16LE();
+	_numHotspots = stream->readUint16LE();
 
 	_hotspotColorTable.clear();
 	_hotspotColorTable.resize(0x20 / sizeof(uint16));
-	_fileStream->read(_hotspotColorTable.data(), 0x20);
+	stream->read(_hotspotColorTable.data(), 0x20);
 
-	// TODO: Remove the now superfluous one
-	readBackgroundAnimations(_fileStream);
+	readBackgroundAnimations(stream);
 
 	// Offset 51F7h
-	_numPathfindingPoints = _fileStream->readUint16LE();
+	_numPathfindingPoints = stream->readUint16LE();
 
 	// Offset 51F9h
-	_fileStream->readUint16LE();
+	stream->readUint16LE();
 
 	// Offset 51FBh
-	_fileStream->readUint16LE();
+	stream->readUint16LE();
 
 	// Offset 51FDh - 5201h
-	_walkDepthThresholdY = _fileStream->readUint16LE();
-	_walkDepthScaleFactor = _fileStream->readUint16LE();
-	_walkBaseSpeedPct = _fileStream->readUint16LE();
+	_walkDepthThresholdY = stream->readUint16LE();
+	_walkDepthScaleFactor = stream->readUint16LE();
+	_walkBaseSpeedPct = stream->readUint16LE();
 
-	_scenePaletteMode = _fileStream->readUint16LE();
-	_paletteDarkenPercent = _fileStream->readUint16LE();
+	_scenePaletteMode = stream->readUint16LE();
+	_paletteDarkenPercent = stream->readUint16LE();
 
-	// Seek to next place
-	// TODO: Duplicated seek address calculation code
-	// This addressing can be found in the l0037_2856 code block
-
-	uint16 sceneDataOffset = newSceneIndex * 0xC;
-	// Offset of the data in [0752h] global
+	uint16 sceneDataOffset = sceneIndex * 0xC;
 	constexpr uint16 globalDataOffset = 0xC + 0x4;
 	sceneDataOffset += globalDataOffset;
-	_fileStream->seek(sceneDataOffset - 0x8);
-	uint32 sceneDataOffset2 = _fileStream->readUint32LE();
-	_fileStream->seek(sceneDataOffset2, SEEK_SET);
+	stream->seek(sceneDataOffset - 0x8);
+	uint32 sceneDataOffset2 = stream->readUint32LE();
+	stream->seek(sceneDataOffset2, SEEK_SET);
 
-	// We read 80h bytes
 	_sceneResourceOffsets.resize(0x80 / 4);
-	_fileStream->read(_sceneResourceOffsets.data(), 0x80);
+	stream->read(_sceneResourceOffsets.data(), 0x80);
 
-	// TODO: There are some more data points missing from the function
-
-	// Apply palette darkening if this scene has it (binary: sceneData+0x5203 != 1)
 	applyPaletteDarkening();
+	return true;
+}
+
+bool Macs2Engine::ensureAmigaDosMcsStream() {
+	if (_amigaDosMcsStream != nullptr)
+		return true;
+
+	Common::File mcs;
+	if (!mcs.open("RESOURCE.MCS") && !mcs.open("resource.mcs"))
+		return false;
+
+	const int64 size = mcs.size();
+	if (size <= 0)
+		return false;
+
+	byte *buf = (byte *)malloc((size_t)size);
+	if (buf == nullptr)
+		return false;
+	if (mcs.read(buf, (uint32)size) != (uint32)size) {
+		free(buf);
+		return false;
+	}
+	_amigaDosMcsStream = new Common::MemoryReadStream(buf, (uint32)size, DisposeAfterUse::YES);
+	debugC(1, kDebugFilePath,
+		   "Amiga: using DOS RESOURCE.MCS (%d bytes) for room/fonts fallback (not present in DataA)",
+		   (int)size);
+	return true;
+}
+
+bool Macs2Engine::loadDosGlobalAssetsFromMcs(Common::MemoryReadStream *stream) {
+	if (stream == nullptr)
+		return false;
+
+	// Same layout as readResourceFile(): shading @ 0xC+4+0x3000+0x300, then 33 image
+	// resources, then font1 + font2. Keep Amiga DataA cursors; fill empty slots
+	// (especially border chrome 30-32) from DOS when present.
+	stream->seek(0xC + 0x4 + 0x3000 + 0x300, SEEK_SET);
+	_shadingTable.resize(0x800);
+	if (stream->read(_shadingTable.data(), 0x800) != 0x800)
+		return false;
+
+	if (_imageResources.size() < 0x21)
+		_imageResources.resize(0x21);
+	for (int i = 0; i < 0x21; i++) {
+		const uint32 length = stream->readUint32LE();
+		if (length == 0)
+			continue;
+		if ((uint)i < _imageResources.size() &&
+			(_imageResources[i]._data.empty() || _imageResources[i]._width == 0 ||
+			 _imageResources[i]._height == 0)) {
+			stream->seek(0x2, SEEK_CUR);
+			AnimFrame frame;
+			frame.readFromStream(stream);
+			_imageResources[i] = Common::move(frame);
+		} else {
+			stream->seek(length, SEEK_CUR);
+		}
+	}
+
+	const uint32 font1SizeField = stream->readUint32LE();
+	(void)font1SizeField;
+	const uint16 font1GlyphCount = stream->readUint16LE();
+	if (font1GlyphCount == 0 || font1GlyphCount > 256)
+		return false;
+	maxGlyphHeight = 0;
+	for (uint i = 0; i < font1GlyphCount; i++) {
+		_glyphs[i].readFromMemory(stream);
+		maxGlyphHeight = MAX(_glyphs[i]._height, maxGlyphHeight);
+	}
+	numGlyphs = font1GlyphCount;
+
+	const uint32 font2SizeField = stream->readUint32LE();
+	(void)font2SizeField;
+	const uint16 font2GlyphCount = stream->readUint16LE();
+	if (font2GlyphCount == 0 || font2GlyphCount > 256)
+		return false;
+	maxPanelGlyphHeight = 0;
+	for (uint i = 0; i < font2GlyphCount; i++) {
+		_panelGlyphs[i].readFromMemory(stream);
+		maxPanelGlyphHeight = MAX(maxPanelGlyphHeight, _panelGlyphs[i]._height);
+	}
+	numPanelGlyphs = font2GlyphCount;
+
+	debugC(1, kDebugFilePath, "Amiga: loaded DOS fonts (%u + %u glyphs) and shading table from RESOURCE.MCS",
+		   font1GlyphCount, font2GlyphCount);
+	return true;
+}
+
+bool Macs2Engine::tryLoadAmigaSceneGraphicsFallback(uint32 sceneIndex) {
+	if (!ensureAmigaDosMcsStream())
+		return false;
+
+	return loadDosSceneGraphics(_amigaDosMcsStream, sceneIndex);
+}
+
+bool Macs2Engine::loadAmigaSceneBackground(uint32 sceneResourceId) {
+	if (!_amigaArchive || sceneResourceId == 0 || sceneResourceId > 0xFFFF)
+		return false;
+	if (!_amigaArchive->hasResource(kAmigaResMM, (uint16)sceneResourceId))
+		return false;
+
+	Common::ScopedPtr<Common::SeekableReadStream> stream(
+		_amigaArchive->createReadStreamForResource(kAmigaResMM, (uint16)sceneResourceId));
+	if (!stream)
+		return false;
+
+	const uint32 size = (uint32)stream->size();
+	Common::Array<byte> mxmm;
+	mxmm.resize(size);
+	if (stream->read(mxmm.data(), size) != size)
+		return false;
+
+	Common::Array<byte> pixels;
+	byte paletteRgb[768];
+	uint colorCount = 0;
+	if (!decodeAmigaMxmmSceneBackground(mxmm.data(), size, pixels, paletteRgb, colorCount))
+		return false;
+	if (pixels.size() != (uint)kScreenWidth * kGameHeight || colorCount == 0)
+		return false;
+
+	for (int y = 0; y < kGameHeight; y++) {
+		for (int x = 0; x < kScreenWidth; x++)
+			_sceneBackground.setPixel(x, y, pixels[(uint)y * kScreenWidth + x]);
+	}
+
+	// _palVanilla holds raw 6-bit VGA values (fade math subtracts from these).
+	// _pal is the 8-bit display palette — must be expanded via applyPaletteDarkening().
+	memset(_pal, 0, sizeof(_pal));
+	memset(_palVanilla, 0, sizeof(_palVanilla));
+	for (uint i = 0; i < colorCount && i < 256; i++) {
+		const byte r8 = paletteRgb[i * 3 + 0];
+		const byte g8 = paletteRgb[i * 3 + 1];
+		const byte b8 = paletteRgb[i * 3 + 2];
+		_palVanilla[i * 3 + 0] = (byte)((r8 * 63) / 255);
+		_palVanilla[i * 3 + 1] = (byte)((g8 * 63) / 255);
+		_palVanilla[i * 3 + 2] = (byte)((b8 * 63) / 255);
+	}
+
+	// Keep Info UI chrome colors in the high VGA indices used by panel drawing.
+	if (_amigaArchive->getInfo().loaded) {
+		const AmigaInfoData &info = _amigaArchive->getInfo();
+		auto amiga12ToVga6 = [](uint16 rgb, byte &r6, byte &g6, byte &b6) {
+			const byte r4 = (rgb >> 8) & 0xF;
+			const byte g4 = (rgb >> 4) & 0xF;
+			const byte b4 = rgb & 0xF;
+			r6 = (byte)((r4 * 63) / 15);
+			g6 = (byte)((g4 * 63) / 15);
+			b6 = (byte)((b4 * 63) / 15);
+		};
+		for (uint i = 0; i < 13; i++) {
+			byte r6, g6, b6;
+			amiga12ToVga6(info.uiPaletteAmiga[i], r6, g6, b6);
+			const uint idx = 0xF0 + i;
+			if (idx >= 256)
+				break;
+			_palVanilla[idx * 3 + 0] = r6;
+			_palVanilla[idx * 3 + 1] = g6;
+			_palVanilla[idx * 3 + 2] = b6;
+		}
+	}
+	applyPaletteDarkening();
+
+	_depthMap.fillRect(Common::Rect(0, 0, kScreenWidth, kGameHeight), 0);
+	_pathfindingMap.fillRect(Common::Rect(0, 0, kScreenWidth, kGameHeight), 0);
+	_shadowMap.fillRect(Common::Rect(0, 0, kScreenWidth, kGameHeight), 0);
+	_hotspotMap.fillRect(Common::Rect(0, 0, kScreenWidth, kGameHeight), 0);
+
+	Common::Array<byte> pathMap, depthMap, shadowMap;
+	if (extractAmigaMxmmSceneMaps(mxmm.data(), size, pathMap, depthMap, shadowMap)) {
+		auto blitMap = [](Graphics::ManagedSurface &dest, const Common::Array<byte> &src) {
+			if (src.size() != (uint)kScreenWidth * kGameHeight)
+				return;
+			for (int y = 0; y < kGameHeight; y++) {
+				for (int x = 0; x < kScreenWidth; x++)
+					dest.setPixel(x, y, src[(uint)y * kScreenWidth + x]);
+			}
+		};
+		blitMap(_pathfindingMap, pathMap);
+		blitMap(_depthMap, depthMap);
+		blitMap(_shadowMap, shadowMap);
+	}
+
+	_numHotspots = 0;
+	_numPathfindingPoints = 0;
+	_backgroundAnimations.clear();
+	_backgroundAnimationsBlobs.clear();
+	_mapImageFileOffset = 0;
+	_mapSubSceneTableFilePos = 0;
+	_scenePaletteMode = 1;
+	_paletteDarkenPercent = 0;
+
+	// Scene script/strings live in the MXMM trailer (not the global scene_table stub).
+	_amigaPendingSceneScript.clear();
+	_amigaPendingSceneStrings.clear();
+	extractAmigaMxmmSceneScript(mxmm.data(), size, _amigaPendingSceneScript, _amigaPendingSceneStrings);
+
+	debugC(1, kDebugFilePath, "Amiga: loaded native MM_%04u (script %u bytes, strings %u bytes)",
+		   (uint)sceneResourceId, (uint)_amigaPendingSceneScript.size(),
+		   (uint)_amigaPendingSceneStrings.size());
+	return true;
+}
+
+void Macs2Engine::changeScene(uint32 newSceneIndex, bool executeScript) {
+	if (isAmiga()) {
+		// Amiga scripts use scene ids = MM_resource_id + 1 (Ghidra FUN_002215fa
+		// subtracts 1 before load_scene_mxmm; load_scene sets curScene = mmId+1).
+		_backgroundAnimations.clear();
+		_backgroundAnimationsBlobs.clear();
+		memset(_areaOverrides, 0, sizeof(_areaOverrides));
+		_amigaPendingSceneScript.clear();
+		_amigaPendingSceneStrings.clear();
+
+		uint32 sceneResourceId = 0;
+		if (newSceneIndex > 0)
+			sceneResourceId = newSceneIndex - 1;
+
+		const bool loadedNativeBg = sceneResourceId != 0 && loadAmigaSceneBackground(sceneResourceId);
+		const bool loadedDosBg = !loadedNativeBg && tryLoadAmigaSceneGraphicsFallback(newSceneIndex);
+		if (!loadedNativeBg && !loadedDosBg) {
+			_sceneBackground.fillRect(Common::Rect(0, 0, kScreenWidth, kGameHeight), 0);
+			_depthMap.fillRect(Common::Rect(0, 0, kScreenWidth, kGameHeight), 0);
+			_pathfindingMap.fillRect(Common::Rect(0, 0, kScreenWidth, kGameHeight), 0);
+			_shadowMap.fillRect(Common::Rect(0, 0, kScreenWidth, kGameHeight), 0);
+			_hotspotMap.fillRect(Common::Rect(0, 0, kScreenWidth, kGameHeight), 0);
+			_numHotspots = 0;
+			_numPathfindingPoints = 0;
+			_scenePaletteMode = 1;
+			_paletteDarkenPercent = 0;
+			applyAmigaUiPalette();
+			if (!_amigaMissingBgWarned) {
+				warning("Amiga: no MM_%04u (script scene %u) and no DOS RESOURCE.MCS fallback for room art",
+						(uint)sceneResourceId, (uint)newSceneIndex);
+				_amigaMissingBgWarned = true;
+			}
+		}
+
+		View1 *currentView = (View1 *)findView("View1");
+		if (currentView != nullptr) {
+			// Do not push _pal here: scriptChangeScene fades the previous
+			// palette to black, then fades the new scene in. Premature DAC
+			// writes made Amiga transitions look inverted (bright→dark).
+			for (auto currentCharacter : currentView->_characters) {
+				if (currentCharacter->_gameObject != nullptr)
+					_scriptExecutor->saveWalkRuntime(currentCharacter, currentCharacter->_gameObject);
+				delete currentCharacter;
+			}
+			currentView->_characters.clear();
+			currentView->flushPendingCharacterDeletes();
+
+			GameObject *actorObject = GameObjects::getObjectByIndex(Scenes::instance()._currentActorIndex);
+			if (actorObject != nullptr && actorObject->_sceneIndex == newSceneIndex) {
+				Character *actorChar = new Character();
+				actorChar->_gameObject = actorObject;
+				currentView->_characters.push_back(actorChar);
+				_scriptExecutor->restoreWalkRuntime(actorChar, actorObject);
+				resetCharacterWalkPath(actorChar);
+				_scriptExecutor->saveWalkRuntime(actorChar, actorObject);
+			}
+			for (auto currentObject : GameObjects::instance()._objects) {
+				if (currentObject == nullptr)
+					continue;
+				if (currentObject->_sceneIndex == newSceneIndex &&
+					currentObject->_index != Scenes::instance()._currentActorIndex &&
+					currentObject->_dataOffset != 0) {
+					Character *c = new Character();
+					c->_gameObject = currentObject;
+					currentView->_characters.push_back(c);
+					_scriptExecutor->restoreWalkRuntime(c, currentObject);
+					resetCharacterWalkPath(c);
+					_scriptExecutor->saveWalkRuntime(c, currentObject);
+				}
+			}
+			currentView->rebuildCharacterLookupTable();
+			currentView->_backgroundSurface.copyFrom(_sceneBackground);
+			if (executeScript)
+				currentView->_paletteDirty = true;
+		}
+
+		Scenes::instance()._lastSceneIndex = Scenes::instance()._currentSceneIndex;
+		Scenes::instance()._currentSceneIndex = newSceneIndex;
+		_scriptExecutor->releaseObjectStream();
+		delete Scenes::instance()._currentSceneScript;
+		delete Scenes::instance()._currentSceneStrings;
+
+		byte *scriptCopy = nullptr;
+		uint32 scriptSize = 0;
+		byte *stringCopy = nullptr;
+		uint32 stringSize = 0;
+
+		if (!_amigaPendingSceneScript.empty()) {
+			scriptSize = _amigaPendingSceneScript.size();
+			scriptCopy = (byte *)malloc(scriptSize);
+			if (scriptCopy)
+				memcpy(scriptCopy, _amigaPendingSceneScript.data(), scriptSize);
+			else
+				scriptSize = 0;
+		}
+		if (!_amigaPendingSceneStrings.empty()) {
+			stringSize = _amigaPendingSceneStrings.size();
+			stringCopy = (byte *)malloc(stringSize);
+			if (stringCopy)
+				memcpy(stringCopy, _amigaPendingSceneStrings.data(), stringSize);
+			else
+				stringSize = 0;
+		}
+		_amigaPendingSceneScript.clear();
+		_amigaPendingSceneStrings.clear();
+
+		// Fallback: global scene_table MXOO stub (usually just opcode 0x18 in the demo).
+		if (scriptSize == 0 && _fileStream != nullptr) {
+			AmigaMxooInfo sceneInfo;
+			const uint32 tableSize = (uint32)_fileStream->size();
+			Common::Array<byte> table;
+			table.resize(tableSize);
+			_fileStream->seek(0);
+			if (_fileStream->read(table.data(), tableSize) == tableSize &&
+				parseAmigaMxoo(table.data(), tableSize, sceneInfo)) {
+				Common::Array<byte> script;
+				Common::Array<byte> strings;
+				if (extractAmigaScript(table.data(), tableSize, script) && !script.empty()) {
+					scriptSize = script.size();
+					scriptCopy = (byte *)malloc(scriptSize);
+					if (scriptCopy)
+						memcpy(scriptCopy, script.data(), scriptSize);
+					else
+						scriptSize = 0;
+				}
+				if (stringSize == 0 && extractAmigaStringBlock(table.data(), tableSize, strings)) {
+					stringSize = strings.size();
+					stringCopy = (byte *)malloc(stringSize);
+					if (stringCopy && stringSize)
+						memcpy(stringCopy, strings.data(), stringSize);
+					else
+						stringSize = 0;
+				}
+			}
+		}
+
+		Scenes::instance()._currentSceneScript = new Common::MemoryReadStream(scriptCopy, scriptSize, DisposeAfterUse::YES);
+		Scenes::instance()._currentSceneStrings = new Common::MemoryReadStream(stringCopy, stringSize, DisposeAfterUse::YES);
+		Scenes::instance()._currentSceneSpecialAnimOffsets.clear();
+		_scriptExecutor->setScript(Scenes::instance()._currentSceneScript);
+
+		_pathfindingOverrides.clear();
+		for (uint i = 0; i < _hotspotOverrides.size(); i++)
+			_hotspotOverrides[i] = 0xFFFF;
+
+		// Match DOS changeScene: when View1 is not up yet (first call from
+		// readAmigaResources), only load scene data. Entry init/repeat — including
+		// intro frameWait/changeScene — must run from View1::tick so waits can
+		// complete in the game loop.
+		if (executeScript && currentView != nullptr)
+			_scriptExecutor->runSceneEntryScriptPasses();
+		return;
+	}
+
+	// Release old scene resources
+	_backgroundAnimations.clear();
+	_backgroundAnimationsBlobs.clear();
+	memset(_areaOverrides, 0, sizeof(_areaOverrides));
+
+	if (!loadDosSceneGraphics(_fileStream, newSceneIndex))
+		error("changeScene(): Failed to load DOS scene graphics for scene %u", newSceneIndex);
 
 	// Refresh characters
 	View1 *currentView = (View1 *)findView("View1");
@@ -1796,27 +2138,48 @@ void Macs2Engine::applyAmigaUiPalette() {
 		return;
 
 	const AmigaInfoData &info = _amigaArchive->getInfo();
-	// Amiga UI colors are 12-bit 0x0RGB. Store as VGA-style 6-bit values so
-	// existing fade/darken helpers (which expect 0..63) keep working.
-	for (uint i = 0; i < 13; i++) {
-		const uint16 rgb = info.uiPaletteAmiga[i];
+
+	auto amiga12ToVga6 = [](uint16 rgb, byte &r6, byte &g6, byte &b6) {
 		const byte r4 = (rgb >> 8) & 0xF;
 		const byte g4 = (rgb >> 4) & 0xF;
 		const byte b4 = rgb & 0xF;
-		const byte r6 = (byte)((r4 * 63) / 15);
-		const byte g6 = (byte)((g4 * 63) / 15);
-		const byte b6 = (byte)((b4 * 63) / 15);
-		// Place UI colors in the high indices used by the Amiga/DOS UI range.
+		r6 = (byte)((r4 * 63) / 15);
+		g6 = (byte)((g4 * 63) / 15);
+		b6 = (byte)((b4 * 63) / 15);
+	};
+
+	// Provisional 32-color playfield palette used until a scene MM_* package is loaded.
+	// Seed from Info UI colors, then fill remaining indices with a visible ramp.
+	for (uint i = 0; i < 32; i++) {
+		byte r6, g6, b6;
+		if (i < 13) {
+			amiga12ToVga6(info.uiPaletteAmiga[i], r6, g6, b6);
+		} else {
+			const byte v = (byte)((i * 63) / 31);
+			r6 = v;
+			g6 = (byte)((v * 3) / 4);
+			b6 = (byte)(v / 2);
+		}
+		if (i == 0) {
+			r6 = g6 = b6 = 0;
+		}
+		_palVanilla[i * 3 + 0] = r6;
+		_palVanilla[i * 3 + 1] = g6;
+		_palVanilla[i * 3 + 2] = b6;
+	}
+
+	// Amiga UI colors also live in the high indices used by panel/chrome drawing.
+	for (uint i = 0; i < 13; i++) {
+		byte r6, g6, b6;
+		amiga12ToVga6(info.uiPaletteAmiga[i], r6, g6, b6);
 		const uint idx = 0xF0 + i;
 		if (idx >= 256)
 			break;
-		_pal[idx * 3 + 0] = r6;
-		_pal[idx * 3 + 1] = g6;
-		_pal[idx * 3 + 2] = b6;
 		_palVanilla[idx * 3 + 0] = r6;
 		_palVanilla[idx * 3 + 1] = g6;
 		_palVanilla[idx * 3 + 2] = b6;
 	}
+	applyPaletteDarkening();
 }
 
 void Macs2Engine::readAmigaResources() {
@@ -1879,13 +2242,14 @@ void Macs2Engine::readAmigaResources() {
 	// Duplicate the first loaded cursor into empty gameplay slots so the UI works.
 	int fallbackIndex = -1;
 	for (uint i = 0; i < _imageResources.size(); i++) {
-		if (!_imageResources[i]._data.empty()) {
+		if (!_imageResources[i]._data.empty() && _imageResources[i]._width > 0 &&
+			_imageResources[i]._height > 0) {
 			fallbackIndex = (int)i;
 			break;
 		}
 	}
 	if (fallbackIndex >= 0) {
-		static const uint16 kRequiredModes[] = {0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19};
+		static const uint16 kRequiredModes[] = {0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A};
 		for (uint16 mode : kRequiredModes) {
 			const uint idx = mode - 1;
 			if (idx < _imageResources.size() && _imageResources[idx]._data.empty())
@@ -1895,21 +2259,121 @@ void Macs2Engine::readAmigaResources() {
 
 	applyAmigaUiPalette();
 
-	// Stub object table so View1 can create the protagonist. Full Amiga object
-	// loading (MXOO body layout) is not wired yet.
+	// Load every OO resource as a GameObject. Object index = resource id + 1.
 	GameObjects::instance()._objects.resize(0x200, nullptr);
-	GameObject *protagonist = new GameObject();
-	protagonist->_index = 1;
-	protagonist->_position = Common::Point(160, 100);
-	protagonist->_sceneIndex = 1;
-	protagonist->_orientation = 0;
-	GameObjects::instance()._objects[0] = protagonist;
+	uint loadedObjects = 0;
+	uint loadedAnims = 0;
+
+	Common::ArchiveMemberList members;
+	_amigaArchive->listMembers(members);
+	for (const Common::ArchiveMemberPtr &member : members) {
+		AmigaResourceType type = kAmigaResUnknown;
+		uint16 resId = 0;
+		if (!Macs2AmigaArchive::parseResourceName(member->getName(), type, resId) || type != kAmigaResOO)
+			continue;
+
+		Common::ScopedPtr<Common::SeekableReadStream> stream(_amigaArchive->createReadStreamForResource(type, resId));
+		if (!stream)
+			continue;
+
+		const uint32 size = (uint32)stream->size();
+		Common::Array<byte> mxoo;
+		mxoo.resize(size);
+		if (stream->read(mxoo.data(), size) != size)
+			continue;
+
+		const uint16 objectIndex = (uint16)(resId + 1);
+		if (objectIndex == 0 || objectIndex > 0x200)
+			continue;
+
+		GameObject *gameObject = GameObjects::instance()._objects[objectIndex - 1];
+		if (gameObject == nullptr) {
+			gameObject = new GameObject();
+			gameObject->_index = objectIndex;
+			GameObjects::instance()._objects[objectIndex - 1] = gameObject;
+		}
+		// Non-zero marks the object as having resident Amiga data (skip DOS file reload).
+		gameObject->_dataOffset = 1;
+		gameObject->_position = Common::Point(0, 0);
+		gameObject->_sceneIndex = 0;
+		gameObject->_orientation = 11;
+		gameObject->_verticalOffsetScale = 0;
+
+		while (gameObject->_blobs.size() < 0x15)
+			gameObject->_blobs.push_back(Common::Array<uint8>());
+		while (gameObject->_blobSourceKeys.size() < 0x15)
+			gameObject->_blobSourceKeys.push_back(0);
+		while (gameObject->_blobWalkSpeeds.size() < 0x15)
+			gameObject->_blobWalkSpeeds.push_back(2);
+		while (gameObject->_blobMirrorFlags.size() < 0x15)
+			gameObject->_blobMirrorFlags.push_back(false);
+
+		AmigaMxooInfo mxooInfo;
+		if (parseAmigaMxoo(mxoo.data(), size, mxooInfo)) {
+			for (uint slot = 0; slot < 21; slot++) {
+				Common::Array<byte> blob;
+				if (!convertAmigaAnimSlotToDosBlob(mxoo.data(), size, mxooInfo.slotOffsets[slot], blob) || blob.empty())
+					continue;
+				if (slot < gameObject->_blobs.size())
+					gameObject->_blobs[slot] = Common::move(blob);
+				else
+					gameObject->_blobs.push_back(Common::move(blob));
+				loadedAnims++;
+			}
+			extractAmigaScript(mxoo.data(), size, gameObject->_script);
+			extractAmigaStringBlock(mxoo.data(), size, gameObject->_stringData);
+
+			// Dialogue portraits: 320x72 atlas -> blobs[17]/[18] (DOS portrait slots).
+			while (gameObject->_blobs.size() < 19)
+				gameObject->_blobs.push_back(Common::Array<uint8>());
+			Common::Array<byte> portraitBlob;
+			if (convertAmigaPortraitAtlasToDosBlob(mxoo.data(), size, mxooInfo.extraOffset, portraitBlob) &&
+				!portraitBlob.empty()) {
+				gameObject->_blobs[17] = portraitBlob;
+				gameObject->_blobs[18] = portraitBlob;
+				loadedAnims++;
+			}
+		} else {
+			// Simple planar sprite (cursor / inventory icon): expose as walk + inventory slots.
+			Common::Array<byte> blob;
+			if (convertAmigaSimpleSpriteToDosBlob(mxoo.data(), size, blob) && !blob.empty()) {
+				gameObject->_blobs[0] = blob;
+				gameObject->_blobs[0x13] = blob;
+				loadedAnims++;
+			}
+		}
+
+		loadedObjects++;
+	}
+
+	// Protagonist object slot (OO_0000 → object 1). Do NOT place him in the room here —
+	// the intro/scene MXMM scripts call moveObject on scene init (same as DOS).
+	GameObject *protagonist = GameObjects::instance()._objects[0];
+	if (protagonist == nullptr) {
+		protagonist = new GameObject();
+		protagonist->_index = 1;
+		protagonist->_dataOffset = 1;
+		GameObjects::instance()._objects[0] = protagonist;
+	}
+	protagonist->_sceneIndex = 0;
+	protagonist->_position = Common::Point(0, 0);
+	protagonist->_orientation = 11;
 
 	Scenes::instance()._currentActorIndex = 1;
-	Scenes::instance()._currentSceneIndex = 1;
-	Scenes::instance()._currentSceneScript = new Common::MemoryReadStream(nullptr, 0);
-	Scenes::instance()._currentSceneStrings = new Common::MemoryReadStream(nullptr, 0);
-	_scriptExecutor->setScript(Scenes::instance()._currentSceneScript);
+
+	// Info MXIN u32 @ offset 8 = starting MM resource id (demo: 40 → intro MM_0040).
+	// Script-visible scene id = MM id + 1 (Ghidra load_scene_mxmm / FUN_002215fa).
+	uint16 startResourceId = _amigaArchive->getInfo().startSceneResourceId;
+	if (startResourceId == 0 || !_amigaArchive->hasResource(kAmigaResMM, startResourceId)) {
+		if (_amigaArchive->hasResource(kAmigaResMM, 40))
+			startResourceId = 40;
+		else if (_amigaArchive->hasResource(kAmigaResMM, 4))
+			startResourceId = 4;
+		else
+			startResourceId = 1;
+	}
+	const uint16 startScriptScene = (uint16)(startResourceId + 1);
+	Scenes::instance()._currentSceneIndex = startScriptScene;
 
 	_sceneBackground.create(kScreenWidth, kGameHeight, Graphics::PixelFormat::createFormatCLUT8());
 	_depthMap.create(kScreenWidth, kGameHeight, Graphics::PixelFormat::createFormatCLUT8());
@@ -1927,7 +2391,37 @@ void Macs2Engine::readAmigaResources() {
 	_scenePaletteMode = 1;
 	_paletteDarkenPercent = 0;
 
-	warning("Amiga demo: archive and cursors loaded; full scene/object graphics path is not implemented yet");
+	// Fonts / shading / border chrome: pull DOS MCS globals when available.
+	if (ensureAmigaDosMcsStream())
+		loadDosGlobalAssetsFromMcs(_amigaDosMcsStream);
+	else
+		warning("Amiga: no RESOURCE.MCS found — text fonts may be missing (room BGs use MM_*)");
+
+	// Border chrome uses fixed slots 30/31/32. Empty/zero-size tiles make
+	// drawBorderSide spin forever (no events, frameWait appears stuck).
+	auto ensureBorderTile = [this](uint index, byte color, uint16 w, uint16 h) {
+		if (index >= _imageResources.size())
+			return;
+		if (!_imageResources[index]._data.empty() && _imageResources[index]._width > 0 &&
+			_imageResources[index]._height > 0)
+			return;
+		AnimFrame tile;
+		tile._width = w;
+		tile._height = h;
+		tile._data.resize((uint)w * h);
+		Common::fill(tile._data.begin(), tile._data.end(), color);
+		_imageResources[index] = Common::move(tile);
+	};
+	if (_imageResources.size() < 33)
+		_imageResources.resize(33);
+	ensureBorderTile(30, 0xF2, 8, 1);
+	ensureBorderTile(31, 0xF1, 8, 8);
+	ensureBorderTile(32, 0xF3, 8, 1);
+
+	debugC(1, kDebugFilePath,
+		   "Amiga objects loaded: %u resources, %u anim slots; start MM_%04u (script scene %u)",
+		   loadedObjects, loadedAnims, startResourceId, startScriptScene);
+	changeScene(Scenes::instance()._currentSceneIndex);
 }
 
 bool Macs2Engine::loadAnimationFromSceneData(uint16 objectIndex, uint16 slotIndex, uint8 arrayIndex, bool shouldMirror, uint16 executingScriptObjectId) {
@@ -2026,6 +2520,15 @@ void Macs2Engine::clearObjectRuntime(GameObject *obj) {
 	if (obj == nullptr)
 		return;
 
+	// Amiga: animation blobs are not reloaded from a DOS-style object record.
+	if (isAmiga()) {
+		obj->_useOverloadAnimation = false;
+		obj->_overloadAnimationMirrored = false;
+		obj->_storedWalkRuntime = GameObject::StoredWalkRuntime();
+		obj->resetDrawBounds();
+		return;
+	}
+
 	obj->_blobs.clear();
 	obj->_blobSourceKeys.clear();
 	obj->_blobWalkSpeeds.clear();
@@ -2043,6 +2546,14 @@ bool Macs2Engine::loadObjectData(GameObject *obj) {
 	if (obj == nullptr) {
 		_scriptExecutor->setScriptError(0x19);
 		return false;
+	}
+	// Amiga objects keep animation/script data resident after readAmigaResources().
+	if (isAmiga()) {
+		if (obj->_dataOffset == 0) {
+			_scriptExecutor->setScriptError(0x19);
+			return false;
+		}
+		return true;
 	}
 	if (obj->_dataOffset == 0) {
 		_scriptExecutor->setScriptError(0x19);
@@ -2235,7 +2746,7 @@ Common::Error Macs2Engine::run() {
 
 	CursorMan.showMouse(false);
 
-	// Initialize Adlib (DOS only - Amiga ues Protracker MOD modules)
+	// Initialize Adlib (DOS only — Amiga has no AdLib song path yet)
 	if (!isAmiga()) {
 		_adlib->init();
 	}

@@ -2267,7 +2267,7 @@ bool View1::tick() {
 	// Music fade tick from gameTick (1008:e556).
 	// Processes volume fade in/out each frame when active.
 	Script::ScriptExecutor *se = g_engine->_scriptExecutor;
-	if (se->_activeMusicSlot != 0 && se->_musicControlMode != 0) {
+	if (se->_activeMusicSlot != 0 && se->_musicControlMode != 0 && !g_engine->isAmiga()) {
 		const uint16 musicStep = MAX<uint16>(se->_musicControlStep, 1);
 		if (se->_musicControlMode == 1) {
 			// Fade out: volume -= step
@@ -3190,10 +3190,14 @@ void View1::drawBorderSide(const Common::Point &pos, const Common::Point &size, 
 	// Clipping region: (x+1, y+1) to (x+width, y+height) per disassembly
 	Common::Rect clippingRect(pos + Common::Point(1, 1), pos + size);
 	// Texture: border sprite from cursor image array at offset 0x1f0 (mode 1)
+	if (g_engine->_imageResources.size() <= 31)
+		return;
+	const AnimFrame &sprite = g_engine->_imageResources[31];
+	if (sprite._width == 0 || sprite._height == 0 || sprite._data.empty())
+		return;
+
 	uint16 currentX = clippingRect.left;
 	uint16 currentY = clippingRect.top;
-	const AnimFrame &sprite = g_engine->_imageResources[31];
-
 	while (currentY < clippingRect.bottom) {
 		while (currentX < clippingRect.right) {
 			drawSpriteClipped(currentX, currentY, clippingRect, sprite._width, sprite._height, sprite._data.data(), s);
@@ -3225,7 +3229,7 @@ void View1::drawHorizontalBorderHighlight(const Common::Point &pos, int16 width,
 	uint16 currentY = clippingRect.top;
 
 	const AnimFrame *sprite = getUISprite(spriteAddress);
-	if (sprite == nullptr) {
+	if (sprite == nullptr || sprite->_width == 0 || sprite->_height == 0 || sprite->_data.empty()) {
 		return;
 	}
 	while (currentX < clippingRect.right) {
@@ -3242,7 +3246,7 @@ void View1::drawVerticalBorderHighlight(const Common::Point &pos, int16 height, 
 	uint16 currentY = clippingRect.top;
 
 	const AnimFrame *sprite = getUISprite(spriteAddress);
-	if (sprite == nullptr) {
+	if (sprite == nullptr || sprite->_width == 0 || sprite->_height == 0 || sprite->_data.empty()) {
 		return;
 	}
 
@@ -4087,7 +4091,8 @@ void View1::openOriginalSaveLoadPanel() {
 
 	// if (g_wMusicEnabled && sceneData[g_wActiveMusicSlot] != 0) adlibStopMusic()
 	if (g_engine->_scriptExecutor->_musicEnabled &&
-		g_engine->_scriptExecutor->_activeMusicSlot != 0) {
+		g_engine->_scriptExecutor->_activeMusicSlot != 0 &&
+		!g_engine->isAmiga()) {
 		g_engine->getAdlib()->stopMusic();
 	}
 
@@ -4387,7 +4392,8 @@ void View1::handleOriginalSaveLoadClick(const Common::Point &pos) {
 				if (g_engine->_scriptExecutor->_musicEnabled &&
 					g_engine->_scriptExecutor->_soundSystemActive) {
 					uint16 slot = g_engine->_scriptExecutor->_activeMusicSlot;
-					if (slot != 0 && !g_engine->_scriptExecutor->_musicSlots[slot - 1].empty()) {
+					if (slot != 0 && !g_engine->_scriptExecutor->_musicSlots[slot - 1].empty() &&
+						!g_engine->isAmiga()) {
 						g_engine->getAdlib()->playSongData(g_engine->_scriptExecutor->_musicSlots[slot - 1]);
 						// Original's adlibTickHandler resets g_bAdlibMasterVolume=0 (full volume).
 						// ScummVM layers user volume on top via scaledMusicVolume, so re-apply it.

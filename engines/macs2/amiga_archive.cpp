@@ -262,13 +262,17 @@ bool Macs2AmigaArchive::loadInfo() {
 		return false;
 
 	infoFile.readUint16BE(); // version
-	infoFile.skip(8);
+	infoFile.readUint16BE(); // pad
+	const uint32 startSceneResourceId = infoFile.readUint32BE();
+	infoFile.readUint16BE(); // pad before cursor/meta word table
 
 	Common::Array<uint16> words;
 	while (infoFile.pos() + 2 <= infoFile.size())
 		words.push_back(infoFile.readUint16BE());
 
 	AmigaInfoData info;
+	if (startSceneResourceId > 0 && startSceneResourceId <= 0xFFFF)
+		info.startSceneResourceId = (uint16)startSceneResourceId;
 	if (words.size() > 6) {
 		// idx 2..6: cursor resource ids (base/talk/look/use/walk)
 		for (uint i = 0; i < 5 && (2 + i) < words.size(); i++)
@@ -334,11 +338,15 @@ byte *Macs2AmigaArchive::decompressPayload(const byte *payload, uint32 payloadLe
 	if (magic == kTagPP20)
 		return decompressPP20(payload, payloadLen, outLen);
 
-	if (magic == kTagMXMM && payloadLen > 14) {
-		const uint32 ppSize = READ_BE_UINT32(payload + 10);
-		if (ppSize > 0 && ppSize <= payloadLen - 14)
-			return decompressPP20(payload + 14, ppSize, outLen);
-		return nullptr;
+	// MXMM is a multi-chunk scene package (chunk0 = planar BG). Return the raw
+	// container so callers can decompress/parse individual chunks.
+	if (magic == kTagMXMM) {
+		byte *copy = (byte *)malloc(payloadLen);
+		if (!copy)
+			return nullptr;
+		memcpy(copy, payload, payloadLen);
+		outLen = payloadLen;
+		return copy;
 	}
 
 	// Uncompressed MXOO / raw payload: return a malloc'd copy for MemoryReadStream.
