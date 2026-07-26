@@ -1,6 +1,7 @@
 MODULE := engines/macs2
 
 MODULE_OBJS = \
+	amiga_archive.o \
 	midiparser_macs2.o \
 	music.o \
 	dialogs.o \

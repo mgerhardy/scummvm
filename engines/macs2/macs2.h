@@ -38,6 +38,7 @@
 #include "common/text-to-speech.h"
 #include "common/util.h"
 #include "engines/engine.h"
+#include "macs2/amiga_archive.h"
 #include "macs2/events.h"
 #include "macs2/macs2_constants.h"
 #include "macs2/scriptexecutor.h"
@@ -258,6 +259,11 @@ public:
 	// Adlib data
 	void readExecutable();
 
+	/** Amiga: open DataA/Mdir archive and load cursors / Info / minimal runtime state. */
+	void readAmigaResources();
+	void applyAmigaUiPalette();
+	bool loadAmigaCursorResource(uint16 resourceId, AnimFrame &out);
+
 	// Assumes that the stream is at the location of the number of background animations
 	void readBackgroundAnimations(Common::MemoryReadStream *stream);
 
@@ -367,6 +373,9 @@ public:
 	Common::Array<BackgroundAnimationBlob> _backgroundAnimationsBlobs;
 
 	Common::MemoryReadStream *_fileStream;
+
+	/** Amiga DataA/Mdir archive (owned). Null on DOS. */
+	Macs2AmigaArchive *_amigaArchive = nullptr;
 
 	void setCursorMode(Script::MouseMode newMode);
 	void nextCursorMode();
@@ -504,7 +513,11 @@ public:
 
 	uint32 getFeatures() const;
 
+	Common::Platform getPlatform() const;
+	bool isAmiga() const { return getPlatform() == Common::kPlatformAmiga; }
 	bool isDemo() const { return getFeatures() & ADGF_DEMO; }
+
+	Macs2AmigaArchive *getAmigaArchive() const { return _amigaArchive; }
 
 	/**
 	 * Returns the game Id
